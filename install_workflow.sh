@@ -27,8 +27,11 @@ source ./installers/install_3dthesis.sh
 # Install/validate autothesis repository
 AUTOTHESIS_DIR="$(cd ..; pwd)/autothesis"
 chmod 755 ./installers/install_autothesis.sh
-source ./installers/install_autothesis
+source ./installers/install_autothesis.sh
 
-
+# Install/validate calibration repository
+CLASSIFICATION_DIR="$(cd ..; pwd)/classification"
+chmod 755 ./installers/install_classification.sh
+source ./installers/install_classification.sh
 
 
