@@ -1,0 +1,14 @@
+Simulation
+{
+	Name		Template
+	Mode		/home/cloud/dev/myna/template_3DThesis/Mode.txt
+	Material	/home/cloud/dev/myna/template_3DThesis/Material.txt
+	Beam		/home/cloud/dev/myna/template_3DThesis/Beam.txt
+	Path		/home/cloud/dev/myna/template_3DThesis/Path.txt
+}
+Options
+{
+	Domain		/home/cloud/dev/myna/template_3DThesis/Domain.txt
+	Output		/home/cloud/dev/myna/template_3DThesis/Output.txt
+	Settings	/home/cloud/dev/myna/template_3DThesis/Settings.txt
+}

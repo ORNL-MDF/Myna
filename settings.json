@@ -1,0 +1,23 @@
+{
+    "Peregrine":
+    {
+        "build_path": "/home/cloud/pseudo-peregrine/ConceptLaserM2-ORNL1/2021/12/2021-12-16 Knapp Zeiss DOE/Peregrine"
+    },
+    "3DThesis":
+    {
+        "root": "/home/cloud/dev",
+        "repo": "/home/cloud/dev/3DThesis",
+        "executable": "/home/cloud/dev/3DThesis/3DThesis",
+        "input_dir_path": "/home/cloud/dev/myna/template_3DThesis",
+        "input_file_path": "/home/cloud/dev/myna/template_3DThesis/ParamInput.txt",
+        "material_database_path": "/home/cloud/dev/myna/resources/3DThesis_materials",
+        "parts":
+        [
+            {
+                "part_number": 1,
+                "layer_start": 50,
+                "layer_end": 50
+            }
+        ]
+    }
+}
