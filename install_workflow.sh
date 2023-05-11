@@ -17,21 +17,25 @@ else
   conda create --name $CONDA_ENV
   conda activate $CONDA_ENV
 fi
+echo ""
 
 # Install/validate 3DThesis repository
 THESIS_DIR="$(cd ..; pwd)/3DThesis"
 THESIS_EXEC="3DThesis"
 chmod 755 ./installers/install_3dthesis.sh
 source ./installers/install_3dthesis.sh
+echo ""
 
 # Install/validate autothesis repository
 AUTOTHESIS_DIR="$(cd ..; pwd)/autothesis"
 chmod 755 ./installers/install_autothesis.sh
 source ./installers/install_autothesis.sh
+echo ""
 
 # Install/validate calibration repository
 CLASSIFICATION_DIR="$(cd ..; pwd)/classification"
 chmod 755 ./installers/install_classification.sh
 source ./installers/install_classification.sh
+echo ""
 
 
