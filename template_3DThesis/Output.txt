@@ -13,11 +13,11 @@ Solidification
 {
 	tSol	0
 	G	1
-	Gx	0
-	Gy	0
-	Gz	0
+	Gx	1
+	Gy	1
+	Gz	1
 	V	1
-	dTdt	0
+	dTdt	1
 	eqFrac	0
 	RDF	0
 	numMelt	0

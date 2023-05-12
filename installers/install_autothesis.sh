@@ -7,7 +7,7 @@ fi
 
 # Clone and build if necessary
 ROOT_DIR=$(pwd)
-TARGET_COMMIT="20f3c7d9d4e20e65afe2068659ddded4419a01fe"
+TARGET_COMMIT="81ecf69586f123890f9b438d29ac4ceaf02ef78e"
 if [ -d "$AUTOTHESIS_DIR" ]; then
   echo "$AUTOTHESIS_DIR already exists."
   cd $AUTOTHESIS_DIR

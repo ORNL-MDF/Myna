@@ -12,10 +12,10 @@ CONDA_ENV_PATH=`conda info --base`
 if [ -d $CONDA_ENV_PATH"/envs/$CONDA_ENV" ]; 
 then
   conda activate $CONDA_ENV
-  conda install pip
 else
-  conda create --name $CONDA_ENV
+  conda create --name $CONDA_ENV python=3.8.10
   conda activate $CONDA_ENV
+  conda install pip
 fi
 echo ""
 

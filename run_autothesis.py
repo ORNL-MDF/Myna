@@ -6,7 +6,7 @@ import autothesis.parser as parser
 import os
 import numpy as np
 
-def run_autothesis(settings):
+def run_autothesis(settings, check_for_existing_results=True):
 
     # [WIP]: Need to figure out how to mount Savitar drive on Unix system
     #        or how to do the file copies to/from Savitar using SFTP or the like.
@@ -22,9 +22,22 @@ def run_autothesis(settings):
     sim.output_dir = settings["3DThesis"]["output_dir_path"]
 
     # Iterate through each part, all layers
+    result_files = []
     for part in settings["3DThesis"]["parts"]:
         print(f'Part number {part["part_number"]}, layers {part["layer_start"]} to {part["layer_end"]}')
         for layer in np.arange(part["layer_start"],part["layer_end"]+1):
+
+            # Set output file name
+            name = f'Part{part["part_number"]:02}.Layer{layer:04}.csv'
+
+            # Check if output file exists
+            if check_for_existing_results:
+                if os.path.exists(os.path.join(sim.output_dir, name)):
+                    print(f'Part {part["part_number"]}, Layer {layer} has already been simulated. Skipping.')
+                    result_file = os.path.join(sim.output_dir, name)
+                    result_files.append(result_file)
+                    continue
+
             
             # Set up simulation files
             peregrine.copy_scan(buildpath=sim.peregrine_path,
@@ -41,12 +54,13 @@ def run_autothesis(settings):
             # Run simulation
             output_path = simulation.run(case_directory=os.path.abspath(sim.input_dir),
                                          input_file=sim.input_file,
-                                         exec_path=sim.executable_path)
+                                         exec_path=sim.executable_path,
+                                         output_suffix=".Solidification")
 
             # Store the simulation results
-            name = f'Part{part["part_number"]:02}.Layer{layer:04}.csv'
             result_file = parser.copy_simulation_result(new_file=os.path.join(sim.output_dir, name), 
                                                         result_file=output_path)
+            result_files.append(result_file)
             
             # Upload to Peregrine, if requested
             if settings["3DThesis"]["Peregrine"]["upload"] == True:
@@ -65,4 +79,4 @@ def run_autothesis(settings):
                                                 )
                                             )
 
-    return result_file
+    return result_files

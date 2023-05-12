@@ -7,7 +7,7 @@ fi
 
 # Clone and build if necessary
 ROOT_DIR=$(pwd)
-TARGET_COMMIT="98514f2e472d1dd1e89fbea92796e0faff456b82"
+TARGET_COMMIT="ad35d0938e3d115323bbaea597378ce47dbd3cba"
 if [ -d "$CLASSIFICATION_DIR" ]; then
   echo "$CLASSIFICATION_DIR already exists."
   cd $CLASSIFICATION_DIR
@@ -23,6 +23,8 @@ else
   cd ..
   git clone https://code.ornl.gov/ygk/classification.git
   cd classification
+  git branch -u origin/myna myna
+  git switch myna
   git checkout $TARGET_COMMIT
 fi
 

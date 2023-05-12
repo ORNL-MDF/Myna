@@ -37,5 +37,11 @@
                 }
             ]
         }
+    },
+
+    "classification":
+    {
+        "output_dir_path": "/home/cloud/dev/myna/results/classification"
     }
+
 }
