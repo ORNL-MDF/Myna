@@ -11,6 +11,7 @@
         "input_dir_path": "/home/cloud/dev/myna/template_3DThesis",
         "input_file_path": "/home/cloud/dev/myna/template_3DThesis/ParamInput.txt",
         "material_database_path": "/home/cloud/dev/myna/resources/3DThesis_materials",
+        "output_dir_path": "/home/cloud/dev/myna/results/3DThesis",
         "parts":
         [
             {
@@ -18,6 +19,23 @@
                 "layer_start": 50,
                 "layer_end": 50
             }
-        ]
+        ],
+        "Peregrine":
+        {
+            "upload": true,
+            "variables":
+            [
+                {
+                    "varname": "G",
+                    "exportname": "Gradient",
+                    "unit": "K/m"
+                },
+                {
+                    "varname": "V",
+                    "exportname": "Velocity",
+                    "unit": "m/s"
+                }
+            ]
+        }
     }
 }

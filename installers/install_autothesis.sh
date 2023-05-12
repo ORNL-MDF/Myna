@@ -7,7 +7,7 @@ fi
 
 # Clone and build if necessary
 ROOT_DIR=$(pwd)
-TARGET_COMMIT="b94cbbb6afbf3c37e625b27680e3fc19439cddf3"
+TARGET_COMMIT="20f3c7d9d4e20e65afe2068659ddded4419a01fe"
 if [ -d "$AUTOTHESIS_DIR" ]; then
   echo "$AUTOTHESIS_DIR already exists."
   cd $AUTOTHESIS_DIR
@@ -23,6 +23,8 @@ else
   cd ..
   git clone https://code.ornl.gov/ygk/autothesis.git
   cd autothesis
+  git branch -u origin/upgrade upgrade
+  git switch upgrade
   git checkout $TARGET_COMMIT
 fi
 
