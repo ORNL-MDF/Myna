@@ -7,7 +7,7 @@ fi
 
 # Clone and build if necessary
 ROOT_DIR=$(pwd)
-TARGET_COMMIT="ad35d0938e3d115323bbaea597378ce47dbd3cba"
+TARGET_COMMIT="8cdd8133c21e197d7937dc7721872eb69762542e"
 if [ -d "$CLASSIFICATION_DIR" ]; then
   echo "$CLASSIFICATION_DIR already exists."
   cd $CLASSIFICATION_DIR

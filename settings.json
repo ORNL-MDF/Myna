@@ -42,6 +42,11 @@
     "classification":
     {
         "output_dir_path": "/home/cloud/dev/myna/results/classification"
+    },
+
+    "rve":
+    {
+        "output_dir_path": "/home/cloud/dev/myna/results/rve"
     }
 
 }

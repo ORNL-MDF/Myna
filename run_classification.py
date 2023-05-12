@@ -6,7 +6,7 @@ import classification.training
 import os
 import numpy as np
 
-def run_classification(settings):
+def run_classification(settings, load_models=False):
 
     # Make directory for classification, if needed, and change wokring directory to it
     orig_dir = os.getcwd()
@@ -31,7 +31,7 @@ def run_classification(settings):
     voxelData, voxelModelPath, nClusterV = classification.training.train_voxel_classifier(
                                                 voxelTrainingData, 
                                                 dpi=300, 
-                                                loadModel=True, 
+                                                loadModel=load_models, 
                                                 plot=True, 
                                                 sF=0.5, 
                                                 gamma=0.8,
@@ -48,7 +48,7 @@ def run_classification(settings):
     # Train supervoxel classification model and generate plots of the classification results
     supervoxelDatasets, _, nClusterSV = classification.training.train_supervoxel_classifier(
                                                                     supervoxelTrainingData, 
-                                                                    loadModel=False, 
+                                                                    loadModel=load_models, 
                                                                     dpi=300, 
                                                                     plot=True, 
                                                                     sF=0.5, 
@@ -66,4 +66,4 @@ def run_classification(settings):
     
     # Return to original working directory
     os.chdir(orig_dir)
-    return status
+    return [os.path.join(settings["classification"]["output_dir_path"], x) for x in supervoxelDatasets]
