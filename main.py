@@ -1,7 +1,10 @@
 import run_autothesis
 import run_classification
 import run_rve_selection
+import run_autofoam
 import json
+import zipfile
+import os
 
 if __name__ == "__main__":
 
@@ -21,3 +24,12 @@ if __name__ == "__main__":
     print("\nRunning RVE selection...")
     results_rve = run_rve_selection.run_rve_selection(settings)
     print(f"Output: {results_rve}")
+
+    print("\nRunning AutoFOAM case generation...")
+    results_autofoam = run_autofoam.run_autofoam(settings, generate_cases=False)
+    print(f"Output: {results_autofoam}")
+
+    print("\nZipping AdditiveFOAM cases...")
+    with zipfile.ZipFile(os.path.join("results", f"autofoam_cases.zip"), mode="w") as archive:
+        for case in results_autofoam:
+            archive.write(case)

@@ -38,4 +38,9 @@ chmod 755 ./installers/install_classification.sh
 source ./installers/install_classification.sh
 echo ""
 
+# Install/validate calibration repository
+AUTOFOAM_DIR="$(cd ..; pwd)/autofoam"
+chmod 755 ./installers/install_autofoam.sh
+source ./installers/install_autofoam.sh
+echo ""
 

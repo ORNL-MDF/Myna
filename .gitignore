@@ -1,2 +1,7 @@
 results/
 Data/
+
+*.polyMesh
+extendedFeatureEdgeMesh
+polyMesh
+triSurface

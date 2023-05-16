@@ -1,0 +1,41 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Version:  dev
+     \\/     M anipulation  |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    location    "system";
+    object      topoSetDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+xmin            -0.03749982;
+ymin            -0.05550862;
+zmin            -1.0000000000000004e-08;
+
+xmax            -0.02249988;
+ymax            -0.04117238;
+zmax            0.002;
+
+actions
+(
+    // cellSet used to remove cells above desired build plane
+    {
+        name    c0;
+        type    cellSet;
+        action  new;
+        source  boxToCell;
+        sourceInfo
+        {
+            box ($xmin $ymin $zmin) ($xmax $ymax $zmax);
+        }
+    }
+);
+
+// ************************************************************************* //
