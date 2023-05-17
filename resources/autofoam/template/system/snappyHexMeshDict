@@ -27,13 +27,13 @@ geometry
     part
     {
         type            triSurfaceMesh;
-        file            "part.stl";
+        file            "zeiss_part.stl";
     }
 }
 
 castellatedMeshControls
 {
-    features        ( { file "part.eMesh" ; level 0 ; } );
+    features        ( { file "zeiss_part.eMesh" ; level 0 ; } );
     refinementSurfaces
     {
         part

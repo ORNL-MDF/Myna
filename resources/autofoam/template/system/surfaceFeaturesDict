@@ -30,7 +30,7 @@ trimFeatures
 
 writeObj        yes;
 
-surfaces        ( "part.stl" );
+surfaces        ( "zeiss_part.stl" );
 
 
 // ************************************************************************* //

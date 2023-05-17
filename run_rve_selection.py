@@ -23,9 +23,15 @@ def run_rve_selection(settings):
     files = settings["classification"]["results"]
     l0s = []
     l1s = []
+    part_numbers = []
     for part in settings["3DThesis"]["parts"]:
+        part_numbers.append(part["part_number"])
         l0s.append(part["layer_start"])
         l1s.append(part["layer_end"])
+
+    # Set up results directory
+    if not os.path.exists(settings["rve"]["output_dir_path"]):
+        os.makedirs(settings["rve"]["output_dir_path"])
 
     # Arrays for exporting data
     pole_xs = []
@@ -33,8 +39,9 @@ def run_rve_selection(settings):
     ids = []
     layer_starts = []
     layer_ends = []
+    ps = []
 
-    for f, l0, l1 in zip(files, l0s, l1s): 
+    for f, l0, l1, p in zip(files, l0s, l1s, part_numbers): 
 
         df = pd.read_csv(f)
         xs = sorted(df["X(mm)"].unique())
@@ -42,6 +49,10 @@ def run_rve_selection(settings):
         nx = len(xs)
         ny = len(ys)
         xx, yy = np.meshgrid(xs, ys, indexing='ij')
+
+        print(f"Part {p}, Layer(s) {l0} to {l1}:")
+        print(f"\t{np.min(xs)=}, {np.max(xs)=}")
+        print(f"\t{np.min(ys)=}, {np.max(ys)=}")
 
         zz = df["id"].to_numpy().reshape(xx.shape)
         zz = zz.T
@@ -62,13 +73,13 @@ def run_rve_selection(settings):
             condition = (table["area"] == np.max(table["area"]))
             input_labels = table["label"]
             output_labels = input_labels * condition
-            fitlered_label_image = skimage.util.map_array(labeled_image, input_labels, output_labels)
+            filtered_label_image = skimage.util.map_array(labeled_image, input_labels, output_labels)
 
             # Pad image
-            fitlered_label_image = np.pad(fitlered_label_image, (1,1))
+            filtered_label_image = np.pad(filtered_label_image, (1,1))
 
             # Get max distance point
-            distances = ndimage.distance_transform_edt(fitlered_label_image)
+            distances = ndimage.distance_transform_edt(filtered_label_image)
             if np.max(distances) > 1:
                 pole = (np.unravel_index(np.argmax(distances), distances.shape))
 
@@ -92,11 +103,12 @@ def run_rve_selection(settings):
                 ids.append(id)
                 layer_starts.append(l0)
                 layer_ends.append(l1)
-                pole_x = ys[pole[0]]
-                pole_y = xs[pole[1]]
+                pole_x = xs[pole[0]]
+                pole_y = ys[pole[1]]
+                ps.append(p)
                 pole_xs.append(1e-3*pole_x)
                 pole_ys.append(1e-3*pole_y)
-                axs[2].imshow(fitlered_label_image, origin="lower", cmap="binary_r")
+                axs[2].imshow(filtered_label_image, origin="lower", cmap="binary_r")
                 axs[2].scatter(pole_x, pole_y, marker = "x", s=8, color="red", label=f"X = {pole_x:.3f} mm,\nY = {pole_y:.3f} mm")
                 rect = Rectangle((pole[1] - 2, pole[0] - 2), 4, 4)
                 pc = PatchCollection([rect], facecolor="none", alpha=1, edgecolor="red")
@@ -109,14 +121,19 @@ def run_rve_selection(settings):
                 axs[2].legend()
                 plt.savefig(
                     os.path.join(settings["rve"]["output_dir_path"],
-                                 os.path.basename(f).replace(".csv", f"_cluster_{id}_segmentation.png")), 
+                                 os.path.basename(f).replace(".csv", f"_{id}_segment.png")), 
                     dpi=300)
                 plt.close()
 
             else:
                 print(f"{f}, cluster {id}: Insufficient cluster size for finding representative region")
 
-    export = pd.DataFrame({"id":ids, "x (m)":pole_xs, "y (m)":pole_ys, "layer_starts":layer_starts, "layer_ends":layer_ends})
+    export = pd.DataFrame({"id":ids, 
+                           "x (m)":pole_xs, 
+                           "y (m)":pole_ys, 
+                           "layer_starts":layer_starts, 
+                           "layer_ends":layer_ends, 
+                           "part_number":ps})
     result_path = os.path.join(settings["rve"]["output_dir_path"],"rve_list.csv")
     export.to_csv(result_path, index=False)
     

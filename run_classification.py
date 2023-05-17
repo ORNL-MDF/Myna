@@ -10,7 +10,7 @@ def run_classification(settings, load_models=False):
 
     # Make directory for classification, if needed, and change wokring directory to it
     orig_dir = os.getcwd()
-    os.makedirs(os.path.dirname(settings["classification"]["output_dir_path"]), exist_ok=True)
+    os.makedirs(settings["classification"]["output_dir_path"], exist_ok=True)
     os.chdir(settings["classification"]["output_dir_path"])
 
     # Create symbolic links to all available 3DThesis results.
