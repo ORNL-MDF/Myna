@@ -81,10 +81,11 @@ def run_rve_selection(settings):
             # Get max distance point
             distances = ndimage.distance_transform_edt(filtered_label_image)
             if np.max(distances) > 1:
-                pole = (np.unravel_index(np.argmax(distances), distances.shape))
+                pole = (np.unravel_index(np.argmax(distances), distances.shape, order='C'))
 
                 fig, axs = plt.subplots(nrows=1, ncols=3, figsize=(9, 3))
 
+                # Plot all segments
                 axs[0].imshow(zz, origin="lower", cmap=cmap)
                 axs[0].set_title("All Clusters")
                 axs[0].xaxis.set_ticklabels([])
@@ -92,6 +93,7 @@ def run_rve_selection(settings):
                 axs[0].set_xticks([])
                 axs[0].set_yticks([])
 
+                # Plot only the filtered cluster segments
                 axs[1].imshow(labeled_image, origin="lower", cmap="inferno")
                 axs[1].set_title(f"Cluster {id} Segments")
                 axs[1].xaxis.set_ticklabels([])
@@ -103,13 +105,14 @@ def run_rve_selection(settings):
                 ids.append(id)
                 layer_starts.append(l0)
                 layer_ends.append(l1)
-                pole_x = xs[pole[0]]
-                pole_y = ys[pole[1]]
+                pole_x = xs[pole[1]]
+                pole_y = ys[pole[0]]
                 ps.append(p)
                 pole_xs.append(1e-3*pole_x)
                 pole_ys.append(1e-3*pole_y)
-                axs[2].imshow(filtered_label_image, origin="lower", cmap="binary_r")
-                axs[2].scatter(pole_x, pole_y, marker = "x", s=8, color="red", label=f"X = {pole_x:.3f} mm,\nY = {pole_y:.3f} mm")
+                # axs[2].imshow(filtered_label_image, origin="lower", cmap="binary_r")
+                axs[2].imshow(distances, origin="lower", cmap="inferno")
+                axs[2].scatter(pole[1], pole[0], marker = "x", s=8, color="red", label=f"X = {pole_x:.3f} mm,\nY = {pole_y:.3f} mm")
                 rect = Rectangle((pole[1] - 2, pole[0] - 2), 4, 4)
                 pc = PatchCollection([rect], facecolor="none", alpha=1, edgecolor="red")
                 axs[2].add_collection(pc)
