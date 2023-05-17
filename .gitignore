@@ -1,5 +1,6 @@
 results/
 Data/
+resources/Peregrine/registered
 
 *.polyMesh
 extendedFeatureEdgeMesh

@@ -8,9 +8,9 @@
         "root": "/home/cloud/dev",
         "repo": "/home/cloud/dev/3DThesis",
         "executable": "/home/cloud/dev/3DThesis/3DThesis",
-        "input_dir_path": "/home/cloud/dev/myna/template_3DThesis",
-        "input_file_path": "/home/cloud/dev/myna/template_3DThesis/ParamInput.txt",
-        "material_database_path": "/home/cloud/dev/myna/resources/3DThesis_materials",
+        "input_dir_path": "/home/cloud/dev/myna/resources/3DThesis/template",
+        "input_file_path": "/home/cloud/dev/myna/resources/3DThesis/template/ParamInput.txt",
+        "material_database_path": "/home/cloud/dev/myna/resources/3DThesis/materials",
         "output_dir_path": "/home/cloud/dev/myna/results/3DThesis",
         "parts":
         [
