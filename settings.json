@@ -1,7 +1,7 @@
 {
     "Peregrine":
     {
-        "build_path": "/home/cloud/pseudo-peregrine/ConceptLaserM2-ORNL1/2021/12/2021-12-16 Knapp Zeiss DOE/Peregrine"
+        "build_path": "/home/cloud/dev/myna/resources/Peregrine"
     },
     "3DThesis":
     {
@@ -15,7 +15,7 @@
         "parts":
         [
             {
-                "part_number": 1,
+                "part_number": 6,
                 "layer_start": 50,
                 "layer_end": 50
             }
