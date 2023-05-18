@@ -5,11 +5,19 @@ import run_autofoam
 import json
 import zipfile
 import os
+import yaml
 
 if __name__ == "__main__":
 
-    with open("settings.json", "r") as f:
-        settings = json.load(f)
+    input_file = "settings.json"
+    with open(input_file, "r") as f:
+        file_type = input_file.split(".")[-1]
+        if file_type == "json":
+            settings = json.load(f)
+        elif file_type == "yaml":
+            settings = yaml.safe_load(f)
+        else:
+            print(f'ERROR: Unsupported input file type "{file_type}"')
 
     print("\nRunning autothesis...")
     results_autothesis = run_autothesis.run_autothesis(settings, check_for_existing_results=False)

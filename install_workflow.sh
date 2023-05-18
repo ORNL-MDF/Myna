@@ -16,6 +16,7 @@ else
   conda create --name $CONDA_ENV python=3.8.10
   conda activate $CONDA_ENV
   conda install pip
+  conda install -c conda-forge pyyaml
 fi
 echo ""
 

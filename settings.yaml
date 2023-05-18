@@ -1,0 +1,47 @@
+---
+Peregrine:
+  build_path: "/home/cloud/dev/myna/resources/Peregrine"
+
+3DThesis:
+    root: "/home/cloud/dev"
+    repo: "/home/cloud/dev/3DThesis"
+    executable: "/home/cloud/dev/3DThesis/3DThesis"
+    input_dir_path: "/home/cloud/dev/myna/resources/3DThesis/template"
+    input_file_path: "/home/cloud/dev/myna/resources/3DThesis/template/ParamInput.txt"
+    material_database_path: "/home/cloud/dev/myna/resources/3DThesis/materials"
+    output_dir_path: "/home/cloud/dev/myna/results/3DThesis"
+    parts:
+      - part_number: 6
+        layer_start: 50
+        layer_end: 50
+    Peregrine:
+        upload: true
+        variables:
+          - varname: "G"
+            exportname: "Gradient"
+            unit: "K/m"
+          - varname: "V"
+            exportname: "Velocity"
+            unit: "m/s"
+
+classification:
+    output_dir_path: "/home/cloud/dev/myna/results/classification"
+
+rve:
+  output_dir_path: "/home/cloud/dev/myna/results/rve"
+
+autofoam:
+    mesh:
+      stl_path: "resources/autofoam/stl_library/zeiss_part.stl"
+      convertToMeters: 0.001
+      spacing: [200.0e-6, 200.0e-6, 200.0e-6]
+      refinement: 0
+      tolerance: 1.0e-08
+    template:
+      template_dir: "resources/autofoam/template"
+    case_dir: "results/autofoam"
+    rve_size: [1.0e-3, 1.0e-3, 0.5e-3]
+    exe:
+      nProcs: 8
+      mpiArgs: "mpirun -n 8"
+...
