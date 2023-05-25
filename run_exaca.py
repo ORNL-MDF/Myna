@@ -89,7 +89,18 @@ def create_cases(settings) :
         )
 
         # Specify the paths to the openfoam temperature data
-        dirs = sorted(glob.glob(f"{case}/*/"))
+        rve_dirs = settings["autofoam"]["results"]
+        dirs = []
+        for d in rve_dirs:
+            pn = os.path.basename(d).split("_")[0]
+            pn = int(pn.replace("P", ""))
+            for part in settings["3DThesis"]["parts"]:
+                if part["part_number"] == pn:
+                    for i in range(part["layer_start"], part["layer_end"]+1):
+                        dirs.append(os.path.join(d, str(i)))
+                    break
+                else:
+                    continue
         dataname = settings["exaca"]["additivefoam_export_name"]
         paths = []
         for d in dirs:
