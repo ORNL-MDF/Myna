@@ -47,8 +47,6 @@ def run_autofoam(settings, generate_cases=True):
             ]
         }
 
-    print(inputs["cases"])
-
     if generate_cases:
         # Preprocess STL
         working_stl_path = autofoam.mesh.preprocess_stl(inputs)
