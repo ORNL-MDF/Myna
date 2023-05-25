@@ -46,19 +46,20 @@ if __name__ == "__main__":
 
     print("\nZipping AdditiveFOAM and ExaCA cases...")
     with zipfile.ZipFile(os.path.join("results", f"additivefoam_exaca_cases.zip"), mode="w") as archive:
-        for case in results_autofoam:
-            for root, dirs, files in os.walk(case):
-                for name in files:
-                    rel_path = os.path.join(root, name).split("results" + os.path.sep)[-1]
-                    archive.write(os.path.join(root, name), rel_path)
-        for case in results_exaca:
-            for root, dirs, files in os.walk(case):
-                for name in files:
-                    rel_path = os.path.join(root, name).split("results" + os.path.sep)[-1]
-                    archive.write(os.path.join(root, name), rel_path)
-        for root, dirs, files in os.walk(os.path.join("resources","exaca","template")):
+        for root, dirs, files in os.walk(os.path.join("results", "autofoam")):
+            for name in files:
+                rel_path = os.path.join(root, name).split("results" + os.path.sep)[-1]
+                archive.write(os.path.join(root, name), rel_path)
+        for root, dirs, files in os.walk(os.path.join("results", "exaca")):
+            for name in files:
+                rel_path = os.path.join(root, name).split("results" + os.path.sep)[-1]
+                archive.write(os.path.join(root, name), rel_path)
+        for root, dirs, files in os.walk(os.path.join("resources","exaca")):
             for name in files:
                 archive.write(os.path.join(root, name))
-        for root, dirs, files in os.walk(os.path.join(".","resources","autofoam","template")):
+        for root, dirs, files in os.walk(os.path.join(".","resources","autofoam")):
+            for name in files:
+                archive.write(os.path.join(root, name))
+        for root, dirs, files in os.walk(os.path.join(".","resources","Peregrine")):
             for name in files:
                 archive.write(os.path.join(root, name))
