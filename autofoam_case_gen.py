@@ -1,4 +1,6 @@
 import autofoam
+import autofoam.mesh
+import autofoam.cases
 import json
 
 def generate(inputs):

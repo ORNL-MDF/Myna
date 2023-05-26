@@ -71,7 +71,7 @@ def run_autofoam(settings, generate_cases=True):
         inp["input_dir"] = "."
         for case in inp["cases"]:
             path = inp["cases"][case]["scan_path"]
-            path = path.split("resources")[-1]
+            path = path.split("resources" + os.path.sep)[-1]
             path = os.path.join("..", "resources", path)
             inp["cases"][case]["scan_path"] = path
 
@@ -79,7 +79,7 @@ def run_autofoam(settings, generate_cases=True):
         autofoam_input_file = os.path.join(inputs["case_dir"],
                                            "autofoam_inputs.json")
         with open(autofoam_input_file, 'w') as f:
-            json.dump(inputs, f, indent=3)
+            json.dump(inp, f, indent=3)
 
         # Copy case generation script to case dir
         script_src = "autofoam_case_gen.py"
