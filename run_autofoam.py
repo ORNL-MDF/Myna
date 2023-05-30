@@ -86,10 +86,10 @@ def run_autofoam(settings, generate_cases=True):
         script_dst = os.path.join(inputs["case_dir"], os.path.basename(script_src))
         shutil.copyfile(script_src, script_dst)
 
-        # Copy autofoam install script to case dir
-        install_src = os.path.join("installers", "install_autofoam.sh")
-        install_dst = os.path.join(inputs["case_dir"], os.path.basename(install_src))
-        shutil.copyfile(install_src, install_dst)
+        # Copy case generation readme to case dir
+        readme_src = os.path.join("resources", "autofoam", "case_gen_readme.md")
+        readme_dst = os.path.join(inputs["case_dir"], os.path.basename(readme_src))
+        shutil.copyfile(readme_src, readme_dst)
     
     cases = inputs["cases"].copy()
     case_names = cases.keys()
