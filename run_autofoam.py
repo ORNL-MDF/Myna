@@ -44,10 +44,10 @@ def run_autofoam(settings, generate_cases=True):
             "RVE":[
                 [row["x (m)"] - 0.5*rs[0],
                  row["y (m)"] - 0.5*rs[1],
-                 row["z_end"] - rs[2]],
+                 -rs[2]],
                 [row["x (m)"] + 0.5*rs[0],
                  row["y (m)"] + 0.5*rs[1],
-                 row["z_end"]]
+                 0.0]
             ]
         }
 
