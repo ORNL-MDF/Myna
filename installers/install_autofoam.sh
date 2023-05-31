@@ -22,7 +22,7 @@ else
   echo "Cloning autofoam repository to $AUTOFOAM_DIR"
   cd ..
   git clone https://code.ornl.gov/8s2/autofoam.git
-  git branch -u origin/package package
+  git branch -u origin/remove-foam-dep remove-foam-dep
   git switch remove-foam-dep
   git checkout $TARGET_COMMIT
 fi
