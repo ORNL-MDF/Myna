@@ -60,11 +60,11 @@ def run_autofoam(settings, generate_cases=True):
         # Modify file paths
         inp = inputs.copy()
         inp["mesh"]["stl_path"] = os.path.join(
-            "..",
+            ".",
             inp["mesh"]["stl_path"]
         )
         inp["template"]["template_dir"] = os.path.join(
-            "..",
+            ".",
             inp["template"]["template_dir"]
         )
         inp["case_dir"] = "."
@@ -72,7 +72,7 @@ def run_autofoam(settings, generate_cases=True):
         for case in inp["cases"]:
             path = inp["cases"][case]["scan_path"]
             path = path.split("resources" + os.path.sep)[-1]
-            path = os.path.join("..", "resources", path)
+            path = os.path.join(".", "resources", path)
             inp["cases"][case]["scan_path"] = path
 
         # Output inputs as JSON file to case dir
@@ -93,6 +93,17 @@ def run_autofoam(settings, generate_cases=True):
     
     cases = inputs["cases"].copy()
     case_names = cases.keys()
-    case_dirs = [os.path.join(inputs["input_dir"], inputs["case_dir"], x) for x in case_names]
+    case_dirs = []
+    # case_dirs = [os.path.join(inputs["input_dir"], inputs["case_dir"], x) for x in case_names]
+    for case_name in case_names:
+        case_name_alt = "additivefoam"
+        part_number = case_name.split("_")[0].split("P")[-1]
+        rve_number = case_name.split("_")[-1]
+        case_dirs.append(os.path.join(
+            inputs["input_dir"],
+            inputs["case_dir"], 
+            f"P{part_number}", 
+            f"rve_{rve_number}", 
+            case_name_alt))
     
     return case_dirs

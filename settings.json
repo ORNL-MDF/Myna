@@ -1,7 +1,8 @@
 {
     "Peregrine":
     {
-        "build_path": "/home/cloud/dev/myna/resources/Peregrine"
+        "build_path": "/home/cloud/dev/myna/resources/Peregrine",
+        "build_name": "myna_test"
     },
     "3DThesis":
     {
@@ -63,7 +64,7 @@
         {
             "template_dir" : "resources/autofoam/template"
         },
-        "case_dir" : "results/autofoam",
+        "case_dir" : "results",
         "rve_size" : [1e-3, 1e-3, 0.5e-3],
         "exe" :
         {
@@ -80,7 +81,7 @@
             "material_file": "IN625.json",
             "orientation_file": "GrainOrientationVectors.csv"
         },
-        "case_dir": "results/exaca",
+        "case_dir": "results",
         "additivefoam_export_name": "solidificationData.csv",
         "case_path_var": "MYNA_SIM_PATH",
         "exaca_path_var": "EXACA_EXE_PATH",

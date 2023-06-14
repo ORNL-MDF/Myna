@@ -28,7 +28,15 @@ def generate(inputs):
     autofoam.mesh.creat_part_mesh(inputs, bbDict)
 
     # Create case files
-    autofoam.cases.create_case_files(inputs)
+    inp = inputs.copy()
+    cases = inputs["cases"]
+    for case_name, case in cases.items():
+        case_name_alt = "additivefoam"
+        part_number = case_name.split("_")[0].split("P")[-1]
+        rve_number = case_name.split("_")[-1]
+        inp["case_dir"] = os.path.join(inputs["case_dir"], f"P{part_number}", f"rve_{rve_number}")
+        inp["cases"] = {case_name_alt: case}
+        autofoam.cases.create_case_files(inp)
 
 
 
@@ -42,6 +50,7 @@ if __name__ == "__main__":
         ["template","template_dir"],
         ["case_dir"]]
     
+    # Set the path for input directories
     for path_input in path_inputs:
         path = nested_get(inputs, path_input)
         if not os.path.isabs(path):
@@ -49,6 +58,7 @@ if __name__ == "__main__":
             nested_set(inputs, path_input, new_path)
             print(path, new_path)
     
+    # For each case update the relevant paths
     for case in inputs["cases"].keys():
         print(case)
         case_path = inputs["cases"][case]["scan_path"]

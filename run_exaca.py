@@ -20,11 +20,12 @@ def create_cases(settings) :
     for case in settings["autofoam"]["results"]:
         template = settings["exaca"]["template"]
         source = template["path"]
-        target = os.path.join(settings["exaca"]["case_dir"], os.path.basename(case))
+        case_dir = case.split(os.path.sep)[:-1]
+        target = os.path.join(os.path.sep, *case_dir, "exaca")
         exaca_cases.append(target)
 
         # Create target directory
-        ignore_files = [template["material_file"], "GrainOrientation*.csv"]
+        ignore_files = [template["material_file"]]
         copytree(source, 
                  target, 
                  ignore=ignore_patterns(*ignore_files), 
@@ -37,7 +38,7 @@ def create_cases(settings) :
 
         # Update the input dictionary for each specified parameter
         inputs = [x for x in settings["exaca"]["inputs"]]
-        for input in inputs :
+        for input in inputs:
             
             # Set independent variables
             keys = input["variable"]
@@ -92,7 +93,7 @@ def create_cases(settings) :
         rve_dirs = settings["autofoam"]["results"]
         dirs = []
         for d in rve_dirs:
-            pn = os.path.basename(d).split("_")[0]
+            pn = d.split(os.path.sep)[-3]
             pn = int(pn.replace("P", ""))
             for part in settings["3DThesis"]["parts"]:
                 if part["part_number"] == pn:
@@ -104,10 +105,14 @@ def create_cases(settings) :
         dataname = settings["exaca"]["additivefoam_export_name"]
         paths = []
         for d in dirs:
-            rel_path = os.path.join(d, dataname).split("results" + os.path.sep)[-1]
-            rel_path = os.path.join(f'{settings["exaca"]["case_path_var"]}', rel_path)
+            pn = d.split(os.path.sep)[-4]
+            rn = d.split(os.path.sep)[-3]
+            ln = d.split(os.path.sep)[-1]
+            rel_path = os.path.join(settings["exaca"]["case_path_var"], pn, rn, "additivefoam", ln)
+            rel_path = os.path.join(rel_path, dataname)
+            # rel_path = os.path.join(f'{settings["exaca"]["case_path_var"]}', rel_path)
             paths.append(rel_path)
-    
+
         nested_set(
             input_dict,
             ["TemperatureData", "TemperatureFiles"],
