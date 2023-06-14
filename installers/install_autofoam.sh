@@ -7,7 +7,7 @@ fi
 
 # Clone and build if necessary
 ROOT_DIR=$(pwd)
-TARGET_COMMIT="7ab23f1336daffd1fc4bcfea42ed280a5e56762b"
+TARGET_COMMIT="0c296f36f773d4fd26d47aea65f2328bc08903d8"
 if [ -d "$AUTOFOAM_DIR" ]; then
   echo "$AUTOFOAM_DIR already exists."
   cd $AUTOFOAM_DIR
