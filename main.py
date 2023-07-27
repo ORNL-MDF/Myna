@@ -3,7 +3,6 @@ import run_classification
 import run_rve_selection
 import run_autofoam
 import run_exaca
-import json
 import zipfile
 import os
 import yaml
@@ -11,15 +10,13 @@ import glob
 
 if __name__ == "__main__":
 
-    input_file = "settings.json"
+    input_file = "settings.yaml"
     with open(input_file, "r") as f:
         file_type = input_file.split(".")[-1]
-        if file_type == "json":
-            settings = json.load(f)
-        elif file_type == "yaml":
+        if file_type.lower() == "yaml":
             settings = yaml.safe_load(f)
         else:
-            print(f'ERROR: Unsupported input file type "{file_type}"')
+            print(f'ERROR: Unsupported input file type "{file_type}". Must be .yaml format')
 
     print("\nRunning autothesis...")
     results_autothesis = run_autothesis.run_autothesis(settings, check_for_existing_results=True)

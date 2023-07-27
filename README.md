@@ -19,7 +19,7 @@ environment named "myna" will be automatically created for use with
 the workflow.
 
 ## Usage
-Before running the workflow, ensure that all settings in `settings.json` are 
+Before running the workflow, ensure that all settings in `settings.yaml` are 
 correct for your system. File paths for 3DThesis should be specified as absolute 
 file paths to ensure the expected behavior, because the 3DThesis executable is
 not necessarily located within the `myna` directory. Relative paths may be used
