@@ -1,0 +1,45 @@
+#!/bin/bash
+# Script to run a specified AdditiveFOAM case using 
+# the command specified by $mpi_run
+# 
+# Usage:
+#   ./runCase <case_dir> <mpi_run>
+
+root_dir=$(pwd)
+
+# Check if a valid case directory is provided
+if [ -z "$1" ]; then
+    echo "WARNING: Directory path argument is missing."
+    echo "Usage: $0 <case_dir> <mpi_run>"
+    exit 1
+else
+    case_dir="$1"
+    # Check if the provided path is a valid directory
+    if [ ! -d "$1" ]; then
+        echo "Error: The provided argument is not a valid directory."
+        echo "Usage: $0 <case_dir> <mpi_run>"
+        exit 1
+    fi
+fi
+
+# Check if an mpi_run command has been specified
+# If not, check if $mpi_run exists as environmental variable
+if [ -z "$2" ]; then
+    mpi_run=$2
+elif [ -z "$mpi_run" ]; then
+    echo "No value for $mpi_run found."
+    echo "Usage: $0 <case_dir> <mpi_run>"
+    exit 1
+fi
+
+# Clean case
+./cleanCase $case_dir
+
+# Run AdditiveFOAM solver in parallel
+decomposePar -case $case_dir > $case_dir/log.decomposePar
+$mpi_run -case $case_dir additiveFoam -parallel > $case_dir/log.additiveFoam
+
+# Reconstruct ExaCA data into a single file
+echo "x,y,z,tm,ts,cr" > $case_dir/solidificationData.csv
+cat $case_dir/ExaCA/* >> $case_dir/solidificationData.csv
+

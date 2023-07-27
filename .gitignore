@@ -8,3 +8,5 @@ polyMesh
 triSurface
 
 log.txt
+
+__pycache__

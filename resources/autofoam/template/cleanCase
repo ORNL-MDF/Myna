@@ -1,0 +1,45 @@
+#!/bin/bash
+# Script to clean an AdditiveFOAM case without deleting the mesh information
+
+# Check if a valid case directory is provided
+# If not, assume execution in file directory
+if [ -z "$1" ]; then
+    echo "WARNING: Directory path argument is missing."
+    echo "         Assuming script directory as working directory."
+    echo "Usage: $0 <directory_path>"
+    case_dir="$(dirname "$0")"
+    echo "Script directory: $case_dir"
+else
+    case_dir="$1"
+    # Check if the provided path is a valid directory
+    if [ ! -d "$1" ]; then
+        echo "Error: The provided argument is not a valid directory."
+        exit 1
+    fi
+fi
+
+# Change to working directory
+root_dir=$(pwd)
+cd $case_dir
+
+# Remove the parallel processing directories
+rm -rf processor*
+
+# Remove the log files
+rm -f log.*
+
+# Remove the ExaCA output
+rm -rf ExaCA
+
+# Remove any reconstructed time steps
+# Step 1: Find directories with integer or float names using 'find' and 'grep' (excluding "0" directory)
+directories_to_delete=$(find "$root_directory" -type d | grep -E '\b(?!0\b)\d+(\.\d+)?\b')
+
+# Step 2: Delete the matching directories
+if [ -n "$directories_to_delete" ]; then
+    echo "$directories_to_delete"
+    echo "$directories_to_delete" | xargs rm -rf
+fi
+
+# Change back to root directory
+cd $root_dir

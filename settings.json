@@ -1,18 +1,18 @@
 {
     "Peregrine":
     {
-        "build_path": "/home/cloud/dev/myna/resources/Peregrine",
+        "build_path": "/home/cloud/myna/resources/Peregrine",
         "build_name": "myna_test"
     },
     "3DThesis":
     {
-        "root": "/home/cloud/dev",
-        "repo": "/home/cloud/dev/3DThesis",
-        "executable": "/home/cloud/dev/3DThesis/3DThesis",
-        "input_dir_path": "/home/cloud/dev/myna/resources/3DThesis/template",
-        "input_file_path": "/home/cloud/dev/myna/resources/3DThesis/template/ParamInput.txt",
-        "material_database_path": "/home/cloud/dev/myna/resources/3DThesis/materials",
-        "output_dir_path": "/home/cloud/dev/myna/results/3DThesis",
+        "root": "/home/cloud",
+        "repo": "/home/cloud/3DThesis",
+        "executable": "/home/cloud/3DThesis/3DThesis",
+        "input_dir_path": "/home/cloud/myna/resources/3DThesis/template",
+        "input_file_path": "/home/cloud/myna/resources/3DThesis/template/ParamInput.txt",
+        "material_database_path": "/home/cloud/myna/resources/3DThesis/materials",
+        "output_dir_path": "/home/cloud/myna/results/3DThesis",
         "parts":
         [
             {
@@ -42,12 +42,12 @@
 
     "classification":
     {
-        "output_dir_path": "/home/cloud/dev/myna/results/classification"
+        "output_dir_path": "/home/cloud/myna/results/classification"
     },
 
     "rve":
     {
-        "output_dir_path": "/home/cloud/dev/myna/results/rve"
+        "output_dir_path": "/home/cloud/myna/results/rve"
     },
 
     "autofoam":
@@ -78,7 +78,7 @@
         "template": {
             "path": "resources/exaca/template",
             "input_file": "inputs.json",
-            "material_file": "IN625.json",
+            "material_file": "SS316.json",
             "orientation_file": "GrainOrientationVectors.csv"
         },
         "case_dir": "results",

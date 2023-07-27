@@ -25,7 +25,7 @@ def generate(inputs):
     autofoam.mesh.extract_stl_features(inputs, origin)
 
     # Create mesh
-    autofoam.mesh.creat_part_mesh(inputs, bbDict)
+    autofoam.mesh.create_part_mesh(inputs, bbDict)
 
     # Create case files
     inp = inputs.copy()
@@ -36,9 +36,7 @@ def generate(inputs):
         rve_number = case_name.split("_")[-1]
         inp["case_dir"] = os.path.join(inputs["case_dir"], f"P{part_number}", f"rve_{rve_number}")
         inp["cases"] = {case_name_alt: case}
-        autofoam.cases.create_case_files(inp)
-
-
+        autofoam.cases.create_case(inp, case_name_alt, os.path.abspath(os.path.join(inp["case_dir"], case_name_alt)))
 
 if __name__ == "__main__":
 

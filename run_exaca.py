@@ -21,7 +21,7 @@ def create_cases(settings) :
         template = settings["exaca"]["template"]
         source = template["path"]
         case_dir = case.split(os.path.sep)[:-1]
-        target = os.path.join(os.path.sep, *case_dir, "exaca")
+        target = os.path.join(os.path.sep, *case_dir, "exaca", "exaca_output")
         exaca_cases.append(target)
 
         # Create target directory
@@ -55,18 +55,18 @@ def create_cases(settings) :
         # Update the input dictionary file paths
         rel_path = settings["exaca"]["case_dir"].split("results" + os.path.sep)[-1]
         rel_path = os.path.join(f'{settings["exaca"]["case_path_var"]}', rel_path)
-        rel_path = os.path.join(rel_path, os.path.basename(case) + os.path.sep)
+        part_number = case_dir[-2]
+        rve_number =case_dir[-1]
+        rel_path = os.path.join(rel_path, part_number, rve_number, "exaca" + os.path.sep)
         nested_set(
             input_dict,
             ["Printing", "PathToOutput"],
             rel_path)
 
-        rel_path = case.split("results" + os.path.sep)[-1]
-        rel_path = os.path.join(f'{settings["exaca"]["case_path_var"]}', rel_path)
         nested_set(
             input_dict,
             ["Printing", "OutputFile"],
-            rel_path
+            "exaca_output"
         )
         
         rel_path = os.path.join(source, template["material_file"]).split(

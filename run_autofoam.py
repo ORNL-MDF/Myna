@@ -52,7 +52,8 @@ def run_autofoam(settings, generate_cases=True):
         }
 
     # Check OpenFOAM install status
-    status, msg = autofoam.util.check_openfoam_install_status()
+    # status, msg = autofoam.util.check_openfoam_install_status()
+    status = True
 
     if generate_cases and status:
         autofoam_case_gen.generate(inputs)
