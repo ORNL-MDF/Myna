@@ -1,15 +1,16 @@
 ---
 Peregrine:
-  build_path: "/home/cloud/dev/myna/resources/Peregrine"
+  build_path: "/home/cloud/myna/resources/Peregrine"
+  build_name: "myna_test"
 
 3DThesis:
-    root: "/home/cloud/dev"
-    repo: "/home/cloud/dev/3DThesis"
-    executable: "/home/cloud/dev/3DThesis/3DThesis"
-    input_dir_path: "/home/cloud/dev/myna/resources/3DThesis/template"
-    input_file_path: "/home/cloud/dev/myna/resources/3DThesis/template/ParamInput.txt"
-    material_database_path: "/home/cloud/dev/myna/resources/3DThesis/materials"
-    output_dir_path: "/home/cloud/dev/myna/results/3DThesis"
+    root: "/home/cloud"
+    repo: "/home/cloud/3DThesis"
+    executable: "/home/cloud/3DThesis/3DThesis"
+    input_dir_path: "/home/cloud/myna/resources/3DThesis/template"
+    input_file_path: "/home/cloud/myna/resources/3DThesis/template/ParamInput.txt"
+    material_database_path: "/home/cloud/myna/resources/3DThesis/materials"
+    output_dir_path: "/home/cloud/myna/results/3DThesis"
     parts:
       - part_number: 6
         layer_start: 50
@@ -25,10 +26,10 @@ Peregrine:
             unit: "m/s"
 
 classification:
-    output_dir_path: "/home/cloud/dev/myna/results/classification"
+    output_dir_path: "/home/cloud/myna/results/classification"
 
 rve:
-  output_dir_path: "/home/cloud/dev/myna/results/rve"
+  output_dir_path: "/home/cloud/myna/results/rve"
 
 autofoam:
     mesh:
@@ -39,7 +40,7 @@ autofoam:
       tolerance: 1.0e-08
     template:
       template_dir: "resources/autofoam/template"
-    case_dir: "results/autofoam"
+    case_dir: "results"
     rve_size: [1.0e-3, 1.0e-3, 0.5e-3]
     exe:
       nProcs: 8
@@ -49,9 +50,9 @@ exaca:
   template:
     path: "resources/exaca/template"
     input_file: "inputs.json"
-    material_file: "IN625.json"
+    material_file: "SS316.json"
     orientation_file: "GrainOrientationVectors.csv"
-  case_dir: "results/exaca"
+  case_dir: "results"
   additivefoam_export_name: "solidificationData.csv"
   case_path_var: "MYNA_SIM_PATH"
   exaca_path_var: "EXACA_EXE_PATH"

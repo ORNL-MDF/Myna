@@ -7,7 +7,7 @@ fi
 
 # Clone and build if necessary
 ROOT_DIR=$(pwd)
-TARGET_COMMIT="3990054e0345b594cecebae00f556571d07f9cef"
+TARGET_COMMIT="0c296f36f773d4fd26d47aea65f2328bc08903d8"
 if [ -d "$AUTOFOAM_DIR" ]; then
   echo "$AUTOFOAM_DIR already exists."
   cd $AUTOFOAM_DIR
@@ -22,8 +22,8 @@ else
   echo "Cloning autofoam repository to $AUTOFOAM_DIR"
   cd ..
   git clone https://code.ornl.gov/8s2/autofoam.git
-  git branch -u origin/package package
-  git switch package
+  git branch -u origin/remove-foam-dep remove-foam-dep
+  git switch remove-foam-dep
   git checkout $TARGET_COMMIT
 fi
 
