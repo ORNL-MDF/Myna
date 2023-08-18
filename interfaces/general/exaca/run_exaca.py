@@ -3,8 +3,10 @@ from shutil import copytree, ignore_patterns
 import numpy as np
 import glob
 import json
-
-
+from myna.workflow.load_input import load_input
+import argparse
+import sys
+import yaml
 
 def nested_set(dict, keys, value):
     ''' modifies a nested dictionary value given a list of keys to the nested location'''
@@ -123,3 +125,25 @@ def create_cases(settings) :
             json.dump(input_dict, f, indent=2)
         
     return exaca_cases
+
+def main(argv=None):
+    # Set up argparse
+    parser = argparse.ArgumentParser(description='Launch ExaCA for '+ 
+                                     'specified input file')
+    parser.add_argument('--input', type=str,
+                        help='path to the desired input file to run' + 
+                        ', for example: ' + 
+                        '--input settings.yaml')
+    parser.add_argument('--output', type=str,
+                        help='path to the desired file to output results to' +
+                        ', for example: ' +
+                        '--output settings.yaml')
+    args = parser.parse_args(argv)
+    settings = load_input(args.input)
+    settings["exaca"]["results"] = create_cases(settings)
+    print(settings["exaca"]["results"])
+    with open(args.output, "w") as f:
+        yaml.dump(settings, f, default_flow_style=None)
+
+if __name__ == "__main__":
+    main(sys.argv[1:])

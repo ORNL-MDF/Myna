@@ -1,0 +1,31 @@
+[build-system]
+requires = ["setuptools>=50.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "myna"
+version = "0.1.0"
+authors = [
+    { name="Gerry Knapp", email="knappgl@ornl.gov" },
+    { name="Sam Reeve", email="reevest@ornl.gov"},
+    { name="John Coleman", email="colemanjs@ornl.gov"},
+    { name="Jamie Stump", email="stumpbc@ornl.gov"}
+]
+description = "A structured interface between Peregrine build database(s) and multi-stage modeling and simulation workflows"
+readme = "README.md"
+requires-python = ">=3.6"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+    'PyYAML',
+    'numpy',
+    'pandas'
+]
+
+[project.scripts]
+myna_run = "myna.workflow.run:main"
+myna_config = "myna.workflow.config:main"
+myna_status = "myna.utils.codebase_status:write_codebase_status_to_file"
+
