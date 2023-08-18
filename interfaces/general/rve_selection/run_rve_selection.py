@@ -8,6 +8,10 @@ import matplotlib.pyplot as plt
 from matplotlib.collections import PatchCollection
 from matplotlib.patches import Rectangle
 import matplotlib as mpl
+from myna.workflow.load_input import load_input
+import argparse
+import sys
+import yaml
 
 def cluster_colormap(n_digits, colorspace="tab20"):
     colors = mpl.cm.get_cmap(colorspace, n_digits)
@@ -141,3 +145,25 @@ def run_rve_selection(settings):
     export.to_csv(result_path, index=False)
     
     return result_path
+
+def main(argv=None):
+    # Set up argparse
+    parser = argparse.ArgumentParser(description='Launch RVE selection for '+ 
+                                     'specified input file')
+    parser.add_argument('--input', type=str,
+                        help='path to the desired input file to run' + 
+                        ', for example: ' + 
+                        '--input settings.yaml')
+    parser.add_argument('--output', type=str,
+                        help='path to the desired file to output results to' +
+                        ', for example: ' +
+                        '--output settings.yaml')
+    args = parser.parse_args(argv)
+    settings = load_input(args.input)
+    settings["rve"]["results"] = run_rve_selection(settings)
+    print(settings["rve"]["results"])
+    with open(args.output, "w") as f:
+        yaml.dump(settings, f, default_flow_style=None)
+
+if __name__ == "__main__":
+    main(sys.argv[1:])

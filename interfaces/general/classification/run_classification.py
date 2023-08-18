@@ -5,6 +5,10 @@ import classification.generator
 import classification.training
 import os
 import numpy as np
+from myna.workflow.load_input import load_input
+import argparse
+import sys
+import yaml
 
 def run_classification(settings, load_models=False, plot=True):
 
@@ -65,3 +69,26 @@ def run_classification(settings, load_models=False, plot=True):
     # Return to original working directory
     os.chdir(orig_dir)
     return [os.path.join(settings["classification"]["output_dir_path"], x) for x in supervoxelDatasets]
+
+def main(argv=None):
+    # Set up argparse
+    parser = argparse.ArgumentParser(description='Launch classification for '+ 
+                                     'specified input file')
+    parser.add_argument('--input', type=str,
+                        help='path to the desired input file to run' + 
+                        ', for example: ' + 
+                        '--input settings.yaml')
+    parser.add_argument('--output', type=str,
+                        help='path to the desired file to output results to' +
+                        ', for example: ' +
+                        '--output settings.yaml')
+    args = parser.parse_args(argv)
+    settings = load_input(args.input)
+    settings["classification"]["results"] = run_classification(settings)
+    print(settings["classification"]["results"])
+    with open(args.output, "w") as f:
+        yaml.dump(settings, f, default_flow_style=None)
+
+
+if __name__ == "__main__":
+    main(sys.argv[1:])

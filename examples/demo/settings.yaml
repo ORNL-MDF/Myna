@@ -10,7 +10,7 @@ Peregrine:
     input_dir_path: "/home/cloud/myna/resources/3DThesis/template"
     input_file_path: "/home/cloud/myna/resources/3DThesis/template/ParamInput.txt"
     material_database_path: "/home/cloud/myna/resources/3DThesis/materials"
-    output_dir_path: "/home/cloud/myna/results/3DThesis"
+    output_dir_path: "/home/cloud/myna/examples/demo/results/3DThesis"
     parts:
       - part_number: 6
         layer_start: 50
@@ -26,20 +26,20 @@ Peregrine:
             unit: "m/s"
 
 classification:
-    output_dir_path: "/home/cloud/myna/results/classification"
+    output_dir_path: "/home/cloud/myna/examples/demo/results/classification"
 
 rve:
-  output_dir_path: "/home/cloud/myna/results/rve"
+  output_dir_path: "/home/cloud/myna/examples/demo/results/rve"
 
 autofoam:
     mesh:
-      stl_path: "resources/autofoam/stl_library/zeiss_part.stl"
+      stl_path: "/home/cloud/myna/resources/autofoam/stl_library/zeiss_part.stl"
       convertToMeters: 0.001
       spacing: [200.0e-6, 200.0e-6, 200.0e-6]
       refinement: 0
       tolerance: 1.0e-08
     template:
-      template_dir: "resources/autofoam/template"
+      template_dir: "/home/cloud/myna/resources/autofoam/template"
     case_dir: "results"
     rve_size: [1.0e-3, 1.0e-3, 0.5e-3]
     exe:
@@ -48,11 +48,11 @@ autofoam:
 
 exaca:
   template:
-    path: "resources/exaca/template"
+    path: "/home/cloud/myna/resources/exaca/template"
     input_file: "inputs.json"
     material_file: "SS316.json"
     orientation_file: "GrainOrientationVectors.csv"
-  case_dir: "results"
+  case_dir: "/home/cloud/myna/examples/demo/results"
   additivefoam_export_name: "solidificationData.csv"
   case_path_var: "MYNA_SIM_PATH"
   exaca_path_var: "EXACA_EXE_PATH"

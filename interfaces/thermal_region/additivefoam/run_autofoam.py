@@ -8,6 +8,10 @@ import pandas as pd
 import numpy as np
 import json
 import shutil
+from myna.workflow.load_input import load_input
+import argparse
+import sys
+import yaml
 
 def get_rve_locs(rve_file, buildmeta_file):
 
@@ -22,7 +26,7 @@ def get_rve_locs(rve_file, buildmeta_file):
 
 def run_autofoam(settings, generate_cases=True):
     inputs = settings["autofoam"]
-    inputs["input_dir"] = os.path.dirname(os.path.realpath(__file__))
+    inputs["input_dir"] = os.getcwd()
     print("Input directory: ", inputs["input_dir"])
 
     # Generate case information from RVE list
@@ -40,14 +44,14 @@ def run_autofoam(settings, generate_cases=True):
                                       "simulation",
                                       f'P{pn:d}'),
             "layers":[x for x in range(int(row["layer_starts"]), int(row["layer_ends"] + 1))],
-            "heights":[row["z_start"], row["z_end"]],
+            "heights":[float(row["z_start"]), float(row["z_end"])],
             "RVE":[
-                [row["x (m)"] - 0.5*rs[0],
-                 row["y (m)"] - 0.5*rs[1],
-                 -rs[2]],
-                [row["x (m)"] + 0.5*rs[0],
-                 row["y (m)"] + 0.5*rs[1],
-                 0.0]
+                [float(row["x (m)"] - 0.5*rs[0]),
+                 float(row["y (m)"] - 0.5*rs[1]),
+                 float(-rs[2])],
+                [float(row["x (m)"] + 0.5*rs[0]),
+                 float(row["y (m)"] + 0.5*rs[1]),
+                 float(0.0)]
             ]
         }
 
@@ -108,3 +112,27 @@ def run_autofoam(settings, generate_cases=True):
             case_name_alt))
     
     return case_dirs
+
+def main(argv=None):
+    # Set up argparse
+    parser = argparse.ArgumentParser(description='Launch autofoam for '+ 
+                                     'specified input file')
+    parser.add_argument('--input', type=str,
+                        help='path to the desired input file to run' + 
+                        ', for example: ' + 
+                        '--input settings.yaml')
+    parser.add_argument('--output', type=str,
+                        help='path to the desired file to output results to' +
+                        ', for example: ' +
+                        '--output settings.yaml')
+    args = parser.parse_args(argv)
+    settings = load_input(args.input)
+    settings["autofoam"]["results"] = run_autofoam(settings)
+    print(settings["autofoam"]["results"])
+    print(settings["autofoam"]["cases"])
+    with open(args.output, "w") as f:
+        yaml.dump(settings, f)
+
+if __name__ == "__main__":
+    main(sys.argv[1:])
+

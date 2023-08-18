@@ -1,4 +1,6 @@
-results/
+results
+results.yaml
+examples/demo/demo_build
 Data/
 resources/Peregrine/registered
 
@@ -8,5 +10,9 @@ polyMesh
 triSurface
 
 log.txt
+status.md
 
 __pycache__
+*.egg-info
+
+*.code-workspace

@@ -5,6 +5,11 @@ import autothesis.peregrine as peregrine
 import autothesis.parser as parser
 import os
 import numpy as np
+from myna.workflow.load_input import load_input
+import argparse
+import sys
+import yaml
+import pandas as pd
 
 def run_autothesis(settings, check_for_existing_results=True):
 
@@ -80,3 +85,33 @@ def run_autothesis(settings, check_for_existing_results=True):
                                             )
 
     return result_files
+
+def main(argv=None):
+    # Set up argparse
+    parser = argparse.ArgumentParser(description='Launch autothesis for '+ 
+                                     'specified input file')
+    parser.add_argument('--input', type=str,
+                        help='path to the desired input file to run' + 
+                        ', for example: ' + 
+                        '--input settings.yaml')
+    parser.add_argument('--output', type=str,
+                        help='path to the desired file to output results to' +
+                        ', for example: ' +
+                        '--output settings.yaml')
+    args = parser.parse_args(argv)
+    settings = load_input(args.input)
+    settings["3DThesis"]["results"] = run_autothesis(settings)
+    
+    # post-process results
+    for filepath in settings["3DThesis"]["results"]:
+        df = pd.read_csv(filepath)
+        df["x (m)"] = df["x"] * 1e-3
+        df["y (m)"] = df["y"] * 1e-3
+        df.to_csv(filepath, index=False)
+
+    with open(args.output, "w") as f:
+        yaml.dump(settings, f, default_flow_style=None)
+
+if __name__ == "__main__":
+    main(sys.argv[1:])
+    
