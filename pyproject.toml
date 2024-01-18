@@ -24,8 +24,17 @@ dependencies = [
     'pandas'
 ]
 
+[project.optional-dependencies]
+dev = [
+  "pytest"
+]
+
 [project.scripts]
 myna_run = "myna.workflow.run:main"
 myna_config = "myna.workflow.config:main"
 myna_status = "myna.utils.codebase_status:write_codebase_status_to_file"
 
+[tool.pytest.ini_options]
+addopts = [
+    "--import-mode=importlib",
+]
