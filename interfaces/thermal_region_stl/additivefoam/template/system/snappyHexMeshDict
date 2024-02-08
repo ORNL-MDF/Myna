@@ -1,0 +1,78 @@
+/*---------------------------------------------------------------------------
+     AdditiveFOAM template input file (compatible with 1.0, OpenFOAM 10)
+
+                      Created for simulation with Myna
+  ---------------------------------------------------------------------------*/
+
+FoamFile
+{
+    version         2;
+    format          ascii;
+    class           dictionary;
+    object          snappyHexMeshDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+#includeEtc     "caseDicts/mesh/generation/snappyHexMeshDict.cfg"
+
+castellatedMesh true;
+
+snap            false;
+
+addLayers       false;
+
+geometry
+{
+    part
+    {
+        type            triSurfaceMesh;
+        file            "part.stl";
+    }
+}
+
+castellatedMeshControls
+{
+    features        ( { file "part.eMesh" ; level 0 ; } );
+    refinementSurfaces
+    {
+        part
+        {
+            level           ( 0 0 );
+            patchInfo
+            {
+                type            wall;
+                inGroups        ( wall );
+            }
+        }
+    }
+    refinementRegions
+    {
+        part
+        {
+            mode            inside;
+            levels          ( ( 0 0 ) );
+        }
+    }
+    nCellsBetweenLevels 3;
+    locationInMesh  ( 0.172432 0.0741688 0.00815248 );
+}
+
+snapControls
+{
+}
+
+addLayersControls
+{
+    layers
+    {
+    }
+    relativeSizes   true;
+    expansionRatio  1.2;
+    finalLayerThickness 0.5;
+    minThickness    0.001;
+}
+
+mergeTolerance  1e-15;
+
+
+// ************************************************************************* //

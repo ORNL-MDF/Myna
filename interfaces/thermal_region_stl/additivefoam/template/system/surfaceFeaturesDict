@@ -1,0 +1,35 @@
+/*---------------------------------------------------------------------------
+     AdditiveFOAM template input file (compatible with 1.0, OpenFOAM 10)
+
+                      Created for simulation with Myna
+  ---------------------------------------------------------------------------*/
+
+FoamFile
+{
+    version         2;
+    format          ascii;
+    class           dictionary;
+    object          surfaceFeaturesDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+includedAngle   180;
+
+subsetFeatures
+{
+    nonManifoldEdges yes;
+    openEdges       yes;
+}
+
+trimFeatures
+{
+    minElem         0;
+    minLen          0;
+}
+
+writeObj        yes;
+
+surfaces        ( "part.stl" );
+
+
+// ************************************************************************* //

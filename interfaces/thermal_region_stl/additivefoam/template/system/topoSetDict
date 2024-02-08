@@ -1,0 +1,40 @@
+/*---------------------------------------------------------------------------
+     AdditiveFOAM template input file (compatible with 1.0, OpenFOAM 10)
+
+                      Created for simulation with Myna
+  ---------------------------------------------------------------------------*/
+
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    location    "system";
+    object      topoSetDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+xmin            0.16503198;
+ymin            0.06701218;
+zmin            -0.0025625288;
+
+xmax            0.17983102;
+ymax            0.08116459699999999;
+zmax            0.00255;
+
+actions
+(
+    // cellSet used to remove cells above desired build plane
+    {
+        name    c0;
+        type    cellSet;
+        action  new;
+        source  boxToCell;
+        sourceInfo
+        {
+            box ($xmin $ymin $zmin) ($xmax $ymax $zmax);
+        }
+    }
+);
+
+// ************************************************************************* //

@@ -1,0 +1,9 @@
+steps:
+- 3dthesis:
+    class: thermal_part
+    execute: [python $MYNA_INTERFACE_PATH/thermal_part/3dthesis/execute.py
+        --input $$MYNA_INPUT_FILE$$
+        --exec $$3DTHESIS_EXEC$$
+        --res $$3DTHESIS_RESOLUTION$$]
+data:
+  build:

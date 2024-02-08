@@ -1,0 +1,25 @@
+/*---------------------------------------------------------------------------
+     AdditiveFOAM template input file (compatible with 1.0, OpenFOAM 10)
+
+                      Created for simulation with Myna
+  ---------------------------------------------------------------------------*/
+
+FoamFile
+{
+    version         2;
+    format          ascii;
+    class           dictionary;
+    object          foamToExaCADict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+execute         on;
+
+box             ( 0.0495 -0.0495 -0.0003 ) ( 0.0505 -0.0485 0 );
+
+dx              2.5e-06;
+
+isotherm        1730;
+
+
+// ************************************************************************* //

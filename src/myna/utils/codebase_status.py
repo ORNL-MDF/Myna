@@ -3,15 +3,21 @@ from importlib.metadata import version
 import argparse
 import os
 
-def write_codebase_status_to_file(argv=None):
 
+def write_codebase_status_to_file(argv=None):
     # Set up argparse
-    parser = argparse.ArgumentParser(description='Launch myna for '+ 
-                                     'specified input file')
-    parser.add_argument('--output', nargs="?", type=str, default="status.md",
-                        help='path to the desired output file to generate' + 
-                        ', default: ' + 
-                        '--output status.md')
+    parser = argparse.ArgumentParser(
+        description="Launch myna for " + "specified input file"
+    )
+    parser.add_argument(
+        "--output",
+        nargs="?",
+        type=str,
+        default="status.md",
+        help="path to the desired output file to generate"
+        + ", default: "
+        + "--output status.md",
+    )
 
     # Parse cmd arguements
     args = parser.parse_args(argv)
@@ -19,12 +25,12 @@ def write_codebase_status_to_file(argv=None):
 
     # Print header
     lines = []
-    lines.append("# Status of Myna components and interfaces\n")
+    lines.append("# Status of Myna components and interfaces\n\n")
     lines.append(f'Myna version: {version("myna")}\n')
 
     # Get all components
     obj = myna.components
-    lines.append("\nWorkflow components:\n")
+    lines.append("\nWorkflow components:\n\n")
     for key in vars(obj).keys():
         if key[0] != "_":
             key_type = type(vars(obj)[key])
@@ -32,15 +38,16 @@ def write_codebase_status_to_file(argv=None):
             try:
                 suffix = ""
                 obj_type = obj_inst.__mro__[-2]
-                if len(obj_inst.__mro__) == 2: suffix = " (base class)"
+                if len(obj_inst.__mro__) == 2:
+                    suffix = " (base class)"
                 if obj_type == obj.component.Component:
-                    lines.append(f'- {key}{suffix}\n')
+                    lines.append(f"- {key}{suffix}\n")
             except Exception:
                 pass
 
     # Get all file definitions
     obj = myna.files
-    lines.append("\nAvailable file interfaces:\n")
+    lines.append("\nAvailable file interfaces:\n\n")
     for key in vars(obj).keys():
         if key[0] != "_":
             key_type = type(vars(obj)[key])
@@ -48,15 +55,16 @@ def write_codebase_status_to_file(argv=None):
             try:
                 suffix = ""
                 obj_type = obj_inst.__mro__[-2]
-                if len(obj_inst.__mro__) == 2: suffix = " (base class)"
+                if len(obj_inst.__mro__) == 2:
+                    suffix = " (base class)"
                 if obj_type == obj.file.File:
-                    lines.append(f'- {key}{suffix}\n')
+                    lines.append(f"- {key}{suffix}\n")
             except Exception:
                 pass
 
-    # Get all Peregrine data types
-    obj = myna.peregrine
-    lines.append("\nAvailable Peregrine data types:\n")
+    # Get all metadata types
+    obj = myna.metadata
+    lines.append("\nAvailable metadata types:\n\n")
     for key in vars(obj).keys():
         if key[0] != "_":
             key_type = type(vars(obj)[key])
@@ -64,21 +72,24 @@ def write_codebase_status_to_file(argv=None):
             try:
                 suffix = ""
                 obj_type = obj_inst.__mro__[-2]
-                if len(obj_inst.__mro__) == 2: suffix = " (base class)"
-                if obj_type == obj.data.PeregrineBuildData:
-                    lines.append(f'- {key}{suffix}\n')
+                if len(obj_inst.__mro__) == 2:
+                    suffix = " (base class)"
+                if obj_type == obj.data.BuildMetadata:
+                    lines.append(f"- {key}{suffix}\n")
             except Exception:
                 pass
 
     # Get all external code interfaces
     path = os.environ["MYNA_INTERFACE_PATH"]
     basepath = os.environ["MYNA_INSTALL_PATH"]
-    lines.append("\nAvailable external code interfaces:\n")
+    lines.append("\nAvailable external code interfaces:\n\n")
     for root, dirs, files in os.walk(path):
-        root_simple = root.replace(basepath + os.path.sep,"")
+        root_simple = root.replace(basepath + os.path.sep, "")
         depth = len(root_simple.split(os.path.sep))
-        if depth == 2: lines.append(f"- {os.path.basename(root)}\n")
-        if depth == 3: lines.append(f"  - {os.path.basename(root)}\n")
+        if depth == 2:
+            lines.append(f"- {os.path.basename(root)}\n")
+        if depth == 3:
+            lines.append(f"  - {os.path.basename(root)}\n")
 
-    with open(output_file, 'w') as f:
+    with open(output_file, "w") as f:
         f.writelines(lines)
