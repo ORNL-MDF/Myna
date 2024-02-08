@@ -1,0 +1,14 @@
+#!/bin/bash
+
+cd ${0%/*} || exit 1
+
+# Run AdditiveFOAM solver in parallel
+decomposePar > log.decomposePar 2>&1
+cores=$(foamDictionary -entry numberOfSubdomains -value system/decomposeParDict)
+mpirun -np $cores additiveFoam -parallel > log.additiveFoam 2>&1
+
+# Reconstruct ExaCA data into a single file
+echo "x,y,z,tm,ts,cr" > solidificationData.csv
+cat ExaCA/* >> solidificationData.csv
+
+

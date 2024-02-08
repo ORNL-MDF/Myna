@@ -4,14 +4,15 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "myna"
-version = "0.1.0"
+version = "0.1.2"
 authors = [
     { name="Gerry Knapp", email="knappgl@ornl.gov" },
     { name="Sam Reeve", email="reevest@ornl.gov"},
     { name="John Coleman", email="colemanjs@ornl.gov"},
-    { name="Jamie Stump", email="stumpbc@ornl.gov"}
+    { name="Jamie Stump", email="stumpbc@ornl.gov"},
+    { name="Stephen DeWitt", email="dewittsj@ornl.gov"}
 ]
-description = "A structured interface between Peregrine build database(s) and multi-stage modeling and simulation workflows"
+description = "A structured interface between Additive Manufacturing build database(s) and multi-stage modeling and simulation workflows"
 readme = "README.md"
 requires-python = ">=3.6"
 classifiers = [
@@ -21,10 +22,21 @@ classifiers = [
 dependencies = [
     'PyYAML',
     'numpy',
-    'pandas'
+    'pandas',
+    'matplotlib',
+    'mistlib @ git+https://code.ornl.gov/mist/mist.git'
 ]
 
 [project.optional-dependencies]
+additivefoam = [
+    'autofoam @ git+https://code.ornl.gov/8s2/autofoam.git@41725ade12cac1d94552d6a8719d900293521c98'
+]
+cluster = [
+    'classification @ git+https://code.ornl.gov/ygk/classification.git@myna'
+]
+autothesis = [
+    'autothesis @ git+https://code.ornl.gov/ygk/autothesis.git'
+]
 dev = [
   "pytest"
 ]
@@ -32,7 +44,9 @@ dev = [
 [project.scripts]
 myna_run = "myna.workflow.run:main"
 myna_config = "myna.workflow.config:main"
+myna_sync = "myna.workflow.sync:main"
 myna_status = "myna.utils.codebase_status:write_codebase_status_to_file"
+myna_peregrine_launcher = "myna.workflow.launch_from_peregrine:launch_from_peregrine"
 
 [tool.pytest.ini_options]
 addopts = [

@@ -1,0 +1,36 @@
+steps:
+- additivefoam_cube:
+    class: thermal_region_reduced_solidification
+    interface: additivefoam_cube
+    configure_args: [--coarse 80e-6,
+        --rx 0.5e-3,
+        --ry 0.5e-3,
+        --rz 300e-6,
+        --pad-xy 0.25e-3,
+        --pad-z 0.1e-3,
+        --pad-sub 2.5e-3,
+        --refine-layer 1,
+        --refine-region 2]
+    execute_args: [--batch, --cores 24]
+- exaca:
+    class: microstructure_region
+    interface: exaca
+    configure_args: [--exec /home/cloud/ExaCA/build/install/bin/ExaCA-Kokkos,
+        --cell-size 2.5,
+        --sub-size 12.3,
+        --nd 250,
+        --mu 21,
+        --std 3]
+    execute_args: [--batch]
+data:
+  build:
+    datatype: Peregrine
+    name: myna_output
+    path: ../../resources
+    parts:
+      P6:
+        regions:
+          r1:
+            layers: [51, 52]
+            x: 0.05
+            y: -0.049

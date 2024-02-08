@@ -1,18 +1,32 @@
-results
-results.yaml
-examples/demo/demo_build
-Data/
-resources/Peregrine/registered
-
+# OpenFOAM mesh files
 *.polyMesh
 extendedFeatureEdgeMesh
 polyMesh
 triSurface
 
-log.txt
+# status output
 status.md
 
+# Python package files
 __pycache__
 *.egg-info
 
+# VS Code
 *.code-workspace
+
+# typical output folder names
+myna_resources/
+demo_build/
+myna_output/
+resources/Peregrine/registered
+
+# other typical case file names
+*configured.yaml
+log.*
+*.log
+logs/
+
+# by default, ignore template files
+# use `git add -f <file(s)>` to force add any
+# template files that were intentionally added
+template/

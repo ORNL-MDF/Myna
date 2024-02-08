@@ -1,0 +1,40 @@
+steps:
+- 3dthesis:
+    class: thermal_part
+    interface: 3dthesis
+    configure_args: [--res 25.0e-6]
+    execute_args: [--exec /home/cloud/3DThesis/build/application/3DThesis,
+      --np 8,
+      --maxproc 32]
+- classification_relabel:
+    class: classify_thermal
+    interface: classification
+    execute_args: [--thermal 3dthesis, --no-training]
+- classification_supervoxel_relabel:
+    class: classify_supervoxel
+    interface: classification
+    execute_args: [--cluster classification_relabel, --no-training]
+- rve:
+    class: rve
+    interface: rve_selection
+- additivefoam_cube:
+    class: thermal_region_reduced_solidification
+    interface: additivefoam_cube
+    configure_args: [--coarse 80e-6,
+        --rx 1.0e-3,
+        --ry 1.0e-3,
+        --rz 300e-6,
+        --pad-xy 0.75e-3,
+        --pad-z 0.4e-3,
+        --pad-sub 2.5e-3,
+        --refine-layer 2,
+        --refine-region 1]
+    execute: [--batch, --cores 24]
+data:
+  build:
+    datatype: Peregrine
+    name: demo_build
+    path: /home/cloud/myna/resources
+    parts:
+      P6:
+        layers: [51, 52, 53, 54]

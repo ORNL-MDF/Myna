@@ -1,0 +1,30 @@
+steps:
+- 3dthesis:
+    class: thermal_part
+    interface: 3dthesis
+    configure_args: [--res 50.0e-6]
+    execute_args: [--exec /home/cloud/3DThesis/build/application/3DThesis,
+      --np 8,
+      --maxproc 32]
+- classification:
+    class: classify_thermal
+    interface: classification
+- classification_relabel:
+    class: classify_thermal
+    interface: classification
+    execute_args: [--thermal 3dthesis, --no-training]
+- classification_supervoxel:
+    class: classify_supervoxel
+    interface: classification
+- classification_supervoxel_relabel:
+    class: classify_supervoxel
+    interface: classification
+    execute_args: [--cluster classification_relabel, --no-training]
+data:
+  build:
+    datatype: Peregrine
+    name: demo_build
+    path: /home/cloud/myna/resources
+    parts:
+      P6:
+        layers: [51, 52, 53, 54]
