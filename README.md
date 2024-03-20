@@ -6,7 +6,7 @@
 
 ## Description
 
-Myna is a framework to facilitate modeling and simulation workflows based on build data stored in a 
+Myna is a framework to facilitate modeling and simulation workflows based on build data stored in a
 digital factory framework, initially developed for the database structure maintained by ORNL MDF's Peregrine tool.
 
 There are several submodules within Myna:
@@ -31,11 +31,11 @@ since the package is not on PyPI. To install `myna` follow the instructions belo
 git clone https://code.ornl.gov/ygk/myna.git
 cd myna
 
-# Optional: To ensure clean build, uninstall existing 
+# Optional: To ensure clean build, uninstall existing
 # repositories for dependencies
 # pip uninstall autofoam classification autothesis
 
-# To install as a static package 
+# To install as a static package
 pip install .
 
 # Or to install as an editable package
@@ -120,3 +120,7 @@ myna_status --output status.md
 
 The `--output <filename>` argument is optional and defaults to "status.md" if not specified.
 Text in the output file is formatted as Markdown.
+
+## Development
+
+See the [guidelines](CONTRIBUTING.md) on how to contribute.

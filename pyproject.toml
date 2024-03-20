@@ -38,7 +38,8 @@ autothesis = [
     'autothesis @ git+https://code.ornl.gov/ygk/autothesis.git'
 ]
 dev = [
-  "pytest"
+  'pytest',
+  'black'
 ]
 
 [project.scripts]
