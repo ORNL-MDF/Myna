@@ -1,4 +1,5 @@
 """File format class for CSV file with region of interest location data"""
+
 import pandas as pd
 import os
 from .file import *

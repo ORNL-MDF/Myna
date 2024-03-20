@@ -1,4 +1,5 @@
 """Data subclass for material name"""
+
 from .data import *
 from .database_types import *
 

@@ -105,9 +105,7 @@ def main(argv=None):
 
         # Raise error if there is an input requirement and it is the first step
         if (i == 0) and step_obj.input_requirement is not None:
-            print(
-                f"Warning: Step {step_name} requires input, but is the first step."
-            )
+            print(f"Warning: Step {step_name} requires input, but is the first step.")
 
         # Set the input and output templates
         step_obj.input_template = step.get(step_name).get("input_template")
@@ -175,12 +173,10 @@ def main(argv=None):
                                 ].get(layer)
                                 is None
                             ):
-                                settings["data"]["build"]["parts"][part][
-                                    "layer_data"
-                                ][layer] = {}
-                            data_obj = constructor(
-                                datatype, build_path, part, layer
-                            )
+                                settings["data"]["build"]["parts"][part]["layer_data"][
+                                    layer
+                                ] = {}
+                            data_obj = constructor(datatype, build_path, part, layer)
                             data_obj.copy_file()
                             datum = {
                                 "file_local": data_obj.file_local,
@@ -194,9 +190,7 @@ def main(argv=None):
                     regions = parts[part].get("regions")
                     if regions is not None:
                         for region in regions:
-                            region_layers = parts[part]["regions"][region].get(
-                                "layers"
-                            )
+                            region_layers = parts[part]["regions"][region].get("layers")
                             if region_layers is not None:
                                 for l in region_layers:
                                     layer = f"{l}"
@@ -226,9 +220,9 @@ def main(argv=None):
                                         "file_local": data_obj.file_local,
                                         "file_database": data_obj.file_database,
                                     }
-                                    settings["data"]["build"]["parts"][part][
-                                        "regions"
-                                    ][region]["layer_data"][layer][data_req] = datum
+                                    settings["data"]["build"]["parts"][part]["regions"][
+                                        region
+                                    ]["layer_data"][layer][data_req] = datum
 
         # Save data to step object
         step_obj.apply_settings(step[step_name], settings["data"])
@@ -255,14 +249,10 @@ def main(argv=None):
                         data_dict_case["build"]["parts"].pop(key, None)
             if "region" in step_obj.types:
                 region = build_struct[3]
-                keys = list(
-                    data_dict_case["build"]["parts"][part]["regions"].keys()
-                )
+                keys = list(data_dict_case["build"]["parts"][part]["regions"].keys())
                 for key in keys:
                     if key != region:
-                        data_dict_case["build"]["parts"][part]["regions"].pop(
-                            key, None
-                        )
+                        data_dict_case["build"]["parts"][part]["regions"].pop(key, None)
                 if "layer" in step_obj.types:
                     layer = build_struct[4]
                     keys = list(
@@ -272,9 +262,9 @@ def main(argv=None):
                     )
                     for key in keys:
                         if key != layer:
-                            data_dict_case["build"]["parts"][part]["regions"][
-                                region
-                            ]["layer_data"].pop(key, None)
+                            data_dict_case["build"]["parts"][part]["regions"][region][
+                                "layer_data"
+                            ].pop(key, None)
             else:
                 if "layer" in step_obj.types:
                     layer = build_struct[3]
@@ -283,15 +273,13 @@ def main(argv=None):
                     )
                     for key in keys:
                         if key != layer:
-                            data_dict_case["build"]["parts"][part][
-                                "layer_data"
-                            ].pop(key, None)
+                            data_dict_case["build"]["parts"][part]["layer_data"].pop(
+                                key, None
+                            )
 
             # Write data to case directory
             with open(os.path.join(case_dir, "myna_data.yaml"), "w") as f:
-                yaml.dump(
-                    data_dict_case, f, sort_keys=False, default_flow_style=None
-                )
+                yaml.dump(data_dict_case, f, sort_keys=False, default_flow_style=None)
 
         # Show the inputs associated with the step
         if step_obj.input_requirement is not None:

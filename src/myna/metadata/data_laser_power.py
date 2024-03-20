@@ -1,4 +1,5 @@
 """Data subclass for laser power"""
+
 from .data import *
 from .database_types import *
 

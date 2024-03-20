@@ -1,4 +1,5 @@
 """ Base class for workflow components"""
+
 import os
 import myna
 
