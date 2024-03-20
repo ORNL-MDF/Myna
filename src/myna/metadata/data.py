@@ -1,4 +1,5 @@
 """Base classes for metadata requirements"""
+
 import os
 import numpy as np
 from .database_types import *

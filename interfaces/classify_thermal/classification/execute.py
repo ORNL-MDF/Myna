@@ -79,7 +79,6 @@ def run_classification(
             drop_cols.append(col)
     df_training = df_reduced.drop(columns=drop_cols)
 
-
     # Convert the whole dataset to a bnpy dataset for clustering after model training
     dataset_current = bnpy.data.XData.from_dataframe(df_training)
 

@@ -1,4 +1,5 @@
 """File format class for cluster id data"""
+
 import pandas as pd
 import os
 from .file import *

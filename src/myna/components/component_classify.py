@@ -1,4 +1,5 @@
 """ Subclass for classification of thermal simulations"""
+
 from .component import *
 from myna.files.file_gv import *
 from myna.files.file_id import *

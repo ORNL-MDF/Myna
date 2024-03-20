@@ -1,4 +1,5 @@
 """Data subclass for spot size"""
+
 from .data import *
 from .database_types import *
 

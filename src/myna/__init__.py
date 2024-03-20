@@ -1,4 +1,5 @@
 """main module for Myna workflow framework"""
+
 import os
 
 # Set environment variables on package import

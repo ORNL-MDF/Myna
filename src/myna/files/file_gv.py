@@ -1,5 +1,6 @@
 """File format class for temperature gradient (G) and solidification 
 velocity (V) data"""
+
 import pandas as pd
 import os
 from .file import *

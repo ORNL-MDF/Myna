@@ -26,7 +26,7 @@ def setup_case(
     refine_layer,
     refine_region,
     template,
-    cores
+    cores,
 ):
     settings = load_input(os.path.join(case_dir, "myna_data.yaml"))
 
@@ -78,11 +78,15 @@ def setup_case(
         "refine_region": refine_region,
     }
     template_stl_mesh_dict_name = "template_stl_mesh_dict.yaml"
-    template_stl_mesh_dict_path = os.path.join(template_path, template_stl_mesh_dict_name)
+    template_stl_mesh_dict_path = os.path.join(
+        template_path, template_stl_mesh_dict_name
+    )
     template_region_mesh_dict_name = "template_region_mesh_dict.yaml"
-    template_region_mesh_dict_path = os.path.join(template_path, template_region_mesh_dict_name)
-    
-    # Write template STL mesh dict as needed, and if the template 
+    template_region_mesh_dict_path = os.path.join(
+        template_path, template_region_mesh_dict_name
+    )
+
+    # Write template STL mesh dict as needed, and if the template
     # STL mesh dict exists, then check if it matches current mesh settings
     use_existing_stl_mesh = False
     if not os.path.exists(template_stl_mesh_dict_path):
@@ -117,7 +121,9 @@ def setup_case(
         try:
             matches = []
             for key in template_region_mesh_dict.keys():
-                entry_match = template_region_mesh_dict.get(key) == existing_dict.get(key)
+                entry_match = template_region_mesh_dict.get(key) == existing_dict.get(
+                    key
+                )
                 matches.append(entry_match)
             if all(matches):
                 use_existing_region_mesh = True
@@ -170,18 +176,20 @@ def setup_case(
             "convertToMeters": 1.0e-3,
             "layer_thickness": layer_thickness,
         },
-        "exe": {
-            "nProcs": cores,
-            "mpiArgs": f"mpirun -np {cores}"},
+        "exe": {"nProcs": cores, "mpiArgs": f"mpirun -np {cores}"},
     }
 
     # Generate cases based on inputs
-    generate(autofoam_input_dict, settings, use_existing_stl_mesh, use_existing_region_mesh)
+    generate(
+        autofoam_input_dict, settings, use_existing_stl_mesh, use_existing_region_mesh
+    )
 
     return
 
 
-def generate(autofoam_input_dict, myna_settings, use_existing_stl_mesh, use_existing_region_mesh):
+def generate(
+    autofoam_input_dict, myna_settings, use_existing_stl_mesh, use_existing_region_mesh
+):
     # Set paths
     case_dir = autofoam_input_dict["case_dir"]
     template_dir = os.path.abspath(autofoam_input_dict["template"]["template_dir"])
@@ -255,7 +263,6 @@ def generate(autofoam_input_dict, myna_settings, use_existing_stl_mesh, use_exis
 
     # If needed, generate AdditiveFOAM mesh in template folder
     if not use_existing_stl_mesh:
-
         # Preprocess the STL file
         working_stl_path = autofoam.mesh.preprocess_stl(autofoam_input_dict)
 
@@ -280,9 +287,10 @@ def generate(autofoam_input_dict, myna_settings, use_existing_stl_mesh, use_exis
         bbDict = {"bb_min": bb_min, "bb_max": bb_max, "bb": bb}
 
     if not use_existing_region_mesh:
-
         # Slice the mesh for the given layer
-        height = float(autofoam_input_dict["layer_thickness"]) * float(autofoam_input_dict["layer"])
+        height = float(autofoam_input_dict["layer_thickness"]) * float(
+            autofoam_input_dict["layer"]
+        )
         print("height = ", height)
         autofoam.cases.slice_mesh(autofoam_input_dict, template_dir, height)
 
@@ -501,7 +509,7 @@ def main(argv=None):
                 refine_layer,
                 refine_region,
                 template,
-                cores
+                cores,
             )
         )
 
