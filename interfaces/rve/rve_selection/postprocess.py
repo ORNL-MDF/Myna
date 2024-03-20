@@ -13,7 +13,7 @@ def main(argv=None):
         description="Update Myna input file with region info"
     )
 
-    # Parse cmd arguements
+    # Parse cmd arguments
     args = parser.parse_args(argv)
 
     # Get settings

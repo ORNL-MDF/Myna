@@ -5,7 +5,7 @@ import os
 
 
 class BuildFile:
-    """File that requries a build path"""
+    """File that requires a build path"""
 
     def __init__(self, datatype, build):
         self.datatype = datatype
@@ -37,7 +37,7 @@ class BuildFile:
 
 
 class PartFile(BuildFile):
-    """Data that requries both a build and part path"""
+    """Data that requires both a build and part path"""
 
     def __init__(self, datatype, build, part):
         BuildFile.__init__(self, datatype, build)
@@ -46,7 +46,7 @@ class PartFile(BuildFile):
 
 
 class LayerFile(BuildFile):
-    """Data that requries both a build and part path"""
+    """Data that requires both a build and part path"""
 
     def __init__(self, datatype, build, part, layer):
         PartFile.__init__(self, datatype, build, part)

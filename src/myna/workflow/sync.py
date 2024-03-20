@@ -185,7 +185,7 @@ def main(argv=None):
         + ' for multiple steps use "--step [step_name_0,step_name_1]"',
     )
 
-    # Parse cmd arguements
+    # Parse cmd arguments
     args = parser.parse_args(argv)
     input_file = args.input
     steps_to_sync = myna.utils.str_to_list(args.step)

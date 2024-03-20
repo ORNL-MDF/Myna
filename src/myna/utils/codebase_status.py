@@ -19,7 +19,7 @@ def write_codebase_status_to_file(argv=None):
         + "--output status.md",
     )
 
-    # Parse cmd arguements
+    # Parse cmd arguments
     args = parser.parse_args(argv)
     output_file = args.output
 
