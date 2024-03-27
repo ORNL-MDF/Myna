@@ -17,13 +17,12 @@ pip install -e .[dev]
 
 You can use `pre-commit` to ensure local changes are ready to be submitted in a
 pull request. It can be installed locally using: `pip install pre-commit`, then it
-must be setup for the repository: `pre-commit install`. Formatting checks are then
-run for every commit.
+must be setup for the repository: `pre-commit install`. Formatting and other checks
+are then run for every commit.
 
-`PRE_COMMIT_ALLOW_NO_CONFIG=1 git commit ...` can be used to selectively skip
-these checks.
+Adding `--no-verify` to the commit options can be used to skip these checks for a given commit.
 
-Checks can instead be done manually, described below.
+Checks can instead be done manually, described next for formatting.
 
 ## Code formatting
 
