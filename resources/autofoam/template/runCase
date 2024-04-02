@@ -1,7 +1,7 @@
 #!/bin/bash
-# Script to run a specified AdditiveFOAM case using 
+# Script to run a specified AdditiveFOAM case using
 # the command specified by $mpi_run
-# 
+#
 # Usage:
 #   ./runCase <case_dir> <mpi_run>
 
@@ -42,4 +42,3 @@ $mpi_run -case $case_dir additiveFoam -parallel > $case_dir/log.additiveFoam
 # Reconstruct ExaCA data into a single file
 echo "x,y,z,tm,ts,cr" > $case_dir/solidificationData.csv
 cat $case_dir/ExaCA/* >> $case_dir/solidificationData.csv
-

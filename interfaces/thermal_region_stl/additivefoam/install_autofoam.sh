@@ -29,7 +29,7 @@ fi
 
 # Install/verify package install
 PACKAGE=`conda list | awk -F"[ ',]+" '/^autofoam/{print $1}'`
-if [ $PACKAGE = "autofoam" ]; 
+if [ $PACKAGE = "autofoam" ];
 then
   echo "autofoam package already installed."
 else

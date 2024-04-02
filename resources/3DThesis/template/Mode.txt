@@ -3,5 +3,3 @@ Solidification
 	Tracking	Surface
 	Timestep	1e-4
 }
-
-

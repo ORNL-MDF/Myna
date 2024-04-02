@@ -31,7 +31,7 @@ else
   git checkout $TARGET_COMMIT
 fi
 
-# 
+#
 if [ -f "$THESIS_DIR/$THESIS_EXEC" ]; then
   echo "$THESIS_DIR/$THESIS_EXEC application already built."
 else
@@ -42,5 +42,3 @@ else
 fi
 
 cd $ROOT_DIR
-
-

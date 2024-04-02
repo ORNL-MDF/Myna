@@ -19,16 +19,16 @@ sources (beam);
 
 beam
 {
-    pathName            scanPath;    
+    pathName            scanPath;
 
-    absorptionModel     Kelly;    
+    absorptionModel     Kelly;
     KellyCoeffs
     {
         geometry        cylinder;
         eta0            0.3;
         etaMin          0.35;
-    }   
-    
+    }
+
     heatSourceModel     modifiedSuperGaussian;
     modifiedSuperGaussianCoeffs
     {

@@ -139,11 +139,11 @@ def run(
 
     """
     # Train supervoxel classification model and generate plots of the classification results
-    supervoxelDatasets, _, nClusterSV = classification.training.train_supervoxel_classifier(supervoxelTrainingData, 
-                                                                     loadModel=loadSupervoxelModel, 
-                                                                     dpi=300, 
-                                                                     plot=plot, 
-                                                                     sF=sFsv, 
+    supervoxelDatasets, _, nClusterSV = classification.training.train_supervoxel_classifier(supervoxelTrainingData,
+                                                                     loadModel=loadSupervoxelModel,
+                                                                     dpi=300,
+                                                                     plot=plot,
+                                                                     sF=sFsv,
                                                                      gamma=gamma,
                                                                      modelInitDir=svInit)
     """

@@ -30,7 +30,7 @@ fi
 
 # Install/verify package install
 PACKAGE=`conda list | awk -F"[ ',]+" '/^autothesis/{print $1}'`
-if [ $PACKAGE = "autothesis" ]; 
+if [ $PACKAGE = "autothesis" ];
 then
   echo "autothesis package already installed."
 else
