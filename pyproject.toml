@@ -24,7 +24,7 @@ dependencies = [
     'numpy',
     'pandas',
     'matplotlib',
-    'mistlib @ git+https://code.ornl.gov/mist/mist.git'
+    'mistlib @ git+https://github.com/ORNL-MDF/mist.git'
 ]
 
 [project.optional-dependencies]
