@@ -6,7 +6,7 @@ from .database_types import *
 
 
 class BuildMetadata:
-    """Metadata that requries a build path"""
+    """Metadata that requires a build path"""
 
     def __init__(self, datatype, build):
         self.file = ""
@@ -38,7 +38,7 @@ class BuildMetadata:
 
 
 class PartMetadata(BuildMetadata):
-    """Data that requries both a build and part path"""
+    """Data that requires both a build and part path"""
 
     def __init__(self, datatype, build, part):
         BuildMetadata.__init__(self, datatype, build)

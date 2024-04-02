@@ -331,7 +331,7 @@ def generate(
     # 1. Read scan path
     df = pd.read_csv(new_scan_path_file, delim_whitespace=True)
 
-    # 2. Interate through rows to determine intersection with
+    # 2. Iterate through rows to determine intersection with
     # the region's bounding box
     elapsed_time = 0.0
     start_time = None

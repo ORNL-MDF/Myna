@@ -43,7 +43,7 @@ def main(argv=None):
         + "not update input file data values",
     )
 
-    # Parse cmd arguements
+    # Parse cmd arguments
     args = parser.parse_args(argv)
     input_file = args.input
     output_file = args.output
