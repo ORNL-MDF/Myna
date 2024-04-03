@@ -28,9 +28,9 @@ else
   git checkout $TARGET_COMMIT
 fi
 
-# 
+#
 PACKAGE=`conda list | awk -F"[ ',]+" '/^classification/{print $1}'`
-if [ $PACKAGE = "classification" ]; 
+if [ $PACKAGE = "classification" ];
 then
   echo "classification package already installed."
 else

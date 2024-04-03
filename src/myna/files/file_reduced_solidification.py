@@ -1,5 +1,5 @@
-""" 
-File format class for solidification data 
+"""
+File format class for solidification data
 
 Based on a the reduced data format defined in:
 - M. Rolchigo, B. Stump, J. Belak, and A. Plotkowski,

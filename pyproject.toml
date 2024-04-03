@@ -10,37 +10,30 @@ authors = [
     { name="Sam Reeve", email="reevest@ornl.gov"},
     { name="John Coleman", email="colemanjs@ornl.gov"},
     { name="Jamie Stump", email="stumpbc@ornl.gov"},
-    { name="Stephen DeWitt", email="dewittsj@ornl.gov"}
-]
+    { name="Stephen DeWitt", email="dewittsj@ornl.gov"}]
 description = "A structured interface between Additive Manufacturing build database(s) and multi-stage modeling and simulation workflows"
 readme = "README.md"
 requires-python = ">=3.6"
 classifiers = [
     "Programming Language :: Python :: 3",
-    "Operating System :: OS Independent",
-]
+    "Operating System :: OS Independent"]
 dependencies = [
     'PyYAML',
     'numpy',
     'pandas',
     'matplotlib',
-    'mistlib @ git+https://github.com/ORNL-MDF/mist.git'
-]
+    'mistlib @ git+https://github.com/ORNL-MDF/mist.git']
 
 [project.optional-dependencies]
 additivefoam = [
-    'autofoam @ git+https://code.ornl.gov/8s2/autofoam.git@41725ade12cac1d94552d6a8719d900293521c98'
-]
+    'autofoam @ git+https://code.ornl.gov/8s2/autofoam.git@41725ade12cac1d94552d6a8719d900293521c98']
 cluster = [
-    'classification @ git+https://code.ornl.gov/ygk/classification.git@myna'
-]
+    'classification @ git+https://code.ornl.gov/ygk/classification.git@myna']
 autothesis = [
-    'autothesis @ git+https://code.ornl.gov/ygk/autothesis.git'
-]
+    'autothesis @ git+https://code.ornl.gov/ygk/autothesis.git']
 dev = [
   'pytest',
-  'black'
-]
+  'black']
 
 [project.scripts]
 myna_run = "myna.workflow.run:main"
@@ -51,5 +44,9 @@ myna_peregrine_launcher = "myna.workflow.launch_from_peregrine:launch_from_pereg
 
 [tool.pytest.ini_options]
 addopts = [
-    "--import-mode=importlib",
-]
+    "--import-mode=importlib"]
+
+[tool.codespell]
+ignore-words-list = 'mater,nd'
+skip = './resources'
+quiet-level = 3

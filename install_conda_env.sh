@@ -1,12 +1,12 @@
 #!/bin/bash
 
-# Creates a a conda environment in the 
+# Creates a a conda environment in the
 # default conda environment location (CONDA_ENV_PATH)
 
 CONDA_ENV="myna"
 source ~/.bashrc
 CONDA_ENV_PATH=`conda info --base`
-if [ -d $CONDA_ENV_PATH"/envs/$CONDA_ENV" ]; 
+if [ -d $CONDA_ENV_PATH"/envs/$CONDA_ENV" ];
 then
   conda activate $CONDA_ENV
 else

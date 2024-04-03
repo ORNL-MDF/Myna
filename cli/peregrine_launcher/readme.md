@@ -1,6 +1,6 @@
 # Peregrine Launcher
 
-This interface is designed to facilitate launching Myna workflows from 
+This interface is designed to facilitate launching Myna workflows from
 Peregrine via the `launch_from_peregrine` script. The modes available to
 Peregrine users are defined by the input files following the notation
 `input_<mode>.yaml`.

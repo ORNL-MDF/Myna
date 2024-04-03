@@ -1,7 +1,7 @@
 #!/bin/bash
-# Script to run a specified ExaCA case using 
+# Script to run a specified ExaCA case using
 # the specified executable and mpi_run parameters
-# 
+#
 # Usage:
 #   ./runCase <case_dir> <exec_path> <mpi_run>
 
@@ -61,4 +61,3 @@ echo "Input path = $case_dir/inputs.json"
 
 # Run the ExaCA case
 $mpi_run $EXACA_EXE_PATH/bin/ExaCA-Kokkos $case_dir/inputs.json
-

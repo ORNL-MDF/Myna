@@ -7,7 +7,7 @@ functionality).
 # Developing new interfaces
 
 `myna` expects a specific directory and file structure for each interface:
-- Parent directories are named after the class names defined in 
+- Parent directories are named after the class names defined in
 [../src/myna/components/component_class_lookup.py].
 - Child directory names then correspond to an available interface name
 for the parent class
@@ -28,6 +28,6 @@ as resources, such as a readme file
 There is no technical difference between the three stages of executables
 on the backend of `myna`. The `os.system()` call is the same for each stage.
 The split into stages is more for organization of tasks into case setup,
-case execution, and tasks to be completed after a (successful) execution, 
+case execution, and tasks to be completed after a (successful) execution,
 which will be useful if implementing a more robust workflow manager in
 the future.

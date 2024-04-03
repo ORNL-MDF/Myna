@@ -1,10 +1,10 @@
 # Interface documentation
 
-- Component type 
+- Component type
   - `thermal_region_reduced_solidification`
 - Interface name
   - `additivefoam_cube`
-- Interface description 
+- Interface description
   - Generate a cubic blockMesh surrounding
     the specified region center location with optional refinements
     in a given rectangular XY region surrounding the region center

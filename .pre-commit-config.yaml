@@ -15,3 +15,6 @@ repos:
     rev: v2.2.6
     hooks:
       - id: codespell
+        # Ref abbrev, variable name, Mist mis-spelling
+        # Passing config from toml does not work.
+        args: ["-L", "mater,nd,coefficent"]
