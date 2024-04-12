@@ -1,3 +1,7 @@
+"""Functionality to output information about available modules in Myna
+to a text file
+"""
+
 import myna
 from importlib.metadata import version
 import argparse
@@ -5,6 +9,13 @@ import os
 
 
 def write_codebase_status_to_file(argv=None):
+    """Writes available Myna components, data, files, and interfaces
+    to a file
+
+    Parses the "--output <filename>" sys.argv input to output to
+    a specific file name.
+    """
+
     # Set up argparse
     parser = argparse.ArgumentParser(
         description="Launch myna for " + "specified input file"

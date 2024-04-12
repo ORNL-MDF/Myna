@@ -1,5 +1,6 @@
-"""File format class for temperature gradient (G) and solidification
-velocity (V) data"""
+"""Define file format class related to the temperature gradient (G) and
+solidification velocity (V)
+"""
 
 import pandas as pd
 import os
@@ -7,11 +8,27 @@ from .file import *
 
 
 class FileGV(File):
+    """File format class for temperature gradient (G) and solidification
+    velocity (V) data
+    """
+
     def __init__(self, file):
         File.__init__(self, file)
         self.filetype = ".csv"
 
     def file_is_valid(self):
+        """Determines if the associated file is valid
+
+        Requires the columns below, additional columns are ignored:
+        - "x (m)": float
+        - "y (m)": float
+        - "g (k/m)": float
+        - "v (m/s)": float
+
+        Returns:
+           Boolean
+        """
+
         if (self.filetype is not None) and (
             os.path.splitext(self.file)[-1] != self.filetype
         ):
@@ -24,7 +41,19 @@ class FileGV(File):
             return self.columns_are_valid(cols, expected_cols, expected_cols_types)
 
     def get_values_for_sync(self, prefix="myna"):
-        """Get values in format expected for sync"""
+        """Get values in format expected for sync
+
+        Args:
+            prefix: prefix for output file name in synced file(s)
+
+        Returns:
+            x: numpy array of x-coordinates
+            y: numpy array of y-coordinates
+            values: list of numpy arrays of values for each (x,y) point
+            value_names: list of string names for each field in the values list
+            value_units: list of string units for each field in the values list
+        """
+
         # Load the file
         df = pd.read_csv(self.file)
         df = df.rename(str.lower, axis="columns")

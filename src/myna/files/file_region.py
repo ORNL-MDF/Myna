@@ -1,4 +1,4 @@
-"""File format class for CSV file with region of interest location data"""
+"""Define a file format class for region of interest location data"""
 
 import pandas as pd
 import os
@@ -6,11 +6,27 @@ from .file import *
 
 
 class FileRegion(File):
+    """File format class for CSV file with region of interest location data"""
+
     def __init__(self, file):
         File.__init__(self, file)
         self.filetype = ".csv"
 
     def file_is_valid(self):
+        """Determines if the associated file is valid
+
+        Requires the columns below, additional columns are ignored:
+        - "id": int
+        - "x": float
+        - "y": float
+        - "layer_starts": int
+        - "layer_ends": int
+        - "part": str
+
+        Returns:
+           Boolean
+        """
+
         if (self.filetype is not None) and (
             os.path.splitext(self.file)[-1] != self.filetype
         ):

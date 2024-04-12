@@ -1,7 +1,16 @@
-""" Lookup data for common name to object name"""
+"""Define common names for accessing metadata classes"""
 
 
-def return_data_class_name(data_name, build=None, part=None):
+def return_data_class_name(data_name):
+    """Return name of data class given the common string name
+
+    Args:
+        data_name: string
+
+    Returns:
+        data_class_name: string of data class from myna.metadata
+    """
+
     data_class_lookup = {
         "spot_size": "SpotSize",
         "laser_power": "LaserPower",

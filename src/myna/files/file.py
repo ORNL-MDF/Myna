@@ -2,7 +2,19 @@
 
 
 class File:
+    """Base class for Myna file definitions.
+
+    Raises:
+       file_is_valid: NotImplementedError in base class
+       get_values_for_sync: NotImplementedError in base class
+    """
+
     def __init__(self, file):
+        """Initialize with file path
+
+        Args:
+           file: filepath string
+        """
         self.file = file
         self.filetype = None
 
@@ -11,6 +23,8 @@ class File:
         raise NotImplementedError
 
     def columns_are_valid(self, cols, expected_cols, expected_cols_types):
+        """Check if file columns are valid and print informative warning."""
+
         if not set(expected_cols).issubset(cols):
             print("\nWARNING: The required headers were not found.")
             print("The following headers were found:")

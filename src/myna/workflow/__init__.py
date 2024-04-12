@@ -1,5 +1,38 @@
-"""submodule to define the workflow"""
+"""Define workflow scripts and modules.
+
+This module defines the functionality of workflow tasks, namely
+configuration, running/execution, and syncing of the results.
+In general, any module that has a command line interface script
+should be located here, as a Myna user will generally interact
+with Myna at the workflow-level.
+
+Available modules and scripts:
+  myna.workflow.config:
+    The main function is installed as myna_config command line
+    function and extracts the necessary metadata from the database
+    to be placed in "myna_resources" directory in the working
+    directory.
+  myna.workflow.run:
+    The main function is installed as myna_run command line
+    function and execute the specified workflow components
+    in the input file.
+  myna.workflow.sync:
+    The main function is installed as myna_sync command line
+    function and syncs the result files from a Myna workflow
+    back to the database.
+  myna.workflow.launch_from_peregrine:
+    The launch_from_peregrine function is installed as the
+    command line script myna_peregrine_launcher to enable
+    executing predefined myna workflows from Peregrine software.
+    The predefined workflows are defined in the "cli/peregrine_launcher"
+    directory located in the root-level repository directory.
+  myna.workflow.load_input:
+    Load and return contents of a myna input file
+
+"""
 
 from myna.workflow.config import *
 from myna.workflow.run import *
+from myna.workflow.sync import *
+from myna.workflow.load_input import *
 from myna.workflow.launch_from_peregrine import *

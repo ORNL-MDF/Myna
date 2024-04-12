@@ -1,7 +1,19 @@
+"""Functionality to get default values from an
+argparse.ArgumentParser object
+"""
+
 import argparse
 
 
 def is_bool_action(option_type):
+    """Determine if an argparse option is Boolean
+
+    Args:
+        option_type: argparse.ArgumentParser.__dict__["_actions"][key]
+
+    Returns: Boolean
+    """
+
     if (option_type == argparse._StoreFalseAction) or (
         option_type == argparse._StoreTrueAction
     ):
@@ -14,9 +26,9 @@ def get_script_call_with_defaults(parser, args):
     """Get the full command_args from the script input,
     including unspecified default values
 
-    Parameters:
-    - parser = argparse.ArgumentParser() object
-    - args = input command_args line arguments from parser.parse_args()
+    Args:
+        parser: argparse.ArgumentParser() object
+        args: input command_args line arguments from parser.parse_args()
     """
 
     # Get all defaults

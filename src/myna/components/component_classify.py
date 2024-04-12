@@ -1,4 +1,10 @@
-""" Subclass for classification of thermal simulations"""
+"""Define Component subclasses for classification of thermal simulations
+
+Available subclasses:
+   ComponentClassify
+   ComponentClassifyThermal
+   ComponentClassifySupervoxel
+"""
 
 from .component import *
 from myna.files.file_gv import *
@@ -6,6 +12,10 @@ from myna.files.file_id import *
 
 
 class ComponentClassify(Component):
+    """Part-wise Component that outputs spatially-varying data labels in the
+    `FileID` class format.
+    """
+
     def __init__(self):
         Component.__init__(self)
         self.output_requirement = FileID
@@ -13,6 +23,11 @@ class ComponentClassify(Component):
 
 
 class ComponentClassifyThermal(ComponentClassify):
+    """Layer-wise Component that outputs spatially-varying data in the
+    FileID` class format and requires input from solidification
+    data file of class `FileGV`.
+    """
+
     def __init__(self):
         ComponentClassify.__init__(self)
         self.input_requirement = FileGV
@@ -20,6 +35,11 @@ class ComponentClassifyThermal(ComponentClassify):
 
 
 class ComponentClassifySupervoxel(ComponentClassify):
+    """Layer-wise Component that outputs spatially-varying data labels in the
+    `FileID` class format and requires input in the
+    `FileID` class format.
+    """
+
     def __init__(self):
         ComponentClassify.__init__(self)
         self.input_requirement = FileID

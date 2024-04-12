@@ -1,3 +1,5 @@
+"""Defines `myna_config` functionality"""
+
 import argparse
 import os
 import yaml
@@ -8,12 +10,13 @@ import myna.metadata
 
 
 def main(argv=None):
-    """Main function for configuring myna data from the command line
+    """Main function for configuring a myna case from the command line
 
-    Parameters
-    ----------
-    argv : list of str, optional
-        List of command line arguments, by default None"""
+    This function is installed as `myna_config` when myna is installed.
+
+    Args:
+        argv : list of command line arguments, by default None
+    """
 
     # Set up argparse
     parser = argparse.ArgumentParser(

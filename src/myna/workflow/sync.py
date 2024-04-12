@@ -43,7 +43,7 @@ def downsample_to_image(data_x, data_y, values, image_size, plate_size, mode="ma
     return np.rot90(image)
 
 
-def upload_results(
+def upload_peregrine_results(
     buildpath,
     partnumber,
     layernumber,
@@ -162,10 +162,9 @@ def make_image(buildpath, layernumber, var_name="Test"):
 def main(argv=None):
     """Main function for running myna_sync from the command line
 
-    Parameters
-    ----------
-    argv : list of str, optional
-        List of command line arguments, by default None"""
+    Args:
+        argv : list of command line arguments, by default None
+    """
 
     # Set up argparse
     parser = argparse.ArgumentParser(

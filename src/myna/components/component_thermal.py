@@ -1,4 +1,14 @@
-""" Subclass for thermal simulations"""
+"""Define subclasses for thermal simulation Components
+
+Available subclasses:
+  ComponentThermal
+  ComponentThermalPart
+  ComponentThermalRegion
+  ComponentThermalPartSTL
+  ComponentThermalRegionSTL
+  ComponentThermalPartReducedSolidification
+  ComponentThermalRegionReducedSolidification
+"""
 
 from .component import *
 from myna.files.file_gv import *
@@ -11,6 +21,8 @@ from myna.files.file_reduced_solidification import *
 
 
 class ComponentThermal(Component):
+    """Build-wise Component that outputs the spatial varying solidification G and V"""
+
     def __init__(self):
         Component.__init__(self)
         self.data_requirements.extend(
@@ -32,12 +44,22 @@ class ComponentThermal(Component):
 
 
 class ComponentThermalPart(ComponentThermal):
+    """Layer-wise Component that outputs the spatial varying solidification
+    characteristics for a part in the format of the class `FileGV`
+    """
+
     def __init__(self):
         ComponentThermal.__init__(self)
         self.types.extend(["part", "layer"])
 
 
 class ComponentThermalRegion(ComponentThermal):
+    """Layer-wise Component that outputs the spatial varying solidification
+    characteristics for a region in the format of the class `FileGV`
+    based on input of the region location in the format
+    `FileRegion`
+    """
+
     def __init__(self):
         ComponentThermal.__init__(self)
         self.input_requirement = FileRegion
@@ -50,12 +72,23 @@ class ComponentThermalRegion(ComponentThermal):
 
 
 class ComponentThermalPartSTL(ComponentThermalPart):
+    """Layer-wise Component that outputs the spatial varying solidification
+    characteristics for a part in the format of the class
+    `FileGV` and requires an STL file as input.
+    """
+
     def __init__(self):
         ComponentThermalPart.__init__(self)
         self.data_requirements.extend(["stl"])
 
 
 class ComponentThermalRegionSTL(ComponentThermalRegion):
+    """Layer-wise Component that outputs the spatial varying solidification
+    characteristics for a region in the format of the class
+    `FileGV` based on input of the region location in the format
+    `FileRegion`. Requires an STL file as input.
+    """
+
     def __init__(self):
         ComponentThermalRegion.__init__(self)
         self.data_requirements.extend(["stl"])
@@ -65,12 +98,23 @@ class ComponentThermalRegionSTL(ComponentThermalRegion):
 # Reduced solidification data output Components #
 #################################################
 class ComponentThermalPartReducedSolidification(ComponentThermalPart):
+    """Layer-wise Component that outputs the spatial varying solidification
+    characteristics for a region in the format of the class
+    `FileReducedSolidification`
+    """
+
     def __init__(self):
         ComponentThermalPart.__init__(self)
         self.output_requirement = FileReducedSolidification
 
 
 class ComponentThermalRegionReducedSolidification(ComponentThermalRegion):
+    """Layer-wise Component that outputs the spatial varying solidification
+    characteristics for a region in the format of the class
+    `FileReducedSolidification` based on input of the region location
+    in the format `FileRegion`
+    """
+
     def __init__(self):
         ComponentThermalRegion.__init__(self)
         self.output_requirement = FileReducedSolidification
