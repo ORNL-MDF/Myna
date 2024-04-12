@@ -1,4 +1,4 @@
-"""Base classes for metadata requirements"""
+"""Define the base classes for metadata requirements"""
 
 import os
 import numpy as np

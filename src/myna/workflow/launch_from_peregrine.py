@@ -1,3 +1,5 @@
+"""Defines myna_peregrine_launcher functionality"""
+
 import sys
 import os
 import subprocess

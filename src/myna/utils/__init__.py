@@ -1,4 +1,5 @@
-"""submodule for utility functions"""
+"""Utility functions for Myna.
+"""
 
 from myna.utils.codebase_status import *
 from myna.utils.nested_dict_tools import *

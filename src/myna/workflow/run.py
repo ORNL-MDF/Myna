@@ -7,12 +7,11 @@ import myna.utils
 
 
 def main(argv=None):
-    """Main function for running myna from the command line
+    """Main function for myna_run script to run myna components from the command line
 
-    Parameters
-    ----------
-    argv : list of str, optional
-        List of command line arguments, by default None"""
+    Args:
+      argv : List of command line arguments, by default None
+    """
 
     # Set up argparse
     parser = argparse.ArgumentParser(

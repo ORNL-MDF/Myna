@@ -1,10 +1,15 @@
+"""Define loading behavior for STL geometry files in databases"""
+
 from .file import *
 import os
 from .database_types import *
 
 
 class STL(PartFile):
-    """File containing the STL for a part in a build."""
+    """File containing the STL for a part in a build.
+
+    Implemented datatypes:
+    - PeregrineDB"""
 
     def __init__(self, datatype, build, part):
         PartFile.__init__(self, datatype, build, part)

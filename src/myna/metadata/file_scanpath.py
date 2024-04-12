@@ -1,10 +1,16 @@
+"""Define loading behavior for scan path files in databases"""
+
 from .file import *
 import os
 from .database_types import *
 
 
 class Scanpath(LayerFile):
-    """File containing the scan path for a layer of a part in a build."""
+    """File containing the scan path for a layer of a part in a build.
+
+    Implemented datatypes:
+    - PeregrineDB
+    """
 
     def __init__(self, datatype, build, part, layer):
         LayerFile.__init__(self, datatype, build, part, layer)

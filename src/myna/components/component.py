@@ -27,6 +27,9 @@ class Component:
         self.types = ["build"]
 
     def run_component(self):
+        """Runs the configure.py, execute.py, and postprocess.py
+        for selected component class/interface combination"""
+
         # Run component configure.py script
         configure_path = os.path.join(
             os.environ["MYNA_INTERFACE_PATH"],
@@ -39,7 +42,7 @@ class Component:
             cmd = self.cmd_preformat(cmd)
             os.system(cmd)
 
-        # Execute component
+        # Run component execute.py script
         has_executed = False
         execute_path = os.path.join(
             os.environ["MYNA_INTERFACE_PATH"],
@@ -53,7 +56,7 @@ class Component:
             os.system(cmd)
             has_executed = True
 
-        # Run component postprocessing
+        # Run component postprocess.py script
         postprocess_path = os.path.join(
             os.environ["MYNA_INTERFACE_PATH"],
             self.component_class,
@@ -84,6 +87,18 @@ class Component:
                 [print("\t" + x) for x in output_files]
 
     def cmd_preformat(self, raw_cmd):
+        """Replace placeholder names in command arguments
+
+        Args:
+            raw_cmd: a string of the command with placeholders
+
+        Available placeholders:
+            {name}: the name of the component
+            {build}: the name of the build associated with the workflow
+            $MYNA_INTERFACE_PATH: the location of the interfaces for the myna install
+            $MYNA_INSTALL_PATH: the location of the myna installation directory
+        """
+
         cmd = raw_cmd.replace("{name}", self.name)
         cmd = cmd.replace("{build}", self.data["build"]["name"])
         cmd = cmd.replace("$MYNA_INTERFACE_PATH", os.environ["MYNA_INTERFACE_PATH"])
@@ -91,6 +106,13 @@ class Component:
         return cmd
 
     def apply_settings(self, step_settings, data_settings):
+        """Update the step and data settings for the component from dictionaries
+
+        Args:
+            step_settings: a dictionary of settings related to the myna step
+            data_settings: a dictionary of settings related to the build data
+        """
+
         try:
             # Load commands for configure, execute, and postprocess
             self.configure_args = step_settings.get(
@@ -121,15 +143,15 @@ class Component:
         except KeyError as e:
             print(e)
             print("ERROR: Check input file contains necessary fields for all steps.")
-            print("Required fields are:")
-            print("- configure")
-            print("- execute")
-            print("- postprocess")
-            print("- output_template")
-            exit()
 
     def get_files_from_template(self, template, abspath=True):
-        """Get all possible input files associated with the component"""
+        """Get all possible input files associated with the component
+
+        Args:
+            template: string that will be used for the output file name for each case
+            abspath: boolean for using absolute path (True, default) or relative (False)
+        """
+
         files = []
 
         # Get build name
@@ -203,13 +225,23 @@ class Component:
         return files
 
     def get_input_files(self, last_step_obj):
-        """Return input file paths associated with the component."""
+        """Return input file paths associated with the component.
+
+        Args:
+            last_step_obj: myna.components.component.Component object for the last
+              step in the workflow
+        """
+
         files, exists, valid = last_step_obj.get_output_files()
 
         return files, exists, valid
 
     def get_output_files(self, abspath=True):
-        """Return output file paths associated with the component."""
+        """Return output file paths associated with the component.
+
+        Args:
+            abspath: default True, boolean for using absolute (True) or relative (False) paths
+        """
 
         # Get output files based on template
         files = self.get_files_from_template(self.output_template, abspath=abspath)
@@ -229,7 +261,11 @@ class Component:
         return files, exists, valid
 
     def check_output_files(self, files):
-        """Return whether a list of output files is valid for the component."""
+        """Return whether a list of output files is valid for the component.
+
+        Args:
+            files: list of filepaths (strings) to check for validity
+        """
         valid_files = []
         if (self.output_requirement is None) or (len(files) == 0):
             print(f"- step {self.name}: No output requirement specified.")
@@ -249,6 +285,16 @@ class Component:
         return valid_files
 
     def sync_output_files(self):
+        """Sync valid output files back to the database
+
+        Sync behavior is defined in the myna.workflow.sync functions
+        and in the myna.files.File subclasses associated with the Component
+        input_requirement and output_requirement properties.
+
+        Returns:
+            synced_files: list of filepaths (strings) to the output files
+        """
+
         synced_files = []
 
         # Check if layerwise syncing is possible
@@ -295,7 +341,7 @@ class Component:
                         peregrine_dir = os.path.join(buildpath, "Peregrine")
                         output_dir = os.path.join(peregrine_dir, "registered", name)
                         partnumber = int(part.replace("P", ""))
-                        output_file = myna.workflow.sync.upload_results(
+                        output_file = myna.workflow.sync.upload_peregrine_results(
                             peregrine_dir,
                             partnumber,
                             layer,
@@ -307,5 +353,6 @@ class Component:
                             output_path=output_dir,
                         )
                         print(f"     - output_file: {output_file=}")
+                        synced_files.append(output_file)
 
         return synced_files
