@@ -62,9 +62,10 @@ script to create a conda environment named "myna" for use with
 the workflow. If you want to install the package as an editable package,
 then you will have to change line 17 of the script to be `pip install -e .`
 
-For developers, `pip install -e .[dev]` will install the optional `pytest` dependency.
-Test scripts are included with the repository in the "tests" directory. Examples of
-using pytest are given below.
+For developers, `pip install -e .[dev]` will install the optional `pytest` dependency,
+as well as `black` for autoformatting. The repository currently uses the default `black`
+formatting. Test scripts are included with the repository in the "tests" directory.
+Examples of using pytest are given below.
 
 ```bash
 # Default tests for aspects myna Python package installation
