@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "myna"
-version = "0.1.2"
+version = "0.1.0.dev"
 authors = [
     { name="Gerry Knapp", email="knappgl@ornl.gov" },
     { name="Sam Reeve", email="reevest@ornl.gov"},
@@ -36,11 +36,14 @@ dev = [
   'black']
 
 [project.scripts]
-myna_run = "myna.workflow.run:main"
-myna_config = "myna.workflow.config:main"
-myna_sync = "myna.workflow.sync:main"
+myna_run = "myna.core.workflow.run:main"
+myna_config = "myna.core.workflow.config:main"
+myna_sync = "myna.core.workflow.sync:main"
 myna_status = "myna.utils.codebase_status:write_codebase_status_to_file"
-myna_peregrine_launcher = "myna.workflow.launch_from_peregrine:launch_from_peregrine"
+myna_peregrine_launcher = "myna.core.workflow.launch_from_peregrine:launch_from_peregrine"
+
+[tool.setuptools]
+py-modules = ["myna"]
 
 [tool.pytest.ini_options]
 addopts = [
