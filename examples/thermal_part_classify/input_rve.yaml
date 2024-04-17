@@ -1,7 +1,7 @@
 steps:
 - 3dthesis:
     class: thermal_part
-    interface: 3dthesis
+    interface: thesis
     configure_args: [--res 25.0e-6]
     execute_args: [--exec /home/cloud/3DThesis/build/application/3DThesis,
       --np 8,
