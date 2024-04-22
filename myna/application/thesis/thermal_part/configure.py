@@ -5,6 +5,7 @@ from myna.core.workflow.load_input import load_input
 import argparse
 import sys
 import shutil
+import numpy as np
 
 
 def configure_case(case_dir, res, myna_input="myna_data.yaml"):
@@ -51,6 +52,7 @@ def configure_case(case_dir, res, myna_input="myna_data.yaml"):
 
     # Set beam data
     beam_file = os.path.join(case_dir, "Beam.txt")
+    power = settings["build"]["parts"][part]["laser_power"]["value"]
     spot_size = settings["build"]["parts"][part]["spot_size"]["value"]
     spot_unit = settings["build"]["parts"][part]["spot_size"]["unit"]
     spot_scale = 1
@@ -58,9 +60,15 @@ def configure_case(case_dir, res, myna_input="myna_data.yaml"):
         spot_scale = 1e-3
     elif spot_unit == "um":
         spot_scale = 1e-6
-    power = settings["build"]["parts"][part]["laser_power"]["value"]
-    parser.adjust_parameter(beam_file, "Width_X", spot_size * spot_scale)
-    parser.adjust_parameter(beam_file, "Width_Y", spot_size * spot_scale)
+
+    # For setting spot size, assume provided spot size is $D4 \sigma$
+    # 3DThesis spot size is $\sqrt(6) \sigma$
+    parser.adjust_parameter(
+        beam_file, "Width_X", 0.25 * np.sqrt(6) * spot_size * spot_scale
+    )
+    parser.adjust_parameter(
+        beam_file, "Width_Y", 0.25 * np.sqrt(6) * spot_size * spot_scale
+    )
     parser.adjust_parameter(beam_file, "Power", power)
 
     # Update domain resolution
