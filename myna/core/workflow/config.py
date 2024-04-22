@@ -4,9 +4,10 @@ import argparse
 import os
 import yaml
 import copy
-from .load_input import load_input
-import myna.core.components
-import myna.core.metadata
+from myna.core.workflow.load_input import load_input
+from myna.core import components
+from myna.core import metadata
+from myna import database
 
 
 def main(argv=None):
@@ -59,11 +60,9 @@ def main(argv=None):
 
     # Check build directory contains the expected metadata folder
     build_path = settings["data"]["build"]["path"]
-    datatype = myna.core.metadata.return_datatype_class(
-        settings["data"]["build"]["datatype"]
-    )
+    datatype = database.return_datatype_class(settings["data"]["build"]["datatype"])
     database_path = build_path
-    if datatype == myna.core.metadata.PeregrineDB:
+    if datatype == database.PeregrineDB:
         database_path = os.path.join(build_path, "Peregrine")
         has_database = os.path.isdir(database_path)
     if not has_database:
@@ -101,7 +100,7 @@ def main(argv=None):
         step_name = [x for x in step.keys()][0]
         component_class_name = step[step_name]["class"]
         print(f"\n- Configuring step {step_name} ({component_class_name})")
-        step_obj = myna.core.components.return_step_class(component_class_name)
+        step_obj = components.return_step_class(component_class_name)
         step_obj.name = step_name
         step_obj.component_class = component_class_name
         step_obj.component_interface = step[step_name]["interface"]
@@ -120,24 +119,24 @@ def main(argv=None):
         # Get the data requirements associated with that class
         for data_req in step_obj.data_requirements:
             # For each data requirements, lookup the corresponding data object
-            data_class_name = myna.core.metadata.return_data_class_name(data_req)
-            constructor = vars(myna.core.metadata)[data_class_name]
+            data_class_name = metadata.return_data_class_name(data_req)
+            constructor = vars(metadata)[data_class_name]
 
             # Construct the relevant data object
-            if constructor.__base__ == myna.core.metadata.BuildMetadata:
+            if constructor.__base__ == metadata.BuildMetadata:
                 if settings["data"]["build"].get("build_data") is None:
                     settings["data"]["build"]["build_data"] = {}
                 data_obj = constructor(datatype, build_path)
                 datum = {"value": data_obj.value, "unit": data_obj.unit}
                 settings["data"]["build"]["build_data"][data_req] = datum
-            elif constructor.__base__ == myna.core.metadata.PartMetadata:
+            elif constructor.__base__ == metadata.PartMetadata:
                 for part in parts.keys():
                     data_obj = constructor(datatype, build_path, part)
                     datum = {"value": data_obj.value, "unit": data_obj.unit}
                     settings["data"]["build"]["parts"][part][data_req] = datum
 
             # Construct the relevant file object
-            elif constructor.__base__ == myna.core.metadata.BuildFile:
+            elif constructor.__base__ == metadata.BuildFile:
                 data_obj = constructor(datatype, build_path)
                 data_obj.copy_file()
                 datum = {
@@ -145,7 +144,7 @@ def main(argv=None):
                     "file_database": data_obj.file_database,
                 }
                 settings["data"]["build"][data_req] = datum
-            elif constructor.__base__ == myna.core.metadata.PartFile:
+            elif constructor.__base__ == metadata.PartFile:
                 for part in parts.keys():
                     data_obj = constructor(datatype, build_path, part)
                     data_obj.copy_file()
@@ -154,7 +153,7 @@ def main(argv=None):
                         "file_database": data_obj.file_database,
                     }
                     settings["data"]["build"]["parts"][part][data_req] = datum
-            elif constructor.__base__ == myna.core.metadata.LayerFile:
+            elif constructor.__base__ == metadata.LayerFile:
                 for part in parts.keys():
                     # Check for layers in part dictionary
                     part_layers = parts[part].get("layers")

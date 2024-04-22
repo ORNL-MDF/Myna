@@ -1,7 +1,6 @@
 """Define loading of the feedstock material name from databases"""
 
 from .data import *
-from .database_types import *
 
 
 class Material(BuildMetadata):
@@ -14,17 +13,15 @@ class Material(BuildMetadata):
 
     def __init__(self, datatype, build):
         BuildMetadata.__init__(self, datatype, build)
-        self.value = self.value_from_file()
+        self.value = self.value_from_database()
 
-    def value_from_file(self):
+    def value_from_database(self):
         """Returns the material name from the associated file
 
         Returns: str
         """
-        data = self.load_file_data()
-        value = None
-        if self.datatype == PeregrineDB:
-            value = self.material_name_format(str(data["material"]))
+        value = self.datatype.load(self, self.build)
+        value = self.material_name_format(value)
         return value
 
     def material_name_format(self, mat):

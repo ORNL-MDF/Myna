@@ -14,9 +14,6 @@ metadata currently implemented:
     example, scan path files.
 """
 
-# Import database classes
-from .database_types import *
-
 # Import all metadata data classes
 from .data import *
 from .data_spot_size import *

@@ -1,5 +1,7 @@
 """Database classes for handling different types of data object loading"""
 
+from myna.database.peregrine import PeregrineDB
+
 
 def return_datatype_class(datatype_str):
     """Return a corresponding database class object given a string name of the database
@@ -16,8 +18,3 @@ def return_datatype_class(datatype_str):
     else:
         print(f"Error: {datatype_str} does not correspond to any implemented database")
         raise NotImplementedError
-
-
-class PeregrineDB:
-    def __init__(self):
-        self.description = "Peregrine database structure"
