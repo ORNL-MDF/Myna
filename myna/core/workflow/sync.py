@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import argparse
 import myna.core.utils
 import myna.core.components
-from .load_input import load_input
+from myna.core.workflow.load_input import load_input
 
 
 def downsample_to_image(data_x, data_y, values, image_size, plate_size, mode="max"):

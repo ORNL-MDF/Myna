@@ -2,7 +2,7 @@ import argparse
 import os
 
 import myna.core.components
-from .load_input import load_input
+from myna.core.workflow.load_input import load_input
 import myna.core.utils
 
 
