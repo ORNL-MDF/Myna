@@ -61,12 +61,9 @@ def main(argv=None):
     # Check build directory contains the expected metadata folder
     build_path = settings["data"]["build"]["path"]
     datatype = database.return_datatype_class(settings["data"]["build"]["datatype"])
-    database_path = build_path
-    if datatype == database.PeregrineDB:
-        database_path = os.path.join(build_path, "Peregrine")
-        has_database = os.path.isdir(database_path)
-    if not has_database:
-        print(f"ERROR: Could not find valid {datatype} folder in" + f" {build_path}")
+    datatype.set_path(build_path)
+    if not datatype.exists():
+        print(f"ERROR: Could not find valid {datatype} in" + f" {build_path}")
         raise FileNotFoundError
 
     # Get part names
@@ -84,7 +81,7 @@ def main(argv=None):
     if show_avail:
         print("Available metadata:\n-------------------------")
         last_path = ""
-        for path, dirs, files in os.walk(database_path):
+        for path, dirs, files in os.walk(datatype.path):
             for f in files:
                 if len(dirs) == 0:
                     if last_path is not path:

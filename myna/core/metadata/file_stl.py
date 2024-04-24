@@ -12,5 +12,5 @@ class STL(PartFile):
 
     def __init__(self, datatype, build, part):
         PartFile.__init__(self, datatype, build, part)
-        self.file_database = datatype.load(self, self.build, part=self.part)
+        self.file_database = datatype.load(type(self), self.build, part=self.part)
         self.file_local = os.path.join(self.resource_dir, "part.stl")

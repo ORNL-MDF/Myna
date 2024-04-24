@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import argparse
 import myna.core.utils
 import myna.core.components
+import myna.database
 from myna.core.workflow.load_input import load_input
 
 
@@ -43,8 +44,8 @@ def downsample_to_image(data_x, data_y, values, image_size, plate_size, mode="ma
     return np.rot90(image)
 
 
-def upload_peregrine_results(
-    buildpath,
+def upload_results(
+    datatype,
     partnumber,
     layernumber,
     x,
@@ -52,13 +53,11 @@ def upload_peregrine_results(
     sim_values,
     var_name="Test",
     var_unit="Test",
-    output_path=None,
 ):
     """Uploads information from result file to Peregrine database"""
 
-    # Make target output_path exists
-    if output_path is None:
-        output_path = os.path.join(buildpath, "registered", var_name)
+    # Make target output_path
+    output_path = os.path.join(datatype.path_dir, "registered", var_name)
     if not os.path.exists(output_path):
         os.makedirs(output_path)
 
@@ -66,9 +65,8 @@ def upload_peregrine_results(
     filepath = f"{layernumber:07}.npz"
     fullpath = os.path.join(output_path, filepath)
 
-    # Get build size
-    metadata = np.load(os.path.join(buildpath, "simulation", "buildmeta.npz"))
-    plate_size = float(metadata["actual_size"][0]) / 1000
+    # Get build plate size (assume square)
+    plate_size = datatype.get_plate_size()[0]
 
     # If a corresponding .npz file exists,
     # then empty any previous data with same part number and add new
@@ -121,21 +119,20 @@ def upload_peregrine_results(
     )
 
     # Make image of data (required for Peregrine)
-    fullpath = make_image(buildpath, layernumber, var_name)
+    fullpath = make_image(datatype, layernumber, var_name)
 
     return fullpath
 
 
-def make_image(buildpath, layernumber, var_name="Test"):
+def make_image(datatype, layernumber, var_name="Test"):
     # Get FilePath
     subpath = os.path.join("registered", var_name)
     filepath = f"{layernumber:07}.npz"
-    fullpath = os.path.join(buildpath, subpath, filepath)
+    fullpath = os.path.join(datatype.path_dir, subpath, filepath)
 
-    # Get Build Size
-    metadata = np.load(os.path.join(buildpath, "simulation", "buildmeta.npz"))
-    plate_size = float(metadata["actual_size"][0]) / 1000
-    image_size = metadata["image_size"][0]
+    # Get Build and Image Size (assume square)
+    plate_size = datatype.get_plate_size()[0]
+    image_size = datatype.get_sync_image_size()[0]
 
     # Load Data
     data = np.load(fullpath, allow_pickle=True)
@@ -153,7 +150,7 @@ def make_image(buildpath, layernumber, var_name="Test"):
         mode="average",
     )
     filepath = f"{layernumber:07}.png"
-    fullpath = os.path.join(buildpath, subpath, filepath)
+    fullpath = os.path.join(datatype.path_dir, subpath, filepath)
     plt.imsave(fullpath, image, cmap="gray")
 
     return fullpath

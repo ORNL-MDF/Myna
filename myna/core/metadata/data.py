@@ -11,7 +11,7 @@ class BuildMetadata:
         self.datatype = datatype
 
     def value_from_database(self):
-        value = self.datatype.load(self, self.build)
+        value = self.datatype.load(type(self), self.build)
         return value
 
 
@@ -23,5 +23,5 @@ class PartMetadata(BuildMetadata):
         self.part = part
 
     def value_from_database(self):
-        value = self.datatype.load(self, self.build, part=self.part)
+        value = self.datatype.load(type(self), self.build, self.part)
         return value

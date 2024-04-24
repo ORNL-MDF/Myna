@@ -2,6 +2,7 @@
 
 import os
 import myna
+import myna.database
 
 
 class Component:
@@ -306,8 +307,8 @@ class Component:
 
         # Get output files for the step
         files = self.check_output_files(self.data["output_paths"][self.name])
-        datatype = self.data["build"]["datatype"]
-        buildpath = self.data["build"]["path"]
+        datatype = myna.database.return_datatype_class(self.data["build"]["datatype"])
+        datatype.set_path(self.data["build"]["path"])
         if self.output_requirement is None:
             print(f"- step {self.name}: No output requirement specified.")
         elif len(files) == 0:
@@ -337,22 +338,18 @@ class Component:
                 # Iterate through loaded fields
                 for value, name, unit in zip(values, value_names, value_units):
                     print(f"  - field: {name}")
-                    if datatype == "Peregrine":
-                        peregrine_dir = os.path.join(buildpath, "Peregrine")
-                        output_dir = os.path.join(peregrine_dir, "registered", name)
-                        partnumber = int(part.replace("P", ""))
-                        output_file = myna.core.workflow.sync.upload_peregrine_results(
-                            peregrine_dir,
-                            partnumber,
-                            layer,
-                            x,
-                            y,
-                            value,
-                            var_name=name,
-                            var_unit=unit,
-                            output_path=output_dir,
-                        )
-                        print(f"     - output_file: {output_file=}")
-                        synced_files.append(output_file)
+                    partnumber = int(part.replace("P", ""))
+                    output_file = myna.core.workflow.sync.upload_results(
+                        datatype,
+                        partnumber,
+                        layer,
+                        x,
+                        y,
+                        value,
+                        var_name=name,
+                        var_unit=unit,
+                    )
+                    print(f"     - output_file: {output_file=}")
+                    synced_files.append(output_file)
 
         return synced_files

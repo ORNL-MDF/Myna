@@ -11,7 +11,19 @@ class PeregrineDB(Database):
         Database.__init__(self)
         self.description = "ORNL MDF Peregrine build file structure"
 
-    def load(metadata_obj, build, part=None, layer=None):
+    def set_path(self, path):
+        """Set the path to the database
+
+        Args:
+          path: filepath to the build folder on the Peregrine server
+        """
+        self.path = os.path.join(path, "Peregrine")
+        self.path_dir = self.path
+
+    def exists(self):
+        return os.path.isdir(self.path)
+
+    def load(self, metadata_type, build, part=None, layer=None):
         """Load and return a metadata value from the database
 
         Implemented metadata loaders:
@@ -24,7 +36,7 @@ class PeregrineDB(Database):
         - Scanpath
         """
 
-        if type(metadata_obj) == metadata.LaserPower:
+        if metadata_type == metadata.LaserPower:
             datafile = os.path.join(build, "Peregrine", "simulation", part, "part.npz")
             data = np.load(datafile, allow_pickle=True)
             index = [
@@ -32,18 +44,18 @@ class PeregrineDB(Database):
             ][0]
             return float(data["parameter_values"][index])
 
-        elif type(metadata_obj) == metadata.LayerThickness:
+        elif metadata_type == metadata.LayerThickness:
             datafile = os.path.join(build, "Peregrine", "simulation", "buildmeta.npz")
             data = np.load(datafile, allow_pickle=True)
             conversion = 1e-3  # millimeters -> meters
             return float(data["layer_thickness"] * conversion)
 
-        elif type(metadata_obj) == metadata.Material:
+        elif metadata_type == metadata.Material:
             datafile = os.path.join(build, "Peregrine", "simulation", "buildmeta.npz")
             data = np.load(datafile, allow_pickle=True)
             return str(data["material"])
 
-        elif type(metadata_obj) == metadata.Preheat:
+        elif metadata_type == metadata.Preheat:
             datafile = os.path.join(build, "Peregrine", "simulation", "buildmeta.npz")
             data = np.load(datafile, allow_pickle=True)
             index = [
@@ -53,7 +65,7 @@ class PeregrineDB(Database):
             ][0]
             return float(data["metadata_values"][index]) + 273.15
 
-        elif type(metadata_obj) == metadata.SpotSize:
+        elif metadata_type == metadata.SpotSize:
             datafile = os.path.join(build, "Peregrine", "simulation", part, "part.npz")
             data = np.load(datafile, allow_pickle=True)
             index = [
@@ -71,18 +83,28 @@ class PeregrineDB(Database):
 
             return value
 
-        elif type(metadata_obj) == metadata.STL:
+        elif metadata_type == metadata.STL:
             file_database = os.path.join(
                 build, "Peregrine", "simulation", part, f"part.stl"
             )
             return file_database
 
-        elif type(metadata_obj) == metadata.Scanpath:
+        elif metadata_type == metadata.Scanpath:
             file_database = os.path.join(
                 build, "Peregrine", "simulation", part, f"{int(layer):07d}.txt"
             )
             return file_database
 
         else:
-            print(f"Error loading: {type(metadata_obj)}")
+            print(f"Error loading: {metadata_type}")
             raise NotImplementedError
+
+    def get_plate_size(self):
+        """Load the (x,y) build plate size in meters"""
+        metadata = np.load(os.path.join(self.path, "simulation", "buildmeta.npz"))
+        return [x / 1e3 for x in metadata["actual_size"]]
+
+    def get_sync_image_size(self):
+        """Load the (x,y) image size in pixels"""
+        metadata = np.load(os.path.join(self.path, "simulation", "buildmeta.npz"))
+        return metadata["image_size"]
