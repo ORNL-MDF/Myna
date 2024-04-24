@@ -6,7 +6,17 @@ class Database:
 
     def __init__(self):
         self.description = ""
+        self.path = None
+        self.path_dir = None
 
-    def load(metadata_obj):
+    def load(self, metadata_type):
         """Load and return a metadata value"""
+        raise NotImplementedError
+
+    def set_path(self, path):
+        """Set the path for the database"""
+        raise NotImplementedError
+
+    def exists(self):
+        """Check if database exists at the specified path"""
         raise NotImplementedError

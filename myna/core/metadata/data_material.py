@@ -20,7 +20,7 @@ class Material(BuildMetadata):
 
         Returns: str
         """
-        value = self.datatype.load(self, self.build)
+        value = self.datatype.load(type(self), self.build)
         value = self.material_name_format(value)
         return value
 

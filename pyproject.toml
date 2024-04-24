@@ -31,6 +31,8 @@ cluster = [
     'classification @ git+https://code.ornl.gov/ygk/classification.git@myna']
 autothesis = [
     'autothesis @ git+https://code.ornl.gov/ygk/autothesis.git']
+peregrine-hdf5 = [
+  'h5py']
 dev = [
   'pytest',
   'black']
