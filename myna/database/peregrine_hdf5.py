@@ -36,7 +36,7 @@ class PeregrineHDF5(Database):
     def exists(self):
         return os.path.exists(self.path)
 
-    def load(self, metadata_type, build, part=None, layer=None):
+    def load(self, metadata_type, part=None, layer=None):
         """Load and return a metadata value from the database
 
         Implemented metadata loaders:
@@ -50,35 +50,30 @@ class PeregrineHDF5(Database):
         """
 
         if metadata_type == metadata.LaserPower:
-            datafile = build
             pid = int(str(part).split("P")[-1])  # remove "P" prefix from part name
-            with h5py.File(datafile, "r") as data:
+            with h5py.File(self.path, "r") as data:
                 value = float(data["parts/process_parameters/power"][pid])
             return value
 
         elif metadata_type == metadata.LayerThickness:
-            datafile = build
             conversion = 1e-3  # millimeters -> meters
-            with h5py.File(datafile, "r") as data:
+            with h5py.File(self.path, "r") as data:
                 value = float(data.attrs["material/layer_thickness"] * conversion)
             return value
 
         elif metadata_type == metadata.Material:
-            datafile = build
-            with h5py.File(datafile, "r") as data:
+            with h5py.File(self.path, "r") as data:
                 value = str(data.attrs["material/composition"])
             return value
 
         elif metadata_type == metadata.Preheat:
-            datafile = build
-            with h5py.File(datafile, "r") as data:
+            with h5py.File(self.path, "r") as data:
                 value = float(data["temporal/bottom_chamber_temperature"][0]) + 273.15
             return value
 
         elif metadata_type == metadata.SpotSize:
-            datafile = build
             pid = int(str(part).split("P")[-1])  # remove "P" prefix from part name
-            with h5py.File(datafile, "r") as data:
+            with h5py.File(self.path, "r") as data:
                 value = float(data["parts/process_parameters/spot_size"][pid])
 
             # NOTE: Correct for bug in Peregrine that saved spot size as microns
@@ -91,7 +86,7 @@ class PeregrineHDF5(Database):
 
         elif metadata_type == metadata.Scanpath:
             # Extract scan path data to file if it doesn't already exist
-            file_database = self.create_scanfile(build, part, layer)
+            file_database = self.create_scanfile(part, layer)
             return file_database
 
         else:
@@ -110,16 +105,15 @@ class PeregrineHDF5(Database):
         with h5py.File(self.path, "r") as data:
             return data["slices/part_ids"].shape[1:]
 
-    def create_scanfile(self, build, part, layer):
+    def create_scanfile(self, part, layer):
         """Create a scanpath file from the HDF5 archive
 
         Args:
-          build: path to the build
           part: name of the part
           layer: layer number
         """
         # Set output file name
-        basedir = os.path.dirname(build)
+        basedir = os.path.dirname(self.path)
         file_database = os.path.join(
             basedir, "simulation", str(part), f"{int(layer):07d}.txt"
         )
@@ -129,9 +123,8 @@ class PeregrineHDF5(Database):
 
         # Only create scan files if files don't already exist
         if not os.path.exists(file_database):
-            datafile = build
             pid = int(str(part).split("P")[-1])  # remove "P" prefix from part name
-            with h5py.File(datafile, "r") as data:
+            with h5py.File(self.path, "r") as data:
 
                 # Get Part ID and scan path information
                 part_ids = data["slices/part_ids"]

@@ -11,8 +11,8 @@ class Material(BuildMetadata):
     - PeregrineDB
     """
 
-    def __init__(self, datatype, build):
-        BuildMetadata.__init__(self, datatype, build)
+    def __init__(self, datatype):
+        BuildMetadata.__init__(self, datatype)
         self.value = self.value_from_database()
 
     def value_from_database(self):
@@ -20,7 +20,7 @@ class Material(BuildMetadata):
 
         Returns: str
         """
-        value = self.datatype.load(type(self), self.build)
+        value = self.datatype.load(type(self))
         value = self.material_name_format(value)
         return value
 

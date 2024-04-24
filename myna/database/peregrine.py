@@ -23,7 +23,7 @@ class PeregrineDB(Database):
     def exists(self):
         return os.path.isdir(self.path)
 
-    def load(self, metadata_type, build, part=None, layer=None):
+    def load(self, metadata_type, part=None, layer=None):
         """Load and return a metadata value from the database
 
         Implemented metadata loaders:
@@ -37,7 +37,7 @@ class PeregrineDB(Database):
         """
 
         if metadata_type == metadata.LaserPower:
-            datafile = os.path.join(build, "Peregrine", "simulation", part, "part.npz")
+            datafile = os.path.join(self.path, "simulation", part, "part.npz")
             data = np.load(datafile, allow_pickle=True)
             index = [
                 ind for ind, x in enumerate(data["parameter_names"]) if x == "Power (W)"
@@ -45,18 +45,18 @@ class PeregrineDB(Database):
             return float(data["parameter_values"][index])
 
         elif metadata_type == metadata.LayerThickness:
-            datafile = os.path.join(build, "Peregrine", "simulation", "buildmeta.npz")
+            datafile = os.path.join(self.path, "simulation", "buildmeta.npz")
             data = np.load(datafile, allow_pickle=True)
             conversion = 1e-3  # millimeters -> meters
             return float(data["layer_thickness"] * conversion)
 
         elif metadata_type == metadata.Material:
-            datafile = os.path.join(build, "Peregrine", "simulation", "buildmeta.npz")
+            datafile = os.path.join(self.path, "simulation", "buildmeta.npz")
             data = np.load(datafile, allow_pickle=True)
             return str(data["material"])
 
         elif metadata_type == metadata.Preheat:
-            datafile = os.path.join(build, "Peregrine", "simulation", "buildmeta.npz")
+            datafile = os.path.join(self.path, "simulation", "buildmeta.npz")
             data = np.load(datafile, allow_pickle=True)
             index = [
                 ind
@@ -66,7 +66,7 @@ class PeregrineDB(Database):
             return float(data["metadata_values"][index]) + 273.15
 
         elif metadata_type == metadata.SpotSize:
-            datafile = os.path.join(build, "Peregrine", "simulation", part, "part.npz")
+            datafile = os.path.join(self.path, "simulation", part, "part.npz")
             data = np.load(datafile, allow_pickle=True)
             index = [
                 ind
@@ -84,14 +84,12 @@ class PeregrineDB(Database):
             return value
 
         elif metadata_type == metadata.STL:
-            file_database = os.path.join(
-                build, "Peregrine", "simulation", part, f"part.stl"
-            )
+            file_database = os.path.join(self.path, "simulation", part, f"part.stl")
             return file_database
 
         elif metadata_type == metadata.Scanpath:
             file_database = os.path.join(
-                build, "Peregrine", "simulation", part, f"{int(layer):07d}.txt"
+                self.path, "simulation", part, f"{int(layer):07d}.txt"
             )
             return file_database
 

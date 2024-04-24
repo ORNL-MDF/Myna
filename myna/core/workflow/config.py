@@ -123,18 +123,18 @@ def main(argv=None):
             if constructor.__base__ == metadata.BuildMetadata:
                 if settings["data"]["build"].get("build_data") is None:
                     settings["data"]["build"]["build_data"] = {}
-                data_obj = constructor(datatype, build_path)
+                data_obj = constructor(datatype)
                 datum = {"value": data_obj.value, "unit": data_obj.unit}
                 settings["data"]["build"]["build_data"][data_req] = datum
             elif constructor.__base__ == metadata.PartMetadata:
                 for part in parts.keys():
-                    data_obj = constructor(datatype, build_path, part)
+                    data_obj = constructor(datatype, part)
                     datum = {"value": data_obj.value, "unit": data_obj.unit}
                     settings["data"]["build"]["parts"][part][data_req] = datum
 
             # Construct the relevant file object
             elif constructor.__base__ == metadata.BuildFile:
-                data_obj = constructor(datatype, build_path)
+                data_obj = constructor(datatype)
                 data_obj.copy_file()
                 datum = {
                     "file_local": data_obj.file_local,
@@ -143,7 +143,7 @@ def main(argv=None):
                 settings["data"]["build"][data_req] = datum
             elif constructor.__base__ == metadata.PartFile:
                 for part in parts.keys():
-                    data_obj = constructor(datatype, build_path, part)
+                    data_obj = constructor(datatype, part)
                     data_obj.copy_file()
                     datum = {
                         "file_local": data_obj.file_local,
@@ -175,7 +175,7 @@ def main(argv=None):
                                 settings["data"]["build"]["parts"][part]["layer_data"][
                                     layer
                                 ] = {}
-                            data_obj = constructor(datatype, build_path, part, layer)
+                            data_obj = constructor(datatype, part, layer)
                             data_obj.copy_file()
                             datum = {
                                 "file_local": data_obj.file_local,
@@ -211,9 +211,7 @@ def main(argv=None):
                                         settings["data"]["build"]["parts"][part][
                                             "regions"
                                         ][region]["layer_data"][layer] = {}
-                                    data_obj = constructor(
-                                        datatype, build_path, part, layer
-                                    )
+                                    data_obj = constructor(datatype, part, layer)
                                     data_obj.copy_file()
                                     datum = {
                                         "file_local": data_obj.file_local,
