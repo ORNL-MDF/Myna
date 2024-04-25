@@ -11,9 +11,7 @@ class Scanpath(LayerFile):
     - PeregrineDB
     """
 
-    def __init__(self, datatype, build, part, layer):
-        LayerFile.__init__(self, datatype, build, part, layer)
-        self.file_database = datatype.load(
-            type(self), self.build, part=self.part, layer=self.layer
-        )
+    def __init__(self, datatype, part, layer):
+        LayerFile.__init__(self, datatype, part, layer)
+        self.file_database = datatype.load(type(self), part=self.part, layer=self.layer)
         self.file_local = os.path.join(self.resource_dir, "scanpath.txt")

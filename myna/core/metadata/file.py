@@ -7,12 +7,11 @@ import os
 class BuildFile:
     """File that requires a build path specification"""
 
-    def __init__(self, datatype, build):
+    def __init__(self, datatype):
         self.datatype = datatype
         self.file_database = ""
         self.file_local = ""
         self.resource_dir = ""
-        self.build = build
         self.myna_format = (
             False  # For tracking if the file has been converted to Myna format
         )
@@ -42,8 +41,8 @@ class BuildFile:
 class PartFile(BuildFile):
     """File that requires both a build and part specification"""
 
-    def __init__(self, datatype, build, part):
-        BuildFile.__init__(self, datatype, build)
+    def __init__(self, datatype, part):
+        BuildFile.__init__(self, datatype)
         self.part = part
         self.resource_dir = os.path.abspath(os.path.join(self.resource_dir, f"{part}"))
 
@@ -51,7 +50,7 @@ class PartFile(BuildFile):
 class LayerFile(PartFile):
     """File that requires a build, part, and layer specification"""
 
-    def __init__(self, datatype, build, part, layer):
-        PartFile.__init__(self, datatype, build, part)
+    def __init__(self, datatype, part, layer):
+        PartFile.__init__(self, datatype, part)
         self.layer = layer
         self.resource_dir = os.path.abspath(os.path.join(self.resource_dir, f"{layer}"))

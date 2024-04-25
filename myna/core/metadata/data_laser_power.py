@@ -10,7 +10,7 @@ class LaserPower(PartMetadata):
     - PeregrineDB
     """
 
-    def __init__(self, datatype, build, part):
-        PartMetadata.__init__(self, datatype, build, part)
+    def __init__(self, datatype, part):
+        PartMetadata.__init__(self, datatype, part)
         self.unit = "W"
         self.value = self.value_from_database()

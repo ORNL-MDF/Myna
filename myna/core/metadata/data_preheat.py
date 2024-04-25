@@ -11,7 +11,7 @@ class Preheat(BuildMetadata):
     - PeregrineDB
     """
 
-    def __init__(self, datatype, build):
-        BuildMetadata.__init__(self, datatype, build)
+    def __init__(self, datatype):
+        BuildMetadata.__init__(self, datatype)
         self.unit = "K"
         self.value = self.value_from_database()
