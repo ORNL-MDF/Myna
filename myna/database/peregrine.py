@@ -38,42 +38,48 @@ class PeregrineDB(Database):
 
         if metadata_type == metadata.LaserPower:
             datafile = os.path.join(self.path, "simulation", part, "part.npz")
-            data = np.load(datafile, allow_pickle=True)
-            index = [
-                ind for ind, x in enumerate(data["parameter_names"]) if x == "Power (W)"
-            ][0]
-            return float(data["parameter_values"][index])
+            with np.load(datafile, allow_pickle=True) as data:
+                index = [
+                    ind
+                    for ind, x in enumerate(data["parameter_names"])
+                    if x == "Power (W)"
+                ][0]
+                value = float(data["parameter_values"][index])
+            return value
 
         elif metadata_type == metadata.LayerThickness:
             datafile = os.path.join(self.path, "simulation", "buildmeta.npz")
-            data = np.load(datafile, allow_pickle=True)
-            conversion = 1e-3  # millimeters -> meters
-            return float(data["layer_thickness"] * conversion)
+            with np.load(datafile, allow_pickle=True) as data:
+                conversion = 1e-3  # millimeters -> meters
+                value = float(data["layer_thickness"] * conversion)
+            return value
 
         elif metadata_type == metadata.Material:
             datafile = os.path.join(self.path, "simulation", "buildmeta.npz")
-            data = np.load(datafile, allow_pickle=True)
-            return str(data["material"])
+            with np.load(datafile, allow_pickle=True) as data:
+                value = str(data["material"])
+            return value
 
         elif metadata_type == metadata.Preheat:
             datafile = os.path.join(self.path, "simulation", "buildmeta.npz")
-            data = np.load(datafile, allow_pickle=True)
-            index = [
-                ind
-                for ind, x in enumerate(data["metadata_names"])
-                if x == "Target Preheat (°C)"
-            ][0]
-            return float(data["metadata_values"][index]) + 273.15
+            with np.load(datafile, allow_pickle=True) as data:
+                index = [
+                    ind
+                    for ind, x in enumerate(data["metadata_names"])
+                    if x == "Target Preheat (°C)"
+                ][0]
+                value = float(data["metadata_values"][index]) + 273.15
+            return value
 
         elif metadata_type == metadata.SpotSize:
             datafile = os.path.join(self.path, "simulation", part, "part.npz")
-            data = np.load(datafile, allow_pickle=True)
-            index = [
-                ind
-                for ind, x in enumerate(data["parameter_names"])
-                if x == "Spot Size (mm)"
-            ][0]
-            value = float(data["parameter_values"][index])
+            with np.load(datafile, allow_pickle=True) as data:
+                index = [
+                    ind
+                    for ind, x in enumerate(data["parameter_names"])
+                    if x == "Spot Size (mm)"
+                ][0]
+                value = float(data["parameter_values"][index])
 
             # NOTE: Correct for bug in Peregrine that saved spot size as microns
             # in some files. Assume that if the spot size is greater than 10
@@ -99,10 +105,12 @@ class PeregrineDB(Database):
 
     def get_plate_size(self):
         """Load the (x,y) build plate size in meters"""
-        metadata = np.load(os.path.join(self.path, "simulation", "buildmeta.npz"))
-        return [x / 1e3 for x in metadata["actual_size"]]
+        with np.load(os.path.join(self.path, "simulation", "buildmeta.npz")) as data:
+            value = [x / 1e3 for x in data["actual_size"]]
+        return value
 
     def get_sync_image_size(self):
         """Load the (x,y) image size in pixels"""
-        metadata = np.load(os.path.join(self.path, "simulation", "buildmeta.npz"))
-        return metadata["image_size"]
+        with np.load(os.path.join(self.path, "simulation", "buildmeta.npz")) as data:
+            value = data["image_size"]
+        return value
