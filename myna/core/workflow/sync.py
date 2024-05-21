@@ -71,16 +71,16 @@ def upload_results(
     # If a corresponding .npz file exists,
     # then empty any previous data with same part number and add new
     if os.path.exists(fullpath):
-        data = np.load(fullpath, allow_pickle=True)
+        with np.load(fullpath, allow_pickle=True) as data:
 
-        # Mask current part number
-        other_parts_in_layer = data["part_num"] != partnumber
+            # Mask current part number
+            other_parts_in_layer = data["part_num"] != partnumber
 
-        # Get coordinates and values outside the masked region
-        xcoords = data["coords_x"][other_parts_in_layer]
-        ycoords = data["coords_y"][other_parts_in_layer]
-        other_partnumbers = data["part_num"][other_parts_in_layer]
-        values = data["values"][other_parts_in_layer]
+            # Get coordinates and values outside the masked region
+            xcoords = data["coords_x"][other_parts_in_layer]
+            ycoords = data["coords_y"][other_parts_in_layer]
+            other_partnumbers = data["part_num"][other_parts_in_layer]
+            values = data["values"][other_parts_in_layer]
 
         # Add new values to masked region
         xcoords = np.concatenate([xcoords, x])
@@ -135,10 +135,10 @@ def make_image(datatype, layernumber, var_name="Test"):
     image_size = datatype.get_sync_image_size()[0]
 
     # Load Data
-    data = np.load(fullpath, allow_pickle=True)
-    xcoords = data["coords_x"]
-    ycoords = data["coords_y"]
-    values = data["values"]
+    with np.load(fullpath, allow_pickle=True) as data:
+        xcoords = data["coords_x"]
+        ycoords = data["coords_y"]
+        values = data["values"]
 
     # Make Image
     image = downsample_to_image(
