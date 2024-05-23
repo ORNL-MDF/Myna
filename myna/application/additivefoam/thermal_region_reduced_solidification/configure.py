@@ -326,7 +326,11 @@ def generate(autofoam_input_dict, myna_settings, use_existing_mesh):
         f"foamDictionary -entry writeInterval -set {np.round(0.5 * (end_time - start_time), 5)} "
         + f"{case_dir}/system/controlDict"
     )
-    shutil.move(os.path.join(case_dir, "0"), os.path.join(case_dir, f"{start_time}"))
+    source = os.path.abspath(os.path.join(case_dir, "0"))
+    target = os.path.abspath(os.path.join(case_dir, f"{start_time}"))
+    if os.path.exists(target):
+        shutil.rmtree(target)
+    shutil.move(source, target)
     os.system(
         f"foamDictionary -entry beam/pathName -set"
         + f""" '"{path_name}"' """

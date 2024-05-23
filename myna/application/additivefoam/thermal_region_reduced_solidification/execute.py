@@ -19,6 +19,7 @@ def run_case(case_dir, cores, batch):
 
     # Run case using "runCase" script
     pid = None
+    process = None
     os.system(f'chmod 755 {os.path.join(case_dir, "runCase")}')
     if not batch:
         os.system(f'{os.path.join(case_dir, "runCase")}')
