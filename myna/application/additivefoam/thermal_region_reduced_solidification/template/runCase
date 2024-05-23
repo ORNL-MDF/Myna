@@ -10,3 +10,6 @@ mpirun -np $cores additiveFoam -parallel > log.additiveFoam 2>&1
 # Reconstruct ExaCA data into a single file
 echo "x,y,z,tm,ts,cr" > solidificationData.csv
 cat ExaCA/* >> solidificationData.csv
+
+# Delete processor directories
+rm -r processor*
