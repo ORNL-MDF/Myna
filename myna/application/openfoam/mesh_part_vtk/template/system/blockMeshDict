@@ -1,10 +1,9 @@
-/*--------------------------------*- C++ -*----------------------------------*\
-  =========                 |
-  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
-   \\    /   O peration     | Website:  https://openfoam.org
-    \\  /    A nd           | Version:  10
-     \\/     M anipulation  |
-\*---------------------------------------------------------------------------*/
+/*---------------------------------------------------------------------------
+     OpenFOAM template input file (compatible with OpenFOAM 10)
+
+                      Created for simulation with Myna
+  ---------------------------------------------------------------------------*/
+
 FoamFile
 {
     version         2;
@@ -14,17 +13,17 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-xmin            0.042499789999999996;
-ymin            -0.05550861;
-zmin            -2.01e-06;
+xmin            0;
+ymin            0;
+zmin            0;
 
-xmax            0.05749781;
-ymax            -0.041172589999999995;
-zmax            0.016500010000000002;
+xmax            1;
+ymax            1;
+zmax            1;
 
-nx              75;
-ny              72;
-nz              83;
+nx              1;
+ny              1;
+nz              1;
 
 vertices
 (

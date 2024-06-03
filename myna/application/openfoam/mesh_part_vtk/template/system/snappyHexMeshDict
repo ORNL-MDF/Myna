@@ -1,10 +1,9 @@
-/*--------------------------------*- C++ -*----------------------------------*\
-  =========                 |
-  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
-   \\    /   O peration     | Website:  https://openfoam.org
-    \\  /    A nd           | Version:  10
-     \\/     M anipulation  |
-\*---------------------------------------------------------------------------*/
+/*---------------------------------------------------------------------------
+     OpenFOAM template input file (compatible with OpenFOAM 10)
+
+                      Created for simulation with Myna
+  ---------------------------------------------------------------------------*/
+
 FoamFile
 {
     version         2;
@@ -27,13 +26,13 @@ geometry
     part
     {
         type            triSurfaceMesh;
-        file            "zeiss_part.stl";
+        file            "part.stl";
     }
 }
 
 castellatedMeshControls
 {
-    features        ( { file "zeiss_part.eMesh" ; level 0 ; } );
+    features        ( { file "part.eMesh" ; level 0 ; } );
     refinementSurfaces
     {
         part
@@ -54,8 +53,8 @@ castellatedMeshControls
             levels          ( ( 0 0 ) );
         }
     }
-    nCellsBetweenLevels 3;
-    locationInMesh  ( 0.0499988 -0.0483406 0.008249 );
+    nCellsBetweenLevels 5;
+    locationInMesh  ( 0 0 0 );
 }
 
 snapControls

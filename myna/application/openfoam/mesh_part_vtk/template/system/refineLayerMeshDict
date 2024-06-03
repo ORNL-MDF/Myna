@@ -1,10 +1,9 @@
-/*--------------------------------*- C++ -*----------------------------------*\
-  =========                 |
-  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
-   \\    /   O peration     | Website:  https://openfoam.org
-    \\  /    A nd           | Version:  10
-     \\/     M anipulation  |
-\*---------------------------------------------------------------------------*/
+/*---------------------------------------------------------------------------
+     OpenFOAM template input file (compatible with OpenFOAM 10)
+
+                      Created for simulation with Myna
+  ---------------------------------------------------------------------------*/
+
 FoamFile
 {
     version         2;
@@ -26,32 +25,28 @@ geometry
 {
     refinementBox
     {
-        type searchableBox;
-        min  (0   0   0);
-        max  (0   0   0);
+        type            searchableBox;
+        min             ( 0 0 0 );
+        max             ( 0 0 0 );
     }
 }
 
 castellatedMeshControls
 {
-    features ();
-
+    features        ( );
     refinementSurfaces
     {
     }
-
     refinementRegions
     {
         refinementBox
         {
             mode            inside;
-            levels          ( ( 4 4 ) );
+            levels          ( ( 0 0 ) );
         }
     }
-
     nCellsBetweenLevels 5;
-
-    locationInMesh  (0   0   0);
+    locationInMesh  ( 0 0 0 );
 }
 
 snapControls
@@ -69,6 +64,7 @@ addLayersControls
     minThickness    0.001;
 }
 
-mergeTolerance  1e-8;
+mergeTolerance  1e-08;
+
 
 // ************************************************************************* //

@@ -5,6 +5,7 @@ from .component_thermal import *
 from .component_microstructure import *
 from .component_rve import *
 from .component_classify import *
+from .component_mesh import *
 
 
 def return_step_class(step_name):
@@ -32,6 +33,8 @@ def return_step_class(step_name):
         "microstructure_part": ComponentMicrostructurePart(),
         "microstructure_region": ComponentMicrostructureRegion(),
         "rve": ComponentRVE(),
+        "mesh_part": ComponentPartMesh(),
+        "mesh_part_vtk": ComponentPartMeshVTK(),
     }
     try:
         step_class = step_class_lookup[step_name]
