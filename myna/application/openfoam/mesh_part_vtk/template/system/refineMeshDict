@@ -1,0 +1,70 @@
+/*---------------------------------------------------------------------------
+     OpenFOAM template input file (compatible with OpenFOAM 10)
+
+                      Created for simulation with Myna
+  ---------------------------------------------------------------------------*/
+
+FoamFile
+{
+    version         2;
+    format          ascii;
+    class           dictionary;
+    object          snappyHexMeshDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+#includeEtc     "caseDicts/mesh/generation/snappyHexMeshDict.cfg"
+
+castellatedMesh true;
+
+snap            false;
+
+addLayers       false;
+
+geometry
+{
+    refinementBox
+    {
+        type            searchableBox;
+        min             ( 0 0 0 );
+        max             ( 0 0 0 );
+    }
+}
+
+castellatedMeshControls
+{
+    features        ( );
+    refinementSurfaces
+    {
+    }
+    refinementRegions
+    {
+        refinementBox
+        {
+            mode            inside;
+            levels          ( ( 0 0 ) );
+        }
+    }
+    nCellsBetweenLevels 5;
+    locationInMesh  ( 0 0 0 );
+}
+
+snapControls
+{
+}
+
+addLayersControls
+{
+    layers
+    {
+    }
+    relativeSizes   true;
+    expansionRatio  1.2;
+    finalLayerThickness 0.5;
+    minThickness    0.001;
+}
+
+mergeTolerance  1e-08;
+
+
+// ************************************************************************* //
