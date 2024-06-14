@@ -2,7 +2,7 @@
 
 Available subclasses:
    ComponentClassify
-   ComponentClassifyThermal
+   ComponentClassifySolidification
    ComponentClassifySupervoxel
 """
 
@@ -22,7 +22,7 @@ class ComponentClassify(Component):
         self.types.append("part")
 
 
-class ComponentClassifyThermal(ComponentClassify):
+class ComponentClassifySolidification(ComponentClassify):
     """Layer-wise Component that outputs spatially-varying data in the
     FileID` class format and requires input from solidification
     data file of class `FileGV`.

@@ -1,35 +1,25 @@
 steps:
 - 3dthesis:
-    class: thermal_part
+    class: solidification_part
     interface: thesis
-    configure_args: [--res 25.0e-6]
+    configure_args: [--res 50.0e-6]
     execute_args: [--exec /home/cloud/3DThesis/build/application/3DThesis,
       --np 8,
       --maxproc 32]
+- classification:
+    class: classify_solidification
+    interface: classification
 - classification_relabel:
-    class: classify_thermal
+    class: classify_solidification
     interface: classification
     execute_args: [--thermal 3dthesis, --no-training]
+- classification_supervoxel:
+    class: classify_supervoxel
+    interface: classification
 - classification_supervoxel_relabel:
     class: classify_supervoxel
     interface: classification
     execute_args: [--cluster classification_relabel, --no-training]
-- rve:
-    class: rve
-    interface: rve_selection
-- additivefoam_cube:
-    class: thermal_region_reduced_solidification
-    interface: additivefoam_cube
-    configure_args: [--coarse 80e-6,
-        --rx 1.0e-3,
-        --ry 1.0e-3,
-        --rz 300e-6,
-        --pad-xy 0.75e-3,
-        --pad-z 0.4e-3,
-        --pad-sub 2.5e-3,
-        --refine-layer 2,
-        --refine-region 1]
-    execute: [--batch, --cores 24]
 data:
   build:
     datatype: Peregrine

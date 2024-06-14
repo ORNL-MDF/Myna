@@ -80,7 +80,7 @@ pytest --interfaces
 To run the example Myna workflow use the `myna_config` and `myna_run` scripts and point to a valid YAML input file:
 
 ```bash
-cd ./examples/thermal_part_3dthesis
+cd ./examples/solidification_part_3dthesis
 
 # The input.yaml in this example should be modified to match your
 # local environment (e.g. file paths)
