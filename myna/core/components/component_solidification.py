@@ -1,13 +1,13 @@
 """Define subclasses for thermal simulation Components
 
 Available subclasses:
-  ComponentThermal
-  ComponentThermalPart
-  ComponentThermalRegion
-  ComponentThermalPartSTL
-  ComponentThermalRegionSTL
-  ComponentThermalPartReducedSolidification
-  ComponentThermalRegionReducedSolidification
+  ComponentSolidification
+  ComponentSolidificationPart
+  ComponentSolidificationRegion
+  ComponentSolidificationPartSTL
+  ComponentSolidificationRegionSTL
+  ComponentSolidificationPartReduced
+  ComponentSolidificationRegionReduced
 """
 
 from .component import *
@@ -20,7 +20,7 @@ from myna.core.files.file_reduced_solidification import *
 ##################
 
 
-class ComponentThermal(Component):
+class ComponentSolidification(Component):
     """Build-wise Component that outputs the spatial varying solidification G and V"""
 
     def __init__(self):
@@ -43,17 +43,17 @@ class ComponentThermal(Component):
 ########################################
 
 
-class ComponentThermalPart(ComponentThermal):
+class ComponentSolidificationPart(ComponentSolidification):
     """Layer-wise Component that outputs the spatial varying solidification
     characteristics for a part in the format of the class `FileGV`
     """
 
     def __init__(self):
-        ComponentThermal.__init__(self)
+        ComponentSolidification.__init__(self)
         self.types.extend(["part", "layer"])
 
 
-class ComponentThermalRegion(ComponentThermal):
+class ComponentSolidificationRegion(ComponentSolidification):
     """Layer-wise Component that outputs the spatial varying solidification
     characteristics for a region in the format of the class `FileGV`
     based on input of the region location in the format
@@ -61,7 +61,7 @@ class ComponentThermalRegion(ComponentThermal):
     """
 
     def __init__(self):
-        ComponentThermal.__init__(self)
+        ComponentSolidification.__init__(self)
         self.input_requirement = FileRegion
         self.types.extend(["part", "region", "layer"])
 
@@ -71,18 +71,18 @@ class ComponentThermalRegion(ComponentThermal):
 ############################
 
 
-class ComponentThermalPartSTL(ComponentThermalPart):
+class ComponentSolidificationPartSTL(ComponentSolidificationPart):
     """Layer-wise Component that outputs the spatial varying solidification
     characteristics for a part in the format of the class
     `FileGV` and requires an STL file as input.
     """
 
     def __init__(self):
-        ComponentThermalPart.__init__(self)
+        ComponentSolidificationPart.__init__(self)
         self.data_requirements.extend(["stl"])
 
 
-class ComponentThermalRegionSTL(ComponentThermalRegion):
+class ComponentSolidificationRegionSTL(ComponentSolidificationRegion):
     """Layer-wise Component that outputs the spatial varying solidification
     characteristics for a region in the format of the class
     `FileGV` based on input of the region location in the format
@@ -90,25 +90,25 @@ class ComponentThermalRegionSTL(ComponentThermalRegion):
     """
 
     def __init__(self):
-        ComponentThermalRegion.__init__(self)
+        ComponentSolidificationRegion.__init__(self)
         self.data_requirements.extend(["stl"])
 
 
 #################################################
 # Reduced solidification data output Components #
 #################################################
-class ComponentThermalPartReducedSolidification(ComponentThermalPart):
+class ComponentSolidificationPartReduced(ComponentSolidificationPart):
     """Layer-wise Component that outputs the spatial varying solidification
     characteristics for a region in the format of the class
     `FileReducedSolidification`
     """
 
     def __init__(self):
-        ComponentThermalPart.__init__(self)
+        ComponentSolidificationPart.__init__(self)
         self.output_requirement = FileReducedSolidification
 
 
-class ComponentThermalRegionReducedSolidification(ComponentThermalRegion):
+class ComponentSolidificationRegionReduced(ComponentSolidificationRegion):
     """Layer-wise Component that outputs the spatial varying solidification
     characteristics for a region in the format of the class
     `FileReducedSolidification` based on input of the region location
@@ -116,5 +116,5 @@ class ComponentThermalRegionReducedSolidification(ComponentThermalRegion):
     """
 
     def __init__(self):
-        ComponentThermalRegion.__init__(self)
+        ComponentSolidificationRegion.__init__(self)
         self.output_requirement = FileReducedSolidification

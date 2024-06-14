@@ -51,7 +51,7 @@ def setup_case(
         template_path = os.path.join(
             os.environ["MYNA_INTERFACE_PATH"],
             "additivefoam",
-            "thermal_region_stl",
+            "solidification_region_stl",
             "template",
         )
     else:

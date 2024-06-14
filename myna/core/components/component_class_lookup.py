@@ -1,11 +1,12 @@
 """Functionality for looking up component subclasses"""
 
 from .component import *
-from .component_thermal import *
+from .component_solidification import *
 from .component_microstructure import *
 from .component_rve import *
 from .component_classify import *
 from .component_mesh import *
+from .component_temperature import *
 
 
 def return_step_class(step_name):
@@ -22,13 +23,14 @@ def return_step_class(step_name):
 
     step_class_lookup = {
         "general": Component(),
-        "thermal_part": ComponentThermalPart(),
-        "thermal_region_reduced_solidification": ComponentThermalRegion(),
-        "thermal_part_reduced_solidification": ComponentThermalPartReducedSolidification(),
-        "thermal_region_reduced_solidification": ComponentThermalRegionReducedSolidification(),
-        "thermal_part_stl": ComponentThermalPartSTL(),
-        "thermal_region_stl": ComponentThermalRegionSTL(),
-        "classify_thermal": ComponentClassifyThermal(),
+        "solidification_part": ComponentSolidificationPart(),
+        "solidification_region_reduced": ComponentSolidificationRegion(),
+        "solidification_part_solidification": ComponentSolidificationPartReduced(),
+        "solidification_region_reduced": ComponentSolidificationRegionReduced(),
+        "solidification_part_stl": ComponentSolidificationPartSTL(),
+        "solidification_region_stl": ComponentSolidificationRegionSTL(),
+        "temperature_part": ComponentTemperaturePart(),
+        "classify_solidification": ComponentClassifySolidification(),
         "classify_supervoxel": ComponentClassifySupervoxel(),
         "microstructure_part": ComponentMicrostructurePart(),
         "microstructure_region": ComponentMicrostructureRegion(),

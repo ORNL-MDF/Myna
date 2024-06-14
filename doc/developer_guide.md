@@ -49,7 +49,7 @@ database, however, this is optional (more on that later).
 
 With the above questions addressed, it is now time to implement a new component class.
 An good example of a component class with the features mentioned above is
-[ComponentThermalPart](../src/myna/components/component_thermal.py)
+[ComponentSolidificationPart](../src/myna/components/component_solidification.py)
 That class does not require a particular input file, it outputs a file class of `FileGV`
 and requires several pieces of metadata. Additionally, it is associated with
 layer-wise part simulations, hence the extension of the component types

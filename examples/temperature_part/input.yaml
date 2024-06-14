@@ -1,14 +1,14 @@
 steps:
 - 3dthesis:
-    class: thermal_part
+    class: temperature_part
     interface: thesis
-    configure_args: [--res 50.0e-6]
-    execute_args: [--exec /home/cloud/3DThesis/build/application/3DThesis, --np 8]
+    configure_args: [--res 25.0e-6]
+    execute_args: [--exec /home/cloud/3DThesis/build/application/3DThesis, --np 8, --batch]
 data:
   build:
     datatype: Peregrine
     name: myna_output
     path: /home/cloud/myna/resources
     parts:
-      P6:
+      'P6':
         layers: [51]

@@ -132,7 +132,7 @@ def main(argv=None):
         exec = os.path.join(
             os.environ["MYNA_INTERFACE_PATH"],
             "thesis",
-            "thermal_part",
+            "solidification_part",
             "3DThesis",
             "build",
             "application",

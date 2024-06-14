@@ -1,7 +1,7 @@
 # Interface documentation
 
 - Component type
-  - `thermal_region_reduced_solidification`
+  - `solidification_region_reduced`
 - Interface name
   - `additivefoam_cube`
 - Interface description
@@ -10,7 +10,7 @@
     in a given rectangular XY region surrounding the region center
     and in a given depth from the top of the layer.
 - Example case
-  - `examples/demo_thermal_region`
+  - `examples/demo_solidification_region`
 
 ## Available options
 

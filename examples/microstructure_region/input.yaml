@@ -1,6 +1,6 @@
 steps:
 - additivefoam_cube:
-    class: thermal_region_reduced_solidification
+    class: solidification_region_reduced
     interface: additivefoam_cube
     configure_args: [--coarse 80e-6,
         --rx 0.5e-3,
