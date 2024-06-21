@@ -24,6 +24,7 @@ dependencies = [
     'matplotlib',
     'mistlib @ git+https://github.com/ORNL-MDF/mist.git',
     'vtk',
+    'h5py',
     'polars',]
 
 [project.optional-dependencies]
