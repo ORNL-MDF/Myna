@@ -1,23 +1,31 @@
 {
-  "SimulationType": "RM",
+  "SimulationType": "FromFile",
   "MaterialFileName": "/home/cloud/myna/resources/exaca/materials/SS316L.json",
-  "GrainOrientationFile": "/home/cloud/spack/opt/spack/linux-centos7-zen2/gcc-13.1.0/exaca-master-rwjy4goycdz5yfzgohn3oysk3qztn6m6/share/ExaCA/GrainOrientationVectors.csv",
+  "GrainOrientationFile": "/home/cloud/spack/opt/spack/linux-ubuntu22.04-zen2/gcc-11.4.0/exaca-master-oz5mzn7epmfj5s7p42a3t37g6rla3c75/share/ExaCA/GrainOrientationVectors.csv",
   "RandomSeed": 0.0,
   "Domain": {
     "CellSize": 2.5,
     "TimeStep": 0.0625,
-    "NumberOfLayers": 2,
+    "NumberOfLayers": 10,
     "LayerOffset": 20.0
   },
   "Nucleation": {
     "Density": 250.0,
     "MeanUndercooling": 21.0,
-    "StDev": 250.0
+    "StDev": 3.0
   },
   "TemperatureData": {
     "TemperatureFiles": [
-      "/media/openfoam/myna_demo_exaam/myna_output/P6/r1/51/additivefoam_cube/thermal_region_exaca-additivefoam_cube-FileExaCA.csv",
-      "/media/openfoam/myna_demo_exaam/myna_output/P6/r1/52/additivefoam_cube/thermal_region_exaca-additivefoam_cube-FileExaCA.csv"
+      "/mnt/share/peregrine-v2023-10/myna_output/P57/r0/150/additivefoam_cube/thermal_region_reduced_solidification-additivefoam_cube-FileReducedSolidification.csv",
+      "/mnt/share/peregrine-v2023-10/myna_output/P57/r0/151/additivefoam_cube/thermal_region_reduced_solidification-additivefoam_cube-FileReducedSolidification.csv",
+      "/mnt/share/peregrine-v2023-10/myna_output/P57/r0/152/additivefoam_cube/thermal_region_reduced_solidification-additivefoam_cube-FileReducedSolidification.csv",
+      "/mnt/share/peregrine-v2023-10/myna_output/P57/r0/153/additivefoam_cube/thermal_region_reduced_solidification-additivefoam_cube-FileReducedSolidification.csv",
+      "/mnt/share/peregrine-v2023-10/myna_output/P57/r0/154/additivefoam_cube/thermal_region_reduced_solidification-additivefoam_cube-FileReducedSolidification.csv",
+      "/mnt/share/peregrine-v2023-10/myna_output/P57/r0/155/additivefoam_cube/thermal_region_reduced_solidification-additivefoam_cube-FileReducedSolidification.csv",
+      "/mnt/share/peregrine-v2023-10/myna_output/P57/r0/156/additivefoam_cube/thermal_region_reduced_solidification-additivefoam_cube-FileReducedSolidification.csv",
+      "/mnt/share/peregrine-v2023-10/myna_output/P57/r0/157/additivefoam_cube/thermal_region_reduced_solidification-additivefoam_cube-FileReducedSolidification.csv",
+      "/mnt/share/peregrine-v2023-10/myna_output/P57/r0/158/additivefoam_cube/thermal_region_reduced_solidification-additivefoam_cube-FileReducedSolidification.csv",
+      "/mnt/share/peregrine-v2023-10/myna_output/P57/r0/159/additivefoam_cube/thermal_region_reduced_solidification-additivefoam_cube-FileReducedSolidification.csv"
     ],
     "LayerwiseTempRead": true
   },
@@ -26,18 +34,16 @@
     "PowderDensity": 0.0
   },
   "Printing": {
-    "PathToOutput": "output/",
+    "PathToOutput": "./",
     "OutputFile": "exaca",
     "PrintBinary": true,
-    "PrintFieldsInit": [],
-    "PrintFieldsFinal": [
-      "GrainID",
-      "LayerID",
-      "GrainMisorientation"
-    ],
-    "PrintIntermediateOutput": {
-      "Frequency": 0,
-      "PrintIdleFrames": false
+    "Interlayer": {
+      "Fields": [
+        "GrainID",
+        "LayerID",
+        "GrainMisorientation",
+        "MeltTimeStep"
+      ]
     }
   }
 }

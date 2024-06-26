@@ -23,7 +23,8 @@ dependencies = [
     'pandas',
     'matplotlib',
     'mistlib @ git+https://github.com/ORNL-MDF/mist.git',
-    'vtk',]
+    'vtk',
+    'polars',]
 
 [project.optional-dependencies]
 additivefoam = [

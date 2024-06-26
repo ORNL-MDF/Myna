@@ -6,6 +6,7 @@ import sys
 import shutil
 import json
 import numpy as np
+import polars as pl
 
 
 def setup_case(
@@ -20,9 +21,13 @@ def setup_case(
     std,
     sub_size,
 ):
+
+    # Copy template to case directory
+    shutil.copytree(template_dir, case_dir, dirs_exist_ok=True)
+
     # Get case settings and template input JSON
     myna_settings = load_input(os.path.join(case_dir, "myna_data.yaml"))
-    input_file = os.path.join(template_dir, "inputs.json")
+    input_file = os.path.join(case_dir, "inputs.json")
     with open(input_file, "r") as f:
         input_settings = json.load(f)
 
@@ -63,12 +68,9 @@ def setup_case(
     # Set substrate grain size
     nested_set(input_settings, ["Substrate", "MeanSize"], sub_size)
 
-    # Write updated input file
+    # Write updated input file to case directory
     with open(input_file, "w") as f:
         json.dump(input_settings, f, indent=2)
-
-    # Copy template to case directory
-    shutil.copytree(template_dir, case_dir, dirs_exist_ok=True)
 
     # Update executable information in the run script
     run_script = os.path.join(case_dir, "runCase.sh")
@@ -81,6 +83,38 @@ def setup_case(
         lines[i] = lines[i].replace("{{EXACA_EXEC}}", exec_name)
     with open(run_script, "w") as f:
         f.writelines(lines)
+
+    # Get analysis file settings to update slice locations
+    analysis_file = os.path.join(case_dir, "analysis.json")
+    with open(analysis_file, "r") as f:
+        analysis_settings = json.load(f)
+
+    # Check the X and Y bounds of the first layer's solidification data and get midpoint
+    df = pl.read_csv(
+        nested_get(input_settings, ["TemperatureData", "TemperatureFiles"])[0]
+    )
+    xmin, xmax = [df["x"].min(), df["x"].max()]
+    ymin, ymax = [df["y"].min(), df["y"].max()]
+    spacing = nested_get(input_settings, ["Domain", "CellSize"])
+    dx = (xmax - xmin) * 1e6 / spacing
+    dy = (ymax - ymin) * 1e6 / spacing
+    ind_x_mid = int(0.5 * dx)
+    ind_y_mid = int(0.5 * dy)
+
+    # Get cell index near the top-surface, but not at the top surface
+    dz = nested_get(input_settings, ["Domain", "NumberOfLayers"]) * nested_get(
+        input_settings, ["Domain", "LayerOffset"]
+    )
+    ind_z_mid = int(0.8 * dz)
+
+    # Set slice locations
+    nested_set(analysis_settings, ["Regions", "XY", "zBounds"], [ind_z_mid, ind_z_mid])
+    nested_set(analysis_settings, ["Regions", "XZ", "yBounds"], [ind_y_mid, ind_y_mid])
+    nested_set(analysis_settings, ["Regions", "YZ", "xBounds"], [ind_x_mid, ind_x_mid])
+
+    # Write updated analysis file to case directory
+    with open(analysis_file, "w") as f:
+        json.dump(analysis_settings, f, indent=2)
 
     return
 

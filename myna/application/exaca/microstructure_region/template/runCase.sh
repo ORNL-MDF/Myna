@@ -8,7 +8,7 @@ EXE="{{EXACA_BIN_PATH}}/{{EXACA_EXEC}}"
 ANALYSIS="{{EXACA_BIN_PATH}}/grain_analysis"
 
 # Run the ExaCA case
-mpiexec -n 4 $EXE inputs.json
+mpiexec -n {{RANKS}} $EXE inputs.json > exaca_run.log 2>&1
 
 # Run the ExaCA analysis script
-$ANALYSIS analysis.json output/exaca
+$ANALYSIS analysis.json ./exaca > exaca_analysis.log 2>&1

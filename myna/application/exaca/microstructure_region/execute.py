@@ -18,9 +18,20 @@ def nested_set(dict, keys, value):
     dict[keys[-1]] = value
 
 
-def run_case(case_dir, batch):
+def run_case(case_dir, batch, ranks):
+
+    # Update number of cores to use
+    run_script = os.path.join(case_dir, "runCase.sh")
+    with open(run_script, "r") as f:
+        lines = f.readlines()
+    for i, line in enumerate(lines):
+        lines[i] = line.replace("{{RANKS}}", f"{ranks}")
+    with open(run_script, "w") as f:
+        f.writelines(lines)
+
     # Run case using "runCase.sh" script
     pid = None
+    process = None
     os.system(f'chmod 755 {os.path.join(case_dir, "runCase.sh")}')
     if not batch:
         os.system(f'{os.path.join(case_dir, "runCase.sh")}')
@@ -51,12 +62,19 @@ def main(argv=None):
         action="store_true",
         help="flag to force re-running of cases with existing output",
     )
+    parser.add_argument(
+        "--ranks",
+        type=int,
+        default=1,
+        help="(int) Number of ranks to use, default 1",
+    )
     parser.set_defaults(overwrite=False)
 
     # Parse command line arguments and get Myna settings
     args = parser.parse_args(argv)
     overwrite = args.overwrite
     batch = args.batch
+    ranks = args.ranks
     settings = load_input(os.environ["MYNA_RUN_INPUT"])
 
     # Get expected Myna output files
@@ -77,7 +95,7 @@ def main(argv=None):
         myna_files, [os.path.dirname(x) for x in myna_files], files_are_valid
     ):
         if not file_is_valid or overwrite:
-            output_file, proc = run_case(case_dir, batch)
+            output_file, proc = run_case(case_dir, batch, ranks)
             output_files.append(output_file)
             processes.append(proc)
         else:
