@@ -309,47 +309,17 @@ class Component:
         files = self.check_output_files(self.data["output_paths"][self.name])
         datatype = myna.database.return_datatype_class(self.data["build"]["datatype"])
         datatype.set_path(self.data["build"]["path"])
+
+        # Get if there are valid output files to sync
+        synced_files = []
         if self.output_requirement is None:
             print(f"- step {self.name}: No output requirement specified.")
         elif len(files) == 0:
             print(f"- step {self.name}: No valid output files found.")
         else:
-            for f in files:
-                print(f"- {f}")
-
-                # Get output file fields to export
-                output_file_obj = self.output_requirement(f)
-                (
-                    x,
-                    y,
-                    values,
-                    value_names,
-                    value_units,
-                ) = output_file_obj.get_values_for_sync(
-                    prefix=f"myna_{self.component_interface}"
-                )
-
-                # Get metadata from file path
-                split_path = f.split(os.path.sep)
-                interface = split_path[-2]
-                layer = int(split_path[-3])
-                part = split_path[-4]
-
-                # Iterate through loaded fields
-                for value, name, unit in zip(values, value_names, value_units):
-                    print(f"  - field: {name}")
-                    partnumber = int(part.replace("P", ""))
-                    output_file = myna.core.workflow.sync.upload_results(
-                        datatype,
-                        partnumber,
-                        layer,
-                        x,
-                        y,
-                        value,
-                        var_name=name,
-                        var_unit=unit,
-                    )
-                    print(f"     - output_file: {output_file=}")
-                    synced_files.append(output_file)
+            # Use the database sync functionality
+            synced_files = datatype.sync(
+                self.component_interface, self.types, self.output_requirement, files
+            )
 
         return synced_files
