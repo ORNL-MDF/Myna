@@ -8,22 +8,18 @@ import json
 import numpy as np
 import polars as pl
 
+from myna.application.exaca import ExaCA
+
 
 def setup_case(
     case_dir,
-    exec,
-    template_dir,
+    sim,
     solid_files,
-    cell_size,
     layer_thickness,
-    nd,
-    mu,
-    std,
-    sub_size,
 ):
 
     # Copy template to case directory
-    shutil.copytree(template_dir, case_dir, dirs_exist_ok=True)
+    shutil.copytree(sim.args.template, case_dir, dirs_exist_ok=True)
 
     # Get case settings and template input JSON
     myna_settings = load_input(os.path.join(case_dir, "myna_data.yaml"))
@@ -50,10 +46,10 @@ def setup_case(
     input_settings["GrainOrientationFile"] = oreintation_file
 
     # Set cell size
-    nested_set(input_settings, ["Domain", "CellSize"], cell_size)
+    nested_set(input_settings, ["Domain", "CellSize"], sim.args.cell_size)
 
     # Set layer offset
-    cells_per_layer = np.ceil(layer_thickness / cell_size)
+    cells_per_layer = np.ceil(layer_thickness / sim.args.cell_size)
     nested_set(input_settings, ["Domain", "LayerOffset"], cells_per_layer)
 
     # Set temperature files
@@ -61,12 +57,12 @@ def setup_case(
     nested_set(input_settings, ["TemperatureData", "TemperatureFiles"], solid_files)
 
     # Set nucleation parameters
-    nested_set(input_settings, ["Nucleation", "Density"], nd)
-    nested_set(input_settings, ["Nucleation", "MeanUndercooling"], mu)
-    nested_set(input_settings, ["Nucleation", "StDev"], std)
+    nested_set(input_settings, ["Nucleation", "Density"], sim.args.nd)
+    nested_set(input_settings, ["Nucleation", "MeanUndercooling"], sim.args.mu)
+    nested_set(input_settings, ["Nucleation", "StDev"], sim.args.std)
 
     # Set substrate grain size
-    nested_set(input_settings, ["Substrate", "MeanSize"], sub_size)
+    nested_set(input_settings, ["Substrate", "MeanSize"], sim.args.sub_size)
 
     # Write updated input file to case directory
     with open(input_file, "w") as f:
@@ -120,92 +116,16 @@ def setup_case(
 
 
 def main(argv=None):
-    # Set up argparse
-    parser = argparse.ArgumentParser(
-        description="Configure ExaCA input files for " + "specified Myna cases"
-    )
-    parser.add_argument(
-        "--template",
-        type=str,
-        help="(str) path to template, if not specified"
-        + " then assume default location",
-    )
-    parser.add_argument("--exec", type=str, help="(str) Path to ExaCA executable")
-    parser.add_argument(
-        "--cell-size", type=float, help="(float) ExaCA cell size in microns"
-    )
-    parser.add_argument(
-        "--nd",
-        type=float,
-        default=1,
-        help="(float) Multiplier for nucleation density, 10^(12) * nd)",
-    )
-    parser.add_argument(
-        "--mu",
-        type=float,
-        default=10,
-        help="(float) Critical undercooling mean temperature "
-        + "for nucleation, in Kelvin",
-    )
-    parser.add_argument(
-        "--std",
-        type=float,
-        default=2,
-        help="(float) Standard deviation for undercooling, in Kelvin",
-    )
-    parser.add_argument(
-        "--sub-size",
-        type=float,
-        default=12.5,
-        help="(float) Grain size of substrate, in microns",
-    )
 
-    # Parse command line arguments and get Myna settings
-    args = parser.parse_args(argv)
-    settings = load_input(os.environ["MYNA_RUN_INPUT"])
-    template = args.template
-    cell_size = args.cell_size
-    nd = args.nd
-    mu = args.mu
-    std = args.std
-    sub_size = args.sub_size
-    exec = args.exec
-
-    # Check if executable exists
-    if exec is None:
-        exec = os.path.join(
-            os.environ["MYNA_INTERFACE_PATH"],
-            "exaca",
-            "microstructure_region",
-            "ExaCA",
-            "build",
-            "install",
-            "bin",
-            "ExaCA",
-        )
-    if not os.path.exists(exec):
-        raise Exception(f'The specified ExaCA executable "{exec}" was not found.')
-    if not os.access(exec, os.X_OK):
-        raise Exception(f'The specified ExaCA executable "{exec}" is not executable.')
-
-    # Set template path
-    if template is None:
-        template = os.path.join(
-            os.environ["MYNA_INTERFACE_PATH"],
-            "exaca",
-            "microstructure_region",
-            "template",
-        )
-    else:
-        template = os.path.abspath(template)
+    # Create ExaCA instance
+    app = ExaCA(argv)
 
     # Get expected Myna output files
-    step_name = os.environ["MYNA_STEP_NAME"]
-    myna_files = settings["data"]["output_paths"][step_name]
+    settings = app.settings
+    myna_files = settings["data"]["output_paths"][app.step_name]
 
     # Get solidification data from previous step
-    last_step_name = os.environ["MYNA_LAST_STEP_NAME"]
-    myna_solid_files = settings["data"]["output_paths"][last_step_name]
+    myna_solid_files = settings["data"]["output_paths"][app.last_step_name]
     solid_file_sets = []
     for part in settings["data"]["build"]["parts"]:
         p = settings["data"]["build"]["parts"][part]
@@ -229,15 +149,9 @@ def main(argv=None):
         output_files.append(
             setup_case(
                 case_dir,
-                exec,
-                template,
+                app,
                 solid_files,
-                cell_size,
                 layer_thickness,
-                nd,
-                mu,
-                std,
-                sub_size,
             )
         )
 
