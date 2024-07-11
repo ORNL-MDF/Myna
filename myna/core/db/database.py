@@ -20,3 +20,7 @@ class Database:
     def exists(self):
         """Check if database exists at the specified path"""
         raise NotImplementedError
+
+    def sync(self, component_type, step_types, output_class, files):
+        """Sync files resulting from a workflow step to the database"""
+        raise NotImplementedError

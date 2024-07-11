@@ -2,7 +2,7 @@
 solidification velocity (V)
 """
 
-import pandas as pd
+import polars as pl
 import os
 from .file import *
 
@@ -34,11 +34,23 @@ class FileGV(File):
         ):
             return False
         else:
-            df = pd.read_csv(self.file, nrows=0)
+            df = pl.read_csv(self.file, n_rows=0)
             cols = [x.lower() for x in df.columns]
             expected_cols = ["x (m)", "y (m)", "g (k/m)", "v (m/s)"]
             expected_cols_types = [float, float, float, float]
             return self.columns_are_valid(cols, expected_cols, expected_cols_types)
+
+    def get_names_for_sync(self, prefix="myna"):
+        """Return the names and units of fields available for syncing
+        Args:
+            prefix: prefix for output file name in synced file(s)
+
+        Returns:
+            value_names: list of string names for each field in the values list
+            value_units: list of string units for each field in the values list"""
+        value_names = [f"{prefix}_G", f"{prefix}_R", f"{prefix}_cooling_rate"]
+        value_units = ["K/m", "m/s", "K/s"]
+        return value_names, value_units
 
     def get_values_for_sync(self, prefix="myna"):
         """Get values in format expected for sync
@@ -55,21 +67,20 @@ class FileGV(File):
         """
 
         # Load the file
-        df = pd.read_csv(self.file)
-        df = df.rename(str.lower, axis="columns")
+        df = pl.read_csv(self.file)
+        df = df.with_columns(pl.all().name.to_lowercase())
 
         # Check if data is three-dimensional
         if "z (m)" in df.columns:
-            df = df[df["z (m)"] == df["z (m)"].max()]
+            df = df.filter(pl.col("z (m)") == df["z (m)"].max())
 
         # Calculate derived field(s)
-        df["cr (k/s)"] = df["g (k/m)"] * df["v (m/s)"]
+        df = df.with_columns((pl.col("g (k/m)") * pl.col("v (m/s)")).alias("cr (k/s)"))
 
         # Set up location and value arrays to return
         x = df["x (m)"].to_numpy()
         y = df["y (m)"].to_numpy()
-        value_names = [f"{prefix}_G", f"{prefix}_R", f"{prefix}_cooling_rate"]
-        value_units = ["K/m", "m/s", "K/s"]
+        value_names, value_units = self.get_names_for_sync(prefix=prefix)
         values = [
             df["g (k/m)"].to_numpy(),
             df["v (m/s)"].to_numpy(),

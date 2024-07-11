@@ -3,13 +3,14 @@ that corresponds to the PEregrine 2023-10 dataset"""
 
 from myna.core.db import Database
 from myna.core import metadata
+from myna.database.peregrine import PeregrineDB
 import os
 import numpy as np
 import h5py
 import pandas as pd
 
 
-class PeregrineHDF5(Database):
+class PeregrineHDF5(PeregrineDB):
     """ORNL MDF Peregrine HDF5 archive structure
 
     Args:
@@ -115,7 +116,7 @@ class PeregrineHDF5(Database):
         # Set output file name
         basedir = os.path.dirname(self.path)
         file_database = os.path.join(
-            basedir, "simulation", str(part), f"{int(layer):07d}.txt"
+            basedir, "simulation", str(part), f"{self.layer_str(layer)}.txt"
         )
 
         # Ensure directory path exists
