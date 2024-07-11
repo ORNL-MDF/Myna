@@ -1,0 +1,135 @@
+{
+    "name": "SS316L",
+    "thermophysical_properties" : {
+        "density": {
+            "print_name": "Density at 298 K",
+            "value": 7955,
+            "unit": "kg/m^3",
+            "reference": "C.S. Kim, Thermophysical properties of stainless steels, Argonne National Laboratory, Argonne, Illinois, 1975.",
+            "uncertainty": "None",
+            "print_symbol": "\\rho"
+        },
+        "specific_heat_solid": {
+            "print_name": "Specific heat capacity (solid)",
+            "value_laurent_poly": [[386.7, 0], [1.329e-1, 1]],
+            "dependent_variable_print_name": "Temperature",
+            "dependent_variable_print_symbol": "T",
+            "dependent_variable_unit": "K",
+            "unit": "J/(kg~K)",
+            "reference": "C.S. Kim, Thermophysical properties of stainless steels, Argonne National Laboratory, Argonne, Illinois, 1975.",
+            "uncertainty": "None",
+            "print_symbol": "c_{p,s}"
+        },
+        "specific_heat_liquid": {
+            "print_name": "Specific heat capacity (liquid)",
+            "value": 770.4,
+            "unit": "J/(kg~K)",
+            "reference": "C.S. Kim, Thermophysical properties of stainless steels, Argonne National Laboratory, Argonne, Illinois, 1975.",
+            "uncertainty": "None",
+            "print_symbol": "c_{p,l}"
+        },
+        "thermal_conductivity_solid": {
+            "print_name": "Thermal conductivity (solid)",
+            "value_laurent_poly": [[0.6658, 0], [1.571e-2, 1]],
+            "dependent_variable_print_name": "Temperature",
+            "dependent_variable_print_symbol": "T",
+            "dependent_variable_unit": "K",
+            "unit": "J/(m~s~K)",
+            "reference": "C.S. Kim, Thermophysical properties of stainless steels, Argonne National Laboratory, Argonne, Illinois, 1975.",
+            "uncertainty": "None",
+            "print_symbol": "k_{s}"
+        },
+        "thermal_conductivity_liquid": {
+            "print_name": "Thermal conductivity (liquid)",
+            "value_laurent_poly": [[10.61, 0], [3.279e-3, 1]],
+            "dependent_variable_print_name": "Temperature",
+            "dependent_variable_print_symbol": "T",
+            "dependent_variable_unit": "K",
+            "unit": "J/(m~s~K)",
+            "reference": "C.S. Kim, Thermophysical properties of stainless steels, Argonne National Laboratory, Argonne, Illinois, 1975.",
+            "uncertainty": "None",
+            "print_symbol": "k_{l}"
+        },
+        "dynamic_viscosity": {
+            "print_name": "Dynamic viscosity at 1730 K",
+            "value": 2.188e-3,
+            "unit": "kg/(m~s)",
+            "reference": "C.S. Kim, Thermophysical properties of stainless steels, Argonne National Laboratory, Argonne, Illinois, 1975.",
+            "uncertainty": "None",
+            "print_symbol": "\\mu"
+        },
+        "thermal_expansion": {
+            "print_name": "Thermal expansion, linear, at 1730 K",
+            "value": 3.101e-5,
+            "unit": "1/K",
+            "reference": "C.S. Kim, Thermophysical properties of stainless steels, Argonne National Laboratory, Argonne, Illinois, 1975.",
+            "uncertainty": "None",
+            "print_symbol": "\\beta"
+        },
+        "latent_heat_fusion": {
+            "print_name": "Latent heat of fusion",
+            "value": 2.68e5,
+            "unit": "J/kg",
+            "reference": "C.S. Kim, Thermophysical properties of stainless steels, Argonne National Laboratory, Argonne, Illinois, 1975.",
+            "uncertainty": "None",
+            "print_symbol": "L_{f}"
+        },
+        "latent_heat_vaporization": {
+            "print_name": "Latent heat of vaporization",
+            "value": 7.41e6,
+            "unit": "J/kg",
+            "reference": "C.S. Kim, Thermophysical properties of stainless steels, Argonne National Laboratory, Argonne, Illinois, 1975.",
+            "uncertainty": "None",
+            "print_symbol": "L_{v}"
+        },
+        "emissivity": {
+            "print_name": "Emissivity",
+            "value": 0.4,
+            "unit": "None",
+            "reference": "None",
+            "uncertainty": "None",
+            "print_symbol": "\\epsilon"
+        },
+        "molecular_mass": {
+            "print_name": "Molecular mass",
+            "value": 55.845,
+            "unit": "g/mol",
+            "reference": "None",
+            "uncertainty": "None",
+            "print_symbol": "M"
+        },
+        "liquidus_temperature": {
+            "print_name": "Liquidus temperature",
+            "value": 1730,
+            "unit": "K",
+            "reference": "C.S. Kim, Thermophysical properties of stainless steels, Argonne National Laboratory, Argonne, Illinois, 1975.",
+            "uncertainty": "None",
+            "print_symbol": "T_{l}"
+        },
+        "solidus_eutectic_temperature": {
+            "print_name": "Solidus/eutecic temperature",
+            "value": 1670,
+            "unit": "K",
+            "reference": "C.S. Kim, Thermophysical properties of stainless steels, Argonne National Laboratory, Argonne, Illinois, 1975.",
+            "uncertainty": "None",
+            "print_symbol": "T_{s}"
+        },
+        "vaporization_temperature": {
+            "print_name": "Vaporization temperature",
+            "value": 3090,
+            "unit": "K",
+            "reference": "C.S. Kim, Thermophysical properties of stainless steels, Argonne National Laboratory, Argonne, Illinois, 1975.",
+            "uncertainty": "None",
+            "print_symbol": "T_{v}"
+        },
+        "laser_absorption": {
+            "print_name": "Laser absorption",
+            "value": 0.36,
+            "unit": "None",
+            "reference": "None",
+            "uncertainty": "None",
+            "print_symbol": "\\alpha"
+        }
+    },
+    "note": "This file currently excludes the surface tension, marangoni coefficient, and the vapor pressure due to the need for function representations other than Laurent polynomials."
+}
