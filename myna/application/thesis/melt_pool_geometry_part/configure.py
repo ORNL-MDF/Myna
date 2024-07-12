@@ -20,7 +20,7 @@ def configure_case(case_dir, res, nout, myna_input="myna_data.yaml"):
 
     # Copy template case
     template_path = os.path.join(
-        os.environ["MYNA_INTERFACE_PATH"], "thesisB", "melt_pool_geometry_part", "template"
+        os.environ["MYNA_INTERFACE_PATH"], "thesis", "melt_pool_geometry_part", "template"
     )
     files = os.listdir(template_path)
     for f in files:
