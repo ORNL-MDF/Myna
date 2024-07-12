@@ -40,6 +40,19 @@ class FileMeltPoolGeometry(File):
             expected_cols_types = [float, float, float, float, float, float]
             return self.columns_are_valid(cols, expected_cols, expected_cols_types)
     
+    def get_names_for_sync(self, prefix="myna"):
+        """Return the names and units of fields available for syncing
+        Args:
+            prefix: prefix for output file name in synced file(s)
+
+        Returns:
+            value_names: list of string names for each field in the values list
+            value_units: list of string units for each field in the values list"""
+        value_names = [f"{prefix}_time", f"{prefix}_length", f"{prefix}_width", f"{prefix}_depth"]
+        value_units = ["s", "m", "m", "m"]
+        return value_names, value_units
+
+
     def get_values_for_sync(self, prefix="myna"):
         """Get values in format expected for sync
 
@@ -66,8 +79,7 @@ class FileMeltPoolGeometry(File):
         # Set up location and value arrays to return
         x = df["x (m)"].to_numpy()
         y = df["y (m)"].to_numpy()
-        value_names = [f"{prefix}_time", f"{prefix}_length", f"{prefix}_width", f"{prefix}_depth"]
-        value_units = ["s", "m", "m", "m"]
+        value_names, value_units = self.get_names_for_sync(prefix)
         values = [
             df["time (s)"].to_numpy(),
             df["length (m)"].to_numpy(),
