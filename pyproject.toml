@@ -28,8 +28,6 @@ dependencies = [
     'polars',]
 
 [project.optional-dependencies]
-additivefoam = [
-    'autofoam @ git+https://code.ornl.gov/8s2/autofoam.git@41725ade12cac1d94552d6a8719d900293521c98']
 cluster = [
     'classification @ git+https://code.ornl.gov/ygk/classification.git@myna']
 autothesis = [
