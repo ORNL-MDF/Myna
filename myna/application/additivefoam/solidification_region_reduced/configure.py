@@ -26,8 +26,11 @@ def setup_case(
     refine_layer,
     refine_region,
     template,
+    overwrite,
 ):
     settings = load_input(os.path.join(case_dir, "myna_data.yaml"))
+    input_dir = os.path.dirname(settings["myna"]["input"])
+    resource_dir = os.path.join(input_dir, "myna_resources")
 
     # Generate case information from RVE list
     build = settings["build"]["name"]
@@ -38,11 +41,21 @@ def setup_case(
     layer = list(region_dict["layer_data"].keys())[0]
     layer_dict = region_dict["layer_data"][layer]
 
+    # Set directory for template mesh
+    resource_template_dir = os.path.join(
+        resource_dir,
+        part,
+        region,
+        "additivefoam",
+        "solidification_region_reduced",
+        "template",
+    )
+
     # Get scan path and layer thickness
     myna_scanfile = layer_dict["scanpath"]["file_local"]
     layer_thickness = settings["build"]["build_data"]["layer_thickness"]["value"]
 
-    # Set template path
+    # Set template path for copy
     if template is None:
         template_path = os.path.join(
             os.environ["MYNA_INTERFACE_PATH"],
@@ -70,12 +83,20 @@ def setup_case(
         "refine_region": refine_region,
     }
     template_mesh_dict_name = "template_mesh_dict.yaml"
-    template_mesh_dict_path = os.path.join(template_path, template_mesh_dict_name)
+    template_mesh_dict_path = os.path.join(
+        resource_template_dir, template_mesh_dict_name
+    )
     use_existing_mesh = False
+
     # If no template mesh dict exists, write it
-    if not os.path.exists(template_mesh_dict_path):
+    if (not os.path.exists(template_mesh_dict_path)) or (overwrite):
+
+        # Copy template to the Myna case resource directory
+        shutil.copytree(template_path, resource_template_dir, dirs_exist_ok=True)
+
         with open(template_mesh_dict_path, "w") as f:
             yaml.dump(template_mesh_dict, f, default_flow_style=False)
+
     # If template mesh dict exists, then check if it matches current
     # build, part, and region
     else:
@@ -89,9 +110,13 @@ def setup_case(
             if all(matches):
                 use_existing_mesh = True
             else:
+                shutil.copytree(
+                    template_path, resource_template_dir, dirs_exist_ok=True
+                )
                 with open(template_mesh_dict_path, "w") as f:
                     yaml.dump(template_mesh_dict, f, default_flow_style=None)
         except:
+            shutil.copytree(template_path, resource_template_dir, dirs_exist_ok=True)
             with open(template_mesh_dict_path, "w") as f:
                 yaml.dump(template_mesh_dict, f, default_flow_style=None)
 
@@ -126,7 +151,7 @@ def setup_case(
         ],
         "rve_pad": [region_pad, region_pad, depth_pad + substrate_pad],
         "case_dir": case_dir,
-        "template": {"template_dir": template_path},
+        "template": {"template_dir": resource_template_dir},
         "mesh": {
             "spacing": [coarse, coarse, coarse],
             "tolerance": 1.0e-08,
@@ -410,6 +435,13 @@ def main(argv=None):
         help="(str) path to template, if not specified"
         + " then assume default location",
     )
+    parser.add_argument(
+        "--overwrite",
+        dest="overwrite",
+        action="store_true",
+        help="flag to force regeneration of mesh and overwrite of any existing mesh",
+    )
+    parser.set_defaults(overwrite=False)
 
     # Parse command line arguments and get Myna settings
     args = parser.parse_args(argv)
@@ -422,6 +454,7 @@ def main(argv=None):
     refine_layer = args.refine_layer
     refine_region = args.refine_region
     template = args.template
+    overwrite = args.overwrite
 
     # Get expected Myna output files
     step_name = os.environ["MYNA_STEP_NAME"]
@@ -443,6 +476,7 @@ def main(argv=None):
                 refine_layer,
                 refine_region,
                 template,
+                overwrite,
             )
         )
 

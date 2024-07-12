@@ -17,15 +17,11 @@ def configure_case(case_dir, res, myna_input="myna_data.yaml"):
     part = list(settings["build"]["parts"].keys())[0]
     layer = list(settings["build"]["parts"][part]["layer_data"].keys())[0]
 
-    # Copy template case
-    template_path = os.path.join(
+    # Copy template to case directory
+    template_dir = os.path.join(
         os.environ["MYNA_INTERFACE_PATH"], "thesis", "solidification_part", "template"
     )
-    files = os.listdir(template_path)
-    for f in files:
-        source = os.path.join(template_path, f)
-        dest = os.path.join(case_dir, f)
-        shutil.copy(source, dest, follow_symlinks=True)
+    shutil.copytree(template_dir, case_dir, dirs_exist_ok=True)
 
     # Set up scan path
     myna_scanfile = settings["build"]["parts"][part]["layer_data"][layer]["scanpath"][

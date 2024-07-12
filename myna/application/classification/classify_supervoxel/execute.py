@@ -29,6 +29,21 @@ def run(
     orig_dir = os.getcwd()
     os.chdir(case_dir)
 
+    # Get case myna_data
+    myna_data = load_input(os.path.join(case_dir, "myna_data.yaml"))
+    input_dir = os.path.dirname(myna_data["myna"]["input"])
+    resource_dir = os.path.join(input_dir, "myna_resources")
+
+    # Generate case information from myna_data
+    build = myna_data["build"]["name"]
+    part = list(myna_data["build"]["parts"].keys())[0]
+    part_dict = myna_data["build"]["parts"][part]
+    layer = list(part_dict["layer_data"].keys())[0]
+    layer_dict = part_dict["layer_data"][layer]
+
+    # Set directory for training data
+    resource_template_dir = os.path.join(resource_dir, "classify_solidification")
+
     # Load cluster data
     df = pd.read_csv(cluster_file)
 
@@ -63,13 +78,7 @@ def run(
     cluster_file_local = copy_path
 
     # Setup folder structure
-    template_dir = os.path.join(
-        os.environ["MYNA_INTERFACE_PATH"],
-        "classification",
-        "supervoxel",
-        "template",
-    )
-    training_dir = os.path.join(template_dir, "training_supervoxels")
+    training_dir = os.path.join(resource_template_dir, "training_supervoxels")
     class_dir = os.path.join(case_dir, "class_supervoxels")
     os.makedirs(training_dir, exist_ok=True)
     os.makedirs(class_dir, exist_ok=True)
@@ -154,7 +163,9 @@ def run(
     sF = 0.5
 
     # Check if model needs to be trained or not
-    model_dir = os.path.join(template_dir, f"supervoxel_model-sF={sF}-gamma={gamma}")
+    model_dir = os.path.join(
+        resource_template_dir, f"supervoxel_model-sF={sF}-gamma={gamma}"
+    )
     if not train_model and os.path.isdir(model_dir):
         latest_model = sorted(glob.glob(os.path.join(model_dir, "*")), reverse=True)[0]
         latest_model_iteration = sorted(
