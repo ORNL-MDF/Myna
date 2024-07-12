@@ -1,5 +1,5 @@
 {
-    "name": "SS316L",
+    "name": "SS316H",
     "thermophysical_properties" : {
         "density": {
             "print_name": "Density at 298 K",
@@ -131,5 +131,5 @@
             "print_symbol": "\\alpha"
         }
     },
-    "note": "This file currently excludes the surface tension, marangoni coefficient, and the vapor pressure due to the need for function representations other than Laurent polynomials."
+    "note": "This file currently excludes the surface tension, marangoni coefficient, and the vapor pressure due to the need for function representations other than Laurent polynomials. All references refer to SS316L data because of similarity of physical properties."
 }
