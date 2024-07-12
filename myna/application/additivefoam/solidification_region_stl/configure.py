@@ -1,10 +1,7 @@
-import autofoam
-import autofoam.mesh
-import autofoam.cases
-import autofoam.util
 import os
 from myna.core.workflow.load_input import load_input
-from myna.core.utils import nested_set, nested_get
+import myna.application.additivefoam as additivefoam
+import myna.application.openfoam as openfoam
 import argparse
 import sys
 import subprocess
@@ -27,6 +24,7 @@ def setup_case(
     refine_region,
     template,
     cores,
+    scale_factor,
     overwrite,
 ):
     settings = load_input(os.path.join(case_dir, "myna_data.yaml"))
@@ -152,8 +150,8 @@ def setup_case(
             with open(template_region_mesh_dict_path, "w") as f:
                 yaml.dump(template_region_mesh_dict, f, default_flow_style=None)
 
-    # Set input dictionary in format required by autofoam
-    autofoam_input_dict = {
+    # Set input dictionary in format required by functions
+    additivefoam_input_dict = {
         "scan_path": myna_scanfile,
         "layer": layer,
         "layer_thickness": layer_thickness,
@@ -193,24 +191,31 @@ def setup_case(
             "stl_path": stl_path,
             "convertToMeters": 1.0e-3,
             "layer_thickness": layer_thickness,
+            "scaling": scale_factor,
         },
         "exe": {"nProcs": cores, "mpiArgs": f"mpirun -np {cores}"},
     }
 
     # Generate cases based on inputs
     generate(
-        autofoam_input_dict, settings, use_existing_stl_mesh, use_existing_region_mesh
+        additivefoam_input_dict,
+        settings,
+        use_existing_stl_mesh,
+        use_existing_region_mesh,
     )
 
     return
 
 
 def generate(
-    autofoam_input_dict, myna_settings, use_existing_stl_mesh, use_existing_region_mesh
+    additivefoam_input_dict,
+    myna_settings,
+    use_existing_stl_mesh,
+    use_existing_region_mesh,
 ):
     # Set paths
-    case_dir = autofoam_input_dict["case_dir"]
-    template_dir = os.path.abspath(autofoam_input_dict["template"]["template_dir"])
+    case_dir = additivefoam_input_dict["case_dir"]
+    template_dir = os.path.abspath(additivefoam_input_dict["template"]["template_dir"])
 
     # Extract the laser power and spot size from the myna settings
     part = list(myna_settings["build"]["parts"].keys())[0]
@@ -221,11 +226,11 @@ def generate(
     )  # diameter -> radius & mm -> m
 
     # Convert the Myna scan path file
-    path_name = os.path.basename(autofoam_input_dict["scan_path"])
+    path_name = os.path.basename(additivefoam_input_dict["scan_path"])
     new_scan_path_file = os.path.join(template_dir, "constant", path_name)
 
-    autofoam.util.convert_peregrine_scanpath(
-        autofoam_input_dict["scan_path"], new_scan_path_file, power
+    additivefoam.path.convert_peregrine_scanpath(
+        additivefoam_input_dict["scan_path"], new_scan_path_file, power
     )
 
     #####################
@@ -276,22 +281,40 @@ def generate(
     ###################
     # Mesh generation #
     ###################
-    rve = autofoam_input_dict["region_box"]
-    rve_pad = autofoam_input_dict["rve_pad"]  # convert from float to XYZ list
+    rve = additivefoam_input_dict["region_box"]
+    rve_pad = additivefoam_input_dict["rve_pad"]  # convert from float to XYZ list
 
     # If needed, generate AdditiveFOAM mesh in template folder
     if not use_existing_stl_mesh:
+
         # Preprocess the STL file
-        working_stl_path = autofoam.mesh.preprocess_stl(autofoam_input_dict)
+        stl_path = additivefoam_input_dict["mesh"]["stl_path"]
+        scale_factor = additivefoam_input_dict["mesh"]["scaling"]
+        working_stl_path = openfoam.mesh.preprocess_stl(
+            template_dir, stl_path, scale_factor
+        )
 
         # Generate background mesh
-        origin, bbDict = autofoam.mesh.create_background_mesh(
-            autofoam_input_dict, working_stl_path
+        origin, bbDict = openfoam.mesh.create_background_mesh(
+            template_dir,
+            working_stl_path,
+            additivefoam_input_dict["mesh"]["spacing"],
+            additivefoam_input_dict["mesh"]["tolerance"],
         )
-        autofoam.mesh.extract_stl_features(autofoam_input_dict, origin)
+        openfoam.mesh.extract_stl_features(
+            template_dir,
+            working_stl_path,
+            additivefoam_input_dict["mesh"]["refinement"],
+            origin,
+        )
 
         # Create mesh for part
-        autofoam.mesh.create_part_mesh(autofoam_input_dict, bbDict)
+        openfoam.mesh.create_part_mesh(
+            template_dir,
+            working_stl_path,
+            bbDict,
+            additivefoam_input_dict["exe"]["mpiArgs"],
+        )
 
     else:
         # get the bounding box information based on specified RVE
@@ -306,37 +329,33 @@ def generate(
 
     if not use_existing_region_mesh:
         # Slice the mesh for the given layer
-        height = float(autofoam_input_dict["layer_thickness"]) * float(
-            autofoam_input_dict["layer"]
+        height = float(additivefoam_input_dict["layer_thickness"]) * float(
+            additivefoam_input_dict["layer"]
         )
         print("height = ", height)
-        autofoam.cases.slice_mesh(autofoam_input_dict, template_dir, height)
+        openfoam.mesh.slice(template_dir, height)
 
         # Generate refined mesh in layer thickness
-        refinement = autofoam_input_dict["mesh"]["refine_layer"]
+        refinement = additivefoam_input_dict["mesh"]["refine_layer"]
         refine_dict_path = os.path.join(template_dir, "system", "refineMeshDict")
         copy_path = os.path.join(template_dir, "system", "refineLayerMeshDict")
         os.system(
             f"foamDictionary -entry castellatedMeshControls/refinementRegions/refinementBox/levels"
             f" -set '( ({refinement} {refinement}) );' {refine_dict_path}"
         )
-        autofoam.cases.refine_mesh_in_RVE(
-            template_dir, autofoam_input_dict["layer_box"]
-        )
+        openfoam.mesh.refine_RVE(template_dir, additivefoam_input_dict["layer_box"])
 
         # Archive copy of the layer refinement dict
         shutil.copy(refine_dict_path, copy_path)
 
         # Generate refined mesh in region
-        refinement = autofoam_input_dict["mesh"]["refine_region"]
+        refinement = additivefoam_input_dict["mesh"]["refine_region"]
         refine_dict_path = os.path.join(template_dir, "system", "refineMeshDict")
         os.system(
             f"foamDictionary -entry castellatedMeshControls/refinementRegions/refinementBox/levels"
             f" -set '( ({refinement} {refinement}) );' {refine_dict_path}"
         )
-        autofoam.cases.refine_mesh_in_RVE(
-            template_dir, autofoam_input_dict["region_box"]
-        )
+        openfoam.mesh.refine_RVE(template_dir, additivefoam_input_dict["region_box"])
 
     ##############################
     # Copy template to case  dir #
@@ -347,7 +366,7 @@ def generate(
     # Set the start and end time #
     ##############################
     # 1. Read scan path
-    df = pd.read_csv(new_scan_path_file, delim_whitespace=True)
+    df = pd.read_csv(new_scan_path_file, sep="\s+")
 
     # 2. Iterate through rows to determine intersection with
     # the region's bounding box
@@ -420,7 +439,8 @@ def generate(
 def main(argv=None):
     # Set up argparse
     parser = argparse.ArgumentParser(
-        description="Launch autofoam for " + "specified input file"
+        description="Launch additivefoam/solidification_region_stl for "
+        + "specified input file"
     )
     parser.add_argument(
         "--rx",
@@ -494,6 +514,12 @@ def main(argv=None):
         help="Number of cores for running each case" + ", for example: " + "--cores 8",
     )
     parser.add_argument(
+        "--scale",
+        default=0.001,
+        type=float,
+        help="Multiple by which to scale the STL file dimensions (default = 0.001, mm -> m)",
+    )
+    parser.add_argument(
         "--overwrite",
         dest="overwrite",
         action="store_true",
@@ -513,6 +539,7 @@ def main(argv=None):
     refine_region = args.refine_region
     template = args.template
     cores = args.cores
+    scale_factor = args.scale
     overwrite = args.overwrite
 
     # Get expected Myna output files
@@ -536,6 +563,7 @@ def main(argv=None):
                 refine_region,
                 template,
                 cores,
+                scale_factor,
                 overwrite,
             )
         )

@@ -33,7 +33,7 @@ cd myna
 
 # Optional: To ensure clean build, uninstall existing
 # repositories for dependencies
-# pip uninstall autofoam classification autothesis
+# pip uninstall classification autothesis
 
 # To install as a static package
 pip install .

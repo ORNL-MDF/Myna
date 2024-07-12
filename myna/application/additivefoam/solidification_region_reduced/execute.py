@@ -1,7 +1,3 @@
-import autofoam
-import autofoam.mesh
-import autofoam.cases
-import autofoam.util
 import os
 from myna.core.workflow.load_input import load_input
 from myna.core.components import return_step_class
@@ -36,7 +32,8 @@ def run_case(case_dir, cores, batch):
 def main(argv=None):
     # Set up argparse
     parser = argparse.ArgumentParser(
-        description="Launch autofoam for " + "specified input file"
+        description="Launch additivefoam/solidification_region_reduced for "
+        + "specified input file"
     )
     parser.add_argument(
         "--cores",
@@ -91,8 +88,9 @@ def main(argv=None):
             output_files.append(myna_file)
     if batch:
         for proc in processes:
-            print(f"Waiting on {proc.pid=}")
-            proc.wait()
+            if proc is not None:
+                print(f"Waiting on {proc.pid=}")
+                proc.wait()
 
     # Rename result files to Myna name format
     if not all(files_are_valid):

@@ -37,7 +37,7 @@ def create_mesh(case_dir, scale_factor, coarse_res, refinement_level, mpiargs):
 def main(argv=None):
     # Set up argparse
     parser = argparse.ArgumentParser(
-        description="Launch autofoam for " + "specified input file"
+        description="Launch openfoam/mesh_part_vtk for " + "specified input file"
     )
     parser.add_argument(
         "--mpiargs",
@@ -49,7 +49,7 @@ def main(argv=None):
         "--scale",
         default=0.001,
         type=float,
-        help="Multiple by which to scale the STL file dimensions",
+        help="Multiple by which to scale the STL file dimensions (default = 0.001, mm -> m)",
     )
     parser.add_argument(
         "--coarse",
