@@ -23,6 +23,21 @@ def run_classification(
     orig_dir = os.getcwd()
     os.chdir(case_dir)
 
+    # Get case myna_data
+    myna_data = load_input(os.path.join(case_dir, "myna_data.yaml"))
+    input_dir = os.path.dirname(myna_data["myna"]["input"])
+    resource_dir = os.path.join(input_dir, "myna_resources")
+
+    # Generate case information from myna_data
+    build = myna_data["build"]["name"]
+    part = list(myna_data["build"]["parts"].keys())[0]
+    part_dict = myna_data["build"]["parts"][part]
+    layer = list(part_dict["layer_data"].keys())[0]
+    layer_dict = part_dict["layer_data"][layer]
+
+    # Set directory for training data
+    resource_template_dir = os.path.join(resource_dir, "classify_solidification")
+
     # Create symbolic links to all available thermal results
     thermal_dir = "thermal_data"
     os.makedirs(thermal_dir, exist_ok=True)
@@ -36,13 +51,7 @@ def run_classification(
     thermal_file_local = copy_path
 
     # Setup folder structure
-    template_dir = os.path.join(
-        os.environ["MYNA_INTERFACE_PATH"],
-        "classification",
-        "thermal",
-        "template",
-    )
-    training_dir = os.path.join(template_dir, "training_voxels")
+    training_dir = os.path.join(resource_template_dir, "training_voxels")
     class_dir = os.path.join(case_dir, "class_voxels")
     os.makedirs(training_dir, exist_ok=True)
     os.makedirs(class_dir, exist_ok=True)
@@ -83,7 +92,9 @@ def run_classification(
     dataset_current = bnpy.data.XData.from_dataframe(df_training)
 
     # Check if model needs to be trained or not
-    model_dir = os.path.join(template_dir, f"voxel_model-sF={sF}-gamma={gamma}")
+    model_dir = os.path.join(
+        resource_template_dir, f"voxel_model-sF={sF}-gamma={gamma}"
+    )
     if not train_model:
         latest_model = sorted(glob.glob(os.path.join(model_dir, "*")), reverse=True)[0]
         latest_model_iteration = sorted(

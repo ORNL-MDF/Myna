@@ -8,6 +8,7 @@ from myna.core.workflow.load_input import load_input
 from myna.core import components
 from myna.core import metadata
 from myna import database
+from importlib.metadata import version
 
 
 def main(argv=None):
@@ -273,6 +274,11 @@ def main(argv=None):
                             data_dict_case["build"]["parts"][part]["layer_data"].pop(
                                 key, None
                             )
+
+            # Add basic information about the Myna workflow
+            data_dict_case["myna"] = {}
+            data_dict_case["myna"]["version"] = version("myna")
+            data_dict_case["myna"]["input"] = os.path.abspath(input_file)
 
             # Write data to case directory
             with open(os.path.join(case_dir, "myna_data.yaml"), "w") as f:
