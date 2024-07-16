@@ -25,8 +25,3 @@ resources/Peregrine/registered
 log.*
 *.log
 logs/
-
-# by default, ignore template files
-# use `git add -f <file(s)>` to force add any
-# template files that were intentionally added
-template/

@@ -7,6 +7,7 @@ from .component_rve import *
 from .component_classify import *
 from .component_mesh import *
 from .component_temperature import *
+from .component_melt_pool_geometry import *
 
 
 def return_step_class(step_name):
@@ -37,6 +38,7 @@ def return_step_class(step_name):
         "rve": ComponentRVE(),
         "mesh_part": ComponentPartMesh(),
         "mesh_part_vtk": ComponentPartMeshVTK(),
+        "melt_pool_geometry_part": ComponentMeltPoolGeometryPart(),
     }
     try:
         step_class = step_class_lookup[step_name]
