@@ -1,14 +1,15 @@
 steps:
 - 3dthesis:
     class: melt_pool_geometry_part
-    interface: thesisB
+    interface: thesis
     configure_args: [--res 25.0e-6]
-    execute_args: [--exec /home/cloud/3DThesis/build/application/3DThesis, --np 8, --batch]
+    execute_args: [--exec /home/cloud/3DThesis/build/application/3DThesis, --np 2,
+      --batch]
 data:
   build:
     datatype: Peregrine
     name: myna_output
     path: /home/cloud/myna/resources
     parts:
-      'P6':
+      P6:
         layers: [51]
