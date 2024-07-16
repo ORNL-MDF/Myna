@@ -47,9 +47,7 @@ def run_case(
     # Run Simulation
     case_directory = os.path.abspath(sim.input_dir)
     output_name = parser.read_parameter(sim.input_file, "Name")[0]
-    result_file = os.path.join(
-        case_directory, "Data", f"{output_name}{output_suffix}.Snapshot.{nout-1}.csv"
-    )
+    result_file = os.path.join(case_dir, "Data", "snapshot_data.csv")
     initial_working_dir = os.getcwd()
     os.chdir(case_directory)
     procs = proc_list.copy()
@@ -179,17 +177,16 @@ def main(argv=None):
 
     # Post-process results to convert to Myna format
     if output_files:
-        snapshot_data_file = output_files[0]
-        mynafile = myna_files[0]
-        df = pd.read_csv(snapshot_data_file)
-        df["time (s)"] = df["Time (s)"]
-        df["length (m)"] = df["Length Rotated (m)"]
-        df["width (m)"] = df["Width Rotated (m)"]
-        df["depth (m)"] = df["Depth (m)"]
-        df["x (m)"] = df["Origin X Rotated (m)"]
-        df["y (m)"] = df["Origin Y Rotated (m)"]
-        df = df[["x (m)", "y (m)", "time (s)", "length (m)", "width (m)", "depth (m)"]]
-        df.to_csv(mynafile, index=False)
+        for (mynafile, snapshot_data_file) in zip(myna_files, output_files):
+            df = pd.read_csv(snapshot_data_file)
+            df["time (s)"] = df["Time (s)"]
+            df["length (m)"] = df["Length Rotated (m)"]
+            df["width (m)"] = df["Width Rotated (m)"]
+            df["depth (m)"] = df["Depth (m)"]
+            df["x (m)"] = df["Origin X Rotated (m)"]
+            df["y (m)"] = df["Origin Y Rotated (m)"]
+            df = df[["x (m)", "y (m)", "time (s)", "length (m)", "width (m)", "depth (m)"]]
+            df.to_csv(mynafile, index=False)
 
 
 if __name__ == "__main__":
