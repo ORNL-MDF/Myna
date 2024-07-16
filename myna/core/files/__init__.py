@@ -17,3 +17,4 @@ from .file_id import *
 from .file_reduced_solidification import *
 from .file_vtk import *
 from .file_temperature import *
+from .file_melt_pool_geometry import *
