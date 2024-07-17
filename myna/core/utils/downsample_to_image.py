@@ -12,15 +12,34 @@ def downsample_to_image(data_x, data_y, values, image_size, plate_size, mode="ma
     plate_size -- size of the build plate (meters)
     mode -- method for downsampling (default "max")
     """
+    # Ensure inputs are numpy arrays and of float type
+    data_x = np.asarray(data_x, dtype=np.float64)
+    data_y = np.asarray(data_y, dtype=np.float64)
+    values = np.asarray(values, dtype=np.float64)
+    
+    # Filter out non-finite values from data_x, data_y, and values
+    mask = np.isfinite(data_x) & np.isfinite(data_y) & np.isfinite(values)
+    data_x = data_x[mask]
+    data_y = data_y[mask]
+    values = values[mask]
+
     # Initialize output image
     image = np.zeros(shape=(image_size, image_size))
 
     # Scale data to integer image pixel locations (divide by sample_size)
     # and center values on pixel centers (add 0.5)
     sample_size = plate_size / image_size
-    i, j = np.array(data_x / sample_size + 0.5, dtype=int), np.array(
-        data_y / sample_size + 0.5, dtype=int
-    )
+    scaled_x = data_x / sample_size + 0.5
+    scaled_y = data_y / sample_size + 0.5
+    
+    # Check for any remaining invalid values before conversion
+    valid_mask_x = np.isfinite(scaled_x) & (scaled_x >= 0) & (scaled_x < image_size)
+    valid_mask_y = np.isfinite(scaled_y) & (scaled_y >= 0) & (scaled_y < image_size)
+    valid_mask = valid_mask_x & valid_mask_y
+
+    i = np.clip(scaled_x[valid_mask].astype(int), 0, image_size - 1)
+    j = np.clip(scaled_y[valid_mask].astype(int), 0, image_size - 1)
+    values = values[valid_mask]
 
     # Convert data to 2D using the specified method
     if mode == "max":
