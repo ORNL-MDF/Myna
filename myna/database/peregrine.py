@@ -296,6 +296,7 @@ class PeregrineDB(Database):
             values=values,
             image_size=image_size,
             plate_size=plate_size,
+            bottom_left=[0, 0],
             mode="average",
         )
         filepath = f"{self.layer_str(layernumber)}.png"
