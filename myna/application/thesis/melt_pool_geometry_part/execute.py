@@ -183,8 +183,8 @@ def main(argv=None):
             df["length (m)"] = df["Length Rotated (m)"]
             df["width (m)"] = df["Width Rotated (m)"]
             df["depth (m)"] = df["Depth (m)"]
-            df["x (m)"] = df["Origin X Rotated (m)"]
-            df["y (m)"] = df["Origin Y Rotated (m)"]
+            df["x (m)"] = df["Beam X)"]
+            df["y (m)"] = df["Beam Y"]
             df = df[["x (m)", "y (m)", "time (s)", "length (m)", "width (m)", "depth (m)"]]
             df.to_csv(mynafile, index=False)
 
