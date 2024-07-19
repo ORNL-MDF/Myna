@@ -1,5 +1,5 @@
 Snapshots
 {
 	Times	0
-	Tracking	Volume
+	Tracking	Geometry
 }
