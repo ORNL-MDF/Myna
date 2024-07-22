@@ -26,5 +26,5 @@ data:
     name: demo_build
     path: /home/cloud/myna/resources
     parts:
-      P6:
+      P5:
         layers: [51, 52, 53, 54]

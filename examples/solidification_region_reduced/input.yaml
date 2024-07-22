@@ -18,7 +18,7 @@ data:
     name: myna_output
     path: ../../resources
     parts:
-      P6:
+      P5:
         regions:
           r1:
             layers: [51, 52]

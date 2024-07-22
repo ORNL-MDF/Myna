@@ -162,7 +162,7 @@ class PeregrineHDF5(PeregrineDB):
                 max_x = 0.5 * dx + dx * (max_x + pad)
                 max_y = 0.5 * dy + dy * (max_y + pad)
 
-                # Copy scan path dataframe and invert the y-axis to match part_id map
+                # Invert the y-axis to match part_id map
                 df_scan["ys"] = y_dim - df_scan["ys"]
                 df_scan["ye"] = y_dim - df_scan["ye"]
 
@@ -175,6 +175,10 @@ class PeregrineHDF5(PeregrineDB):
                 df_scan = df_scan[df_scan["ye"] > min_y]
                 df_scan = df_scan[df_scan["xe"] < max_x]
                 df_scan = df_scan[df_scan["ye"] < max_y]
+
+                # Undo the inversion of the y-axis to return to original coordinates
+                df_scan["ys"] = y_dim - df_scan["ys"]
+                df_scan["ye"] = y_dim - df_scan["ye"]
 
                 # Export scan path
                 df_converted = pd.DataFrame(

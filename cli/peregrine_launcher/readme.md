@@ -16,5 +16,5 @@ To run an example using the resources provided with the `myna` repository, first
 open `config.yaml` and set the path to your local installation of 3DThesis. Then use:
 
 ```bash
-myna_peregrine_launcher /home/cloud/myna/resources [51] [P6] 20e-6 gv
+myna_peregrine_launcher /home/cloud/myna/resources [51] [P5] 20e-6 gv
 ```
