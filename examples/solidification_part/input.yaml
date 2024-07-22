@@ -10,5 +10,5 @@ data:
     name: myna_output
     path: /home/cloud/myna/resources
     parts:
-      P6:
+      P5:
         layers: [51]

@@ -1,0 +1,43 @@
+steps:
+- additivefoam:
+    class: solidification_region_reduced
+    interface: additivefoam
+    configure_args: [--coarse 80e-6, --rx 0.5e-3, --ry 0.5e-3, --rz 300e-6, --pad-xy
+        0.5e-3, --pad-z 0.1e-3, --pad-sub 2.5e-3, --refine-layer 1, --refine-region
+        1]
+    execute_args: [--batch, --cores 2]
+- exaca:
+    class: microstructure_region
+    interface: exaca
+    configure_args: [--exec /home/cloud/spack/opt/spack/linux-ubuntu22.04-zen2/gcc-11.4.0/exaca-master-oz5mzn7epmfj5s7p42a3t37g6rla3c75/bin/ExaCA-Kokkos,
+      --cell-size 2.5, --sub-size 12.3, --nd 250, --mu 21, --std 3]
+    execute_args: [--batch]
+data:
+  build:
+    datatype: Peregrine
+    name: myna_output
+    path: ../../resources
+    parts:
+      P5:
+        regions:
+          r1:
+            layers: [51, 52]
+            x: 0.2
+            y: 0.021
+            layer_data:
+              '51':
+                scanpath: {file_local: /home/cloud/myna/examples/microstructure_region/myna_resources/P5/51/scanpath.txt,
+                  file_database: ../../resources/Peregrine/simulation/P5/0000051.txt}
+              '52':
+                scanpath: {file_local: /home/cloud/myna/examples/microstructure_region/myna_resources/P5/52/scanpath.txt,
+                  file_database: ../../resources/Peregrine/simulation/P5/0000052.txt}
+        spot_size: {value: 0.13, unit: mm}
+        laser_power: {value: 350.0, unit: W}
+    build_data:
+      preheat: {value: 298.15, unit: K}
+      material: {value: SS316L, unit: ''}
+      layer_thickness: {value: 5.0e-05, unit: m}
+  output_paths:
+    additivefoam: [/home/cloud/myna/examples/microstructure_region/myna_output/P5/r1/51/additivefoam/solidification_region_reduced-additivefoam-FileReducedSolidification.csv,
+      /home/cloud/myna/examples/microstructure_region/myna_output/P5/r1/52/additivefoam/solidification_region_reduced-additivefoam-FileReducedSolidification.csv]
+    exaca: [/home/cloud/myna/examples/microstructure_region/myna_output/P5/r1/exaca/microstructure_region-exaca-FileVTK.vtk]
