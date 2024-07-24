@@ -1,7 +1,7 @@
-import autothesis.parser as parser
 import mistlib as mist
 import os
 from myna.core.workflow.load_input import load_input
+from myna.application.thesis.parse import adjust_parameter
 import argparse
 import sys
 import shutil
@@ -44,7 +44,7 @@ def configure_case(case_dir, res, myna_input="myna_data.yaml"):
 
     # Set preheat temperature
     preheat = settings["build"]["build_data"]["preheat"]["value"]
-    parser.adjust_parameter(os.path.join(case_dir, "Material.txt"), "T_0", preheat)
+    adjust_parameter(os.path.join(case_dir, "Material.txt"), "T_0", preheat)
 
     # Set beam data
     beam_file = os.path.join(case_dir, "Beam.txt")
@@ -59,17 +59,13 @@ def configure_case(case_dir, res, myna_input="myna_data.yaml"):
 
     # For setting spot size, assume provided spot size is $D4 \sigma$
     # 3DThesis spot size is $\sqrt(6) \sigma$
-    parser.adjust_parameter(
-        beam_file, "Width_X", 0.25 * np.sqrt(6) * spot_size * spot_scale
-    )
-    parser.adjust_parameter(
-        beam_file, "Width_Y", 0.25 * np.sqrt(6) * spot_size * spot_scale
-    )
-    parser.adjust_parameter(beam_file, "Power", power)
+    adjust_parameter(beam_file, "Width_X", 0.25 * np.sqrt(6) * spot_size * spot_scale)
+    adjust_parameter(beam_file, "Width_Y", 0.25 * np.sqrt(6) * spot_size * spot_scale)
+    adjust_parameter(beam_file, "Power", power)
 
     # Update domain resolution
     domain_file = os.path.join(case_dir, "Domain.txt")
-    parser.adjust_parameter(domain_file, "Res", res)
+    adjust_parameter(domain_file, "Res", res)
 
     return
 
@@ -77,7 +73,7 @@ def configure_case(case_dir, res, myna_input="myna_data.yaml"):
 def main(argv=None):
     # Set up argparse
     parser = argparse.ArgumentParser(
-        description="Launch autothesis for " + "specified input file"
+        description="Configure solidification_part for " + "specified input file"
     )
     parser.add_argument(
         "--res",
@@ -95,7 +91,7 @@ def main(argv=None):
     step_name = os.environ["MYNA_STEP_NAME"]
     myna_files = settings["data"]["output_paths"][step_name]
 
-    # Run autothesis for each case
+    # Run each case
     for case_dir in [os.path.dirname(x) for x in myna_files]:
         configure_case(case_dir, res)
 
