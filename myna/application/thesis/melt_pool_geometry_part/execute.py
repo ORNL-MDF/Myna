@@ -1,8 +1,7 @@
-import autothesis.main
-import autothesis.plot
-import autothesis.parser as parser
 import os
 from myna.core.workflow.load_input import load_input
+from myna.application.thesis import adjust_parameter, read_parameter
+from myna.application.thesis import Thesis
 import argparse
 import sys
 import pandas as pd
@@ -24,16 +23,17 @@ def run_case(
     overwrite=False,
     check_for_existing_results=True,
 ):
-    # Set up simulation paths
-    sim = autothesis.main.Simulation()
-    sim.executable_path = executable
-    sim.input_dir = case_dir
-    sim.input_file = os.path.join(case_dir, case_input_file)
-    sim.output_dir = case_dir
+    # Set up simulation object
+    sim = Thesis(
+        executable=executable,
+        input_dir=case_dir,
+        input_filename=case_input_file,
+        output_dir=case_dir,
+    )
 
     # Update simulation threads
     settings_file = os.path.join(case_dir, "Settings.txt")
-    parser.adjust_parameter(settings_file, "MaxThreads", np)
+    adjust_parameter(settings_file, "MaxThreads", np)
 
     # Define the result file
     result_file = os.path.join(case_dir, "Data", "snapshot_data.csv")
@@ -46,7 +46,7 @@ def run_case(
 
     # Run Simulation
     case_directory = os.path.abspath(sim.input_dir)
-    output_name = parser.read_parameter(sim.input_file, "Name")[0]
+    output_name = read_parameter(sim.input_file, "Name")[0]
     result_file = os.path.join(case_dir, "Data", "snapshot_data.csv")
     initial_working_dir = os.getcwd()
     os.chdir(case_directory)
@@ -93,7 +93,7 @@ def run_case(
 def main(argv=None):
     # Set up argparse
     parser = argparse.ArgumentParser(
-        description="Launch autothesis for " + "specified input file"
+        description="Launch melt_pool_geometry_part for " + "specified input file"
     )
     parser.add_argument(
         "--exec", default="", type=str, help="(str) path to the executable file to use"
@@ -159,7 +159,7 @@ def main(argv=None):
     step_name = os.environ["MYNA_STEP_NAME"]
     myna_files = settings["data"]["output_paths"][step_name]
 
-    # Run autothesis for each case
+    # Run each case
     output_files = []
     proc_list = []
     for case_dir in [os.path.dirname(x) for x in myna_files]:
@@ -177,7 +177,7 @@ def main(argv=None):
 
     # Post-process results to convert to Myna format
     if output_files:
-        for (mynafile, snapshot_data_file) in zip(myna_files, output_files):
+        for mynafile, snapshot_data_file in zip(myna_files, output_files):
             df = pd.read_csv(snapshot_data_file)
             df["time (s)"] = df["Time (s)"]
             df["length (m)"] = df["Length Rotated (m)"]
@@ -185,7 +185,9 @@ def main(argv=None):
             df["depth (m)"] = df["Depth (m)"]
             df["x (m)"] = df["Beam X"]
             df["y (m)"] = df["Beam Y"]
-            df = df[["x (m)", "y (m)", "time (s)", "length (m)", "width (m)", "depth (m)"]]
+            df = df[
+                ["x (m)", "y (m)", "time (s)", "length (m)", "width (m)", "depth (m)"]
+            ]
             df.to_csv(mynafile, index=False)
 
 

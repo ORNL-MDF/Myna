@@ -1,4 +1,3 @@
-import autothesis.parser as parser
 import mistlib as mist
 import os
 from myna.core.workflow.load_input import load_input
@@ -6,7 +5,7 @@ import argparse
 import sys
 import shutil
 import numpy as np
-from myna.application.thesis import get_scan_stats, Path
+from myna.application.thesis import get_scan_stats, adjust_parameter
 
 
 def configure_case(case_dir, res, nout, myna_input="myna_data.yaml"):
@@ -20,7 +19,10 @@ def configure_case(case_dir, res, nout, myna_input="myna_data.yaml"):
 
     # Copy template case
     template_path = os.path.join(
-        os.environ["MYNA_INTERFACE_PATH"], "thesis", "melt_pool_geometry_part", "template"
+        os.environ["MYNA_INTERFACE_PATH"],
+        "thesis",
+        "melt_pool_geometry_part",
+        "template",
     )
     files = os.listdir(template_path)
     for f in files:
@@ -49,7 +51,7 @@ def configure_case(case_dir, res, nout, myna_input="myna_data.yaml"):
 
     # Set preheat temperature
     preheat = settings["build"]["build_data"]["preheat"]["value"]
-    parser.adjust_parameter(os.path.join(case_dir, "Material.txt"), "T_0", preheat)
+    adjust_parameter(os.path.join(case_dir, "Material.txt"), "T_0", preheat)
 
     # Set beam data
     beam_file = os.path.join(case_dir, "Beam.txt")
@@ -64,23 +66,19 @@ def configure_case(case_dir, res, nout, myna_input="myna_data.yaml"):
 
     # For setting spot size, assume provided spot size is $D4 \sigma$
     # 3DThesis spot size is $\sqrt(6) \sigma$
-    parser.adjust_parameter(
-        beam_file, "Width_X", 0.25 * np.sqrt(6) * spot_size * spot_scale
-    )
-    parser.adjust_parameter(
-        beam_file, "Width_Y", 0.25 * np.sqrt(6) * spot_size * spot_scale
-    )
-    parser.adjust_parameter(beam_file, "Power", power)
+    adjust_parameter(beam_file, "Width_X", 0.25 * np.sqrt(6) * spot_size * spot_scale)
+    adjust_parameter(beam_file, "Width_Y", 0.25 * np.sqrt(6) * spot_size * spot_scale)
+    adjust_parameter(beam_file, "Power", power)
 
     # Update domain resolution
     domain_file = os.path.join(case_dir, "Domain.txt")
-    parser.adjust_parameter(domain_file, "Res", res)
+    adjust_parameter(domain_file, "Res", res)
 
     # Update output times
     mode_file = os.path.join(case_dir, "Mode.txt")
     elapsed_time, _ = get_scan_stats(case_scanfile)
     times = np.linspace(0, elapsed_time, nout)
-    parser.adjust_parameter(mode_file, "Times", ",".join([str(x) for x in times]))
+    adjust_parameter(mode_file, "Times", ",".join([str(x) for x in times]))
 
     return
 
@@ -88,7 +86,8 @@ def configure_case(case_dir, res, nout, myna_input="myna_data.yaml"):
 def main(argv=None):
     # Set up argparse
     parser = argparse.ArgumentParser(
-        description="Launch autothesis for " + "specified input file"
+        description="Configure melt_pool_geometry_part cases for "
+        + "specified input file"
     )
     parser.add_argument(
         "--res",
@@ -113,7 +112,7 @@ def main(argv=None):
     step_name = os.environ["MYNA_STEP_NAME"]
     myna_files = settings["data"]["output_paths"][step_name]
 
-    # Run autothesis for each case
+    # Configure each case
     for case_dir in [os.path.dirname(x) for x in myna_files]:
         configure_case(case_dir, res, nout)
 

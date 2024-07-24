@@ -33,7 +33,7 @@ cd myna
 
 # Optional: To ensure clean build, uninstall existing
 # repositories for dependencies
-# pip uninstall classification autothesis
+# pip uninstall classification
 
 # To install as a static package
 pip install .
@@ -42,7 +42,7 @@ pip install .
 # pip install -e .
 
 # Install with all optional dependencies
-pip install -e .[autothesis,additivefoam,cluster]
+pip install -e .[cluster,dev]
 ```
 
 Optional dependencies include:
