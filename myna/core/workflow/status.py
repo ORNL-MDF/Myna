@@ -2,24 +2,17 @@
 to a text file
 """
 
-import myna
+from myna import core
 from importlib.metadata import version
 import argparse
 import os
 
 
-def write_codebase_status_to_file(argv=None):
+# Parser comes from the top-level command parsing
+def write_codebase_status_to_file(parser):
     """Writes available Myna components, data, files, and interfaces
     to a file
-
-    Parses the "--output <filename>" sys.argv input to output to
-    a specific file name.
     """
-
-    # Set up argparse
-    parser = argparse.ArgumentParser(
-        description="Launch myna for " + "specified input file"
-    )
     parser.add_argument(
         "--output",
         nargs="?",
@@ -31,7 +24,7 @@ def write_codebase_status_to_file(argv=None):
     )
 
     # Parse cmd arguments
-    args = parser.parse_args(argv)
+    args = parser.parse_args()
     output_file = args.output
 
     # Print header
@@ -40,7 +33,7 @@ def write_codebase_status_to_file(argv=None):
     lines.append(f'Myna version: {version("myna")}\n')
 
     # Get all components
-    obj = myna.components
+    obj = core.components
     lines.append("\nWorkflow components:\n\n")
     for key in vars(obj).keys():
         if key[0] != "_":
@@ -57,7 +50,7 @@ def write_codebase_status_to_file(argv=None):
                 pass
 
     # Get all file definitions
-    obj = myna.files
+    obj = core.files
     lines.append("\nAvailable file interfaces:\n\n")
     for key in vars(obj).keys():
         if key[0] != "_":
@@ -74,7 +67,7 @@ def write_codebase_status_to_file(argv=None):
                 pass
 
     # Get all metadata types
-    obj = myna.metadata
+    obj = core.metadata
     lines.append("\nAvailable metadata types:\n\n")
     for key in vars(obj).keys():
         if key[0] != "_":

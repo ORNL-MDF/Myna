@@ -1,3 +1,5 @@
+"""Defines `myna run` functionality"""
+
 import argparse
 import os
 
@@ -6,17 +8,9 @@ from myna.core.workflow.load_input import load_input
 import myna.core.utils
 
 
-def main(argv=None):
-    """Main function for myna_run script to run myna components from the command line
-
-    Args:
-      argv : List of command line arguments, by default None
-    """
-
-    # Set up argparse
-    parser = argparse.ArgumentParser(
-        description="Launch myna for " + "specified input file"
-    )
+# Parser comes from the top-level command parsing
+def main(parser):
+    """Main function for running myna workflows"""
     parser.add_argument(
         "--input",
         default="input.yaml",
@@ -32,7 +26,7 @@ def main(argv=None):
     )
 
     # Parse cmd arguments
-    args = parser.parse_args(argv)
+    args = parser.parse_args()
     input_file = args.input
     steps_to_run = myna.core.utils.str_to_list(args.step)
 

@@ -1,3 +1,5 @@
+"""Defines `myna sync` functionality"""
+
 import os
 import argparse
 import myna.core.utils
@@ -6,17 +8,10 @@ import myna.database
 from myna.core.workflow.load_input import load_input
 
 
-def main(argv=None):
-    """Main function for running myna_sync from the command line
+# Parser comes from the top-level command parsing
+def main(parser):
+    """Main function for syncing myna data back to a database"""
 
-    Args:
-        argv : list of command line arguments, by default None
-    """
-
-    # Set up argparse
-    parser = argparse.ArgumentParser(
-        description="Launch myna for " + "specified input file"
-    )
     parser.add_argument(
         "--input",
         default="input.yaml",
