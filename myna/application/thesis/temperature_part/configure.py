@@ -5,7 +5,7 @@ import argparse
 import sys
 import shutil
 import numpy as np
-from myna.application.thesis import get_scan_stats, adjust_parameter
+from myna.application.thesis import get_scan_stats, adjust_parameter, Thesis
 
 
 def configure_case(case_dir, res, nout, myna_input="myna_data.yaml"):
@@ -77,36 +77,15 @@ def configure_case(case_dir, res, nout, myna_input="myna_data.yaml"):
 
 
 def main(argv=None):
-    # Set up argparse
-    parser = argparse.ArgumentParser(
-        description="Configure temperature_part for " + "specified input file"
-    )
-    parser.add_argument(
-        "--res",
-        default=12.5e-6,
-        type=float,
-        help="(float) resolution to use for simulations in meters",
-    )
-    parser.add_argument(
-        "--nout",
-        default=1000,
-        type=int,
-        help="(int) number of snapshot outputs along scan path",
-    )
 
-    # Parse command line arguments
-    args = parser.parse_args(argv)
-    settings = load_input(os.environ["MYNA_RUN_INPUT"])
-    res = args.res
-    nout = args.nout
+    sim = Thesis("temperature_part", argv)
 
     # Get expected Myna output files
-    step_name = os.environ["MYNA_STEP_NAME"]
-    myna_files = settings["data"]["output_paths"][step_name]
+    myna_files = sim.settings["data"]["output_paths"][sim.step_name]
 
     # Configure each case
     for case_dir in [os.path.dirname(x) for x in myna_files]:
-        configure_case(case_dir, res, nout)
+        configure_case(case_dir, sim.args.res, sim.args.nout)
 
 
 if __name__ == "__main__":

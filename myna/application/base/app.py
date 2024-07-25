@@ -65,7 +65,7 @@ class MynaApp:
 
     # Check if executable exists
     def check_exe(self, *path_args):
-        exe = self.exec
+        exe = self.args.exec
         if exe is None:
             exe = os.path.join(self.path, *path_args)
 
@@ -81,11 +81,9 @@ class MynaApp:
     # args must have been parsed
     def set_procs(self):
         # Set processor information
-        self.np = self.args.np
-        self.maxproc = self.args.maxproc
-        if self.maxproc is None:
-            self.maxproc = os.cpu_count()
-        self.np = min(os.cpu_count(), self.np, self.maxproc)
+        if self.args.maxproc is None:
+            self.args.maxproc = os.cpu_count()
+        self.args.np = min(os.cpu_count(), self.args.np, self.args.maxproc)
 
     def set_template_path(self, *path_args):
         if self.template is None:

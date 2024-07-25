@@ -11,35 +11,20 @@ import glob
 
 
 def run_case(
-    executable,
-    case_dir,
-    batch,
     proc_list,
-    np,
-    maxproc,
-    nout,
-    case_input_file="ParamInput.txt",
-    output_suffix="",
-    overwrite=False,
+    sim,
     check_for_existing_results=True,
 ):
-    # Set up simulation object
-    sim = Thesis(
-        executable=executable,
-        input_dir=case_dir,
-        input_filename=case_input_file,
-        output_dir=case_dir,
-    )
 
     # Update simulation threads
-    settings_file = os.path.join(case_dir, "Settings.txt")
-    adjust_parameter(settings_file, "MaxThreads", np)
+    settings_file = os.path.join(sim.input_dir, "Settings.txt")
+    adjust_parameter(settings_file, "MaxThreads", sim.args.np)
 
     # Check if output file exists
     if check_for_existing_results:
-        output_files = glob.glob(os.path.join(case_dir, "Data", "*.csv"))
-        if (len(output_files) > 0) and not overwrite:
-            print(f"{case_dir} has already been simulated. Skipping.")
+        output_files = glob.glob(os.path.join(sim.input_dir, "Data", "*.csv"))
+        if (len(output_files) > 0) and not sim.args.overwrite:
+            print(f"{sim.input_dir} has already been simulated. Skipping.")
             result_file = output_files[0]
             return [result_file, proc_list]
 
@@ -47,27 +32,27 @@ def run_case(
     case_directory = os.path.abspath(sim.input_dir)
     output_name = read_parameter(sim.input_file, "Name")[0]
     result_file = os.path.join(
-        case_directory, "Data", f"{output_name}{output_suffix}.Snapshot.{nout-1}.csv"
+        case_directory,
+        "Data",
+        f"{output_name}{sim.output_suffix}.Snapshot.{sim.args.nout-1}.csv",
     )
     initial_working_dir = os.getcwd()
     os.chdir(case_directory)
     procs = proc_list.copy()
-    print(f"{case_dir}:")
-    print(f"\tWorking directory: {os.getcwd()}")
     try:
         # Submit job
         t0 = time.perf_counter()
         process = subprocess.Popen(
-            [sim.executable_path, sim.input_file], stdout=subprocess.DEVNULL
+            [sim.args.exec, sim.input_file], stdout=subprocess.DEVNULL
         )
-        print(f"\tRunning: {sim.executable_path} {sim.input_file}")
+        print(f"\tRunning: {sim.args.exec} {sim.input_file}")
         print(f"\tPID: {process.pid}")
 
         # Check if there are enough processors available for another job
-        procs_available = ((len(procs) + 2) * np) <= maxproc
+        procs_available = ((len(procs) + 2) * sim.args.np) <= sim.args.maxproc
 
         # Wait for job to finish as needed
-        if batch:
+        if sim.args.batch:
             procs.append(process)
             if not procs_available:
                 proc0 = procs.pop(0)
@@ -83,7 +68,7 @@ def run_case(
         print("Failed to run simulation:")
         print(e)
         print("Working directory on exit = ", os.getcwd())
-        print("Executable exists = ", os.path.exists(sim.executable_path))
+        print("Executable exists = ", os.path.exists(sim.args.executable_path))
         print("Input file exists = ", os.path.exists(sim.input_file))
         exit()
     os.chdir(initial_working_dir)
@@ -92,81 +77,19 @@ def run_case(
 
 
 def main(argv=None):
-    # Set up argparse
-    parser = argparse.ArgumentParser(
-        description="Run temperature_part for " + "specified input file"
-    )
-    parser.add_argument(
-        "--exec", default="", type=str, help="(str) path to the executable file to use"
-    )
-    parser.add_argument(
-        "--np",
-        default=8,
-        type=int,
-        help="(int) processors to use per job, will "
-        + "correct to the maximum available processors if "
-        + "set too large",
-    )
-    parser.add_argument(
-        "--maxproc",
-        default=None,
-        type=int,
-        help="(int) maximum available processors for system, will "
-        + "correct to the maximum available processors if "
-        + "set too large",
-    )
-    parser.add_argument(
-        "--batch", dest="batch", action="store_true", help="(flag) run jobs in parallel"
-    )
-    parser.add_argument(
-        "--nout",
-        default=1000,
-        type=int,
-        help="(int) number of snapshot outputs",
-    )
-    parser.set_defaults(batch=False)
 
-    # Parse command line arguments
-    args = parser.parse_args(argv)
-    settings = load_input(os.environ["MYNA_RUN_INPUT"])
-    exec = args.exec
-    batch = args.batch
-    np = args.np
-    maxproc = args.maxproc
-    nout = args.nout
-
-    # Check if executable exists
-    if exec == "":
-        exec = os.path.join(
-            os.environ["MYNA_INTERFACE_PATH"],
-            "thesis",
-            "solidification_part",
-            "3DThesis",
-            "build",
-            "application",
-            "3DThesis.exe",
-        )
-    if not os.path.exists(exec):
-        raise Exception(f'3DThesis executable "{exec}" not found.')
-    if not os.access(exec, os.X_OK):
-        raise Exception(f'3DThesis executable "{exec}" is not executable.')
-
-    # Get and set process information
-    if maxproc is None:
-        maxproc = os.cpu_count()
-    np = min(os.cpu_count(), np, maxproc)
+    # Set up simulation object
+    sim = Thesis("temperature_part", argv)
 
     # Get expected Myna output files
-    step_name = os.environ["MYNA_STEP_NAME"]
-    myna_files = settings["data"]["output_paths"][step_name]
+    myna_files = sim.settings["data"]["output_paths"][sim.step_name]
 
     # Run each case
     output_files = []
     proc_list = []
     for case_dir in [os.path.dirname(x) for x in myna_files]:
-        result_file, proc_list = run_case(
-            exec, case_dir, batch, proc_list, np, maxproc, nout
-        )
+        sim.set_case(case_dir, case_dir)
+        result_file, proc_list = run_case(proc_list, sim)
         output_files.append(result_file)
 
     # Wait for any remaining processes

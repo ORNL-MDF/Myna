@@ -7,6 +7,8 @@ import sys
 import shutil
 import numpy as np
 
+from myna.application.thesis import Thesis
+
 
 def configure_case(case_dir, res, myna_input="myna_data.yaml"):
     # Load input file
@@ -71,29 +73,16 @@ def configure_case(case_dir, res, myna_input="myna_data.yaml"):
 
 
 def main(argv=None):
-    # Set up argparse
-    parser = argparse.ArgumentParser(
-        description="Configure solidification_part for " + "specified input file"
-    )
-    parser.add_argument(
-        "--res",
-        default=12.5e-6,
-        type=float,
-        help="(float) resolution to use for simulations in meters",
-    )
 
-    # Parse command line arguments
-    args = parser.parse_args(argv)
-    settings = load_input(os.environ["MYNA_RUN_INPUT"])
-    res = args.res
+    sim = Thesis("solidification_part", argv)
 
     # Get expected Myna output files
     step_name = os.environ["MYNA_STEP_NAME"]
-    myna_files = settings["data"]["output_paths"][step_name]
+    myna_files = sim.settings["data"]["output_paths"][sim.step_name]
 
     # Run each case
     for case_dir in [os.path.dirname(x) for x in myna_files]:
-        configure_case(case_dir, res)
+        configure_case(case_dir, sim.args.res)
 
 
 if __name__ == "__main__":
