@@ -1,13 +1,9 @@
 import os
 import shutil
-import numpy as np
-import glob
-import json
 from myna.core.workflow.load_input import load_input
 from myna.core.components import return_step_class
 import argparse
 import sys
-import yaml
 import subprocess
 
 
@@ -40,7 +36,7 @@ def run_case(case_dir, batch, ranks):
         print(f"{command=}")
         process = subprocess.Popen(command, shell=True)
 
-    result_file = os.path.join(case_dir, "output", "exaca.vtk")
+    result_file = os.path.join(case_dir, "exaca.vtk")
     return result_file, process
 
 
@@ -109,7 +105,7 @@ def main(argv=None):
     for filepath, mynafile, file_is_valid in zip(
         output_files, myna_files, files_are_valid
     ):
-        if not file_is_valid:
+        if not file_is_valid and os.path.exists(filepath):
             shutil.move(filepath, mynafile)
 
 
