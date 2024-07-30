@@ -25,7 +25,8 @@ dependencies = [
     'mistlib @ git+https://github.com/ORNL-MDF/mist.git',
     'vtk',
     'h5py',
-    'polars',]
+    'polars',
+    'pyebsd @ git+https://github.com/arthursn/pyebsd.git',]
 
 [project.optional-dependencies]
 cluster = [
