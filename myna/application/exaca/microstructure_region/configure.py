@@ -115,10 +115,10 @@ def setup_case(
     return
 
 
-def main(argv=None):
+def main():
 
     # Create ExaCA instance
-    app = ExaCA(argv)
+    app = ExaCA()
 
     # Get expected Myna output files
     settings = app.settings
@@ -157,4 +157,4 @@ def main(argv=None):
 
 
 if __name__ == "__main__":
-    main(sys.argv[1:])
+    main()

@@ -76,9 +76,9 @@ def configure_case(case_dir, res, nout, myna_input="myna_data.yaml"):
     return
 
 
-def main(argv=None):
+def main():
 
-    sim = Thesis("temperature_part", argv)
+    sim = Thesis("temperature_part")
 
     # Get expected Myna output files
     myna_files = sim.settings["data"]["output_paths"][sim.step_name]
@@ -89,4 +89,4 @@ def main(argv=None):
 
 
 if __name__ == "__main__":
-    main(sys.argv[1:])
+    main()

@@ -72,9 +72,9 @@ def configure_case(case_dir, res, myna_input="myna_data.yaml"):
     return
 
 
-def main(argv=None):
+def main():
 
-    sim = Thesis("solidification_part", argv)
+    sim = Thesis("solidification_part")
 
     # Get expected Myna output files
     step_name = os.environ["MYNA_STEP_NAME"]
@@ -86,4 +86,4 @@ def main(argv=None):
 
 
 if __name__ == "__main__":
-    main(sys.argv[1:])
+    main()

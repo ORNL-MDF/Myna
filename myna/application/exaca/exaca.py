@@ -3,7 +3,7 @@ from myna.application.base import MynaApp
 
 class ExaCA(MynaApp):
 
-    def __init__(self, argv):
+    def __init__(self):
         super().__init__("ExaCA")
 
         # Setup ExaCA specific inputs
@@ -36,7 +36,7 @@ class ExaCA(MynaApp):
             help="(float) Grain size of substrate, in microns",
         )
 
-        self.args = self.parser.parse_args(argv)
+        self.args = self.parser.parse_args()
 
         super().check_exe(
             "exaca",

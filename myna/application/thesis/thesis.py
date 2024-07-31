@@ -6,7 +6,6 @@ class Thesis(MynaApp):
     def __init__(
         self,
         sim_type,
-        argv,
         input_dir=None,
         input_filename="ParamInput.txt",
         material_filename="Material.txt",
@@ -29,7 +28,7 @@ class Thesis(MynaApp):
             help="(int) number of snapshot outputs",
         )
 
-        self.args = self.parser.parse_args(argv)
+        self.args = self.parser.parse_args()
 
         # Set case directories and input files
         if input_dir is not None:
