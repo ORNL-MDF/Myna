@@ -1,4 +1,3 @@
-import classification
 import os
 import sys
 import glob
@@ -7,6 +6,7 @@ import argparse
 import pandas as pd
 import numpy as np
 from myna.core.workflow.load_input import load_input
+import myna.application.bnpy as myna_bnpy
 
 
 def run(
@@ -19,12 +19,7 @@ def run(
     supervoxelStep=250e-6,
     dpi=300,
 ):
-    """
-    # Generate supervoxel training data from the voxel classification data
-    supervoxelTrainingData = classification.generator.make_supervoxel_training_data(voxelModelPath,
-        voxelStep=0.0125, supervoxelStep=svStep,
-        dpi=300, plot=plot)
-    """
+    """Generate supervoxel training data from the voxel clustering data"""
     # Go to case directory
     orig_dir = os.getcwd()
     os.chdir(case_dir)
@@ -42,7 +37,7 @@ def run(
     layer_dict = part_dict["layer_data"][layer]
 
     # Set directory for training data
-    resource_template_dir = os.path.join(resource_dir, "classify_solidification")
+    resource_template_dir = os.path.join(resource_dir, "cluster_solidification")
 
     # Load cluster data
     df = pd.read_csv(cluster_file)
@@ -70,18 +65,17 @@ def run(
     mesh = pd.DataFrame(mesh, columns=["x (m)", "y (m)"])
 
     # Create symbolic links to all available clustering results
-    cluster_dir = "cluster_data"
-    os.makedirs(cluster_dir, exist_ok=True)
-    copy_path = os.path.join(cluster_dir, os.path.basename(cluster_file))
+    training_dir = "training_data"
+    os.makedirs(training_dir, exist_ok=True)
+    copy_path = os.path.join(training_dir, os.path.basename(cluster_file))
     if not os.path.exists(copy_path):
         os.symlink(cluster_file, copy_path)
-    cluster_file_local = copy_path
 
     # Setup folder structure
     training_dir = os.path.join(resource_template_dir, "training_supervoxels")
-    class_dir = os.path.join(case_dir, "class_supervoxels")
+    cluster_dir = os.path.join(case_dir, "cluster_supervoxels")
     os.makedirs(training_dir, exist_ok=True)
-    os.makedirs(class_dir, exist_ok=True)
+    os.makedirs(cluster_dir, exist_ok=True)
 
     # TODO: Load number of clusters from the voxel clustering model,
     # do not expect that any given file will have all the voxel cluster ids
@@ -125,7 +119,7 @@ def run(
         mesh = pd.read_csv(meshCompCSV)
 
     for cluster in clusters:
-        classification.plotting.cluster_composition_map(
+        myna_bnpy.cluster_composition_map(
             xx * 1e3,
             yy * 1e3,
             mesh,
@@ -142,20 +136,9 @@ def run(
     xmin, xmax = [0, 1]
     for col in df_training.columns:
         print(f"Generating histogram for distribution of {col}")
-        classification.plotting.supervoxel_composition_hist(
+        myna_bnpy.supervoxel_composition_hist(
             df_training, col, exportName=f"training_data_dist-{col}.png", dpi=dpi
         )
-
-    """
-    # Train supervoxel classification model and generate plots of the classification results
-    supervoxelDatasets, _, nClusterSV = classification.training.train_supervoxel_classifier(supervoxelTrainingData,
-                                                                     loadModel=loadSupervoxelModel,
-                                                                     dpi=300,
-                                                                     plot=plot,
-                                                                     sF=sFsv,
-                                                                     gamma=gamma,
-                                                                     modelInitDir=svInit)
-    """
 
     # Convert the whole dataset to a bnpy dataset for clustering after model training
     dataset_current = bnpy.data.XData.from_dataframe(df_training)
@@ -255,7 +238,7 @@ def run(
             print(f'{info_dict["task_output_path"]=}')
             task_output_path = info_dict["task_output_path"]
 
-    result_file = os.path.join(class_dir, f"cluster_ids.csv")
+    result_file = os.path.join(cluster_dir, f"cluster_ids.csv")
     cur_model, lap_val = bnpy.load_model_at_lap(task_output_path, None)
     df_output = mesh.copy()
 
@@ -285,21 +268,17 @@ def run(
     # Generate colormap for supervoxel voxel cluster ID compositions
     voxel_model, lap_val = bnpy.load_model_at_lap(voxel_model_path, None)
     n_digits = max(voxel_model.allocModel.K, 2)
-    colors, cmap, colorValues = classification.plotting.cluster_colormap(
-        n_digits, colorspace="tab10"
-    )
+    colors, cmap, colorValues = myna_bnpy.cluster_colormap(n_digits, colorspace="tab10")
     suffix = f"sF={sF}-g={gamma}-K={K}"
 
     # Plot colormesh of supervoxel cluster IDs
     n_digits = max(cur_model.allocModel.K, 2)
-    colors, cmap, colorValues = classification.plotting.cluster_colormap(
-        n_digits, colorspace="tab10"
-    )
+    colors, cmap, colorValues = myna_bnpy.cluster_colormap(n_digits, colorspace="tab10")
     mesh["X(mm)"] = mesh["x (m)"] * 1e3
     mesh["Y(mm)"] = mesh["y (m)"] * 1e3
     mesh["id"] = df_output["id"].to_numpy()
-    classification.plotting.supervoxel_id_colormesh(
-        mesh, colorValues, cmap, exportName=f"class_supervoxel-{suffix}.png", dpi=dpi
+    myna_bnpy.supervoxel_id_colormesh(
+        mesh, colorValues, cmap, exportName=f"cluster_supervoxel-{suffix}.png", dpi=dpi
     )
 
     os.chdir(orig_dir)
@@ -309,20 +288,20 @@ def run(
 def main(argv=None):
     # Set up argparse
     parser = argparse.ArgumentParser(
-        description="Launch classification for " + "specified input file"
+        description="Launch clustering for " + "specified input file"
     )
     parser.add_argument(
         "--cluster",
         default="",
         type=str,
-        help="input cluster step name" + ", for example: " + "--cluster classification",
+        help="input cluster step name" + ", for example: " + "--cluster cluster",
     )
     parser.add_argument(
         "--voxel-model",
         dest="voxel_model",
-        default="$MYNA_INTERFACE_PATH/classification/thermal/template/voxel_model-sF=0.5-gamma=8",
+        default="myna_resources/cluster_solidification/voxel_model-sF=0.5-gamma=8",
         type=str,
-        help="path to model for voxel classification",
+        help="path to model for voxel clustering",
     )
     parser.add_argument(
         "--res",
@@ -357,16 +336,11 @@ def main(argv=None):
 
     # Get latest voxel model
     voxel_model = args.voxel_model
-    voxel_model = voxel_model.replace(
-        "$MYNA_INTERFACE_PATH", os.environ["MYNA_INTERFACE_PATH"]
-    )
     voxel_model = voxel_model.replace("/", os.sep)
-    voxel_model = sorted(glob.glob(os.path.join(voxel_model, "*")), reverse=True)[
-        0
-    ]  # Model iteration
-    voxel_model = sorted(glob.glob(os.path.join(voxel_model, "*")), reverse=True)[
-        0
-    ]  # Training iteration
+    # Model iteration
+    voxel_model = sorted(glob.glob(os.path.join(voxel_model, "*")), reverse=True)[0]
+    # Training iteration
+    voxel_model = sorted(glob.glob(os.path.join(voxel_model, "*")), reverse=True)[0]
 
     # Get expected Myna output files
     step_name = os.environ["MYNA_STEP_NAME"]
@@ -376,12 +350,12 @@ def main(argv=None):
         cluster_step_name = os.environ["MYNA_LAST_STEP_NAME"]
     cluster_files = settings["data"]["output_paths"][cluster_step_name]
 
-    # Run classification
+    # Run clustering
     output_files = []
     for case_dir, cluster_file in zip(
         [os.path.dirname(x) for x in myna_files], cluster_files
     ):
-        print("Running classification for:")
+        print("Running clustering for:")
         print(f"- {case_dir=}")
         print(f"- {cluster_file=}")
         output_files.append(

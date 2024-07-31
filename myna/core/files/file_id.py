@@ -8,7 +8,7 @@ from .file import *
 class FileID(File):
     """Define file format class for a field of integer IDs.
 
-    Intended for use with the `myna.components.classify` classes.
+    Intended for use with the `myna.components.cluster` classes.
     """
 
     def __init__(self, file):

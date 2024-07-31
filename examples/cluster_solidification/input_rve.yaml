@@ -6,14 +6,14 @@ steps:
     execute_args: [--exec /home/cloud/3DThesis/build/application/3DThesis,
       --np 8,
       --maxproc 32]
-- classification_relabel:
-    class: classify_solidification
-    interface: classification
+- cluster_relabel:
+    class: cluster_solidification
+    interface: bnpy
     execute_args: [--thermal 3dthesis, --no-training]
-- classification_supervoxel_relabel:
-    class: classify_supervoxel
-    interface: classification
-    execute_args: [--cluster classification_relabel, --no-training]
+- cluster_supervoxel_relabel:
+    class: cluster_supervoxel
+    interface: bnpy
+    execute_args: [--cluster cluster_relabel, --no-training]
 - rve:
     class: rve
     interface: rve_selection

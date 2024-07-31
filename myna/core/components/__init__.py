@@ -33,7 +33,7 @@ following attributes of Component:
 
 from .component_class_lookup import *
 from .component_solidification import *
-from .component_classify import *
+from .component_cluster import *
 from .component_microstructure import *
 from .component_rve import *
 from .component import *

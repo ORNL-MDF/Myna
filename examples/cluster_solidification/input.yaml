@@ -1,0 +1,31 @@
+steps:
+- 3dthesis:
+    class: solidification_part
+    interface: thesis
+    configure_args: [--res 50.0e-6]
+    execute_args: [--exec /home/cloud/3DThesis/build/application/3DThesis,
+      --np 8,
+      --maxproc 32,
+      --batch]
+- cluster:
+    class: cluster_solidification
+    interface: bnpy
+- cluster_relabel:
+    class: cluster_solidification
+    interface: bnpy
+    execute_args: [--thermal 3dthesis, --no-training]
+- cluster_supervoxel:
+    class: cluster_supervoxel
+    interface: bnpy
+- cluster_supervoxel_relabel:
+    class: cluster_supervoxel
+    interface: bnpy
+    execute_args: [--cluster cluster_relabel, --no-training]
+data:
+  build:
+    datatype: Peregrine
+    name: demo_build
+    path: /home/cloud/myna/resources
+    parts:
+      P5:
+        layers: [51, 52, 53, 54]
