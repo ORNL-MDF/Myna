@@ -31,10 +31,6 @@ since the package is not on PyPI. To install `myna` follow the instructions belo
 git clone https://code.ornl.gov/ygk/myna.git
 cd myna
 
-# Optional: To ensure clean build, uninstall existing
-# repositories for dependencies
-# pip uninstall classification
-
 # To install as a static package
 pip install .
 
@@ -42,10 +38,10 @@ pip install .
 # pip install -e .
 
 # Install with all optional dependencies
-pip install -e .[cluster,dev]
+pip install -e .[dev]
 ```
 
-Optional dependencies include:
+Optional external dependencies include:
 
 - for installer scripts
   - git
@@ -54,7 +50,6 @@ Optional dependencies include:
 - for running `examples/demo`
   - 3DThesis
   - AdditiveFOAM
-  - classification
   - ExaCA
 
 If you have anaconda3 installed, you can use the `install_conda_env.sh`

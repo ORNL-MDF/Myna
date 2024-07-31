@@ -4,7 +4,7 @@ from .component import *
 from .component_solidification import *
 from .component_microstructure import *
 from .component_rve import *
-from .component_classify import *
+from .component_cluster import *
 from .component_mesh import *
 from .component_temperature import *
 from .component_melt_pool_geometry import *
@@ -31,8 +31,8 @@ def return_step_class(step_name):
         "solidification_part_stl": ComponentSolidificationPartSTL(),
         "solidification_region_stl": ComponentSolidificationRegionSTL(),
         "temperature_part": ComponentTemperaturePart(),
-        "classify_solidification": ComponentClassifySolidification(),
-        "classify_supervoxel": ComponentClassifySupervoxel(),
+        "cluster_solidification": ComponentClusterSolidification(),
+        "cluster_supervoxel": ComponentClusterSupervoxel(),
         "microstructure_part": ComponentMicrostructurePart(),
         "microstructure_region": ComponentMicrostructureRegion(),
         "rve": ComponentRVE(),

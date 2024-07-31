@@ -1,8 +1,8 @@
-import classification
 import os
 import pandas as pd
 import numpy as np
 from myna.core.workflow.load_input import load_input
+import myna.application.bnpy as myna_bnpy
 import argparse
 import sys
 import glob
@@ -10,7 +10,7 @@ import bnpy
 import matplotlib.pyplot as plt
 
 
-def run_classification(
+def run_clustering(
     case_dir,
     thermal_file,
     settings,
@@ -36,7 +36,7 @@ def run_classification(
     layer_dict = part_dict["layer_data"][layer]
 
     # Set directory for training data
-    resource_template_dir = os.path.join(resource_dir, "classify_solidification")
+    resource_template_dir = os.path.join(resource_dir, "cluster_solidification")
 
     # Create symbolic links to all available thermal results
     thermal_dir = "thermal_data"
@@ -52,9 +52,9 @@ def run_classification(
 
     # Setup folder structure
     training_dir = os.path.join(resource_template_dir, "training_voxels")
-    class_dir = os.path.join(case_dir, "class_voxels")
+    cluster_dir = os.path.join(case_dir, "cluster_voxels")
     os.makedirs(training_dir, exist_ok=True)
-    os.makedirs(class_dir, exist_ok=True)
+    os.makedirs(cluster_dir, exist_ok=True)
 
     # Set parameters for voxel training
     nSamples = 25000
@@ -186,7 +186,7 @@ def run_classification(
             print(f'{info_dict["task_output_path"]=}')
             task_output_path = info_dict["task_output_path"]
 
-    result_file = os.path.join(class_dir, f"cluster_ids.csv")
+    result_file = os.path.join(cluster_dir, f"cluster_ids.csv")
     cur_model, lap_val = bnpy.load_model_at_lap(task_output_path, None)
     df_output = df_reduced.copy()
 
@@ -215,20 +215,18 @@ def run_classification(
 
     # Generate plots
     dpi = 300
-    colors, cmap, _ = classification.plotting.cluster_colormap(n_digits)
+    colors, cmap, _ = myna_bnpy.cluster_colormap(n_digits)
     suffix = f"sF={sF}-g={gamma}-K={K}"
 
     # GV plot
-    gv_plot_file = os.path.join(class_dir, f"class_GV-{suffix}.png")
-    classification.plotting.voxel_GV_plot(
-        df_output, colors, cmap, gv_plot_file, dpi=dpi
-    )
+    gv_plot_file = os.path.join(cluster_dir, f"cluster_GV-{suffix}.png")
+    myna_bnpy.voxel_GV_plot(df_output, colors, cmap, gv_plot_file, dpi=dpi)
 
     # Field histograms
     fields = ["logG", "logV"]
     for field in fields:
-        field_value_file = os.path.join(class_dir, f"class_{field}-{suffix}.png")
-        classification.plotting.voxel_id_stacked_histogram(
+        field_value_file = os.path.join(cluster_dir, f"cluster_{field}-{suffix}.png")
+        myna_bnpy.voxel_id_stacked_histogram(
             df_output,
             field,
             colors,
@@ -238,11 +236,11 @@ def run_classification(
         )
 
     # Spatial map of clusters
-    map_plot_file = os.path.join(class_dir, f"class_map-{suffix}.png")
+    map_plot_file = os.path.join(cluster_dir, f"cluster_map-{suffix}.png")
     colormap = "tab10"
     if n_digits > 10:
         colormap = "tab20"
-    colors, cmap, colorValues = classification.plotting.cluster_colormap(
+    colors, cmap, colorValues = myna_bnpy.cluster_colormap(
         n_digits, colorspace=colormap
     )
     fig, ax = plt.subplots()
@@ -268,7 +266,7 @@ def run_classification(
 def main(argv=None):
     # Set up argparse
     parser = argparse.ArgumentParser(
-        description="Launch classification for " + "specified input file"
+        description="Launch clustering for " + "specified input file"
     )
     parser.add_argument(
         "--thermal",
@@ -306,16 +304,16 @@ def main(argv=None):
         thermal_step_name = os.environ["MYNA_LAST_STEP_NAME"]
     thermal_files = settings["data"]["output_paths"][thermal_step_name]
 
-    # Run classification
+    # Run clustering
     output_files = []
     for case_dir, thermal_file in zip(
         [os.path.dirname(x) for x in myna_files], thermal_files
     ):
-        print("Running classification for:")
+        print("Running clustering for:")
         print(f"- {case_dir=}")
         print(f"- {thermal_file=}")
         output_files.append(
-            run_classification(case_dir, thermal_file, settings, train_model, overwrite)
+            run_clustering(case_dir, thermal_file, settings, train_model, overwrite)
         )
 
     # Post-process results to convert to Myna format

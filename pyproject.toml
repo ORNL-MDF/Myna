@@ -26,11 +26,10 @@ dependencies = [
     'vtk',
     'h5py',
     'polars',
+    'bnpy @ git+https://github.com/gknapp1/bnpy',
     'pyebsd @ git+https://github.com/arthursn/pyebsd.git',]
 
 [project.optional-dependencies]
-cluster = [
-    'classification @ git+https://code.ornl.gov/ygk/classification.git@myna']
 dev = [
   'pytest',
   'black']

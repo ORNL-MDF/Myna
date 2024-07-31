@@ -4,5 +4,5 @@
 from . import thesis
 from . import additivefoam
 from . import exaca
-from . import classification
+from . import bnpy
 from . import rve
