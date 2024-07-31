@@ -19,8 +19,7 @@ def setup_case(
 ):
 
     # Copy template to case directory
-    if (not os.path.exists(sim.args.template)) or (sim.args.overwrite):
-        shutil.copytree(sim.args.template, case_dir, dirs_exist_ok=True)
+    sim.copy(case_dir)
 
     # Get case settings and template input JSON
     myna_settings = load_input(os.path.join(case_dir, "myna_data.yaml"))

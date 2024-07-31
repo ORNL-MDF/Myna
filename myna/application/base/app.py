@@ -1,5 +1,5 @@
 import argparse
-import os
+import os, shutil
 
 from myna.core.workflow.load_input import load_input
 
@@ -94,3 +94,9 @@ class MynaApp:
             )
         else:
             self.template = os.path.abspath(self.template)
+
+    def copy(self, case_dir):
+        if (not os.path.exists(self.args.template)) or (self.args.overwrite):
+            shutil.copytree(self.args.template, case_dir, dirs_exist_ok=True)
+        else:
+            print(f"Warning: NOT overwriting existing case in: {case_dir}")
