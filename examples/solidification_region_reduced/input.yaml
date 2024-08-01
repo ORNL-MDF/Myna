@@ -1,8 +1,9 @@
 steps:
 - additivefoam_cube:
     class: solidification_region_reduced
-    interface: additivefoam_cube
-    configure_args: [--coarse 80e-6,
+    interface: additivefoam
+    configure_args: [--exec /home/cloud/OpenFOAM/cloud-10/platforms/linux64GccDPInt32-spack/bin/additiveFoam,
+        --coarse 80e-6,
         --rx 1.0e-3,
         --ry 1.0e-3,
         --rz 300e-6,
@@ -10,8 +11,9 @@ steps:
         --pad-z 0.4e-3,
         --pad-sub 2.5e-3,
         --refine-layer 2,
-        --refine-region 1]
-    execute_args: [--batch, --cores 24]
+        --refine-region 1,
+        --overwrite]
+    execute_args: [--batch, --cores 16, --overwrite]
 data:
   build:
     datatype: Peregrine
@@ -22,5 +24,5 @@ data:
         regions:
           r1:
             layers: [51, 52]
-            x: 0.05
-            y: -0.049
+            x: 0.2
+            y: 0.022
