@@ -41,14 +41,7 @@ class Thesis(MynaApp):
         self.output_suffix = output_suffix
 
         super().set_procs()
-        super().check_exe(
-            "thesis",
-            self.simulation_type,
-            "3DThesis",
-            "build",
-            "application",
-            "3DThesis.exe",
-        )
+        super().check_exe("3DThesis")
 
         # Initialize layer and part tracking arrays
         self.layers = []

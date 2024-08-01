@@ -82,11 +82,6 @@ class AdditiveFOAM(MynaApp):
 
         super().set_procs()
         super().check_exe(
-            "thesis",
-            self.simulation_type,
-            "AdditiveFOAM",
-            "build",
-            "application",
             "additiveFoam",
         )
 

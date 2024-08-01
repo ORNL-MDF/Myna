@@ -65,19 +65,22 @@ class MynaApp:
         self.parser.set_defaults(batch=False)
 
     # Check if executable exists
-    def check_exe(self, *path_args):
+    def check_exe(self, default):
+        # Try user-specified location or find it in the PATH.
         exe = self.args.exec
+        # Try to find it in the path.
         if exe is None:
-            exe = os.path.join(self.path, *path_args)
+            exe = shutil.which(default)
+            # Try a Windows exe just in case.
+            if exe is None:
+                exe = shutil.which(default + ".exe")
 
         if not os.path.exists(exe):
-            raise Exception(
-                f'The specified {self.name} executable "{exe}" was not found.'
-            )
+            raise Exception(f"{self.name} executable was not found.")
+
+        # Check that it can be used
         if not os.access(exe, os.X_OK):
-            raise Exception(
-                f'The specified {self.name} executable "{exe}" is not executable.'
-            )
+            raise Exception(f'{self.name} executable "{exe}" is not executable.')
 
     # args must have been parsed
     def set_procs(self):

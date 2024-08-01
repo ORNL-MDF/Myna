@@ -39,12 +39,6 @@ class ExaCA(MynaApp):
         self.args = self.parser.parse_args()
 
         super().check_exe(
-            "exaca",
-            "microstructure_region",
-            "ExaCA",
-            "build",
-            "install",
-            "bin",
             "ExaCA",
         )
 
