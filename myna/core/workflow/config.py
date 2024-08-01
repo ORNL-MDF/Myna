@@ -222,7 +222,7 @@ def main(parser):
                                     ]["layer_data"][layer][data_req] = datum
 
         # Save data to step object
-        step_obj.apply_settings(step[step_name], settings["data"])
+        step_obj.apply_settings(step[step_name], settings["data"], settings["myna"])
 
         # Make needed directories and copy data dict to each case directory
         case_dirs = step_obj.get_files_from_template("")
@@ -295,7 +295,7 @@ def main(parser):
         # Set the outputs associated with the step
         if step_obj.output_requirement is not None:
             print(f'  > Expecting output for step "{step_name}":')
-            step_obj.apply_settings(step[step_name], settings["data"])
+            step_obj.apply_settings(step[step_name], settings["data"], settings["myna"])
             files, exists, valid = step_obj.get_output_files()
             if len(files) > 0:
                 for f, e, v in zip(files, exists, valid):

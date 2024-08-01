@@ -11,6 +11,7 @@
 import os
 import myna
 import myna.database
+from myna.core.workflow import load_input
 
 
 class Component:
@@ -34,6 +35,7 @@ class Component:
         self.output_template = ""
         self.data = {}
         self.types = ["build"]
+        self.workspace = None
 
     def run_component(self):
         """Runs the configure.py, execute.py, and postprocess.py
@@ -47,7 +49,9 @@ class Component:
             "configure.py",
         )
         if os.path.exists(configure_path):
-            cmd = f'python {configure_path} {" ".join(self.configure_args)}'
+
+            # Submit configure.py command
+            cmd = f'python {configure_path} {self.get_step_args_str("configure")}'
             cmd = self.cmd_preformat(cmd)
             os.system(cmd)
 
@@ -60,7 +64,7 @@ class Component:
             "execute.py",
         )
         if os.path.exists(execute_path):
-            cmd = f'python {execute_path} {" ".join(self.execute_args)}'
+            cmd = f'python {execute_path} {self.get_step_args_str("execute")}'
             cmd = self.cmd_preformat(cmd)
             os.system(cmd)
             has_executed = True
@@ -73,7 +77,7 @@ class Component:
             "postprocess.py",
         )
         if os.path.exists(postprocess_path):
-            cmd = f'python {postprocess_path} {" ".join(self.postprocess_args)}'
+            cmd = f'python {postprocess_path} {self.get_step_args_str("postprocess")}'
             cmd = self.cmd_preformat(cmd)
             os.system(cmd)
 
@@ -114,12 +118,13 @@ class Component:
         cmd = cmd.replace("$MYNA_INSTALL_PATH", os.environ["MYNA_INSTALL_PATH"])
         return cmd
 
-    def apply_settings(self, step_settings, data_settings):
+    def apply_settings(self, step_settings, data_settings, myna_settings):
         """Update the step and data settings for the component from dictionaries
 
         Args:
             step_settings: a dictionary of settings related to the myna step
             data_settings: a dictionary of settings related to the build data
+            myna_settings: a dictionary of settings related to general Myna functionality
         """
 
         try:
@@ -148,6 +153,9 @@ class Component:
 
             # Set myna data
             self.data = data_settings
+
+            # Set workspace path
+            self.workspace = myna_settings.get("workspace", None)
 
         except KeyError as e:
             print(e)
@@ -331,3 +339,40 @@ class Component:
             )
 
         return synced_files
+
+    def get_step_args_str(self, operation):
+        """Get the command string for the configure, execute, or postprocess operation
+
+        Args:
+            operation: "configure", "execute", or "postprocess"
+
+        Returns:
+            argstr: string of command arguments"""
+
+        # Initialize
+        assert operation in set(["configure", "execute", "postprocess"])
+        config_str = ""
+
+        # Get values from the workspace
+        if self.workspace is not None:
+            workspace_dict = load_input(self.workspace)
+            workspace_dict = workspace_dict.get(self.component_interface, {})
+            workspace_dict = workspace_dict.get(self.component_class, {})
+            workspace_dict = workspace_dict.get(operation, {})
+            print(workspace_dict)
+            for key in workspace_dict.keys():
+                if type(workspace_dict[key]) == bool:
+                    config_str += f" --{key}"
+                else:
+                    config_str += f" --{key} {workspace_dict[key]}"
+
+        # Overwrite workspace with any values from the input file
+        arg_dict = getattr(self, f"{operation}_args")
+        for key in arg_dict.keys():
+            value = arg_dict[key]
+            if type(value) == bool:
+                config_str += f" --{key}"
+            else:
+                config_str += f" --{key} {value}"
+
+        return config_str

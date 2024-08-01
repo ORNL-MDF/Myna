@@ -88,7 +88,9 @@ def main():
     # Check if case already has valid output
     step_obj = return_step_class(os.environ["MYNA_STEP_CLASS"])
     step_obj.apply_settings(
-        settings["steps"][int(os.environ["MYNA_STEP_INDEX"])], settings["data"]
+        settings["steps"][int(os.environ["MYNA_STEP_INDEX"])],
+        settings["data"],
+        settings["myna"],
     )
     files, exists, files_are_valid = step_obj.get_output_files()
 

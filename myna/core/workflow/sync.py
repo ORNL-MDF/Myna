@@ -80,5 +80,5 @@ def main(parser):
                 )
                 sync_step = False
         if sync_step:
-            step_obj.apply_settings(step[step_name], settings["data"])
+            step_obj.apply_settings(step[step_name], settings["data"], settings["myna"])
             step_obj.sync_output_files()
