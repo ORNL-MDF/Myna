@@ -35,4 +35,5 @@ from .config import *
 from .run import *
 from .sync import *
 from .load_input import *
+from .status import *
 from .launch_from_peregrine import *

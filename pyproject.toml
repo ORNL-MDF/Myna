@@ -35,11 +35,7 @@ dev = [
   'black']
 
 [project.scripts]
-myna_run = "myna.core.workflow.run:main"
-myna_config = "myna.core.workflow.config:main"
-myna_sync = "myna.core.workflow.sync:main"
-myna_status = "myna.utils.codebase_status:write_codebase_status_to_file"
-myna_peregrine_launcher = "myna.core.workflow.launch_from_peregrine:launch_from_peregrine"
+myna = "myna.core.workflow.all:main"
 
 [tool.setuptools]
 py-modules = ["myna"]

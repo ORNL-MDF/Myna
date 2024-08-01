@@ -1,4 +1,4 @@
-"""Defines `myna_config` functionality"""
+"""Defines `myna config` functionality"""
 
 import argparse
 import os
@@ -11,19 +11,10 @@ from myna import database
 from importlib.metadata import version
 
 
-def main(argv=None):
-    """Main function for configuring a myna case from the command line
+# Parser comes from the top-level command parsing
+def main(parser):
+    """Main function for configuring a myna case from the command line"""
 
-    This function is installed as `myna_config` when myna is installed.
-
-    Args:
-        argv : list of command line arguments, by default None
-    """
-
-    # Set up argparse
-    parser = argparse.ArgumentParser(
-        description="Configure myna data for " + "specified input file"
-    )
     parser.add_argument(
         "--input",
         default="input.yaml",
@@ -49,7 +40,7 @@ def main(argv=None):
     )
 
     # Parse cmd arguments
-    args = parser.parse_args(argv)
+    args = parser.parse_args()
     input_file = args.input
     output_file = args.output
     if output_file == "":

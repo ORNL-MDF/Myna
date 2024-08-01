@@ -1,4 +1,4 @@
-"""Defines myna_peregrine_launcher functionality"""
+"""Defines myna launch_peregrine functionality"""
 
 import sys
 import os
