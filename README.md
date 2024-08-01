@@ -11,7 +11,7 @@ digital factory framework, initially developed for the database structure mainta
 
 There are several submodules within Myna:
 
-- `workflow`: contains scripts that are run from the command line to execute Myna tasks, such as the command `myna_run --input demo.yaml`
+- `workflow`: contains scripts that are run from the command line to execute Myna tasks, such as the command `myna run --input demo.yaml`
 - `components`: specifies components in the workflow, such that each component subclass can have specific input & output file and data requirements
 - `files`: defines specific file formats that can be specified as either input or output requirements for a component
 - `metadata`: defines the specific pieces of meatdata that can be specified as requirements for a component.
@@ -77,29 +77,29 @@ pytest --interfaces
 
 ## Usage
 
-To run the example Myna workflow use the `myna_config` and `myna_run` scripts and point to a valid YAML input file:
+To run the example Myna workflow use the `myna config` and `myna run` commands and point to a valid YAML input file:
 
 ```bash
-cd ./examples/solidification_part_3dthesis
+cd ./examples/solidification_part
 
 # The input.yaml in this example should be modified to match your
 # local environment (e.g. file paths)
 
 # Config will update the data fields in input.yaml with the relevant
 # metadata and output the updated fields to input_configured.yaml
-myna_config --input input.yaml --output input_configured.yaml
+myna config --input input.yaml --output input_configured.yaml
 
 # Run executes the Myna components specified in input_configured.yaml
-myna_run --input input_configured.yaml
+myna run --input input_configured.yaml
 
 # Sync stores the results from the Myna run back to the database format
-myna_sync --input input_configured.yaml
+myna sync --input input_configured.yaml
 
-# myna_run and myna_sync both accept the `--step <step_name>` argument
+# myna run and myna sync both accept the `--step <step_name>` argument
 # to only run/sync a single step or a subset with a comma-separated list
 #  `--step [<step_name>,<other_step name>,...]`.
 # For example:
-myna_sync --input input_configured.yaml --step 3dthesis
+myna sync --input input_configured.yaml --step 3dthesis
 ```
 
 Before running the example workflow, ensure that all dependencies are installed and
@@ -112,11 +112,11 @@ the myna package.
 
 ### Available components and interfaces
 
-To get a summary of the available interfaces, use the `myna_status` command line script.
+To get a summary of the available interfaces, use the `myna status` command line script.
 
 ```bash
 # write myna component and interface status to <filename>
-myna_status --output status.md
+myna status --output status.md
 ```
 
 The `--output <filename>` argument is optional and defaults to "status.md" if not specified.
