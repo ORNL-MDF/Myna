@@ -11,32 +11,31 @@ import glob
 
 
 def run_case(
-    case_dir,
     proc_list,
     sim,
     check_for_existing_results=True,
 ):
     # Update simulation threads
-    settings_file = os.path.join(case_dir, "Settings.txt")
-    adjust_parameter(settings_file, "MaxThreads", np)
+    settings_file = os.path.join(sim.input_dir, "Settings.txt")
+    adjust_parameter(settings_file, "MaxThreads", sim.args.np)
 
     # Define the result file
-    result_file = os.path.join(case_dir, "Data", "snapshot_data.csv")
+    result_file = os.path.join(sim.input_dir, "Data", "snapshot_data.csv")
 
     # Check if output file exists
     if check_for_existing_results:
-        if os.path.exists(result_file) and not overwrite:
-            print(f"{case_dir} has already been simulated. Skipping.")
+        if os.path.exists(result_file) and not sim.args.overwrite:
+            print(f"{sim.input_dir} has already been simulated. Skipping.")
             return [result_file, proc_list]
 
     # Run Simulation
     case_directory = os.path.abspath(sim.input_dir)
     output_name = read_parameter(sim.input_file, "Name")[0]
-    result_file = os.path.join(case_dir, "Data", "snapshot_data.csv")
+    result_file = os.path.join(sim.input_dir, "Data", "snapshot_data.csv")
     initial_working_dir = os.getcwd()
     os.chdir(case_directory)
     procs = proc_list.copy()
-    print(f"{case_dir}:")
+    print(f"{sim.input_dir}:")
     print(f"\tWorking directory: {os.getcwd()}")
     try:
         # Submit job
@@ -48,10 +47,10 @@ def run_case(
         print(f"\tPID: {process.pid}")
 
         # Check if there are enough processors available for another job
-        procs_available = ((len(procs) + 2) * np) <= maxproc
+        procs_available = ((len(procs) + 2) * sim.args.np) <= sim.args.maxproc
 
         # Wait for job to finish as needed
-        if batch:
+        if sim.args.batch:
             procs.append(process)
             if not procs_available:
                 proc0 = procs.pop(0)
@@ -77,7 +76,7 @@ def run_case(
 
 def main(argv=None):
     # Set up simulation object
-    sim = Thesis("melt_pool_geometry_part", argv)
+    sim = Thesis("melt_pool_geometry_part")
 
     # Get expected Myna output files
     myna_files = sim.settings["data"]["output_paths"][sim.step_name]

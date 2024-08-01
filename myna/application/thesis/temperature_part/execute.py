@@ -79,7 +79,7 @@ def run_case(
 def main(argv=None):
 
     # Set up simulation object
-    sim = Thesis("temperature_part", argv)
+    sim = Thesis("temperature_part")
 
     # Get expected Myna output files
     myna_files = sim.settings["data"]["output_paths"][sim.step_name]
