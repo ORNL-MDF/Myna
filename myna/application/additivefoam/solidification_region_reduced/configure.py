@@ -14,7 +14,7 @@ from myna.application.additivefoam.path import convert_peregrine_scanpath
 
 
 def setup_case(case_dir, app):
-    settings = app.settings
+    settings = load_input(os.path.join(case_dir, "myna_data.yaml"))
     input_dir = os.path.dirname(settings["myna"]["input"])
     resource_dir = os.path.join(input_dir, "myna_resources")
 
@@ -49,6 +49,7 @@ def setup_case(case_dir, app):
             "solidification_region_reduced",
             "template",
         )
+        app.args.template = template_path
     else:
         template_path = os.path.abspath(app.args.template)
 
@@ -61,9 +62,9 @@ def setup_case(case_dir, app):
         "rx": app.args.rx,
         "ry": app.args.ry,
         "rz": app.args.rz,
-        "region_pad": app.args.region_pad,
-        "depth_pad": app.args.depth_pad,
-        "substrate_pad": app.args.substrate_pad,
+        "region_pad": app.args.pad_xy,
+        "depth_pad": app.args.pad_z,
+        "substrate_pad": app.args.pad_sub,
         "coarse_mesh": app.args.coarse,
         "refine_layer": app.args.refine_layer,
         "refine_region": app.args.refine_region,
@@ -85,13 +86,13 @@ def setup_case(case_dir, app):
         "layer_thickness": layer_thickness,
         "layer_box": [
             [
-                float(region_dict["x"] - 0.5 * app.args.rx - app.args.region_pad),
-                float(region_dict["y"] - 0.5 * app.args.ry - app.args.region_pad),
-                float(-app.args.rz - app.args.depth_pad),
+                float(region_dict["x"] - 0.5 * app.args.rx - app.args.pad_xy),
+                float(region_dict["y"] - 0.5 * app.args.ry - app.args.pad_xy),
+                float(-app.args.rz - app.args.pad_z),
             ],
             [
-                float(region_dict["x"] + 0.5 * app.args.rx + app.args.region_pad),
-                float(region_dict["y"] + 0.5 * app.args.ry + app.args.region_pad),
+                float(region_dict["x"] + 0.5 * app.args.rx + app.args.pad_xy),
+                float(region_dict["y"] + 0.5 * app.args.ry + app.args.pad_xy),
                 float(0.0),
             ],
         ],
@@ -108,9 +109,9 @@ def setup_case(case_dir, app):
             ],
         ],
         "rve_pad": [
-            app.args.region_pad,
-            app.args.region_pad,
-            app.args.depth_pad + app.args.substrate_pad,
+            app.args.pad_xy,
+            app.args.pad_xy,
+            app.args.pad_z + app.args.pad_sub,
         ],
         "case_dir": case_dir,
         "template": {"template_dir": resource_template_dir},

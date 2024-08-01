@@ -78,7 +78,7 @@ class AdditiveFOAM(MynaApp):
             help="Multiple by which to scale the STL file dimensions (default = 0.001, mm -> m)",
         )
 
-        self.args = self.self.parser.parse_args()
+        self.args = self.parser.parse_args()
 
         super().set_procs()
         super().check_exe(
@@ -114,13 +114,11 @@ class AdditiveFOAM(MynaApp):
                 if all(matches):
                     use_existing_mesh = True
                 else:
-                    shutil.copytree(
-                        self.args.template_path, case_dir, dirs_exist_ok=True
-                    )
+                    shutil.copytree(self.args.template, case_dir, dirs_exist_ok=True)
                     with open(mesh_path, "w") as f:
                         yaml.dump(mesh_dict, f, default_flow_style=None)
             except:
-                shutil.copytree(self.args.template_path, case_dir, dirs_exist_ok=True)
+                shutil.copytree(self.args.template, case_dir, dirs_exist_ok=True)
                 with open(mesh_path, "w") as f:
                     yaml.dump(mesh_dict, f, default_flow_style=None)
 

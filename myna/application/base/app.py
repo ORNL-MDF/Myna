@@ -36,6 +36,7 @@ class MynaApp:
             action="store_true",
             help="force regeneration of each run and overwrite of any existing data",
         )
+        self.parser.set_defaults(overwrite=False)
         self.parser.add_argument(
             "--exec", type=str, help=f"(str) Path to {self.name} executable"
         )
