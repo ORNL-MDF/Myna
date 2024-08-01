@@ -1,0 +1,7 @@
+thesis:
+   solidification_part:
+      configure:
+         res: 25e-6
+      execute:
+         batch: True
+         exec: /home/cloud/3DThesis/build/application/3DThesis
