@@ -31,13 +31,13 @@ class Thesis(MynaApp):
         self.args = self.parser.parse_args()
 
         # Set case directories and input files
+        self.input_filename = input_filename
+        self.material_filename = material_filename
         if input_dir is not None:
             if output_dir is not None:
                 self.set_case(input_dir, output_dir)
             else:
                 self.set_case(input_dir, input_dir)
-        self.input_filename = input_filename
-        self.material_filename = material_filename
         self.output_suffix = output_suffix
 
         super().set_procs()

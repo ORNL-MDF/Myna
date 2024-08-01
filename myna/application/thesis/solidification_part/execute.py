@@ -11,20 +11,19 @@ import glob
 
 
 def run_case(
-    case_dir,
     proc_list,
     sim,
     check_for_existing_results=True,
 ):
     # Update simulation threads
-    settings_file = os.path.join(case_dir, "Settings.txt")
+    settings_file = os.path.join(sim.input_dir, "Settings.txt")
     adjust_parameter(settings_file, "MaxThreads", sim.args.np)
 
     # Check if output file exists
     if check_for_existing_results:
-        output_files = glob.glob(os.path.join(case_dir, "Data", "*.csv"))
+        output_files = glob.glob(os.path.join(sim.input_dir, "Data", "*.csv"))
         if (len(output_files) > 0) and not sim.args.overwrite:
-            print(f"{case_dir} has already been simulated. Skipping.")
+            print(f"{sim.input_dir} has already been simulated. Skipping.")
             result_file = output_files[0]
             return [result_file, proc_list]
 
@@ -37,7 +36,7 @@ def run_case(
     initial_working_dir = os.getcwd()
     os.chdir(case_directory)
     procs = proc_list.copy()
-    print(f"{case_dir}:")
+    print(f"{sim.input_dir}:")
     print(f"\tWorking directory: {os.getcwd()}")
     try:
         # Submit job
@@ -81,7 +80,6 @@ def main(argv=None):
     # Set up simulation object
     sim = Thesis(
         "solidification_part",
-        argv,
         output_suffix=".Solidification",
     )
 

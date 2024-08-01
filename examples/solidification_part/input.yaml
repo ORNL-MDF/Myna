@@ -2,7 +2,7 @@ steps:
 - 3dthesis:
     class: solidification_part
     interface: thesis
-    configure_args: [--res 50.0e-6]
+    configure_args: [--res 50.0e-6, --exec /home/cloud/3DThesis/build/application/3DThesis, --np 8]
     execute_args: [--exec /home/cloud/3DThesis/build/application/3DThesis, --np 8]
 data:
   build:
