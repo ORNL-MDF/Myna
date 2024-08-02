@@ -1,5 +1,6 @@
 import os
-from myna.application.base import MynaApp
+
+from myna.core.app.base import MynaApp
 
 
 class Thesis(MynaApp):
