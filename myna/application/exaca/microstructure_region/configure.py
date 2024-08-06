@@ -39,11 +39,11 @@ def setup_case(
     input_settings["MaterialFileName"] = material_file
 
     # Set orientation file
-    exaca_install_dir = os.path.dirname(os.path.dirname(exec))
-    oreintation_file = os.path.join(
+    exaca_install_dir = os.path.dirname(os.path.dirname(sim.args.exec))
+    orientation_file = os.path.join(
         exaca_install_dir, "share", "ExaCA", "GrainOrientationVectors.csv"
     )
-    input_settings["GrainOrientationFile"] = oreintation_file
+    input_settings["GrainOrientationFile"] = orientation_file
 
     # Set cell size
     nested_set(input_settings, ["Domain", "CellSize"], sim.args.cell_size)
@@ -72,8 +72,8 @@ def setup_case(
     run_script = os.path.join(case_dir, "runCase.sh")
     with open(run_script, "r") as f:
         lines = f.readlines()
-    bin_path = os.path.dirname(exec)
-    exec_name = os.path.basename(exec)
+    bin_path = os.path.dirname(sim.args.exec)
+    exec_name = os.path.basename(sim.args.exec)
     for i, line in enumerate(lines):
         lines[i] = line.replace("{{EXACA_BIN_PATH}}", bin_path)
         lines[i] = lines[i].replace("{{EXACA_EXEC}}", exec_name)
