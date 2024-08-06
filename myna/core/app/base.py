@@ -103,11 +103,10 @@ class MynaApp:
         try:
             case_dir_files = os.listdir(case_dir)
             case_dir_files.remove("myna_data.yaml")
-        except:
+        except ValueError:
             case_dir_files = []
 
-        # Copy there are no existing files in the case directory
-        # or overwrite is specified
+        # Copy if there are no existing files in the case directory or overwrite is specified
         if (len(case_dir_files) == 0) or (self.args.overwrite):
             shutil.copytree(self.args.template, case_dir, dirs_exist_ok=True)
         else:

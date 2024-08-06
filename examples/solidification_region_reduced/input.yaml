@@ -2,8 +2,7 @@ steps:
 - additivefoam_cube:
     class: solidification_region_reduced
     interface: additivefoam
-    configure_args: [--exec /home/cloud/OpenFOAM/cloud-10/platforms/linux64GccDPInt32-spack/bin/additiveFoam,
-        --coarse 80e-6,
+    configure_args: [--coarse 80e-6,
         --rx 1.0e-3,
         --ry 1.0e-3,
         --rz 300e-6,
