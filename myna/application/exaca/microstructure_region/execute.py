@@ -40,7 +40,7 @@ def run_case(case_dir, batch, ranks):
     return result_file, process
 
 
-def main(argv=None):
+def main():
     # Set up argparse
     parser = argparse.ArgumentParser(
         description="Launch ExaCA for " + "specified input file"
@@ -67,7 +67,7 @@ def main(argv=None):
     parser.set_defaults(overwrite=False)
 
     # Parse command line arguments and get Myna settings
-    args = parser.parse_args(argv)
+    args = parser.parse_args()
     overwrite = args.overwrite
     batch = args.batch
     ranks = args.ranks
@@ -110,4 +110,4 @@ def main(argv=None):
 
 
 if __name__ == "__main__":
-    main(sys.argv[1:])
+    main()

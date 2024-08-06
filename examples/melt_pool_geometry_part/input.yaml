@@ -2,7 +2,7 @@ steps:
 - 3dthesis:
     class: melt_pool_geometry_part
     interface: thesis
-    configure_args: [--res 25.0e-6]
+    configure_args: [--res 25.0e-6, --exec /home/cloud/3DThesis/build/application/3DThesis]
     execute_args: [--exec /home/cloud/3DThesis/build/application/3DThesis, --np 2,
       --batch]
 data:
