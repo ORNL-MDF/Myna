@@ -73,7 +73,7 @@ class MynaApp:
             if exe is None:
                 exe = shutil.which(default + ".exe")
 
-        if not os.path.exists(exe):
+        if exe is None or not os.path.exists(exe):
             raise Exception(f"{self.name} executable was not found.")
 
         # Check that it can be used
