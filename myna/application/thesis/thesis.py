@@ -1,29 +1,55 @@
 import os
 
+from myna.core.app.base import MynaApp
 
-class Thesis:
+
+class Thesis(MynaApp):
     def __init__(
         self,
-        input_dir,
-        executable="3DThesis",
+        sim_type,
+        input_dir=None,
         input_filename="ParamInput.txt",
         material_filename="Material.txt",
         output_dir=None,
+        output_suffix="",
     ):
-        cwd = os.getcwd()
+        super().__init__("3DThesis")
+        self.simulation_type = sim_type
+
+        self.parser.add_argument(
+            "--res",
+            default=12.5e-6,
+            type=float,
+            help="(float) resolution to use for simulations in meters",
+        )
+        self.parser.add_argument(
+            "--nout",
+            default=1000,
+            type=int,
+            help="(int) number of snapshot outputs",
+        )
+
+        self.args = self.parser.parse_args()
 
         # Set case directories and input files
-        self.input_dir = input_dir
-        if output_dir is None:
-            self.output_dir = self.input_dir
-        else:
-            self.output_dir = output_dir
-        self.input_file = os.path.join(self.input_dir, input_filename)
-        self.material_dir = os.path.join(self.input_dir, material_filename)
+        self.input_filename = input_filename
+        self.material_filename = material_filename
+        if input_dir is not None:
+            if output_dir is not None:
+                self.set_case(input_dir, output_dir)
+            else:
+                self.set_case(input_dir, input_dir)
+        self.output_suffix = output_suffix
 
-        # Set executable path
-        self.executable_path = executable
+        super().set_procs()
+        super().check_exe("3DThesis")
 
         # Initialize layer and part tracking arrays
         self.layers = []
         self.parts = []
+
+    def set_case(self, input_dir, output_dir):
+        self.input_dir = input_dir
+        self.output_dir = output_dir
+        self.input_file = os.path.join(self.input_dir, self.input_filename)
+        self.material_dir = os.path.join(self.input_dir, self.material_filename)
