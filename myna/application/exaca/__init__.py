@@ -4,3 +4,4 @@ from .id import *
 from .subgrain import *
 from .meltpool import *
 from .vtk import *
+from .exaca import ExaCA

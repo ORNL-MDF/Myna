@@ -5,3 +5,4 @@ Submodules:
 """
 
 from . import path
+from .additivefoam import AdditiveFOAM

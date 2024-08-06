@@ -1,7 +1,4 @@
 import os
-from myna.core.workflow.load_input import load_input
-import myna.application.additivefoam as additivefoam
-import myna.application.openfoam as openfoam
 import argparse
 import sys
 import subprocess
@@ -10,24 +7,14 @@ import pandas as pd
 import numpy as np
 import yaml
 
+from myna.core.workflow.load_input import load_input
+import myna.application.openfoam as openfoam
+from myna.application.additivefoam import AdditiveFOAM
+from myna.application.additivefoam.path import convert_peregrine_scanpath
 
-def setup_case(
-    case_dir,
-    rx,
-    ry,
-    rz,
-    region_pad,
-    depth_pad,
-    substrate_pad,
-    coarse,
-    refine_layer,
-    refine_region,
-    template,
-    cores,
-    scale_factor,
-    overwrite,
-):
-    settings = load_input(os.path.join(case_dir, "myna_data.yaml"))
+
+def setup_case(case_dir, app):
+    settings = app.settings
     input_dir = os.path.dirname(settings["myna"]["input"])
     resource_dir = os.path.join(input_dir, "myna_resources")
 
@@ -57,17 +44,6 @@ def setup_case(
     # Get STL file location
     stl_path = part_dict["stl"]["file_local"]
 
-    # Set template path
-    if template is None:
-        template_path = os.path.join(
-            os.environ["MYNA_INTERFACE_PATH"],
-            "additivefoam",
-            "solidification_region_stl",
-            "template",
-        )
-    else:
-        template_path = os.path.abspath(template)
-
     # Set and write template background mesh dictionary
     # for checking if background mesh needs to be regenerated
     # TODO: Make sure this contains all needed fields for checking
@@ -76,17 +52,17 @@ def setup_case(
         "build": build,
         "part": part,
         "region": region,
-        "coarse_mesh": coarse,
+        "coarse_mesh": app.args.coarse,
     }
     template_region_mesh_dict = {
-        "rx": rx,
-        "ry": ry,
-        "rz": rz,
-        "region_pad": region_pad,
-        "depth_pad": depth_pad,
-        "substrate_pad": substrate_pad,
-        "refine_layer": refine_layer,
-        "refine_region": refine_region,
+        "rx": app.args.rx,
+        "ry": app.args.ry,
+        "rz": app.args.rz,
+        "region_pad": app.args.region_pad,
+        "depth_pad": app.args.depth_pad,
+        "substrate_pad": app.args.substrate_pad,
+        "refine_layer": app.args.refine_layer,
+        "refine_region": app.args.refine_region,
     }
     template_stl_mesh_dict_name = "template_stl_mesh_dict.yaml"
     template_stl_mesh_dict_path = os.path.join(
@@ -99,31 +75,9 @@ def setup_case(
 
     # Write template STL mesh dict as needed, and if the template
     # STL mesh dict exists, then check if it matches current mesh settings
-    use_existing_stl_mesh = False
-    if (not os.path.exists(template_stl_mesh_dict_path)) or (overwrite):
-        shutil.copytree(template_path, resource_template_dir, dirs_exist_ok=True)
-        with open(template_stl_mesh_dict_path, "w") as f:
-            yaml.dump(template_stl_mesh_dict, f, default_flow_style=False)
-    else:
-        with open(template_stl_mesh_dict_path, "r") as f:
-            existing_dict = yaml.safe_load(f)
-        try:
-            matches = []
-            for key in template_stl_mesh_dict.keys():
-                entry_match = template_stl_mesh_dict.get(key) == existing_dict.get(key)
-                matches.append(entry_match)
-            if all(matches):
-                use_existing_stl_mesh = True
-            else:
-                shutil.copytree(
-                    template_path, resource_template_dir, dirs_exist_ok=True
-                )
-                with open(template_stl_mesh_dict_path, "w") as f:
-                    yaml.dump(template_stl_mesh_dict, f, default_flow_style=None)
-        except:
-            shutil.copytree(template_path, resource_template_dir, dirs_exist_ok=True)
-            with open(template_stl_mesh_dict_path, "w") as f:
-                yaml.dump(template_stl_mesh_dict, f, default_flow_style=None)
+    use_existing_stl_mesh = app.copy(
+        resource_template_dir, template_region_mesh_dict_path, template_stl_mesh_dict
+    )
 
     # Write template region mesh dict as needed, and if the template region
     # mesh dict exists, then check if it matches current mesh settings
@@ -157,43 +111,47 @@ def setup_case(
         "layer_thickness": layer_thickness,
         "layer_box": [
             [
-                float(region_dict["x"] - 0.5 * rx - region_pad),
-                float(region_dict["y"] - 0.5 * ry - region_pad),
-                float(-rz - depth_pad),
+                float(region_dict["x"] - 0.5 * app.args.rx - app.args.region_pad),
+                float(region_dict["y"] - 0.5 * app.args.ry - app.args.region_pad),
+                float(-app.args.rz - app.args.depth_pad),
             ],
             [
-                float(region_dict["x"] + 0.5 * rx + region_pad),
-                float(region_dict["y"] + 0.5 * ry + region_pad),
+                float(region_dict["x"] + 0.5 * app.args.rx + app.args.region_pad),
+                float(region_dict["y"] + 0.5 * app.args.ry + app.args.region_pad),
                 float(0.0),
             ],
         ],
         "region_box": [
             [
-                float(region_dict["x"] - 0.5 * rx),
-                float(region_dict["y"] - 0.5 * ry),
-                float(-rz),
+                float(region_dict["x"] - 0.5 * app.args.rx),
+                float(region_dict["y"] - 0.5 * app.args.ry),
+                float(-app.args.rz),
             ],
             [
-                float(region_dict["x"] + 0.5 * rx),
-                float(region_dict["y"] + 0.5 * ry),
+                float(region_dict["x"] + 0.5 * app.args.rx),
+                float(region_dict["y"] + 0.5 * app.args.ry),
                 float(0.0),
             ],
         ],
-        "rve_pad": [region_pad, region_pad, depth_pad + substrate_pad],
+        "rve_pad": [
+            app.args.region_pad,
+            app.args.region_pad,
+            app.args.depth_pad + app.args.substrate_pad,
+        ],
         "case_dir": case_dir,
         "template": {"template_dir": resource_template_dir},
         "mesh": {
-            "spacing": [coarse, coarse, coarse],
+            "spacing": [app.args.coarse, app.args.coarse, app.args.coarse],
             "tolerance": 1.0e-08,
             "refinement": 0,
-            "refine_layer": refine_layer,
-            "refine_region": refine_region + refine_layer,
+            "refine_layer": app.args.refine_layer,
+            "refine_region": app.args.refine_region + app.args.refine_layer,
             "stl_path": stl_path,
             "convertToMeters": 1.0e-3,
             "layer_thickness": layer_thickness,
-            "scaling": scale_factor,
+            "scaling": app.args.scale_factor,
         },
-        "exe": {"nProcs": cores, "mpiArgs": f"mpirun -np {cores}"},
+        "exe": {"nProcs": app.args.cores, "mpiArgs": f"mpirun -np {app.args.cores}"},
     }
 
     # Generate cases based on inputs
@@ -229,7 +187,7 @@ def generate(
     path_name = os.path.basename(additivefoam_input_dict["scan_path"])
     new_scan_path_file = os.path.join(template_dir, "constant", path_name)
 
-    additivefoam.path.convert_peregrine_scanpath(
+    convert_peregrine_scanpath(
         additivefoam_input_dict["scan_path"], new_scan_path_file, power
     )
 
@@ -436,138 +394,19 @@ def generate(
     return
 
 
-def main(argv=None):
-    # Set up argparse
-    parser = argparse.ArgumentParser(
-        description="Launch additivefoam/solidification_region_stl for "
-        + "specified input file"
-    )
-    parser.add_argument(
-        "--rx",
-        default=1e-3,
-        type=float,
-        help="(float) width of region along X-axis, in meters",
-    )
-    parser.add_argument(
-        "--ry",
-        default=1e-3,
-        type=float,
-        help="(float) width of region along Y-axis, in meters",
-    )
-    parser.add_argument(
-        "--rz",
-        default=1e-3,
-        type=float,
-        help="(float) depth of region along Z-axis, in meters",
-    )
-    parser.add_argument(
-        "--pad-xy",
-        default=2e-3,
-        type=float,
-        help="(float) size of single-refinement mesh region around"
-        + " the double-refined region in XY, in meters",
-    )
-    parser.add_argument(
-        "--pad-z",
-        default=1e-3,
-        type=float,
-        help="(float) size of single-refinement mesh region around"
-        + " the double-refined region in Z, in meters",
-    )
-    parser.add_argument(
-        "--pad-sub",
-        default=1e-3,
-        type=float,
-        help="(float) size of coarse mesh cubic region below"
-        + " the refined regions in Z, in meters",
-    )
-    parser.add_argument(
-        "--coarse",
-        default=640e-6,
-        type=float,
-        help="(float) size of fine mesh, in meters",
-    )
-    parser.add_argument(
-        "--refine-layer",
-        default=5,
-        type=int,
-        help="(int) number of region mesh refinement"
-        + " levels in layer (each level halves coarse mesh)",
-    )
-    parser.add_argument(
-        "--refine-region",
-        default=1,
-        type=int,
-        help="(int) additional refinement of region mesh"
-        + " level after layer refinement (each level halves coarse mesh)",
-    )
-    parser.add_argument(
-        "--template",
-        type=str,
-        help="(str) path to template, if not specified"
-        + " then assume default location",
-    )
-    parser.add_argument(
-        "--cores",
-        default=8,
-        type=int,
-        help="Number of cores for running each case" + ", for example: " + "--cores 8",
-    )
-    parser.add_argument(
-        "--scale",
-        default=0.001,
-        type=float,
-        help="Multiple by which to scale the STL file dimensions (default = 0.001, mm -> m)",
-    )
-    parser.add_argument(
-        "--overwrite",
-        dest="overwrite",
-        action="store_true",
-        help="flag to force regeneration of mesh and overwrite of any existing mesh",
-    )
-    parser.set_defaults(overwrite=False)
+def main():
 
-    # Parse command line arguments and get Myna settings
-    args = parser.parse_args(argv)
-    settings = load_input(os.environ["MYNA_RUN_INPUT"])
-    rx, ry, rz = args.rx, args.ry, args.rz
-    padxy = args.pad_xy
-    padz = args.pad_z
-    substrate_pad = args.pad_sub
-    coarse = args.coarse
-    refine_layer = args.refine_layer
-    refine_region = args.refine_region
-    template = args.template
-    cores = args.cores
-    scale_factor = args.scale
-    overwrite = args.overwrite
+    # Create app instance
+    app = AdditiveFOAM("solidification_region_stl")
 
     # Get expected Myna output files
-    step_name = os.environ["MYNA_STEP_NAME"]
-    myna_files = settings["data"]["output_paths"][step_name]
+    myna_files = app.settings["data"]["output_paths"][app.step_name]
 
     # Generate AdditiveFOAM case files for each Myna case
     output_files = []
     for case_dir in [os.path.dirname(x) for x in myna_files]:
-        output_files.append(
-            setup_case(
-                case_dir,
-                rx,
-                ry,
-                rz,
-                padxy,
-                padz,
-                substrate_pad,
-                coarse,
-                refine_layer,
-                refine_region,
-                template,
-                cores,
-                scale_factor,
-                overwrite,
-            )
-        )
+        output_files.append(setup_case(case_dir, app))
 
 
 if __name__ == "__main__":
-    main(sys.argv[1:])
+    main()
