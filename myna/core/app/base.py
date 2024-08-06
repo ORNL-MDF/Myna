@@ -12,8 +12,6 @@ class MynaApp:
 
     def __init__(self, name):
         self.name = name
-        self.template = None
-
         self.settings = load_input(os.environ["MYNA_RUN_INPUT"])
         self.path = os.environ["MYNA_INTERFACE_PATH"]
         self.step_name = os.environ["MYNA_STEP_NAME"]
@@ -90,17 +88,27 @@ class MynaApp:
         self.args.np = min(os.cpu_count(), self.args.np, self.args.maxproc)
 
     def set_template_path(self, *path_args):
-        if self.template is None:
-            self.template = os.path.join(
+        if self.args.template is None:
+            self.args.template = os.path.join(
                 self.path,
                 *path_args,
                 "template",
             )
         else:
-            self.template = os.path.abspath(self.template)
+            self.args.template = os.path.abspath(self.args.template)
 
     def copy(self, case_dir):
-        if (not os.path.exists(self.args.template)) or (self.args.overwrite):
+
+        # Get list of files in case directory, except for the myna data file
+        try:
+            case_dir_files = os.listdir(case_dir)
+            case_dir_files.remove("myna_data.yaml")
+        except:
+            case_dir_files = []
+
+        # Copy there are no existing files in the case directory
+        # or overwrite is specified
+        if (len(case_dir_files) == 0) or (self.args.overwrite):
             shutil.copytree(self.args.template, case_dir, dirs_exist_ok=True)
         else:
             print(f"Warning: NOT overwriting existing case in: {case_dir}")
