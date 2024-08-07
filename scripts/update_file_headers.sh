@@ -1,10 +1,8 @@
 #!/bin/bash
 
 cd $(dirname $0)
-cd ..
-for folder in myna tests;
+for folder in ../myna ../tests;
 do
-    filelist=$()
-    licenseheaders -t $(realpath ../scripts/bsd-3.tmpl) -y 2024 --ext *.py
-    cd ..
+    echo $(realpath $folder)
+    licenseheaders -t bsd-3.tmpl -y 2024 --dir $folder --ext .py
 done
