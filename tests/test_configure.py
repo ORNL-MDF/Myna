@@ -21,8 +21,11 @@ def run_configure(path):
     # Currently required to run from the example folder
     os.chdir(path)
 
+    # We do not want actual commandline args here
+    if "--interfaces" in sys.argv:
+        sys.argv.remove("--interfaces")
+    # Rely heavily on defaults (only modify output to avoid local changes from test execution)
     sys.argv.extend(["--output", "test.json"])
-    # Rely heavily on defaults (no other modified args)
     myna.core.workflow.config.main(parser)
 
     os.chdir(test_dir)
