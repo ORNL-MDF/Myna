@@ -154,3 +154,8 @@ available Peregrine v2023-10 dataset:
 ## Development
 
 See the [guidelines](CONTRIBUTING.md) on how to contribute.
+
+
+## License
+
+Myna is distributed under an [open source 3-clause BSD license](LICENSE.md).
