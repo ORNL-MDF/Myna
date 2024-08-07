@@ -32,7 +32,8 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
   'pytest',
-  'black']
+  'black',
+  'licenseheaders']
 
 [project.scripts]
 myna = "myna.core.workflow.all:main"

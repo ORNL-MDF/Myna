@@ -1,3 +1,11 @@
+#
+# Copyright (c) 2024 Oak Ridge National Laboratory.
+#
+# This file is part of Myna. For details, see the top-level license
+# at https://github.com/ORNL-MDF/Myna/LICENSE.md.
+#
+# License: 3-clause BSD, see https://opensource.org/licenses/BSD-3-Clause.
+#
 """Define file format class related to the spatial distribution of melt pool geometries
 """
 
@@ -36,10 +44,17 @@ class FileMeltPoolGeometry(File):
         else:
             df = pd.read_csv(self.file, nrows=0)
             cols = [x.lower() for x in df.columns]
-            expected_cols = ["time (s)", "x (m)", "y (m)", "length (m)", "width (m)", "depth (m)"]
+            expected_cols = [
+                "time (s)",
+                "x (m)",
+                "y (m)",
+                "length (m)",
+                "width (m)",
+                "depth (m)",
+            ]
             expected_cols_types = [float, float, float, float, float, float]
             return self.columns_are_valid(cols, expected_cols, expected_cols_types)
-    
+
     def get_names_for_sync(self, prefix="myna"):
         """Return the names and units of fields available for syncing
         Args:
@@ -48,10 +63,14 @@ class FileMeltPoolGeometry(File):
         Returns:
             value_names: list of string names for each field in the values list
             value_units: list of string units for each field in the values list"""
-        value_names = [f"{prefix}_time", f"{prefix}_length", f"{prefix}_width", f"{prefix}_depth"]
+        value_names = [
+            f"{prefix}_time",
+            f"{prefix}_length",
+            f"{prefix}_width",
+            f"{prefix}_depth",
+        ]
         value_units = ["s", "m", "m", "m"]
         return value_names, value_units
-
 
     def get_values_for_sync(self, prefix="myna"):
         """Get values in format expected for sync
@@ -87,4 +106,3 @@ class FileMeltPoolGeometry(File):
             df["depth (m)"].to_numpy(),
         ]
         return x, y, values, value_names, value_units
-    
