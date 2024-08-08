@@ -6,3 +6,7 @@ thesis:
       execute:
          batch: True
          exec: 3DThesis
+exaca:
+   microstructure_region:
+      configure:
+         exec: ExaCA

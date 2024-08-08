@@ -19,7 +19,7 @@ steps:
     class: microstructure_region
     interface: exaca
     configure_args:
-      exec: ExaCA-Kokkos
+      exec: ExaCA
       cell-size: 2.5
       sub-size: 12.3
       nd: 250
