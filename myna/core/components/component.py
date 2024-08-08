@@ -363,7 +363,9 @@ class Component:
             for key in workspace_dict.keys():
                 if key not in arg_dict.keys():
                     if type(workspace_dict[key]) == bool:
-                        config_str += f" --{key}"
+                        # Assume that default flag behavior is False
+                        if workspace_dict[key]:
+                            config_str += f" --{key}"
                     else:
                         config_str += f" --{key} {workspace_dict[key]}"
 
