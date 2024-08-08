@@ -351,6 +351,7 @@ class Component:
 
         # Initialize
         assert operation in set(["configure", "execute", "postprocess"])
+        arg_dict = getattr(self, f"{operation}_args")
         config_str = ""
 
         # Get values from the workspace
@@ -359,15 +360,14 @@ class Component:
             workspace_dict = workspace_dict.get(self.component_interface, {})
             workspace_dict = workspace_dict.get(self.component_class, {})
             workspace_dict = workspace_dict.get(operation, {})
-            print(workspace_dict)
             for key in workspace_dict.keys():
-                if type(workspace_dict[key]) == bool:
-                    config_str += f" --{key}"
-                else:
-                    config_str += f" --{key} {workspace_dict[key]}"
+                if key not in arg_dict.keys():
+                    if type(workspace_dict[key]) == bool:
+                        config_str += f" --{key}"
+                    else:
+                        config_str += f" --{key} {workspace_dict[key]}"
 
         # Overwrite workspace with any values from the input file
-        arg_dict = getattr(self, f"{operation}_args")
         for key in arg_dict.keys():
             value = arg_dict[key]
             if type(value) == bool:

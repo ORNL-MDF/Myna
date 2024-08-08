@@ -2,6 +2,7 @@ thesis:
    solidification_part:
       configure:
          res: 25e-6
+         exec: 3DThesis
       execute:
          batch: True
          exec: 3DThesis
