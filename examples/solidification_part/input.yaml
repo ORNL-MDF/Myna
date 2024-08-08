@@ -5,7 +5,6 @@ steps:
     configure_args:
       res: 50.0e-6
     execute_args:
-      exec: /home/cloud/3DThesis/build/application/3DThesis
       np: 8
 data:
   build:
@@ -16,4 +15,4 @@ data:
       P5:
         layers: [51]
 myna:
-  workspace: /home/cloud/myna/examples/examples.myna-workspace
+  workspace: ../example-workspace.yaml
