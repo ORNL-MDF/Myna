@@ -25,7 +25,7 @@ data:
   build:
     datatype: Peregrine
     name: demo_build
-    path: /home/cloud/myna/resources
+    path: ../../resources
     parts:
       P5:
         layers: [51, 52, 53, 54]
