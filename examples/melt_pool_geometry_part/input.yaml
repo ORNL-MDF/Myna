@@ -9,7 +9,7 @@ data:
   build:
     datatype: Peregrine
     name: myna_output
-    path: /home/cloud/myna/resources
+    path: ../../resources
     parts:
       P5:
         layers: [51]
