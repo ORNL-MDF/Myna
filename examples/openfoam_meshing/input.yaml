@@ -2,8 +2,9 @@ steps:
 - meshing:
     class: mesh_part_vtk
     interface: openfoam
-    configure_args: []
-    execute_args: [--mpiarg "mpirun -np 8"]
+    execute_args:
+      mpiarg: mpirun
+      np: 8
 data:
   build:
     datatype: Peregrine

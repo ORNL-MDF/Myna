@@ -2,39 +2,48 @@ steps:
 - 3dthesis:
     class: solidification_part
     interface: thesis
-    configure_args: [--res 25.0e-6]
-    execute_args: [--exec /home/cloud/3DThesis/build/application/3DThesis,
-      --np 8,
-      --maxproc 32]
+    configure_args:
+      res: 25.0e-6
+    execute_args:
+      exec: 3DThesis
+      np: 8
+      maxproc: 32
 - cluster_relabel:
     class: cluster_solidification
     interface: bnpy
-    execute_args: [--thermal 3dthesis, --no-training]
+    execute_args:
+        thermal: 3dthesis
+        no-training: True
 - cluster_supervoxel_relabel:
     class: cluster_supervoxel
     interface: bnpy
-    execute_args: [--cluster cluster_relabel, --no-training]
+    execute_args:
+        cluster: cluster_relabel
+        no-training: True
 - rve:
     class: rve
     interface: rve_selection
 - additivefoam_cube:
     class: solidification_region_reduced
     interface: additivefoam_cube
-    configure_args: [--coarse 80e-6,
-        --rx 1.0e-3,
-        --ry 1.0e-3,
-        --rz 300e-6,
-        --pad-xy 0.75e-3,
-        --pad-z 0.4e-3,
-        --pad-sub 2.5e-3,
-        --refine-layer 2,
-        --refine-region 1]
-    execute: [--batch, --cores 24]
+    configure_args:
+        coarse: 80e-6
+        rx: 1.0e-3
+        ry: 1.0e-3
+        rz: 300.0e-6
+        pad-xy: 0.75e-3
+        pad-z: 0.4e-3
+        pad-sub: 2.5e-3
+        refine-layer: 2
+        refine-region: 1
+    execute:
+        batch:True
+        cores: 24
 data:
   build:
     datatype: Peregrine
     name: demo_build
-    path: /home/cloud/myna/resources
+    path: ../../resources
     parts:
       P5:
         layers: [51, 52, 53, 54]
