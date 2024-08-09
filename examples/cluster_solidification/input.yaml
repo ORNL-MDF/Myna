@@ -2,10 +2,10 @@ steps:
 - 3dthesis:
     class: solidification_part
     interface: thesis
+    executable: 3DThesis
     configure_args:
       res: 50.0e-6
     execute_args:
-      exec: 3DThesis
       np: 8
       maxproc: 32
       batch: True
