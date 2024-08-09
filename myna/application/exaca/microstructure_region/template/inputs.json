@@ -30,8 +30,7 @@
     "LayerwiseTempRead": true
   },
   "Substrate": {
-    "MeanSize": 12.3,
-    "PowderDensity": 0.0
+    "MeanSize": 12.3
   },
   "Printing": {
     "PathToOutput": "./",
