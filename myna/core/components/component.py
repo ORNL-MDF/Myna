@@ -12,6 +12,7 @@ import os
 import myna
 import myna.database
 from myna.core.workflow import load_input
+import logging
 
 
 class Component:
@@ -27,6 +28,7 @@ class Component:
         self.configure_args = []
         self.execute_args = []
         self.postprocess_args = []
+        self.executable = None
         self.name = f"Component-{self.id}"
         self.data_requirements = []
         self.input_requirement = None
@@ -100,7 +102,8 @@ class Component:
                 [print("\t" + x) for x in output_files]
 
     def cmd_preformat(self, raw_cmd):
-        """Replace placeholder names in command arguments
+        """Replace placeholder names in command arguments and adds executable argument
+        if a custom executable path is specified.
 
         Args:
             raw_cmd: a string of the command with placeholders
@@ -116,6 +119,10 @@ class Component:
         cmd = cmd.replace("{build}", self.data["build"]["name"])
         cmd = cmd.replace("$MYNA_INTERFACE_PATH", os.environ["MYNA_INTERFACE_PATH"])
         cmd = cmd.replace("$MYNA_INSTALL_PATH", os.environ["MYNA_INSTALL_PATH"])
+
+        if self.executable is not None:
+            cmd += f" --exec {self.executable}"
+
         return cmd
 
     def apply_settings(self, step_settings, data_settings, myna_settings):
@@ -128,6 +135,10 @@ class Component:
         """
 
         try:
+            # Set workspace path
+            if myna_settings is not None:
+                self.workspace = myna_settings.get("workspace", None)
+
             # Load commands for configure, execute, and postprocess
             self.configure_args = step_settings.get(
                 "configure_args", self.configure_args
@@ -136,6 +147,14 @@ class Component:
             self.postprocess_args = step_settings.get(
                 "postprocess_args", self.postprocess_args
             )
+
+            # Set the executable for the step
+            if self.workspace is not None:
+                workspace_dict = load_input(self.workspace)
+                workspace_dict = workspace_dict.get(self.component_interface, {})
+                workspace_dict = workspace_dict.get(self.component_class, {})
+                self.executable = workspace_dict["executable"]
+            self.executable = step_settings.get("executable", self.executable)
 
             # If an output_template is specified, use it.
             # Otherwise, use a combination of the class, component, and output names.
@@ -153,9 +172,6 @@ class Component:
 
             # Set myna data
             self.data = data_settings
-
-            # Set workspace path
-            self.workspace = myna_settings.get("workspace", None)
 
         except KeyError as e:
             print(e)
@@ -354,6 +370,21 @@ class Component:
         arg_dict = getattr(self, f"{operation}_args")
         config_str = ""
 
+        # Function to identify depreciated input dictionary keys:
+        def check_depreciated_args(dict_key, value, operation):
+            depreciating_keys = ["exec"]
+            if dict_key in depreciating_keys:
+                logging.warn(
+                    f" Step {self.name} {operation}"
+                    f' argument "{dict_key}" for {operation} is'
+                    + " deprecitated. Using default value. Instead, use: "
+                    + f"  \n\t{self.name}:"
+                    + f"  \n\t  executable: {value}\n",
+                )
+                return True
+            else:
+                return False
+
         # Get values from the workspace
         if self.workspace is not None:
             workspace_dict = load_input(self.workspace)
@@ -362,19 +393,27 @@ class Component:
             workspace_dict = workspace_dict.get(operation, {})
             for key in workspace_dict.keys():
                 if key not in arg_dict.keys():
-                    if type(workspace_dict[key]) == bool:
+                    value = workspace_dict[key]
+                    # Check for flag
+                    if (type(workspace_dict[key]) == bool) and (
+                        not check_depreciated_args(key, value, operation)
+                    ):
                         # Assume that default flag behavior is False
-                        if workspace_dict[key]:
+                        if value:
                             config_str += f" --{key}"
-                    else:
-                        config_str += f" --{key} {workspace_dict[key]}"
+
+                    # Else, get value
+                    elif not check_depreciated_args(key, value, operation):
+                        config_str += f" --{key} {value}"
 
         # Overwrite workspace with any values from the input file
         for key in arg_dict.keys():
             value = arg_dict[key]
-            if type(value) == bool:
+            if (type(value) == bool) and (
+                not check_depreciated_args(key, value, operation)
+            ):
                 config_str += f" --{key}"
-            else:
+            elif not check_depreciated_args(key, value, operation):
                 config_str += f" --{key} {value}"
 
         return config_str

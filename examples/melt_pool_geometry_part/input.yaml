@@ -2,11 +2,10 @@ steps:
 - 3dthesis:
     class: melt_pool_geometry_part
     interface: thesis
+    executable: 3DThesis
     configure_args:
       res: 25.0e-6
-      exec: 3DThesis
     execute_args:
-      exec: 3DThesis
       np: 2
       batch: True
 data:

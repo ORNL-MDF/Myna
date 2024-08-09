@@ -78,5 +78,7 @@ def main(parser):
                 )
                 run_step = False
         if run_step:
-            step_obj.apply_settings(step[step_name], settings["data"], settings["myna"])
+            step_obj.apply_settings(
+                step[step_name], settings.get("data"), settings.get("myna")
+            )
             step_obj.run_component()
