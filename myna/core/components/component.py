@@ -24,7 +24,7 @@ class Component:
         self.id = Component.step_id
         Component.step_id += 1
         self.component_class = None
-        self.component_interface = None
+        self.component_application = None
         self.configure_dict = {}
         self.execute_dict = {}
         self.postprocess_dict = {}
@@ -41,12 +41,12 @@ class Component:
 
     def run_component(self):
         """Runs the configure.py, execute.py, and postprocess.py
-        for selected component class/interface combination"""
+        for selected component class & application combination"""
 
         # Run component configure.py script
         configure_path = os.path.join(
-            os.environ["MYNA_INTERFACE_PATH"],
-            self.component_interface,
+            os.environ["MYNA_APP_PATH"],
+            self.component_application,
             self.component_class,
             "configure.py",
         )
@@ -60,8 +60,8 @@ class Component:
         # Run component execute.py script
         has_executed = False
         execute_path = os.path.join(
-            os.environ["MYNA_INTERFACE_PATH"],
-            self.component_interface,
+            os.environ["MYNA_APP_PATH"],
+            self.component_application,
             self.component_class,
             "execute.py",
         )
@@ -73,8 +73,8 @@ class Component:
 
         # Run component postprocess.py script
         postprocess_path = os.path.join(
-            os.environ["MYNA_INTERFACE_PATH"],
-            self.component_interface,
+            os.environ["MYNA_APP_PATH"],
+            self.component_application,
             self.component_class,
             "postprocess.py",
         )
@@ -111,13 +111,13 @@ class Component:
         Available placeholders:
             {name}: the name of the component
             {build}: the name of the build associated with the workflow
-            $MYNA_INTERFACE_PATH: the location of the interfaces for the myna install
+            $MYNA_APP_PATH: the location of the app module in the myna install
             $MYNA_INSTALL_PATH: the location of the myna installation directory
         """
 
         cmd = raw_cmd.replace("{name}", self.name)
         cmd = cmd.replace("{build}", self.data["build"]["name"])
-        cmd = cmd.replace("$MYNA_INTERFACE_PATH", os.environ["MYNA_INTERFACE_PATH"])
+        cmd = cmd.replace("$MYNA_APP_PATH", os.environ["MYNA_APP_PATH"])
         cmd = cmd.replace("$MYNA_INSTALL_PATH", os.environ["MYNA_INSTALL_PATH"])
 
         if self.executable is not None:
@@ -149,7 +149,7 @@ class Component:
             # Set the executable for the step
             if self.workspace is not None:
                 workspace_dict = load_input(self.workspace)
-                workspace_dict = workspace_dict.get(self.component_interface, {})
+                workspace_dict = workspace_dict.get(self.component_application, {})
                 workspace_dict = workspace_dict.get(self.component_class, {})
                 self.executable = workspace_dict["executable"]
             self.executable = step_settings.get("executable", self.executable)
@@ -349,7 +349,7 @@ class Component:
         else:
             # Use the database sync functionality
             synced_files = datatype.sync(
-                self.component_interface, self.types, self.output_requirement, files
+                self.component_application, self.types, self.output_requirement, files
             )
 
         return synced_files
@@ -386,7 +386,7 @@ class Component:
         # Get values from the workspace
         if self.workspace is not None:
             workspace_dict = load_input(self.workspace)
-            workspace_dict = workspace_dict.get(self.component_interface, {})
+            workspace_dict = workspace_dict.get(self.component_application, {})
             workspace_dict = workspace_dict.get(self.component_class, {})
             workspace_dict = workspace_dict.get(operation, {})
             for key in workspace_dict.keys():

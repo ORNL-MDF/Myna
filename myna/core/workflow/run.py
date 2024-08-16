@@ -55,7 +55,7 @@ def main(parser):
         step_obj = myna.core.components.return_step_class(component_class_name)
         step_obj.name = step_name
         step_obj.component_class = component_class_name
-        step_obj.component_interface = step[step_name]["interface"]
+        step_obj.component_application = step[step_name]["application"]
 
         # Set environmental variable for the step name
         if index != 0:

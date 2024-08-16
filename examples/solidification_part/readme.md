@@ -1,4 +1,4 @@
-# 3DThesis interface example
+# 3DThesis application example for layer-wise solidification of a full part
 
 To configure the example, first update the path to your 3DThesis executable in
 the input file, "input.yaml" by either:

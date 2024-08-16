@@ -1,7 +1,7 @@
 steps:
 - 3dthesis:
     class: solidification_part
-    interface: thesis
+    application: thesis
     configure:
       res: 50.0e-6
     execute:

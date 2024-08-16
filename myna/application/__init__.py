@@ -6,7 +6,7 @@
 #
 # License: 3-clause BSD, see https://opensource.org/licenses/BSD-3-Clause.
 #
-"""external simulation interface module for Myna workflow framework"""
+"""external simulation application module for Myna workflow framework"""
 
 # Submodules
 from . import thesis

@@ -100,7 +100,7 @@ def main(parser):
         step_obj = components.return_step_class(component_class_name)
         step_obj.name = step_name
         step_obj.component_class = component_class_name
-        step_obj.component_interface = step[step_name]["interface"]
+        step_obj.component_application = step[step_name]["application"]
 
         # Raise error if there is an input requirement and it is the first step
         if (i == 0) and step_obj.input_requirement is not None:

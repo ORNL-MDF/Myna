@@ -1,7 +1,7 @@
 steps:
 - 3dthesis:
     class: solidification_part
-    interface: thesis
+    application: thesis
     executable: 3DThesis
     configure:
       res: 25.0e-6
@@ -10,22 +10,22 @@ steps:
       maxproc: 32
 - cluster_relabel:
     class: cluster_solidification
-    interface: bnpy
+    application: bnpy
     execute:
         thermal: 3dthesis
         no-training: True
 - cluster_supervoxel_relabel:
     class: cluster_supervoxel
-    interface: bnpy
+    application: bnpy
     execute:
         cluster: cluster_relabel
         no-training: True
 - rve:
     class: rve
-    interface: rve_selection
+    application: rve_selection
 - additivefoam_cube:
     class: solidification_region_reduced
-    interface: additivefoam_cube
+    application: additivefoam_cube
     configure:
         coarse: 80e-6
         rx: 1.0e-3

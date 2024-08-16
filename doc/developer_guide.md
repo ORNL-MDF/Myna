@@ -62,7 +62,7 @@ regardless of if there is an existing application. This will allow you to test t
 correct metadata is being supplied to the case directories. When composing your
 input file, just provide an arbitrary name for the application, e.g., "test".
 
-## Developing new interfaces
+## Developing new applications
 
 Once a new component is implemented, you will have to implement a corresponding
 application (app) to use with `myna run`. Applications consist of up to three scripts:

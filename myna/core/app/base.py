@@ -14,14 +14,14 @@ from myna.core.workflow.load_input import load_input
 
 class MynaApp:
     settings = "MYNA_RUN_INPUT"
-    path = "MYNA_INTERFACE_PATH"
+    path = "MYNA_APP_PATH"
     step_name = "MYNA_STEP_NAME"
     last_step_name = "MYNA_LAST_STEP_NAME"
 
     def __init__(self, name):
         self.name = name
         self.settings = load_input(os.environ["MYNA_RUN_INPUT"])
-        self.path = os.environ["MYNA_INTERFACE_PATH"]
+        self.path = os.environ["MYNA_APP_PATH"]
         self.step_name = os.environ["MYNA_STEP_NAME"]
         self.last_step_name = os.environ["MYNA_LAST_STEP_NAME"]
 

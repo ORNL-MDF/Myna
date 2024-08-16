@@ -3,7 +3,7 @@ cd ${0%/*} || exit 1  # run from this directory
 
 # source the correct version of ExaCA based
 # on {{EXACA_BIN_PATH}} and {{EXACA_EXEC}} specified
-# in interface configure script
+# in the app's configure.py script
 EXE="{{EXACA_BIN_PATH}}/{{EXACA_EXEC}}"
 ANALYSIS="{{EXACA_BIN_PATH}}/grain_analysis"
 

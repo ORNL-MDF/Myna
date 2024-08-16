@@ -16,7 +16,7 @@ import shutil
 
 # Copy template directory
 template_dir = os.path.join(
-    os.environ["MYNA_INTERFACE_PATH"], "openfoam", "mesh_part_vtk", "template"
+    os.environ["MYNA_APP_PATH"], "openfoam", "mesh_part_vtk", "template"
 )
 working_dir = os.path.abspath(os.path.join(".", "example_case"))
 shutil.copytree(template_dir, working_dir, dirs_exist_ok=True)

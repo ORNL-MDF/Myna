@@ -1,7 +1,7 @@
 steps:
 - additivefoam:
     class: solidification_region_reduced
-    interface: additivefoam
+    application: additivefoam
     configure:
       coarse: 80e-6
       rx: 0.5e-3
@@ -17,7 +17,7 @@ steps:
       cores: 2
 - exaca:
     class: microstructure_region
-    interface: exaca
+    application: exaca
     executable: ExaCA
     configure:
       cell-size: 2.5

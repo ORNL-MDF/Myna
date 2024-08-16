@@ -91,7 +91,7 @@ def write_codebase_status_to_file(parser):
                 pass
 
     # Get all applications
-    path = os.environ["MYNA_INTERFACE_PATH"]
+    path = os.environ["MYNA_APP_PATH"]
     basepath = os.environ["MYNA_INSTALL_PATH"]
     lines.append("\nAvailable applications:\n\n")
     for root, dirs, files in os.walk(path):

@@ -20,7 +20,7 @@ def pytest_addoption(parser):
 
 def pytest_configure(config):
     config.addinivalue_line(
-        "markers", "apps: mark interface test (needs external dependency)"
+        "markers", "apps: mark application test (needs external dependency)"
     )
 
 
