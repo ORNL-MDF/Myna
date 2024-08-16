@@ -2,7 +2,7 @@ steps:
 - additivefoam:
     class: solidification_region_reduced
     interface: additivefoam
-    configure_args:
+    configure:
       coarse: 80e-6
       rx: 0.5e-3
       ry: 0.5e-3
@@ -12,20 +12,20 @@ steps:
       pad-sub: 2.5e-3
       refine-layer: 1
       refine-region: 1
-    execute_args:
+    execute:
       batch: True
       cores: 2
 - exaca:
     class: microstructure_region
     interface: exaca
     executable: ExaCA
-    configure_args:
+    configure:
       cell-size: 2.5
       sub-size: 12.3
       nd: 250
       mu: 21
       std: 3
-    execute_args:
+    execute:
       batch: True
 data:
   build:

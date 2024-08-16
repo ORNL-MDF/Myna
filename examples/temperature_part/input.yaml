@@ -3,9 +3,9 @@ steps:
     class: temperature_part
     interface: thesis
     executable: 3DThesis
-    configure_args:
+    configure:
       res: 25.0e-6
-    execute_args:
+    execute:
       np: 8
       batch: True
 data:

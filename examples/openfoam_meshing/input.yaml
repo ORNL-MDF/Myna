@@ -2,7 +2,7 @@ steps:
 - meshing:
     class: mesh_part_vtk
     interface: openfoam
-    execute_args:
+    execute:
       mpiarg: mpirun
       np: 8
 data:

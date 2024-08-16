@@ -3,9 +3,9 @@ steps:
     class: melt_pool_geometry_part
     interface: thesis
     executable: 3DThesis
-    configure_args:
+    configure:
       res: 25.0e-6
-    execute_args:
+    execute:
       np: 2
       batch: True
 data:

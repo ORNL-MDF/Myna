@@ -2,7 +2,7 @@ steps:
 - additivefoam:
     class: solidification_region_stl
     interface: additivefoam
-    configure_args:
+    configure:
       coarse: 160.0e-6
       rx: 1.0e-3
       ry: 1.0e-3

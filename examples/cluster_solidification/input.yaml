@@ -3,9 +3,9 @@ steps:
     class: solidification_part
     interface: thesis
     executable: 3DThesis
-    configure_args:
+    configure:
       res: 50.0e-6
-    execute_args:
+    execute:
       np: 8
       maxproc: 32
       batch: True
@@ -15,7 +15,7 @@ steps:
 - cluster_relabel:
     class: cluster_solidification
     interface: bnpy
-    execute_args:
+    execute:
       thermal: 3dthesis
       no-training: True
 - cluster_supervoxel:
@@ -24,7 +24,7 @@ steps:
 - cluster_supervoxel_relabel:
     class: cluster_supervoxel
     interface: bnpy
-    execute_args:
+    execute:
       cluster: cluster_relabel
       no-training: True
 data:

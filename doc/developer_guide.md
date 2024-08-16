@@ -82,10 +82,13 @@ simply wrap other scripts as needed. All steps are optional and if one of these
 scripts is not present, it will be ignored.
 
 Many of the already implemented interfaces use the `argparse` library to parse
-user-specified inputs. In the input file, `config_args`, `execute_args`, and
-`postprocess_args` allow users to pass command line arguments to each of the scripts
+user-specified inputs. In the input file, `configure`, `execute`, and
+`postprocess` allow users to pass options to each of the scripts
 for the interface. Any parameters that you wish to have accessible to users are
-intended to be adjusted through such command line arguments.
+intended to be adjusted through such options, which are passed to the script via
+command line in the format `--key value` or `--key` for Boolean flags. For Boolean
+flags, the assumed behavior is False if the flag is not passed and True if the flag is
+passed.
 
 It is likely that your interface will require a `template` directory, or a set of input
 files for your model that get copied into every case. If you are using a template

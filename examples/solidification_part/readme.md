@@ -4,7 +4,7 @@ To configure the example, first update the path to your 3DThesis executable in
 the input file, "input.yaml" by either:
 
 - a) setting the path to the 3DThesis executable in (`exec`) under
-    the `3dthesis` step's `execute_args` entry
+    the `3dthesis` step's `execute` entry
 - b) setting the path in the example workspace `../example-workspace.yaml`
 
 For instructions on building 3DThesis, see the documentation on the

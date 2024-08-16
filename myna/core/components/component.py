@@ -25,9 +25,9 @@ class Component:
         Component.step_id += 1
         self.component_class = None
         self.component_interface = None
-        self.configure_args = []
-        self.execute_args = []
-        self.postprocess_args = []
+        self.configure_dict = {}
+        self.execute_dict = {}
+        self.postprocess_dict = {}
         self.executable = None
         self.name = f"Component-{self.id}"
         self.data_requirements = []
@@ -140,12 +140,10 @@ class Component:
                 self.workspace = myna_settings.get("workspace", None)
 
             # Load commands for configure, execute, and postprocess
-            self.configure_args = step_settings.get(
-                "configure_args", self.configure_args
-            )
-            self.execute_args = step_settings.get("execute_args", self.execute_args)
-            self.postprocess_args = step_settings.get(
-                "postprocess_args", self.postprocess_args
+            self.configure_dict = step_settings.get("configure", self.configure_dict)
+            self.execute_dict = step_settings.get("execute", self.execute_dict)
+            self.postprocess_dict = step_settings.get(
+                "postprocess", self.postprocess_dict
             )
 
             # Set the executable for the step
@@ -367,7 +365,7 @@ class Component:
 
         # Initialize
         assert operation in set(["configure", "execute", "postprocess"])
-        arg_dict = getattr(self, f"{operation}_args")
+        arg_dict = getattr(self, f"{operation}_dict")
         config_str = ""
 
         # Function to identify obsolete input dictionary keys:

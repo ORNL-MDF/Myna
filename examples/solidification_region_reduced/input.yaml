@@ -2,7 +2,7 @@ steps:
 - additivefoam_cube:
     class: solidification_region_reduced
     interface: additivefoam
-    configure_args:
+    configure:
       coarse: 80.0e-6
       rx: 1.0e-3
       ry: 1.0e-3
@@ -13,7 +13,7 @@ steps:
       refine-layer: 2
       refine-region: 1
       overwrite: True
-    execute_args:
+    execute:
       batch: True
       overwrite: True
       cores: 16
