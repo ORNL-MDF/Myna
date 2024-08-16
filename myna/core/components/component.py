@@ -370,14 +370,14 @@ class Component:
         arg_dict = getattr(self, f"{operation}_args")
         config_str = ""
 
-        # Function to identify depreciated input dictionary keys:
-        def check_depreciated_args(dict_key, value, operation):
-            depreciating_keys = ["exec"]
-            if dict_key in depreciating_keys:
+        # Function to identify obsolete input dictionary keys:
+        def check_obsolete_args(dict_key, value, operation):
+            obsolete_keys = ["exec"]
+            if dict_key in obsolete_keys:
                 logging.warn(
                     f" Step {self.name} {operation}"
                     f' argument "{dict_key}" for {operation} is'
-                    + " deprecitated. Using default value. Instead, use: "
+                    + " obsolete. Using default value. Instead, use: "
                     + f"  \n\t{self.name}:"
                     + f"  \n\t  executable: {value}\n",
                 )
@@ -396,24 +396,24 @@ class Component:
                     value = workspace_dict[key]
                     # Check for flag
                     if (type(workspace_dict[key]) == bool) and (
-                        not check_depreciated_args(key, value, operation)
+                        not check_obsolete_args(key, value, operation)
                     ):
                         # Assume that default flag behavior is False
                         if value:
                             config_str += f" --{key}"
 
                     # Else, get value
-                    elif not check_depreciated_args(key, value, operation):
+                    elif not check_obsolete_args(key, value, operation):
                         config_str += f" --{key} {value}"
 
         # Overwrite workspace with any values from the input file
         for key in arg_dict.keys():
             value = arg_dict[key]
             if (type(value) == bool) and (
-                not check_depreciated_args(key, value, operation)
+                not check_obsolete_args(key, value, operation)
             ):
                 config_str += f" --{key}"
-            elif not check_depreciated_args(key, value, operation):
+            elif not check_obsolete_args(key, value, operation):
                 config_str += f" --{key} {value}"
 
         return config_str
