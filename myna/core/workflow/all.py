@@ -27,9 +27,9 @@ def main():
 
     # Only parse known argument (type) since others will only be used per-step.
     args, _ = parser.parse_known_args()
-    if args.type == "status":
-        myna.core.workflow.status.write_codebase_status_to_file()
-    elif args.type == "launch_peregrine":
+    if "status" in args.type:
+        myna.core.workflow.status.write_codebase_status_to_file(parser)
+    elif "launch_peregrine" in args.type:
         myna.core.workflow.launch_from_peregrine.launch_from_peregrine()
     else:
         if "config" in args.type:

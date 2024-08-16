@@ -11,23 +11,23 @@ import pytest
 
 def pytest_addoption(parser):
     parser.addoption(
-        "--interfaces",
+        "--apps",
         action="store_true",
         default=False,
-        help="Run tests which include simulation interfaces",
+        help="Run tests which include simulation applications",
     )
 
 
 def pytest_configure(config):
     config.addinivalue_line(
-        "markers", "interfaces: mark interface test (needs external dependency)"
+        "markers", "apps: mark interface test (needs external dependency)"
     )
 
 
 def pytest_collection_modifyitems(config, items):
-    if config.getoption("--interfaces"):
+    if config.getoption("--apps"):
         return
-    skip = pytest.mark.skip(reason="Option --interfaces needed to run")
+    skip = pytest.mark.skip(reason="Option --apps needed to run")
     for item in items:
-        if "interfaces" in item.keywords:
+        if "apps" in item.keywords:
             item.add_marker(skip)

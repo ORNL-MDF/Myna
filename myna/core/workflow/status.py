@@ -12,7 +12,6 @@ to a text file
 
 from myna import core
 from importlib.metadata import version
-import argparse
 import os
 
 
@@ -37,10 +36,10 @@ def write_codebase_status_to_file(parser):
 
     # Print header
     lines = []
-    lines.append("# Status of Myna components and interfaces\n\n")
+    lines.append("# Status of Myna components and applications\n\n")
     lines.append(f'Myna version: {version("myna")}\n')
 
-    # Get all components
+    # Get all components classes
     obj = core.components
     lines.append("\nWorkflow components:\n\n")
     for key in vars(obj).keys():
@@ -57,9 +56,9 @@ def write_codebase_status_to_file(parser):
             except Exception:
                 pass
 
-    # Get all file definitions
+    # Get all file classes
     obj = core.files
-    lines.append("\nAvailable file interfaces:\n\n")
+    lines.append("\nAvailable file classes:\n\n")
     for key in vars(obj).keys():
         if key[0] != "_":
             key_type = type(vars(obj)[key])
@@ -74,9 +73,9 @@ def write_codebase_status_to_file(parser):
             except Exception:
                 pass
 
-    # Get all metadata types
+    # Get all metadata classes
     obj = core.metadata
-    lines.append("\nAvailable metadata types:\n\n")
+    lines.append("\nAvailable metadata classes:\n\n")
     for key in vars(obj).keys():
         if key[0] != "_":
             key_type = type(vars(obj)[key])
@@ -91,10 +90,10 @@ def write_codebase_status_to_file(parser):
             except Exception:
                 pass
 
-    # Get all external code interfaces
+    # Get all applications
     path = os.environ["MYNA_INTERFACE_PATH"]
     basepath = os.environ["MYNA_INSTALL_PATH"]
-    lines.append("\nAvailable external code interfaces:\n\n")
+    lines.append("\nAvailable applications:\n\n")
     for root, dirs, files in os.walk(path):
         root_simple = root.replace(basepath + os.path.sep, "")
         depth = len(root_simple.split(os.path.sep))

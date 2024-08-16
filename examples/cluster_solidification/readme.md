@@ -1,4 +1,4 @@
-# Clustering interface examples
+# Clustering application examples
 
 ## Example 1: Clustering
 
@@ -17,7 +17,7 @@ myna_run --input input.yaml
 The `plot_all_parts.py` script is provide to visualize the results of the clustering.
 The resulting output will depend on the training of the voxel and supervoxel models.
 
-**NOTE:** If there is already a clustering modeling in the interface
+**NOTE:** If there is already a clustering modeling in the application
 template folder, it may be overwritten or updated. If you wish to use
 a pre-trained clustering model for the voxel and supervoxels clustering
 steps, then make sure to use the `--no-training` flag in the clustering
@@ -32,14 +32,14 @@ To run the example, enter the `myna_config` command followed by the desired `myn
 command:
 
 ```bash
-myna_config --input input_rve.yaml
+myna config --input input_rve.yaml
 
 # If running from scratch:
-myna_run --input input_rve.yaml
+myna run --input input_rve.yaml
 
 # If Example #1 has already been run and you want to skip the first steps:
-myna_run --input input_rve.yaml --step [rve,additivefoam_cube]
+myna run --input input_rve.yaml --step [rve,additivefoam_cube]
 
 # If Example #1 has already been run and you only want to run the RVE selection:
-myna_run --input input_rve.yaml --step rve
+myna run --input input_rve.yaml --step rve
 ```
