@@ -35,7 +35,7 @@ def main(parser):
     )
 
     # Parse cmd arguments
-    args = parser.parse_args(argv)
+    args = parser.parse_args()
     input_file = args.input
     steps_to_sync = myna.core.utils.str_to_list(args.step)
 
