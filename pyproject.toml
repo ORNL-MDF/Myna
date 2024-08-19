@@ -19,7 +19,8 @@ classifiers = [
     "Operating System :: OS Independent"]
 dependencies = [
     'PyYAML',
-    'numpy',
+    # Necessary for pyebsd
+    'numpy < 2.0',
     'pandas',
     'matplotlib',
     'mistlib @ git+https://github.com/ORNL-MDF/mist.git',
