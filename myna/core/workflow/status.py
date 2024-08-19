@@ -17,7 +17,7 @@ import os
 
 # Parser comes from the top-level command parsing
 def write_codebase_status_to_file(parser):
-    """Writes available Myna components, data, files, and interfaces
+    """Writes available Myna components, data, files, and applications
     to a file
     """
     parser.add_argument(
