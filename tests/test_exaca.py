@@ -11,7 +11,7 @@ import subprocess
 
 
 # This test checks if ExaCA is in the current environment,
-# which is the preferred method for accessing the executable in the ExaCA interfaces
+# which is the preferred method for accessing the executable in the ExaCA applications
 @pytest.mark.apps
 def test_exaca():
     # This assumes it is on the path
