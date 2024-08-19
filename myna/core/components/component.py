@@ -11,6 +11,8 @@
 import os
 import myna
 import myna.database
+from myna.core.workflow import load_input
+import logging
 
 
 class Component:
@@ -22,10 +24,11 @@ class Component:
         self.id = Component.step_id
         Component.step_id += 1
         self.component_class = None
-        self.component_interface = None
-        self.configure_args = []
-        self.execute_args = []
-        self.postprocess_args = []
+        self.component_application = None
+        self.configure_dict = {}
+        self.execute_dict = {}
+        self.postprocess_dict = {}
+        self.executable = None
         self.name = f"Component-{self.id}"
         self.data_requirements = []
         self.input_requirement = None
@@ -34,46 +37,49 @@ class Component:
         self.output_template = ""
         self.data = {}
         self.types = ["build"]
+        self.workspace = None
 
     def run_component(self):
         """Runs the configure.py, execute.py, and postprocess.py
-        for selected component class/interface combination"""
+        for selected component class & application combination"""
 
         # Run component configure.py script
         configure_path = os.path.join(
-            os.environ["MYNA_INTERFACE_PATH"],
-            self.component_interface,
+            os.environ["MYNA_APP_PATH"],
+            self.component_application,
             self.component_class,
             "configure.py",
         )
         if os.path.exists(configure_path):
-            cmd = f'python {configure_path} {" ".join(self.configure_args)}'
+
+            # Submit configure.py command
+            cmd = f'python {configure_path} {self.get_step_args_str("configure")}'
             cmd = self.cmd_preformat(cmd)
             os.system(cmd)
 
         # Run component execute.py script
         has_executed = False
         execute_path = os.path.join(
-            os.environ["MYNA_INTERFACE_PATH"],
-            self.component_interface,
+            os.environ["MYNA_APP_PATH"],
+            self.component_application,
             self.component_class,
             "execute.py",
         )
         if os.path.exists(execute_path):
-            cmd = f'python {execute_path} {" ".join(self.execute_args)}'
+            cmd = f'python {execute_path} {self.get_step_args_str("execute")}'
             cmd = self.cmd_preformat(cmd)
             os.system(cmd)
             has_executed = True
 
         # Run component postprocess.py script
         postprocess_path = os.path.join(
-            os.environ["MYNA_INTERFACE_PATH"],
-            self.component_interface,
+            os.environ["MYNA_APP_PATH"],
+            self.component_application,
             self.component_class,
             "postprocess.py",
         )
         if os.path.exists(postprocess_path):
-            cmd = f'python {postprocess_path} {" ".join(self.postprocess_args)}'
+            cmd = f'python {postprocess_path} {self.get_step_args_str("postprocess")}'
             cmd = self.cmd_preformat(cmd)
             os.system(cmd)
 
@@ -96,7 +102,8 @@ class Component:
                 [print("\t" + x) for x in output_files]
 
     def cmd_preformat(self, raw_cmd):
-        """Replace placeholder names in command arguments
+        """Replace placeholder names in command arguments and adds executable argument
+        if a custom executable path is specified.
 
         Args:
             raw_cmd: a string of the command with placeholders
@@ -104,33 +111,48 @@ class Component:
         Available placeholders:
             {name}: the name of the component
             {build}: the name of the build associated with the workflow
-            $MYNA_INTERFACE_PATH: the location of the interfaces for the myna install
+            $MYNA_APP_PATH: the location of the app module in the myna install
             $MYNA_INSTALL_PATH: the location of the myna installation directory
         """
 
         cmd = raw_cmd.replace("{name}", self.name)
         cmd = cmd.replace("{build}", self.data["build"]["name"])
-        cmd = cmd.replace("$MYNA_INTERFACE_PATH", os.environ["MYNA_INTERFACE_PATH"])
+        cmd = cmd.replace("$MYNA_APP_PATH", os.environ["MYNA_APP_PATH"])
         cmd = cmd.replace("$MYNA_INSTALL_PATH", os.environ["MYNA_INSTALL_PATH"])
+
+        if self.executable is not None:
+            cmd += f" --exec {self.executable}"
+
         return cmd
 
-    def apply_settings(self, step_settings, data_settings):
+    def apply_settings(self, step_settings, data_settings, myna_settings):
         """Update the step and data settings for the component from dictionaries
 
         Args:
             step_settings: a dictionary of settings related to the myna step
             data_settings: a dictionary of settings related to the build data
+            myna_settings: a dictionary of settings related to general Myna functionality
         """
 
         try:
+            # Set workspace path
+            if myna_settings is not None:
+                self.workspace = myna_settings.get("workspace", None)
+
             # Load commands for configure, execute, and postprocess
-            self.configure_args = step_settings.get(
-                "configure_args", self.configure_args
+            self.configure_dict = step_settings.get("configure", self.configure_dict)
+            self.execute_dict = step_settings.get("execute", self.execute_dict)
+            self.postprocess_dict = step_settings.get(
+                "postprocess", self.postprocess_dict
             )
-            self.execute_args = step_settings.get("execute_args", self.execute_args)
-            self.postprocess_args = step_settings.get(
-                "postprocess_args", self.postprocess_args
-            )
+
+            # Set the executable for the step
+            if self.workspace is not None:
+                workspace_dict = load_input(self.workspace)
+                workspace_dict = workspace_dict.get(self.component_application, {})
+                workspace_dict = workspace_dict.get(self.component_class, {})
+                self.executable = workspace_dict["executable"]
+            self.executable = step_settings.get("executable", self.executable)
 
             # If an output_template is specified, use it.
             # Otherwise, use a combination of the class, component, and output names.
@@ -327,7 +349,69 @@ class Component:
         else:
             # Use the database sync functionality
             synced_files = datatype.sync(
-                self.component_interface, self.types, self.output_requirement, files
+                self.component_application, self.types, self.output_requirement, files
             )
 
         return synced_files
+
+    def get_step_args_str(self, operation):
+        """Get the command string for the configure, execute, or postprocess operation
+
+        Args:
+            operation: "configure", "execute", or "postprocess"
+
+        Returns:
+            argstr: string of command arguments"""
+
+        # Initialize
+        assert operation in set(["configure", "execute", "postprocess"])
+        arg_dict = getattr(self, f"{operation}_dict")
+        config_str = ""
+
+        # Function to identify obsolete input dictionary keys:
+        def check_obsolete_args(dict_key, value, operation):
+            obsolete_keys = ["exec"]
+            if dict_key in obsolete_keys:
+                logging.warn(
+                    f" Step {self.name} {operation}"
+                    f' argument "{dict_key}" for {operation} is'
+                    + " obsolete. Using default value. Instead, use: "
+                    + f"  \n\t{self.name}:"
+                    + f"  \n\t  executable: {value}\n",
+                )
+                return True
+            else:
+                return False
+
+        # Get values from the workspace
+        if self.workspace is not None:
+            workspace_dict = load_input(self.workspace)
+            workspace_dict = workspace_dict.get(self.component_application, {})
+            workspace_dict = workspace_dict.get(self.component_class, {})
+            workspace_dict = workspace_dict.get(operation, {})
+            for key in workspace_dict.keys():
+                if key not in arg_dict.keys():
+                    value = workspace_dict[key]
+                    # Check for flag
+                    if (type(workspace_dict[key]) == bool) and (
+                        not check_obsolete_args(key, value, operation)
+                    ):
+                        # Assume that default flag behavior is False
+                        if value:
+                            config_str += f" --{key}"
+
+                    # Else, get value
+                    elif not check_obsolete_args(key, value, operation):
+                        config_str += f" --{key} {value}"
+
+        # Overwrite workspace with any values from the input file
+        for key in arg_dict.keys():
+            value = arg_dict[key]
+            if (type(value) == bool) and (
+                not check_obsolete_args(key, value, operation)
+            ):
+                config_str += f" --{key}"
+            elif not check_obsolete_args(key, value, operation):
+                config_str += f" --{key} {value}"
+
+        return config_str

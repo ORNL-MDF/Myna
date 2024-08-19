@@ -35,7 +35,7 @@ def main(parser):
     )
 
     # Parse cmd arguments
-    args = parser.parse_args(argv)
+    args = parser.parse_args()
     input_file = args.input
     steps_to_sync = myna.core.utils.str_to_list(args.step)
 
@@ -53,11 +53,11 @@ def main(parser):
         # Get the step name and class
         step_name = [x for x in step.keys()][0]
         component_class_name = step[step_name]["class"]
-        component_interface_name = step[step_name]["interface"]
+        component_app_name = step[step_name]["application"]
         step_obj = myna.core.components.return_step_class(component_class_name)
         step_obj.name = step_name
         step_obj.component_class = component_class_name
-        step_obj.component_interface = component_interface_name
+        step_obj.component_application = component_app_name
 
         # Set environmental variable for the step name
         if index != 0:
@@ -80,5 +80,5 @@ def main(parser):
                 )
                 sync_step = False
         if sync_step:
-            step_obj.apply_settings(step[step_name], settings["data"])
+            step_obj.apply_settings(step[step_name], settings["data"], settings["myna"])
             step_obj.sync_output_files()

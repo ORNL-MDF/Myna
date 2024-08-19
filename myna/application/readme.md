@@ -1,28 +1,31 @@
-# External code interfaces
+# External code applications
 
-This directory contains interfaces to models and codes that are external to
-the main Myna source code (i.e., not part of the `myna` Python package
+This directory contains applications to wrap models and simulation tools that are
+external to the main Myna source code (i.e., not part of the `myna` Python package
 functionality).
 
-# Developing new interfaces
+## Developing new applications
 
-`myna` expects a specific directory and file structure for each interface:
+`myna` expects a specific directory and file structure for each application (app):
+
 - Parent directories are named after the class names defined in
 [../src/myna/components/component_class_lookup.py].
-- Child directory names then correspond to an available interface name
+- Child directory names then correspond to an available app name
 for the parent class
-- Each available interface can contain three stages of executables
+- Each available app can contain three stages of executables
 that will be called sequentially with the corresponding arguments from
 the myna_run input file:
+
   1. configure.py <configure_args>
   2. execute.py <execute_args>
   3. postprocess.py <postprocess_args>
+
 - The expectation is that each configure, execute, and postprocess
 script will use the Python argparse module to parse command line inputs
 - If the model has a case template that it will copy from, then the
 convention is to name that directory "template" (this is
 not strictly necessary)
-- Other files can be included in the interface directory for documentation or
+- Other files can be included in the app directory for documentation or
 as resources, such as a readme file
 
 There is no technical difference between the three stages of executables

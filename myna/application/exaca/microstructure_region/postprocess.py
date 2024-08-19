@@ -39,7 +39,9 @@ def main(argv=None):
     step_obj = return_step_class(os.environ["MYNA_STEP_CLASS"])
     step_dict = settings["steps"][int(os.environ["MYNA_STEP_INDEX"])]
     step_obj.name = list(step_dict.keys())[0]
-    step_obj.apply_settings(step_dict[step_obj.name], settings["data"])
+    step_obj.apply_settings(
+        step_dict[step_obj.name], settings["data"], settings["myna"]
+    )
     _, _, files_are_valid = step_obj.get_output_files()
 
     # Open the myna file and export the RGB fields

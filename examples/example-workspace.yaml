@@ -1,0 +1,10 @@
+thesis:
+   solidification_part:
+      executable: 3DThesis
+      configure:
+         res: 25e-6
+      execute:
+         batch: True
+exaca:
+   microstructure_region:
+      executable: ExaCA

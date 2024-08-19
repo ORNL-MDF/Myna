@@ -29,7 +29,7 @@ def configure_case(case_dir, res, myna_input="myna_data.yaml"):
 
     # Copy template to case directory
     template_dir = os.path.join(
-        os.environ["MYNA_INTERFACE_PATH"], "thesis", "solidification_part", "template"
+        os.environ["MYNA_APP_PATH"], "thesis", "solidification_part", "template"
     )
     shutil.copytree(template_dir, case_dir, dirs_exist_ok=True)
 
