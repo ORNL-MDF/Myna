@@ -10,9 +10,9 @@ import pytest
 import subprocess
 
 
-# This test checks if OpenFOAM-10 is activated in the current environment,
-# which is required for the AdditiveFOAM interfaces
-@pytest.mark.interfaces
+# This test checks if ExaCA is in the current environment,
+# which is the preferred method for accessing the executable in the ExaCA applications
+@pytest.mark.apps
 def test_exaca():
     # This assumes it is on the path
     output = subprocess.run("ExaCA", shell=True, capture_output=True)

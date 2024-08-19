@@ -1,25 +1,23 @@
 # Myna
 
-**NOTE**: This repository contains working examples of the workflow, but on-going development may change directory structures, output files, etc. from previous versions.
+**NOTE**: This repository contains working examples of the workflow, but on-going
+development may change directory structures, output files, etc. from previous versions.
 
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
 ## Description
 
-Myna is a framework to facilitate modeling and simulation workflows based on build data stored in a
-digital factory framework, initially developed for the database structure maintained by ORNL MDF's Peregrine tool.
+Myna is a framework to facilitate modeling and simulation workflows for additive
+manufacturing based on build data stored in a digital factory framework, initially
+developed for the database structure maintained by ORNL MDF's Peregrine tool.
 
-There are several submodules within Myna:
+There are three top-level submodules within Myna:
 
-- `workflow`: contains scripts that are run from the command line to execute Myna tasks, such as the command `myna run --input demo.yaml`
-- `components`: specifies components in the workflow, such that each component subclass can have specific input & output file and data requirements
-- `files`: defines specific file formats that can be specified as either input or output requirements for a component
-- `metadata`: defines the specific pieces of meatdata that can be specified as requirements for a component.
-Each data subclasses contains the functionality needed to extract specific information from the database
-(e.g., MDF Peregrine)
-
-There is also a folder, `interfaces`, that contains interfaces for connecting third-party models to Myna.
-These are stored with the directory scheme `interfaces/<component_name>/<interface_name>`.
+- `core`: contains class definitions for metadata, file types, and workflow components,
+as well as the core functionality for running Myna workflows
+- `application`: implementations of wrappers for various models to satisfy the
+requirements of the defined Myna workflow steps
+- `database`: implementations of readers for different database types
 
 ## Installation
 
@@ -28,29 +26,24 @@ since the package is not on PyPI. To install `myna` follow the instructions belo
 
 ```bash
 # clone repository and change directory to cloned repository
-git clone https://code.ornl.gov/ygk/myna.git
+git clone https://github.com/ORNL-MDF/Myna
 cd myna
 
 # To install as a static package
 pip install .
 
 # Or to install as an editable package
-# pip install -e .
+pip install -e .
 
 # Install with all optional dependencies
 pip install -e .[dev]
 ```
 
-Optional external dependencies include:
+External dependencies are required depending on which applications you wish to use:
 
-- for installer scripts
-  - git
-  - anaconda3
-  - cmake
-- for running `examples/demo`
-  - 3DThesis
-  - AdditiveFOAM
-  - ExaCA
+- [3DThesis](https://gitlab.com/JamieStumpORNL/3DThesis)
+- [AdditiveFOAM](https://github.com/ORNL/AdditiveFOAM)
+- [ExaCA](https://github.com/LLNL/ExaCA)
 
 If you have anaconda3 installed, you can use the `install_conda_env.sh`
 script to create a conda environment named "myna" for use with
@@ -66,56 +59,31 @@ Examples of using pytest are given below.
 # Default tests for aspects myna Python package installation
 pytest
 
-# Include optional tests that check interface functionality
-pytest --interfaces
+# Include optional tests that check application functionality
+pytest --apps
 ```
 
 ## Usage
 
-To run the example Myna workflow use the `myna config` and `myna run` commands and point to a valid YAML input file:
+Myna input files define the order of simulation steps and the options for each step.
+Optional workspaces can also be created as `.yaml` or `.myna-workspace` files that can
+be referenced to share common settings across multiple input files. See
+[examples/solidification_part/readme.md](examples/solidification_part/readme.md) for
+more details. Note: Before running this example, ensure that the external 3DThesis
+dependency is installed and that the 3DThesis executable is in your path.
+
+### Available components and applications
+
+To get a summary of the available classes and applications, use the `myna status`
+command line tool.
 
 ```bash
-cd ./examples/solidification_part
-
-# The input.yaml in this example should be modified to match your
-# local environment (e.g. file paths)
-
-# Config will update the data fields in input.yaml with the relevant
-# metadata and output the updated fields to input_configured.yaml
-myna config --input input.yaml --output input_configured.yaml
-
-# Run executes the Myna components specified in input_configured.yaml
-myna run --input input_configured.yaml
-
-# Sync stores the results from the Myna run back to the database format
-myna sync --input input_configured.yaml
-
-# myna run and myna sync both accept the `--step <step_name>` argument
-# to only run/sync a single step or a subset with a comma-separated list
-#  `--step [<step_name>,<other_step name>,...]`.
-# For example:
-myna sync --input input_configured.yaml --step 3dthesis
-```
-
-Before running the example workflow, ensure that all dependencies are installed and
-that the settings in `input.yaml` are correct for your system. File paths should
-be specified as absolute file paths to ensure the expected behavior. To access the interfaces included
-with the Myna repository, you can use the `$MYNA_INTERFACE_PATH` environmental variable
-in the step components' configure, execute, and postprocess commands within the Myna input file. Both
-`$MYNA_INTERFACE_PATH` and `$MYNA_INSTALL_PATH` are set whenever running the Myna scripts or importing
-the myna package.
-
-### Available components and interfaces
-
-To get a summary of the available interfaces, use the `myna status` command line script.
-
-```bash
-# write myna component and interface status to <filename>
+# write myna component and application status to <filename>
 myna status --output status.md
 ```
 
-The `--output <filename>` argument is optional and defaults to "status.md" if not specified.
-Text in the output file is formatted as Markdown.
+The `--output <filename>` argument is optional and defaults to "status.md" if not
+specified. Text in the output file is formatted as Markdown.
 
 ## Attribution
 
@@ -149,7 +117,6 @@ available Peregrine v2023-10 dataset:
    type = {Dataset}
 }
 ```
-
 
 ## Development
 

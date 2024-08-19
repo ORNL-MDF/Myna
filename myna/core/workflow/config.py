@@ -100,7 +100,7 @@ def main(parser):
         step_obj = components.return_step_class(component_class_name)
         step_obj.name = step_name
         step_obj.component_class = component_class_name
-        step_obj.component_interface = step[step_name]["interface"]
+        step_obj.component_application = step[step_name]["application"]
 
         # Raise error if there is an input requirement and it is the first step
         if (i == 0) and step_obj.input_requirement is not None:
@@ -222,7 +222,9 @@ def main(parser):
                                     ]["layer_data"][layer][data_req] = datum
 
         # Save data to step object
-        step_obj.apply_settings(step[step_name], settings["data"])
+        step_obj.apply_settings(
+            step[step_name], settings.get("data"), settings.get("myna")
+        )
 
         # Make needed directories and copy data dict to each case directory
         case_dirs = step_obj.get_files_from_template("")
@@ -295,7 +297,9 @@ def main(parser):
         # Set the outputs associated with the step
         if step_obj.output_requirement is not None:
             print(f'  > Expecting output for step "{step_name}":')
-            step_obj.apply_settings(step[step_name], settings["data"])
+            step_obj.apply_settings(
+                step[step_name], settings.get("data"), settings.get("myna")
+            )
             files, exists, valid = step_obj.get_output_files()
             if len(files) > 0:
                 for f, e, v in zip(files, exists, valid):

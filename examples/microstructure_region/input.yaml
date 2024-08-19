@@ -1,23 +1,32 @@
 steps:
 - additivefoam:
     class: solidification_region_reduced
-    interface: additivefoam
-    configure_args: [--coarse 80e-6,
-        --rx 0.5e-3,
-        --ry 0.5e-3,
-        --rz 300e-6,
-        --pad-xy 0.5e-3,
-        --pad-z 0.1e-3,
-        --pad-sub 2.5e-3,
-        --refine-layer 1,
-        --refine-region 1]
-    execute_args: [--batch, --cores 2]
+    application: additivefoam
+    configure:
+      coarse: 80e-6
+      rx: 0.5e-3
+      ry: 0.5e-3
+      rz: 300.0e-6
+      pad-xy: 0.5e-3
+      pad-z: 0.1e-3
+      pad-sub: 2.5e-3
+      refine-layer: 1
+      refine-region: 1
+    execute:
+      batch: True
+      cores: 2
 - exaca:
     class: microstructure_region
-    interface: exaca
-    configure_args: [--exec /home/cloud/spack/opt/spack/linux-ubuntu22.04-zen2/gcc-11.4.0/exaca-master-oz5mzn7epmfj5s7p42a3t37g6rla3c75/bin/ExaCA-Kokkos, --cell-size
-        2.5, --sub-size 12.3, --nd 250, --mu 21, --std 3]
-    execute_args: [--batch]
+    application: exaca
+    executable: ExaCA
+    configure:
+      cell-size: 2.5
+      sub-size: 12.3
+      nd: 250
+      mu: 21
+      std: 3
+    execute:
+      batch: True
 data:
   build:
     datatype: Peregrine

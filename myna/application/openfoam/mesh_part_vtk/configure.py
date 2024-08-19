@@ -18,7 +18,7 @@ def setup_case(case_dir, template_dir):
     # Set template path
     if template_dir is None:
         template_path = os.path.join(
-            os.environ["MYNA_INTERFACE_PATH"],
+            os.environ["MYNA_APP_PATH"],
             "openfoam",
             "mesh_part_vtk",
             "template",
