@@ -1,10 +1,13 @@
 steps:
 - 3dthesis:
     class: melt_pool_geometry_part
-    interface: thesis
-    configure_args: [--res 25.0e-6, --exec /home/cloud/3DThesis/build/application/3DThesis]
-    execute_args: [--exec /home/cloud/3DThesis/build/application/3DThesis, --np 2,
-      --batch]
+    application: thesis
+    executable: 3DThesis
+    configure:
+      res: 25.0e-6
+    execute:
+      np: 2
+      batch: True
 data:
   build:
     datatype: Peregrine

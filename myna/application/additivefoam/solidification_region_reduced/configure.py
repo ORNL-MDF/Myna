@@ -52,7 +52,7 @@ def setup_case(case_dir, app):
     # Set template path for copy
     if app.args.template is None:
         template_path = os.path.join(
-            os.environ["MYNA_INTERFACE_PATH"],
+            os.environ["MYNA_APP_PATH"],
             "additivefoam",
             "solidification_region_reduced",
             "template",

@@ -130,7 +130,7 @@ class PeregrineDB(Database):
         and file structure.
 
         Args:
-          component_type: (str) name of workflow component interface, i.e., Component.component_interface
+          component_type: (str) name of workflow component app, i.e., Component.component_application
           step_types: (list of str) list of workflow component types, i.e., Component.types
           output_class: class object for the output file, e.g., Component.output_requirement
           files: List of files to sync for the passed workflow component
@@ -220,7 +220,7 @@ class PeregrineDB(Database):
 
                         # Get metadata from file path
                         split_path = f.split(os.path.sep)
-                        interface = split_path[-2]
+                        app = split_path[-2]
                         layer = int(split_path[-3])
                         if is_region_type:
                             region = split_path[-4]

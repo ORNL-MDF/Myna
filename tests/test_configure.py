@@ -17,21 +17,24 @@ import myna
 def run_configure(path, example):
     parser = argparse.ArgumentParser("test")
 
-    test_dir = os.getcwd()
     # Currently required to run from the example folder
+    test_dir = os.getcwd()
     example_path = os.path.join(path, "../examples", example)
     os.chdir(example_path)
 
-    # We do not want actual commandline args here
-    if "--interfaces" in sys.argv:
-        sys.argv.remove("--interfaces")
-    # Rely heavily on defaults (only modify output to avoid local changes from test execution)
-    output_dir = os.path.join(path, "tmp")
+    # Rely heavily on defaults (modify output to avoid local changes from test)
+    output_dir = os.path.join(example_path, "tmp")
+    output_file = os.path.join(output_dir, "test.json")
     if not os.path.exists(output_dir):
         os.mkdir(output_dir)
-    sys.argv.extend(["--output", os.path.join(output_dir, "test.json")])
+    sys.argv = ["test", "--output", output_file]
     myna.core.workflow.config.main(parser)
 
+    # Check if output file was generated
+    assert os.path.exists(output_file)
+
+    # Cleanup
+    shutil.rmtree(output_dir)
     os.chdir(test_dir)
 
 
@@ -51,6 +54,3 @@ def test_configure():
     abs_path = os.path.dirname(os.path.abspath(__file__))
     for example in examples:
         run_configure(abs_path, example)
-
-    # Cleanup files
-    shutil.rmtree(os.path.join(abs_path, "tmp"))

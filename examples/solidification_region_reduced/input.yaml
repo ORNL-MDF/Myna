@@ -1,18 +1,22 @@
 steps:
 - additivefoam_cube:
     class: solidification_region_reduced
-    interface: additivefoam
-    configure_args: [--coarse 80e-6,
-        --rx 1.0e-3,
-        --ry 1.0e-3,
-        --rz 300e-6,
-        --pad-xy 0.75e-3,
-        --pad-z 0.4e-3,
-        --pad-sub 2.5e-3,
-        --refine-layer 2,
-        --refine-region 1,
-        --overwrite]
-    execute_args: [--batch, --cores 16, --overwrite]
+    application: additivefoam
+    configure:
+      coarse: 80.0e-6
+      rx: 1.0e-3
+      ry: 1.0e-3
+      rz: 300.0e-6
+      pad-xy: 0.75e-3
+      pad-z: 0.4e-3
+      pad-sub: 2.5e-3
+      refine-layer: 2
+      refine-region: 1
+      overwrite: True
+    execute:
+      batch: True
+      overwrite: True
+      cores: 16
 data:
   build:
     datatype: Peregrine
