@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "myna"
-version = "0.1.0.dev0"
+version = "1.0.0"
 authors = [
     { name="Gerry Knapp", email="knappgl@ornl.gov" },
     { name="Sam Reeve", email="reevest@ornl.gov"},
@@ -19,7 +19,8 @@ classifiers = [
     "Operating System :: OS Independent"]
 dependencies = [
     'PyYAML',
-    'numpy',
+    # Necessary for pyebsd
+    'numpy < 2.0',
     'pandas',
     'matplotlib',
     'mistlib @ git+https://github.com/ORNL-MDF/mist.git',
