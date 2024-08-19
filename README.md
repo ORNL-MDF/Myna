@@ -87,7 +87,7 @@ specified. Text in the output file is formatted as Markdown.
 
 ## Attribution
 
-If you use Myna in your work, please cite this repository. In addition, there is a
+If you use Myna in your work, please [cite this repository](https://zenodo.org/doi/10.5281/zenodo.13345124). In addition, there is a
 preliminary work that introduces the concept of leverging the digital thread for
 simulations and uses the precursor to Myna:
 
