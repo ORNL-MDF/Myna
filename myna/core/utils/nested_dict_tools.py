@@ -21,3 +21,19 @@ def nested_get(dict, keys):
     for key in keys[:-1]:
         dict = dict.setdefault(key, {})
     return dict[keys[-1]]
+
+
+def get_synonymous_key(dict_obj, synonym_list):
+    """Returns the object at the first matching key from a dictionary-like object
+    given a list of synonymous keys
+
+    Args:
+        dict_obj: dictionary-like object, e.g., dict or h5py.File()
+        synonym_list: list of synonymous keys to check
+
+    Returns:
+        entry_name: first matching key
+    """
+    matches = [syn in dict_obj for syn in synonym_list]
+    entry_name = synonym_list[matches.index(True)]
+    return entry_name

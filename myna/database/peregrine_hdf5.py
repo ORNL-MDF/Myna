@@ -12,6 +12,7 @@ that corresponds to the PEregrine 2023-10 dataset"""
 from myna.core.db import Database
 from myna.core import metadata
 from myna.database.peregrine import PeregrineDB
+from myna.core.utils import get_synonymous_key
 import os
 import numpy as np
 import h5py
@@ -26,6 +27,23 @@ class PeregrineHDF5(PeregrineDB):
                associated with the public dataset (https://doi.org/10.13139/ORNLNCCS/2008021)
                is set as the default assumed behavior for the data loader.
     """
+
+    synonyms = {
+        "laser_power": [
+            "parts/process_parameters/laser_power",
+            "parts/process_parameters/power",
+        ],
+        "laser_spot_size": [
+            "parts/process_parameters/laser_spot_size",
+            "parts/process_parameters/spot_size",
+        ],
+        "laser_scan_speed": [
+            "parts/process_parameters/laser_beam_speed",
+            "parts/process_parameters/scan_speed",
+            "parts/process_parameters/speed",
+            "parts/process_parameters/velocity",
+        ],
+    }
 
     def __init__(self, version="v2023_10"):
 
@@ -61,7 +79,9 @@ class PeregrineHDF5(PeregrineDB):
         if metadata_type == metadata.LaserPower:
             pid = int(str(part).split("P")[-1])  # remove "P" prefix from part name
             with h5py.File(self.path, "r") as data:
-                value = float(data["parts/process_parameters/power"][pid])
+                value = float(
+                    get_synonymous_key(data, self.synonyms["laser_power"])[pid]
+                )
             return value
 
         elif metadata_type == metadata.LayerThickness:
@@ -83,7 +103,9 @@ class PeregrineHDF5(PeregrineDB):
         elif metadata_type == metadata.SpotSize:
             pid = int(str(part).split("P")[-1])  # remove "P" prefix from part name
             with h5py.File(self.path, "r") as data:
-                value = float(data["parts/process_parameters/spot_size"][pid])
+                value = float(
+                    get_synonymous_key(data, self.synonyms["laser_spot_size"])[pid]
+                )
 
             # NOTE: Correct for bug in Peregrine that saved spot size as microns
             # in some files. Assume that if the spot size is greater than 10
@@ -199,8 +221,12 @@ class PeregrineHDF5(PeregrineDB):
                         "tParam": [],
                     }
                 )
+
+                # Find scan speed, which can have variable node names depending
+                # on the build
                 scan_speed = (
-                    data["parts/process_parameters/velocity"][pid] / 1e3
+                    get_synonymous_key(data, self.synonyms["laser_scan_speed"])[pid]
+                    / 1e3
                 )  # mm/s -> m/s
                 if len(df_scan) > 0:
                     for _, row in df_scan.iterrows():

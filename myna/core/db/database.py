@@ -12,6 +12,8 @@
 class Database:
     """The base class for a Myna database"""
 
+    synonyms = {}
+
     def __init__(self):
         self.description = ""
         self.path = None
