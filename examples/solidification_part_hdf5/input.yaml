@@ -1,0 +1,18 @@
+steps:
+- 3dthesis:
+    class: solidification_part
+    application: thesis
+    configure:
+      res: 50.0e-6
+    execute:
+      np: 8
+data:
+  build:
+    datatype: PeregrineHDF5
+    name: myna_output
+    path: ../../resources/PeregrineHDF5/minimal.hdf5
+    parts:
+      P1:
+        layers: [0]
+myna:
+  workspace: ../example-workspace.yaml

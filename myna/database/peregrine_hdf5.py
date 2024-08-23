@@ -79,9 +79,8 @@ class PeregrineHDF5(PeregrineDB):
         if metadata_type == metadata.LaserPower:
             pid = int(str(part).split("P")[-1])  # remove "P" prefix from part name
             with h5py.File(self.path, "r") as data:
-                value = float(
-                    get_synonymous_key(data, self.synonyms["laser_power"])[pid]
-                )
+                name = get_synonymous_key(data, self.synonyms["laser_power"])
+                value = float(data[name][pid])
             return value
 
         elif metadata_type == metadata.LayerThickness:
@@ -103,9 +102,8 @@ class PeregrineHDF5(PeregrineDB):
         elif metadata_type == metadata.SpotSize:
             pid = int(str(part).split("P")[-1])  # remove "P" prefix from part name
             with h5py.File(self.path, "r") as data:
-                value = float(
-                    get_synonymous_key(data, self.synonyms["laser_spot_size"])[pid]
-                )
+                name = get_synonymous_key(data, self.synonyms["laser_spot_size"])
+                value = float(data[name][pid])
 
             # NOTE: Correct for bug in Peregrine that saved spot size as microns
             # in some files. Assume that if the spot size is greater than 10
@@ -158,7 +156,7 @@ class PeregrineHDF5(PeregrineDB):
             with h5py.File(self.path, "r") as data:
 
                 # Get Part ID and scan path information
-                part_ids = data["slices/part_ids"]
+                part_ids = data["slices/part_ids"][int(layer)]
                 scan_path = data[f"scans/{layer}"]
                 df_scan = pd.DataFrame(
                     {
@@ -175,18 +173,18 @@ class PeregrineHDF5(PeregrineDB):
                 y_dim = data.attrs["printer/y_real_dimension"]
                 ix = 1
                 iy = 0
-                dx = x_dim / part_ids[int(layer)].shape[ix]
-                dy = y_dim / part_ids[int(layer)].shape[iy]
+                dx = x_dim / part_ids.shape[ix]
+                dy = y_dim / part_ids.shape[iy]
 
                 # Get bounds in pixel indices
-                inds = np.argwhere(part_ids[int(layer)] == pid)
+                inds = np.argwhere(part_ids == pid)
                 min_x = np.min(inds[:, ix])
                 min_y = np.min(inds[:, iy])
                 max_x = np.max(inds[:, ix]) + 1
                 max_y = np.max(inds[:, iy]) + 1
 
                 # Convert bounds to millimeters
-                pad = 1  # px
+                pad = 2  # px
                 min_x = 0.5 * dx + dx * (min_x - pad)
                 min_y = 0.5 * dy + dy * (min_y - pad)
                 max_x = 0.5 * dx + dx * (max_x + pad)
@@ -224,10 +222,10 @@ class PeregrineHDF5(PeregrineDB):
 
                 # Find scan speed, which can have variable node names depending
                 # on the build
-                scan_speed = (
-                    get_synonymous_key(data, self.synonyms["laser_scan_speed"])[pid]
-                    / 1e3
-                )  # mm/s -> m/s
+                name = get_synonymous_key(data, self.synonyms["laser_scan_speed"])
+                # mm/s -> m/s
+                scan_speed = float(data[name][pid]) / 1e3
+
                 if len(df_scan) > 0:
                     for _, row in df_scan.iterrows():
                         z = data.attrs["material/layer_thickness"] * float(layer)
