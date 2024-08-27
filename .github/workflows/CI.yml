@@ -31,3 +31,9 @@ jobs:
       - name: Run pytest
         run: |
           python -m pytest
+
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: psf/black@stable
