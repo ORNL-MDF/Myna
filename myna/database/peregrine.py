@@ -10,13 +10,19 @@
 
 from myna.core.db import Database
 from myna.core import metadata
-from myna.core.utils import downsample_to_image
+from myna.core.utils import downsample_to_image, get_synonymous_key
 import matplotlib.pyplot as plt
 import os
 import numpy as np
 
 
 class PeregrineDB(Database):
+
+    synonyms = {
+        "laser_power": ["Laser Beam Power (W)", "Power (W)"],
+        "laser_spot_size": ["Laser Spot Size (µm)", "Spot Size (µm)", "Spot Size (mm)"],
+    }
+
     def __init__(self):
         Database.__init__(self)
         self.description = "ORNL MDF Peregrine build file structure"
@@ -49,11 +55,10 @@ class PeregrineDB(Database):
         if metadata_type == metadata.LaserPower:
             datafile = os.path.join(self.path, "simulation", part, "part.npz")
             with np.load(datafile, allow_pickle=True) as data:
-                index = [
-                    ind
-                    for ind, x in enumerate(data["parameter_names"])
-                    if x == "Power (W)"
-                ][0]
+                parameter_name = get_synonymous_key(
+                    data["parameter_names"], self.synonyms["laser_power"]
+                )
+                index = list(data["parameter_names"]).index(parameter_name)
                 value = float(data["parameter_values"][index])
             return value
 
@@ -84,11 +89,10 @@ class PeregrineDB(Database):
         elif metadata_type == metadata.SpotSize:
             datafile = os.path.join(self.path, "simulation", part, "part.npz")
             with np.load(datafile, allow_pickle=True) as data:
-                index = [
-                    ind
-                    for ind, x in enumerate(data["parameter_names"])
-                    if x == "Spot Size (mm)"
-                ][0]
+                parameter_name = get_synonymous_key(
+                    data["parameter_names"], self.synonyms["laser_spot_size"]
+                )
+                index = list(data["parameter_names"]).index(parameter_name)
                 value = float(data["parameter_values"][index])
 
             # NOTE: Correct for bug in Peregrine that saved spot size as microns

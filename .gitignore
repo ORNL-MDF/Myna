@@ -19,6 +19,8 @@ myna_resources/
 demo_build/
 myna_output/
 resources/Peregrine/registered
+resources/PeregrineHDF5/simulation
+resources/PeregrineHDF5/registered
 
 # other typical case file names
 *configured.yaml
