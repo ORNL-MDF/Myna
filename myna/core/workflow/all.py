@@ -30,7 +30,7 @@ def main():
     if "status" in args.type:
         myna.core.workflow.status.write_codebase_status_to_file(parser)
     elif "launch_peregrine" in args.type:
-        myna.core.workflow.launch_from_peregrine.launch_from_peregrine()
+        myna.core.workflow.launch_from_peregrine(parser)
     else:
         if "config" in args.type:
             myna.core.workflow.config.main(parser)
