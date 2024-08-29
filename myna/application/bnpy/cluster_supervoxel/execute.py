@@ -9,12 +9,12 @@
 import os
 import sys
 import glob
-import bnpy
-import argparse
 import pandas as pd
 import numpy as np
 from myna.core.workflow.load_input import load_input
 import myna.application.bnpy as myna_bnpy
+from myna.application.bnpy import Bnpy
+from myna.application.bnpy import bnpy_module_dependency_error_msg
 
 
 def run(
@@ -24,10 +24,19 @@ def run(
     train_model,
     overwrite,
     voxel_model_path,
+    app,
     supervoxelStep=250e-6,
     dpi=300,
 ):
     """Generate supervoxel training data from the voxel clustering data"""
+
+    # Load app-specific dependencies
+    try:
+        import bnpy
+    except Exception as e:
+        print(e)
+        print(bnpy_module_dependency_error_msg())
+
     # Go to case directory
     orig_dir = os.getcwd()
     os.chdir(case_dir)
@@ -154,9 +163,11 @@ def run(
     sF = 0.5
 
     # Check if model needs to be trained or not
-    model_dir = os.path.join(
-        resource_template_dir, f"supervoxel_model-sF={sF}-gamma={gamma}"
-    )
+    model_dir = app.model
+    if model_dir is None:
+        model_dir = os.path.join(
+            resource_template_dir, f"supervoxel_model-sF={sF}-gamma={gamma}"
+        )
     if not train_model and os.path.isdir(model_dir):
         latest_model = sorted(glob.glob(os.path.join(model_dir, "*")), reverse=True)[0]
         latest_model_iteration = sorted(
@@ -293,11 +304,12 @@ def run(
     return result_file
 
 
-def main(argv=None):
+def main():
+
+    app = Bnpy("cluster_supervoxel")
+
     # Set up argparse
-    parser = argparse.ArgumentParser(
-        description="Launch clustering for " + "specified input file"
-    )
+    parser = app.parser
     parser.add_argument(
         "--cluster",
         default="",
@@ -374,6 +386,7 @@ def main(argv=None):
                 train_model,
                 overwrite,
                 voxel_model,
+                app,
                 supervoxelStep=resolution,
             )
         )
