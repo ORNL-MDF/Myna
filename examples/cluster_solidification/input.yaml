@@ -7,30 +7,21 @@ steps:
       res: 50.0e-6
     execute:
       np: 8
-      maxproc: 32
       batch: True
-- cluster:
-    class: cluster_solidification
-    application: bnpy
-- cluster_relabel:
+- voxel:
     class: cluster_solidification
     application: bnpy
     execute:
-      thermal: 3dthesis
-      no-training: True
-- cluster_supervoxel:
-    class: cluster_supervoxel
-    application: bnpy
-- cluster_supervoxel_relabel:
+      no-training: False
+- supervoxel:
     class: cluster_supervoxel
     application: bnpy
     execute:
-      cluster: cluster_relabel
-      no-training: True
+      no-training: False
 data:
   build:
     datatype: Peregrine
-    name: demo_build
+    name: myna_output
     path: ..
     parts:
       P5:

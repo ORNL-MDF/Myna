@@ -430,7 +430,8 @@ class Component:
             if (type(value) == bool) and (
                 not check_obsolete_args(key, value, operation)
             ):
-                config_str += f" --{key}"
+                if value:
+                    config_str += f" --{key}"
             elif not check_obsolete_args(key, value, operation):
                 config_str += f" --{key} {value}"
 

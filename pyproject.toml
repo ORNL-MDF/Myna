@@ -28,14 +28,19 @@ dependencies = [
     'vtk',
     'h5py',
     'polars',
-    'bnpy @ git+https://github.com/gknapp1/bnpy',
-    'pyebsd @ git+https://github.com/arthursn/pyebsd.git',]
+    'pyebsd @ git+https://github.com/arthursn/pyebsd.git',
+    'scipy']
 
 [project.optional-dependencies]
 dev = [
   'pytest',
   'black',
   'licenseheaders']
+bnpy = [
+    'bnpy @ git+https://github.com/gknapp1/bnpy',
+    'opencv-python',
+    'POT',
+]
 
 [project.scripts]
 myna = "myna.core.workflow.all:main"
