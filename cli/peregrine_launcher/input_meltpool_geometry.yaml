@@ -1,4 +1,4 @@
 steps:
 - 3dthesis:
-    class: solidification_part
+    class: melt_pool_geometry_part
     application: thesis

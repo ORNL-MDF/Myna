@@ -1,0 +1,33 @@
+additivefoam:
+  solidification_region_reduced:
+    configure:
+      coarse: 80e-6
+      pad-sub: 1e-3
+      pad-xy: 0.00125
+      pad-z: 0.0005
+      refine-layer: 1
+      refine-region: 1
+      rx: 1e-3
+      ry: 1e-3
+      rz: 0.0003
+exaca:
+  microstructure_region:
+    configure:
+      cell-size: 2.5
+      nd: 250
+      sub-size: 12.3
+    executable: ExaCA
+thesis:
+  melt_pool_geometry_part:
+    configure:
+      nout: 1000
+      res: 20e-6
+    executable: 3DThesis
+    execute:
+      batch: true
+  solidification_part:
+    configure:
+      res: 25e-6
+    executable: 3DThesis
+    execute:
+      batch: true
