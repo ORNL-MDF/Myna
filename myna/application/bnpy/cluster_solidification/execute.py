@@ -16,6 +16,7 @@ import sys
 import glob
 import bnpy
 import matplotlib.pyplot as plt
+from myna.application.bnpy import Bnpy
 
 
 def run_clustering(
@@ -24,6 +25,7 @@ def run_clustering(
     settings,
     train_model,
     overwrite,
+    app,
     load_models=False,
     plot=True,
 ):
@@ -272,15 +274,16 @@ def run_clustering(
 
 
 def main(argv=None):
+    app = Bnpy("cluster_supervoxel")
+
     # Set up argparse
-    parser = argparse.ArgumentParser(
-        description="Launch clustering for " + "specified input file"
-    )
+    parser = app.parser
+
     parser.add_argument(
         "--thermal",
-        default="",
+        default=None,
         type=str,
-        help="thermal step name" + ", for example: " + "--thermal 3dthesis",
+        help='thermal step name, for example: "--thermal 3dthesis"',
     )
     parser.add_argument(
         "--no-training",
@@ -308,7 +311,7 @@ def main(argv=None):
     step_name = os.environ["MYNA_STEP_NAME"]
     myna_files = settings["data"]["output_paths"][step_name]
     thermal_step_name = args.thermal
-    if thermal_step_name == "":
+    if thermal_step_name is None:
         thermal_step_name = os.environ["MYNA_LAST_STEP_NAME"]
     thermal_files = settings["data"]["output_paths"][thermal_step_name]
 
@@ -321,7 +324,9 @@ def main(argv=None):
         print(f"- {case_dir=}")
         print(f"- {thermal_file=}")
         output_files.append(
-            run_clustering(case_dir, thermal_file, settings, train_model, overwrite)
+            run_clustering(
+                case_dir, thermal_file, settings, train_model, overwrite, app
+            )
         )
 
     # Post-process results to convert to Myna format
