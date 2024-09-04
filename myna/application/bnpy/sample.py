@@ -1,10 +1,8 @@
 import pandas as pd
 import matplotlib.pyplot as plt
-import os
 import numpy as np
 import scipy.interpolate as interp
 from scipy.stats import chi2
-import cv2 as cv
 
 
 # Find the bin centers
@@ -17,6 +15,8 @@ def np_hist_to_cv(counts):
 
 
 def sample_single_dataset(filename):
+    import cv2 as cv
+
     # Read the data
     df = pd.read_csv(filename)
 
@@ -31,6 +31,10 @@ def sample_single_dataset(filename):
     max_V = df["log10_V"].max()
 
     def get_pdf_eval(df, nbins):
+        # TODO: Update this to use function for n-dimensional data:
+        # - https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.gaussian_kde.html
+        # - https://pythonot.github.io/auto_examples/gromov/plot_gromov.html
+
         # Use numpy's histogram2d to calculate the 2D histogram
         H, xedges, yedges = np.histogram2d(
             df["log10_V"],

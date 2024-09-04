@@ -11,10 +11,8 @@ import pandas as pd
 import numpy as np
 from myna.core.workflow.load_input import load_input
 import myna.application.bnpy as myna_bnpy
-import argparse
 import sys
 import glob
-import bnpy
 import matplotlib.pyplot as plt
 from myna.application.bnpy import Bnpy
 
@@ -29,6 +27,9 @@ def run_clustering(
     load_models=False,
     plot=True,
 ):
+    # Import Myna [bnpy]-optional module(s)
+    import bnpy
+
     # Go to case directory
     orig_dir = os.getcwd()
     os.chdir(case_dir)

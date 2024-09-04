@@ -9,8 +9,6 @@
 import os
 import sys
 import glob
-import bnpy
-import argparse
 import pandas as pd
 import numpy as np
 from myna.core.workflow.load_input import load_input
@@ -30,6 +28,10 @@ def run(
     dpi=300,
 ):
     """Generate supervoxel training data from the voxel clustering data"""
+
+    # Import Myna [bnpy]-optional module(s)
+    import bnpy
+
     # Go to case directory
     orig_dir = os.getcwd()
     os.chdir(case_dir)
