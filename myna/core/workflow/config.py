@@ -46,11 +46,19 @@ def main(parser):
         help="switch to show all available data files, but will"
         + "not update input file data values",
     )
+    parser.add_argument(
+        "--overwrite",
+        dest="overwrite",
+        action="store_true",
+        help="(flag) run jobs in parallel",
+    )
+    parser.set_defaults(overwrite=False)
 
     # Parse cmd arguments
     args = parser.parse_args()
     input_file = args.input
     output_file = args.output
+    overwrite = args.overwrite
     if output_file == "":
         output_file = input_file
     show_avail = args.avail
@@ -135,7 +143,7 @@ def main(parser):
             # Construct the relevant file object
             elif constructor.__base__ == metadata.BuildFile:
                 data_obj = constructor(datatype)
-                data_obj.copy_file()
+                data_obj.copy_file(overwrite=overwrite)
                 datum = {
                     "file_local": data_obj.file_local,
                     "file_database": data_obj.file_database,
@@ -144,7 +152,7 @@ def main(parser):
             elif constructor.__base__ == metadata.PartFile:
                 for part in parts.keys():
                     data_obj = constructor(datatype, part)
-                    data_obj.copy_file()
+                    data_obj.copy_file(overwrite=overwrite)
                     datum = {
                         "file_local": data_obj.file_local,
                         "file_database": data_obj.file_database,
@@ -176,7 +184,7 @@ def main(parser):
                                     layer
                                 ] = {}
                             data_obj = constructor(datatype, part, layer)
-                            data_obj.copy_file()
+                            data_obj.copy_file(overwrite=overwrite)
                             datum = {
                                 "file_local": data_obj.file_local,
                                 "file_database": data_obj.file_database,
@@ -212,7 +220,7 @@ def main(parser):
                                             "regions"
                                         ][region]["layer_data"][layer] = {}
                                     data_obj = constructor(datatype, part, layer)
-                                    data_obj.copy_file()
+                                    data_obj.copy_file(overwrite=overwrite)
                                     datum = {
                                         "file_local": data_obj.file_local,
                                         "file_database": data_obj.file_database,

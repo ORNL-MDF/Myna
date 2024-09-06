@@ -68,7 +68,14 @@ class MynaApp:
             action="store_true",
             help="(flag) run jobs in parallel",
         )
+        self.parser.add_argument(
+            "--skip",
+            dest="batch",
+            action="store_true",
+            help="(flag) run jobs in parallel",
+        )
         self.parser.set_defaults(batch=False)
+        self.parser.set_defaults(skip=False)
 
     # Check if executable exists
     def check_exe(self, default):

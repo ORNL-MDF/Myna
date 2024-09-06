@@ -98,8 +98,9 @@ def main():
     myna_files = sim.settings["data"]["output_paths"][sim.step_name]
 
     # Configure each case
-    for case_dir in [os.path.dirname(x) for x in myna_files]:
-        configure_case(case_dir, sim.args.res, sim.args.nout)
+    if not sim.args.skip:
+        for case_dir in [os.path.dirname(x) for x in myna_files]:
+            configure_case(case_dir, sim.args.res, sim.args.nout)
 
 
 if __name__ == "__main__":
