@@ -21,3 +21,7 @@ class Bnpy(MynaApp):
             action="store_false",
             help="flag to use pre-trained model",
         )
+
+
+def bnpy_module_dependency_error_msg():
+    return '!! Install "bnpy" optional dependencies !!'

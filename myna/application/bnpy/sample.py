@@ -1,127 +1,73 @@
-import pandas as pd
-import matplotlib.pyplot as plt
 import numpy as np
-import scipy.interpolate as interp
-from scipy.stats import chi2
+from .bnpy import bnpy_module_dependency_error_msg
 
 
-# Find the bin centers
-def centers(edges):
-    return edges[:-1] + 0.5 * np.diff(edges[:2])
+def get_representative_distribution(
+    data, n0=1000, dn=1000, conv_abs=1e-3, conv_rel=1e-1, conv_count=3, bins=10
+):
 
+    # Load app-specific dependencies
+    try:
+        import ot
+    except Exception as e:
+        print(e)
+        print(bnpy_module_dependency_error_msg())
 
-def np_hist_to_cv(counts):
-    return counts.ravel().astype("float32")
+    # Initialize convergence criteria
+    residue_rel = 1e6
+    residue_abs = 1e6
+    consecutive_counter = 0
+    wasserstein_last = 1e6
+    iteration = 0
+    distances = []
 
-
-def sample_single_dataset(filename):
-    import cv2 as cv
-
-    # Read the data
-    df = pd.read_csv(filename)
-
-    # Calculate log10 of G and V columns
-    df["log10_G"] = np.log10(df["G"])
-    df["log10_V"] = np.log10(df["V"])
-
-    # Find the minimum and maximum values of the data
-    min_G = df["log10_G"].min()
-    max_G = df["log10_G"].max()
-    min_V = df["log10_V"].min()
-    max_V = df["log10_V"].max()
-
-    def get_pdf_eval(df, nbins):
-        # TODO: Update this to use function for n-dimensional data:
-        # - https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.gaussian_kde.html
-        # - https://pythonot.github.io/auto_examples/gromov/plot_gromov.html
-
-        # Use numpy's histogram2d to calculate the 2D histogram
-        H, xedges, yedges = np.histogram2d(
-            df["log10_V"],
-            df["log10_G"],
-            bins=nbins,
-            range=[[min_V, max_V], [min_G, max_G]],
-            density=True,
+    # Get data range
+    data_range = []
+    dims = data.shape[1]
+    for i in range(dims):
+        data_range.append(
+            (
+                min(np.min(data[:, i]), np.min(data[:, i])),
+                max(np.max(data[:, i]), np.max(data[:, i])),
+            )
         )
 
-        xcenters = centers(xedges)
-        ycenters = centers(yedges)
+    while consecutive_counter <= conv_count:
 
-        # Interpolate the histogram
-        pdf = interp.interp2d(xcenters, ycenters, H)
-        pdf_eval = pdf(xedges, yedges)
-        return pdf_eval
+        # Randomly sample from dataset
+        sample = data[
+            np.random.choice(data.shape[0], n0 + dn * iteration, replace=False)
+        ]
 
-    # Sample the data until the limit is reached
-    sf = 0
-    sf0 = -1
-    tol = 0.005
-    n_samples = 100
-    inc_samples = 100
-    nbins = 25
-    pdf_eval_ref = get_pdf_eval(df, nbins)
-    sfs = []
-    ns = []
-    while (np.abs(sf - sf0) > tol) or (sf < 0.75):
-        sf0 = sf
+        # Compute the histograms
+        hist_data = np.histogramdd(data, bins=10, range=data_range, density=True)
+        hist_sample = np.histogramdd(sample, bins=10, range=data_range, density=True)
 
-        # Sample the data and get evaluation of the PDF
-        df_sample = df.sample(n=int(n_samples))
-        pdf_eval = get_pdf_eval(df_sample, nbins)
+        # Get locations of the histogram bins
+        centers = (
+            0.5 * (np.array(hist_data[1])[:, 1:] - np.array(hist_data[1])[:, :-1])
+            + np.array(hist_data[1])[:, :-1]
+        )
+        xs = np.meshgrid(centers[0], centers[1], centers[2])
+        xs = np.array(xs).T.reshape(-1, dims)
+        xt = np.meshgrid(*centers)
+        xt = np.array(xt).T.reshape(-1, dims)
+        M = ot.dist(xs, xt, metric="euclidean")
+        A = hist_data[0].reshape(xs.shape[0])
+        B = hist_sample[0].reshape(xt.shape[0])
+        wasserstein = ot.emd2(A, B, M)
 
-        # Calculate the difference between the PDFs
-        h1 = np_hist_to_cv(pdf_eval)
-        h2 = np_hist_to_cv(pdf_eval_ref)
-        dof = len(h1) - 1
-        diff = cv.compareHist(h1, h2, cv.HISTCMP_CHISQR)
-        sf = chi2.sf(diff, 1)
-        ns.append(n_samples)
-        sfs.append(sf * 100)
-        n_samples += inc_samples
+        residue_rel = np.abs((wasserstein_last - wasserstein) / wasserstein)
+        residue_abs = np.abs(wasserstein_last - wasserstein)
+        distances.append(wasserstein)
+        if (residue_rel < conv_rel) and (residue_abs < conv_abs):
+            consecutive_counter += 1
+        wasserstein_last = wasserstein
+        iteration += 1
 
-    # Plot the results
-    fig, ax = plt.subplots()
-    ax.plot(ns, sfs, "k-", zorder=2)
-    ax.text(
-        ns[-1],
-        sfs[-1],
-        f"N={ns[-1]}\n{sfs[-1]:.2f}%",
-        horizontalalignment="right",
-        verticalalignment="bottom",
+    n_sample = len(sample)
+    n_data = len(data)
+    print(
+        f"{n_sample} / {n_data} ({n_sample/n_data*100:.1f}%):\t{wasserstein:.3g}\trel = {residue_rel:.2g}\tabs = {residue_abs:.2g}"
     )
-
-    # Continue with the calculation until sf >= 0.99 is reached
-    inc_samples = 10000
-    while sf < 0.99:
-        sf0 = sf
-
-        # Sample the data and get evaluation of the PDF
-        df_sample = df.sample(n=int(n_samples))
-        pdf_eval = get_pdf_eval(df_sample, nbins)
-
-        # Calculate the difference between the PDFs
-        h1 = np_hist_to_cv(pdf_eval)
-        h2 = np_hist_to_cv(pdf_eval_ref)
-        dof = len(h1) - 1
-        diff = cv.compareHist(h1, h2, cv.HISTCMP_CHISQR)
-        sf = chi2.sf(diff, 1)
-        ns.append(n_samples)
-        sfs.append(sf * 100)
-        n_samples += inc_samples
-
-    # Plot the results
-    ax.plot(ns, sfs, "b--", zorder=1)
-    ax.text(
-        ns[-1],
-        sfs[-1],
-        f"N={ns[-1]}\n{sfs[-1]:.2f}%",
-        horizontalalignment="right",
-        verticalalignment="bottom",
-    )
-
-    # Set the plot parameters
-    ax.set_xscale("log")
-    ax.set_xlabel("Number of samples")
-    ax.set_ylabel("Similarity factor (%)")
-    plt.savefig("sample_single_dataset.png", dpi=300, bbox_inches="tight")
-    plt.show()
+    return sample, distances

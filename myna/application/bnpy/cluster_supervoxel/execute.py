@@ -14,6 +14,7 @@ import numpy as np
 from myna.core.workflow.load_input import load_input
 import myna.application.bnpy as myna_bnpy
 from myna.application.bnpy import Bnpy
+from myna.application.bnpy import bnpy_module_dependency_error_msg
 
 
 def run(
@@ -29,8 +30,12 @@ def run(
 ):
     """Generate supervoxel training data from the voxel clustering data"""
 
-    # Import Myna [bnpy]-optional module(s)
-    import bnpy
+    # Load app-specific dependencies
+    try:
+        import bnpy
+    except Exception as e:
+        print(e)
+        print(bnpy_module_dependency_error_msg())
 
     # Go to case directory
     orig_dir = os.getcwd()
