@@ -34,6 +34,11 @@ class BuildFile:
             os.makedirs(os.path.abspath(os.path.dirname(destination)), exist_ok=True)
             shutil.copy(self.file_database, destination)
 
+        try:
+            self.local_to_myna_format()
+        except NotImplementedError:
+            pass
+
     def set_local_resource_dir(self):
         """Get the local resource directory and make if it doesn't exist"""
 
@@ -45,6 +50,15 @@ class BuildFile:
         """Convert the local file to the myna format"""
 
         raise NotImplementedError
+
+
+class BuildLayerPartsetFile(BuildFile):
+    """File that requires both a build and layer specification"""
+
+    def __init__(self, datatype, partset, layer):
+        BuildFile.__init__(self, datatype)
+        self.partset = partset
+        self.layer = layer
 
 
 class PartFile(BuildFile):

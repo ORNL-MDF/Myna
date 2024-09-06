@@ -29,4 +29,9 @@ def load_input(filename):
                 f'ERROR: Unsupported input file type "{file_type}". Must be .yaml format'
             )
 
+        # Enforce that main keys exist
+        for key in ["steps", "data", "myna"]:
+            if settings.get(key) is None:
+                settings[key] = {}
+
     return settings

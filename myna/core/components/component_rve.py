@@ -23,3 +23,14 @@ class ComponentRVE(Component):
         Component.__init__(self)
         self.input_requirement = FileID
         self.output_requirement = FileRegion
+
+
+class ComponentCentroidRVE(Component):
+    """Build-wise Component that outputs the location of region(s) of interest
+    in the `FileRegion` class format based on the part geometry within the build
+    """
+
+    def __init__(self):
+        Component.__init__(self)
+        self.data_requirements.extend(["part_id_map"])
+        self.output_requirement = FileRegion

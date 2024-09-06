@@ -1,0 +1,31 @@
+steps:
+- rve_center:
+    class: rve_part_center
+    application: rve
+- additivefoam_cube:
+    class: solidification_region_reduced
+    application: additivefoam
+    configure:
+      coarse: 80.0e-6
+      rx: 1.0e-3
+      ry: 1.0e-3
+      rz: 300.0e-6
+      pad-xy: 0.75e-3
+      pad-z: 0.4e-3
+      pad-sub: 2.5e-3
+      refine-layer: 2
+      refine-region: 1
+      overwrite: True
+    execute:
+      batch: True
+      overwrite: True
+      cores: 16
+data:
+  build:
+    datatype: Peregrine
+    name: myna_output
+    path: ../../resources
+    parts:
+      P5:
+        layers: [51,52]
+myna:

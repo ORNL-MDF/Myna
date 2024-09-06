@@ -34,6 +34,7 @@ from .data_preheat import *
 from .file import *
 from .file_scanpath import *
 from .file_stl import *
+from .file_part_id_map import *
 
 # Import metadata data class name lookup
 from .data_class_lookup import *
