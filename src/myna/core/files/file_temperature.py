@@ -6,7 +6,7 @@
 #
 # License: 3-clause BSD, see https://opensource.org/licenses/BSD-3-Clause.
 #
-"""Define file format class related to the spatial distribution of temperature (T)
+"""Define file format classes related to the spatial distribution of temperature (T)
 """
 
 import pandas as pd
@@ -43,3 +43,10 @@ class FileTemperature(File):
             expected_cols = ["x (m)", "y (m)", "t (k)"]
             expected_cols_types = [float, float, float]
             return self.columns_are_valid(cols, expected_cols, expected_cols_types)
+
+
+class FileTemperatureFinal(FileTemperature):
+    """File format class for temperature (T) after a layer is deposited"""
+
+    def __init__(self, file):
+        FileTemperature.__init__(self, file)
