@@ -1,0 +1,40 @@
+/*---------------------------------------------------------------------------
+     AdditiveFOAM template input file (compatible with 1.0, OpenFOAM 10)
+
+                      Created for simulation with Myna
+  ---------------------------------------------------------------------------*/
+
+FoamFile
+{
+    version         2;
+    format          ascii;
+    class           dictionary;
+    object          heatSourceProperties;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+sources         ( beam );
+
+beam
+{
+    pathName        scanpath.txt;
+    absorptionModel Kelly;
+    KellyCoeffs
+    {
+        geometry        cylinder;
+        eta0            0.3;
+        etaMin          0.35;
+    }
+    heatSourceModel modifiedSuperGaussian;
+    modifiedSuperGaussianCoeffs
+    {
+        dimensions      ( 6.5e-05 6.5e-05 3e-05 );
+        m               2;
+        k               2;
+        transient       true;
+        isoValue        1670;
+    }
+}
+
+
+// ************************************************************************* //
