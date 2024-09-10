@@ -25,13 +25,14 @@ class BuildFile:
         )
         self.set_local_resource_dir()
 
-    def copy_file(self, destination=None):
+    def copy_file(self, destination=None, overwrite=True):
         """Copy self.file to destination"""
 
         if destination is None:
             destination = self.file_local
-        os.makedirs(os.path.abspath(os.path.dirname(destination)), exist_ok=True)
-        shutil.copy(self.file_database, destination)
+        if not os.path.exists(destination) or overwrite:
+            os.makedirs(os.path.abspath(os.path.dirname(destination)), exist_ok=True)
+            shutil.copy(self.file_database, destination)
 
     def set_local_resource_dir(self):
         """Get the local resource directory and make if it doesn't exist"""

@@ -56,15 +56,16 @@ def main():
     parser.add_argument(
         "--batch",
         dest="batch",
+        default=False,
         action="store_true",
-        help="flag to run jobs in background",
+        help="flag to run jobs in background, default = False",
     )
-    parser.set_defaults(batch=False)
     parser.add_argument(
         "--overwrite",
         dest="overwrite",
+        default=False,
         action="store_true",
-        help="flag to force re-running of cases with existing output",
+        help="flag to force re-running of cases with existing output, default = False",
     )
     parser.add_argument(
         "--ranks",
@@ -72,7 +73,6 @@ def main():
         default=1,
         help="(int) Number of ranks to use, default 1",
     )
-    parser.set_defaults(overwrite=False)
 
     # Parse command line arguments and get Myna settings
     args = parser.parse_args()
