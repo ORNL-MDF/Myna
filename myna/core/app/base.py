@@ -39,10 +39,11 @@ class MynaApp:
         self.parser.add_argument(
             "--overwrite",
             dest="overwrite",
+            default=False,
             action="store_true",
-            help="force regeneration of each run and overwrite of any existing data",
+            help="force regeneration of each run and overwrite of any existing data,"
+            + " default = False",
         )
-        self.parser.set_defaults(overwrite=False)
         self.parser.add_argument(
             "--exec", type=str, help=f"(str) Path to {self.name} executable"
         )
@@ -65,17 +66,18 @@ class MynaApp:
         self.parser.add_argument(
             "--batch",
             dest="batch",
+            default=False,
             action="store_true",
             help="(flag) run jobs in parallel",
         )
         self.parser.add_argument(
             "--skip",
             dest="batch",
+            default=False,
             action="store_true",
-            help="(flag) run jobs in parallel",
+            help="(flag) if parsed by the app, skip the corresponding"
+            + " stage of the component, default = False",
         )
-        self.parser.set_defaults(batch=False)
-        self.parser.set_defaults(skip=False)
 
     # Check if executable exists
     def check_exe(self, default):

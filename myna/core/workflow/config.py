@@ -49,10 +49,10 @@ def main(parser):
     parser.add_argument(
         "--overwrite",
         dest="overwrite",
+        default=False,
         action="store_true",
-        help="(flag) run jobs in parallel",
+        help="(flag) overwrite existing files in Myna resources, default = False",
     )
-    parser.set_defaults(overwrite=False)
 
     # Parse cmd arguments
     args = parser.parse_args()

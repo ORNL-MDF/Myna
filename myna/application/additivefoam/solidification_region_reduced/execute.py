@@ -52,17 +52,17 @@ def main(argv=None):
     parser.add_argument(
         "--batch",
         dest="batch",
+        default=False,
         action="store_true",
         help="flag to run jobs in background",
     )
     parser.add_argument(
         "--overwrite",
         dest="overwrite",
+        default=False,
         action="store_true",
         help="flag to force re-running of cases with existing output",
     )
-    parser.set_defaults(overwrite=False)
-    parser.set_defaults(batch=False)
 
     # Parse command line arguments and get Myna settings
     args = parser.parse_args(argv)

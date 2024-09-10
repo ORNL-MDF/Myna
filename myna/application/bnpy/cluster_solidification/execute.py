@@ -285,18 +285,18 @@ def main(argv=None):
     parser.add_argument(
         "--no-training",
         dest="train_model",
+        default=True,
         action="store_false",
         help="flag to use pre-trained clustering model (error will "
-        + "be thrown is no clustering model exists)",
+        + "be thrown is no clustering model exists), default=True",
     )
     parser.add_argument(
         "--overwrite",
         dest="overwrite",
+        default=False,
         action="store_true",
-        help="flag to force overwrite of existing cluster IDs",
+        help="flag to force overwrite of existing cluster IDs, default=False",
     )
-    parser.set_defaults(train_model=True)
-    parser.set_defaults(overwrite=False)
 
     # Parse command line arguments
     args = parser.parse_args(argv)
