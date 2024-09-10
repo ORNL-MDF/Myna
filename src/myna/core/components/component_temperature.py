@@ -13,8 +13,8 @@ Available subclasses:
   ComponentTemperaturePart
 """
 
-from .component import *
 from myna.core.files import FileTemperature, FileTemperatureFinal
+from .component import Component
 
 ##################
 # Base Component #
@@ -54,12 +54,22 @@ class ComponentTemperaturePart(ComponentTemperature):
         self.types.extend(["part", "layer"])
 
 
-class ComponentTemperatureFinalPartSTL(ComponentTemperaturePart):
+class ComponentTemperatureFinalPart(ComponentTemperaturePart):
     """Layer-wise Component that outputs the domain temperature
     at the end of a layer for a part in the format of the class `FileTemperatureFinal`
     """
 
     def __init__(self):
         ComponentTemperaturePart.__init__(self)
-        self.data_requirements.extend(["stl"])
         self.output_requirement = FileTemperatureFinal
+
+
+class ComponentTemperatureFinalPartSTL(ComponentTemperatureFinalPart):
+    """Layer-wise Component that outputs the domain temperature
+    at the end of a layer for a part in the format of the class `FileTemperatureFinal`.
+    Requires an STL file as input.
+    """
+
+    def __init__(self):
+        ComponentTemperatureFinalPart.__init__(self)
+        self.data_requirements.extend(["stl"])

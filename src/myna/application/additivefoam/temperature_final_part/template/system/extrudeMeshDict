@@ -1,0 +1,36 @@
+/*---------------------------------------------------------------------------
+     AdditiveFOAM template input file (compatible with 1.0, OpenFOAM 10)
+
+                      Created for simulation with Myna
+  ---------------------------------------------------------------------------*/
+
+  FoamFile
+{
+    version         2;
+    format          ascii;
+    class           dictionary;
+    location        "system";
+    object          extrudeMeshDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+constructFrom   mesh;
+sourceCase      ".";
+sourcePatches   (top);
+
+flipNormals     false;
+
+nLayers         0;
+expansionRatio  1;
+
+extrudeModel    linearDirection;
+
+linearDirectionCoeffs
+{
+    direction       (0 0 1);
+    thickness       0;
+}
+
+mergeFaces      false;
+
+// ************************************************************************* //

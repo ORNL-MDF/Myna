@@ -90,7 +90,7 @@ class AdditiveFOAM(MynaApp):
             help="Multiple by which to scale the STL file dimensions (default = 0.001, mm -> m)",
         )
 
-        self.args = self.parser.parse_args()
+        self.args, _ = self.parser.parse_known_args()
 
         super().set_procs()
         super().check_exe(
@@ -100,6 +100,7 @@ class AdditiveFOAM(MynaApp):
 
     def update_template_path(self):
         """Updates the template path parameter"""
+        print(self.args.template)
         if self.args.template is None:
             template_path = os.path.join(
                 os.environ["MYNA_APP_PATH"],
@@ -108,6 +109,7 @@ class AdditiveFOAM(MynaApp):
                 "template",
             )
             self.args.template = template_path
+        print(self.args.template)
 
     def copy_template_to_dir(self, target_dir):
         """Copies the specified template directory to the specified target directory"""
@@ -180,6 +182,21 @@ class AdditiveFOAM(MynaApp):
         os.system(
             f"foamDictionary -entry beam/{absorption_model}Coeffs/etaMin"
             + f' -set "{absorption}" {case_dir}/constant/heatSourceDict'
+        )
+
+    def get_part_resource_template_dir(self, part):
+        """Provides the path to the template directory in the myna_resources folder
+
+        Args:
+            part: The name of the part
+        """
+        return os.path.join(
+            os.path.dirname(self.input_file),
+            "myna_resources",
+            part,
+            "additivefoam",
+            self.simulation_type,
+            "template",
         )
 
     def get_region_resource_template_dir(self, part, region):
@@ -311,7 +328,7 @@ class AdditiveFOAM(MynaApp):
         end_time = np.round(end_time, 5)
         self.update_start_and_end_times(case_dir, start_time, end_time)
 
-    def update_start_and_end_times(self, case_dir, start_time, end_time):
+    def update_start_and_end_times(self, case_dir, start_time, end_time, n_write=2):
         """Updates the case to adjust the start and end time by adjusting:"
 
         - start and end times of the simulation in system/controlDict
@@ -322,6 +339,7 @@ class AdditiveFOAM(MynaApp):
             case_dir: case directory to update
             start_time: start time of the simulation
             end_time: end time of the simulation
+            n_write: number of times to write output (must be > 0)
         """
         os.system(
             f"foamDictionary -entry startTime -set {start_time} "
@@ -332,14 +350,20 @@ class AdditiveFOAM(MynaApp):
             + f"{case_dir}/system/controlDict"
         )
         os.system(
-            f"foamDictionary -entry writeInterval -set {np.round(0.5 * (end_time - start_time), 5)} "
+            f"foamDictionary -entry writeInterval -set {np.round((1 / n_write) * (end_time - start_time), 8)} "
             + f"{case_dir}/system/controlDict"
         )
         source = os.path.abspath(os.path.join(case_dir, "0"))
-        target = os.path.abspath(os.path.join(case_dir, f"{start_time}"))
-        if os.path.exists(target):
-            shutil.rmtree(target)
-        shutil.move(source, target)
+        target = os.path.abspath(
+            os.path.join(
+                case_dir,
+                f"{int(start_time) if float(start_time).is_integer() else start_time}",
+            )
+        )
+        if target != source:
+            if os.path.exists(target):
+                shutil.rmtree(target)
+            shutil.move(source, target)
 
     def update_heatsource_scanfile(self, case_dir, scanpath_name):
         """Updates the heatSourceDict to point to the specified scan path file
