@@ -38,10 +38,9 @@ Available modules and scripts:
     Load and return contents of a myna input file
 
 """
-
-from .config import *
-from .run import *
-from .sync import *
+from . import config
+from . import run
+from . import sync
 from .load_input import *
 from .status import *
 from .launch_from_peregrine import *

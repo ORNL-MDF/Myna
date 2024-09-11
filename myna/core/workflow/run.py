@@ -17,7 +17,7 @@ import myna.core.utils
 
 
 # Parser comes from the top-level command parsing
-def main(parser):
+def parse(parser):
     """Main function for running myna workflows"""
     parser.add_argument(
         "--input",
@@ -35,8 +35,17 @@ def main(parser):
 
     # Parse cmd arguments
     args = parser.parse_args()
-    input_file = args.input
-    steps_to_run = myna.core.utils.str_to_list(args.step)
+    run(args.input, args.step)
+
+
+def run(input_file, step=None):
+    """Run a Myna workflow
+
+    Args:
+        input_file: path to the configured Myna input file
+        step: name of step to run, runs all if None"""
+
+    steps_to_run = myna.core.utils.str_to_list(step)
 
     # Set environmental variable for input file location
     os.environ["MYNA_RUN_INPUT"] = os.path.abspath(input_file)

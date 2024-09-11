@@ -17,7 +17,7 @@ from myna.core.workflow.load_input import load_input
 
 
 # Parser comes from the top-level command parsing
-def main(parser):
+def parse(parser):
     """Main function for syncing myna data back to a database"""
 
     parser.add_argument(
@@ -36,8 +36,17 @@ def main(parser):
 
     # Parse cmd arguments
     args = parser.parse_args()
-    input_file = args.input
-    steps_to_sync = myna.core.utils.str_to_list(args.step)
+    sync(args.input, args.step)
+
+
+def sync(input_file, step=None):
+    """Sync the results of a Myna workflow
+
+    Args:
+        input_file: path to the configured Myna input file
+        step: name of step to sync, syncs all if None"""
+
+    steps_to_sync = myna.core.utils.str_to_list(step)
 
     # Set environmental variable for input file location
     os.environ["MYNA_SYNC_INPUT"] = os.path.abspath(input_file)

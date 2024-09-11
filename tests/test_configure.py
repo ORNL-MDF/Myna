@@ -28,7 +28,7 @@ def run_configure(path, example):
     if not os.path.exists(output_dir):
         os.mkdir(output_dir)
     sys.argv = ["test", "--output", output_file]
-    myna.core.workflow.config.main(parser)
+    myna.core.workflow.config.parse(parser)
 
     # Check if output file was generated
     assert os.path.exists(output_file)

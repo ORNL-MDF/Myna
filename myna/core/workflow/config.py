@@ -20,7 +20,7 @@ from importlib.metadata import version
 
 
 # Parser comes from the top-level command parsing
-def main(parser):
+def parse(parser):
     """Main function for configuring a myna case from the command line"""
 
     parser.add_argument(
@@ -34,7 +34,6 @@ def main(parser):
     parser.add_argument(
         "--output",
         type=str,
-        default="",
         help="path to the desired output file to write"
         + ", for example: "
         + "--output demo.yaml",
@@ -56,12 +55,20 @@ def main(parser):
 
     # Parse cmd arguments
     args = parser.parse_args()
-    input_file = args.input
-    output_file = args.output
-    overwrite = args.overwrite
-    if output_file == "":
+    config(args.input, args.output, args.avail, args.overwrite)
+
+
+def config(input_file, output_file=None, show_avail=False, overwrite=False):
+    """Configure a myna workflow based on an input file
+
+    Args:
+      input_file: path to Myna input file
+      output_file: path to write configured input file, if None set input_file
+      show_avail: only shows available data files, but does not copy
+      overwrite: flag to overwrite existing files in Myna resources"""
+
+    if output_file is None:
         output_file = input_file
-    show_avail = args.avail
 
     # Load input file
     settings = load_input(input_file)

@@ -33,8 +33,8 @@ def main():
         myna.core.workflow.launch_from_peregrine(parser)
     else:
         if "config" in args.type:
-            myna.core.workflow.config.main(parser)
+            myna.core.workflow.config.parse(parser)
         if "run" in args.type:
-            myna.core.workflow.run.main(parser)
+            myna.core.workflow.run.parse(parser)
         if "sync" in args.type:
-            myna.core.workflow.sync.main(parser)
+            myna.core.workflow.sync.parse(parser)
