@@ -15,32 +15,83 @@ from .subgrain import rotate_grains
 from .vtk import vtk_structure_points_locs
 
 
+def rotation_matrix_to_euler(R, frame="passive"):
+    """Convert rotation matrices to the corresponding set of Euler angles in the Bunge
+    ZXZ passive reference frame
+
+    Adapted from D. Depriester, 2018.
+    https://doi.org/10.13140/RG.2.2.34498.48321/5
+
+    Args:
+        R: [M,M] rotation matrix or [N,M,M] array of N rotation matrices
+        frame: reference frame for the given rotation matrix, options are
+               "passive" (matrix for sample frame rotating to crystal frame) or
+               "active" (matrix for crystal frame rotating to sample frame)
+    """
+
+    # Set an arbitrary constant for when np.sin(Phi) == 0 and Phi == 0|pi
+    const = 0
+
+    # Ensure that R is a list of rotation matrices
+    if np.ndim(R) == 2:
+        R = np.array([R])
+
+    # Calculate Euler angles
+    if frame == "active":
+        R = np.linalg.inv(R)
+    g11 = R[:, 0, 0]
+    g13 = R[:, 0, 2]
+    g21 = R[:, 1, 0]
+    g23 = R[:, 1, 2]
+    g31 = R[:, 2, 0]
+    g32 = R[:, 2, 1]
+    g33 = R[:, 2, 2]
+    Phi = np.arccos(g33)
+    phi1 = np.where(
+        np.sin(Phi) != 0,
+        np.arctan2(g31, -g32),
+        np.where(
+            Phi == 0,
+            np.arctan2(-g21, g11) - const,
+            np.arctan2(g21, g11) + const,
+        ),
+    )
+    phi2 = np.where(
+        np.sin(Phi) != 0,
+        np.arctan2(g13, g23),
+        np.ones_like(Phi) * const,
+    )
+    phi1[phi1 < 0] = phi1[phi1 < 0] + 2.0 * np.pi
+    phi2[phi2 < 0] = phi2[phi2 < 0] + 2.0 * np.pi
+    return phi1, Phi, phi2
+
+
 # Get rotation vectors associated with each grain ID
 def load_grain_ids(fileName):
-    col_names = ["nx1", "nx2", "nx3", "ny1", "ny2", "ny3", "nz1", "nz2", "nz3"]
+    col_names = ["nx1", "ny1", "nz1", "nx2", "ny2", "nz2", "nx3", "ny3", "nz3"]
     dfIds = pd.read_csv(fileName, skiprows=1, header=None, names=col_names)
-    dfIds["Grain ID"] = dfIds.index + 1
-    dfIds["Grain ID"] = dfIds["Grain ID"].astype(int)
+    dfIds["Orientation ID"] = dfIds.index + 1
+    dfIds["Orientation ID"] = dfIds["Orientation ID"].astype(int)
 
     # Convert <nx1, ny1, nz1, ...> to <phi1, Phi, phi2>
     dfIds["phi1"] = 0.0
     dfIds["Phi"] = 0.0
     dfIds["phi2"] = 0.0
+    rot_col_ids = [dfIds.columns.get_loc(x) for x in col_names]
+    R = dfIds.iloc[:, rot_col_ids].to_numpy()
+    R = R.reshape(len(R), 3, 3)
+    phi1, Phi, phi2 = rotation_matrix_to_euler(R, frame="passive")
+
+    # Store Euler angles in dataframe
     id_phi1 = dfIds.columns.get_loc("phi1")
     id_Phi = dfIds.columns.get_loc("Phi")
     id_phi2 = dfIds.columns.get_loc("phi2")
-    col_ids = [dfIds.columns.get_loc(x) for x in col_names]
-    R = dfIds.iloc[:, col_ids].to_numpy()
-    R = R.reshape(len(R), 3, 3)
-    phi1, Phi, phi2 = pyebsd.ebsd.orientation.rotation_matrix_to_euler_angles(
-        R, conv="zxz"
-    )
     dfIds.iloc[:, id_phi1] = phi1
     dfIds.iloc[:, id_Phi] = Phi
     dfIds.iloc[:, id_phi2] = phi2
 
     # Drop orientation vectors, i.e., col_names
-    dfIds.drop(columns=col_names, inplace=True)
+    # dfIds.drop(columns=col_names, inplace=True)
 
     return dfIds
 
@@ -64,8 +115,10 @@ def convert_id_to_rotation(
     data = pd.DataFrame({"X (m)": x, "Y (m)": y, "Z (m)": z})
 
     # ID for orientation
-    data["Grain ID"] = np.where(gids == 0, np.zeros_like(gids), np.mod(gids, 10000))
-    data["Grain ID"] = data["Grain ID"].astype(int)
+    data["Orientation ID"] = np.where(
+        gids == 0, np.zeros_like(gids), np.mod(gids, 10000)
+    )
+    data["Orientation ID"] = data["Orientation ID"].astype(int)
 
     # ID for parent grain
     data["gid"] = gids
