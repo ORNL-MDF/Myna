@@ -20,7 +20,8 @@ class MynaApp:
 
     def __init__(self, name):
         self.name = name
-        self.settings = load_input(os.environ["MYNA_RUN_INPUT"])
+        self.input_file = os.environ["MYNA_RUN_INPUT"]
+        self.settings = load_input(self.input_file)
         self.path = os.environ["MYNA_APP_PATH"]
         self.step_name = os.environ["MYNA_STEP_NAME"]
         self.last_step_name = os.environ["MYNA_LAST_STEP_NAME"]

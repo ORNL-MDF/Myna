@@ -27,6 +27,7 @@ def return_data_class_name(data_name):
         "scanpath": "Scanpath",
         "stl": "STL",
         "layer_thickness": "LayerThickness",
+        "part_id_map": "PartIDMap",
     }
     try:
         data_class_name = data_class_lookup[data_name]

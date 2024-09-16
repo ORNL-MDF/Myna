@@ -27,3 +27,6 @@ resources/PeregrineHDF5/registered
 log.*
 *.log
 logs/
+
+# expected modifications to the example Peregrine resource directory
+*.parquet

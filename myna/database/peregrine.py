@@ -14,6 +14,7 @@ from myna.core.utils import downsample_to_image, get_synonymous_key
 import matplotlib.pyplot as plt
 import os
 import numpy as np
+import polars as pl
 import warnings
 
 
@@ -134,6 +135,27 @@ class PeregrineDB(Database):
             file_database = os.path.join(
                 self.simulation_dir, part, f"{self.layer_str(layer)}.txt"
             )
+            return file_database
+
+        elif metadata_type == metadata.PartIDMap:
+            file_database = os.path.join(
+                self.path, "simulation", f"part_id_map_{self.layer_str(layer)}.parquet"
+            )
+            if not os.path.exists(file_database):
+                df = pl.DataFrame(
+                    schema={"part_id": str, "x (m)": float, "y (m)": float}
+                )
+                for p in list(part):
+                    file_database_part = os.path.join(
+                        self.path, "simulation", p, f"{self.layer_str(layer)}.txt"
+                    )
+                    df_p = pl.read_csv(file_database_part, separator="\t")
+                    df_p = df_p.with_columns(pl.lit(p).alias("part_id"))
+                    df_p = df_p.with_columns((pl.col("X(mm)") * 1e-3).alias("x (m)"))
+                    df_p = df_p.with_columns((pl.col("Y(mm)") * 1e-3).alias("y (m)"))
+                    df_p = df_p.select(["part_id", "x (m)", "y (m)"])
+                    df = pl.concat([df, df_p], how="diagonal")
+                df.write_parquet(file_database, compression="lz4")
             return file_database
 
         else:
