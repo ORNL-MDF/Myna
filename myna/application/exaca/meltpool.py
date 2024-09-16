@@ -13,6 +13,7 @@ import vtk
 import os
 from vtk.util.numpy_support import numpy_to_vtkIdTypeArray, numpy_to_vtk, vtk_to_numpy
 from .vtk import *
+from .id import grain_id_to_reference_id
 from myna.core.utils import nested_get
 
 
@@ -205,7 +206,12 @@ def aggregate_melt_times(
 
 
 def merge_melt_times_with_rgb(
-    file_rgb, file_melt, export_file, decimal_precision=8, verbose=False
+    file_rgb,
+    file_melt,
+    export_file,
+    decimal_precision=8,
+    verbose=False,
+    num_ref_ids=10000,
 ):
 
     if verbose:
@@ -257,12 +263,12 @@ def merge_melt_times_with_rgb(
     data_rgb = data_rgb.with_columns(
         (pl.col("Z (m)").round(decimal_precision)).alias("Z (m)")
     )
-    grain_ids = np.where(gids == 0, np.zeros_like(gids), np.mod(gids, 10000))
+    ref_ids = grain_id_to_reference_id(gids, num_ref_ids)
 
-    # ID for orientation ("Grain ID") and parent grain ("gid")
-    data_rgb = data_rgb.with_columns(pl.Series(name="Grain ID", values=grain_ids))
-    data_rgb = data_rgb.with_columns(pl.Series(name="gid", values=gids))
-    data_rgb = data_rgb.cast({"Grain ID": int, "gid": int})
+    # ID for orientation ("Reference ID") and parent grain ("Grain ID")
+    data_rgb = data_rgb.with_columns(pl.Series(name="Reference ID", values=ref_ids))
+    data_rgb = data_rgb.with_columns(pl.Series(name="Grain ID", values=gids))
+    data_rgb = data_rgb.cast({"Reference ID": int, "Grain ID": int})
 
     # Convert melt vtk data to dataframe
     if verbose:
@@ -301,7 +307,7 @@ def merge_melt_times_with_rgb(
     df_merged = data_rgb.join(data_melt, on=["X (m)", "Y (m)", "Z (m)"], how="full")
     print(f"  - df_merged size (pre-gid-filter): {df_merged.shape}")
     df_merged = df_merged.filter(
-        (pl.col("gid").is_not_null() & pl.col(["gid"]).is_not_nan())
+        (pl.col("Grain ID").is_not_null() & pl.col(["Grain ID"]).is_not_nan())
     )
     print(f"  - df_merged size (post-gid-filter): {df_merged.shape}")
     df_merged = df_merged.sort(by=["Z (m)", "Y (m)", "X (m)"])
@@ -325,7 +331,10 @@ def merge_melt_times_with_rgb(
     points.SetData(vtk_points)
 
     # Add scalar data to vtk_dataset from df_merged
-    scalar_names = ["gid", "ts", "dts"]
+    # - Grain ID: the grain ID from ExaCA
+    # - ts: the time of solidification
+    # - dts: the gradient of the time of solidification
+    scalar_names = ["Grain ID", "ts", "dts"]
     scalar_types = [
         vtk.VTK_INT,
         vtk.VTK_FLOAT,
