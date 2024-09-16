@@ -14,6 +14,7 @@ from myna.core.utils import downsample_to_image, get_synonymous_key
 import matplotlib.pyplot as plt
 import os
 import numpy as np
+import warnings
 
 
 class PeregrineDB(Database):
@@ -33,11 +34,33 @@ class PeregrineDB(Database):
         Args:
           path: filepath to the build folder on the Peregrine server
         """
-        self.path = os.path.join(path, "Peregrine")
-        self.path_dir = self.path
+        self.path = path
+        self.path_dir = os.path.join(path, "Peregrine")
+
+        # Note: In September 2024, the Peregrine simulation data directory for
+        # Myna-related data moved from "Peregrine/simulation" to
+        # "Peregrine/simulation/meltpool".
+        self.simulation_dir = os.path.join(self.path_dir, "simulation", "meltpool")
+        if not os.path.isdir(self.simulation_dir):
+            old_simulation_dir = os.path.join(self.path_dir, "simulation")
+            if os.path.isdir(old_simulation_dir):
+                warnings.warn(
+                    'Found metadata in "Peregine/simulation" directory in database.'
+                    + "\n\tThis is an outdated directory structure and likely"
+                    + " has resulted from working on a stale copy of Peregrine data."
+                    + "\n\tThis structure will not be supported in future releases."
+                    + "\n\tPlease move relevant simulation metadata to"
+                    + " `Peregrine/simulation/meltpool`\n",
+                    FutureWarning,
+                )
+                self.simulation_dir = old_simulation_dir
 
     def exists(self):
-        return os.path.isdir(self.path)
+        return (
+            os.path.isdir(self.path)
+            and os.path.isdir(self.path_dir)
+            and os.path.isdir(self.simulation_dir)
+        )
 
     def load(self, metadata_type, part=None, layer=None):
         """Load and return a metadata value from the database
@@ -53,7 +76,7 @@ class PeregrineDB(Database):
         """
 
         if metadata_type == metadata.LaserPower:
-            datafile = os.path.join(self.path, "simulation", part, "part.npz")
+            datafile = os.path.join(self.simulation_dir, part, "part.npz")
             with np.load(datafile, allow_pickle=True) as data:
                 parameter_name = get_synonymous_key(
                     data["parameter_names"], self.synonyms["laser_power"]
@@ -63,20 +86,20 @@ class PeregrineDB(Database):
             return value
 
         elif metadata_type == metadata.LayerThickness:
-            datafile = os.path.join(self.path, "simulation", "buildmeta.npz")
+            datafile = os.path.join(self.simulation_dir, "buildmeta.npz")
             with np.load(datafile, allow_pickle=True) as data:
                 conversion = 1e-3  # millimeters -> meters
                 value = float(data["layer_thickness"] * conversion)
             return value
 
         elif metadata_type == metadata.Material:
-            datafile = os.path.join(self.path, "simulation", "buildmeta.npz")
+            datafile = os.path.join(self.simulation_dir, "buildmeta.npz")
             with np.load(datafile, allow_pickle=True) as data:
                 value = str(data["material"])
             return value
 
         elif metadata_type == metadata.Preheat:
-            datafile = os.path.join(self.path, "simulation", "buildmeta.npz")
+            datafile = os.path.join(self.simulation_dir, "buildmeta.npz")
             with np.load(datafile, allow_pickle=True) as data:
                 index = [
                     ind
@@ -87,7 +110,7 @@ class PeregrineDB(Database):
             return value
 
         elif metadata_type == metadata.SpotSize:
-            datafile = os.path.join(self.path, "simulation", part, "part.npz")
+            datafile = os.path.join(self.simulation_dir, part, "part.npz")
             with np.load(datafile, allow_pickle=True) as data:
                 parameter_name = get_synonymous_key(
                     data["parameter_names"], self.synonyms["laser_spot_size"]
@@ -104,12 +127,12 @@ class PeregrineDB(Database):
             return value
 
         elif metadata_type == metadata.STL:
-            file_database = os.path.join(self.path, "simulation", part, f"part.stl")
+            file_database = os.path.join(self.simulation_dir, part, f"part.stl")
             return file_database
 
         elif metadata_type == metadata.Scanpath:
             file_database = os.path.join(
-                self.path, "simulation", part, f"{self.layer_str(layer)}.txt"
+                self.simulation_dir, part, f"{self.layer_str(layer)}.txt"
             )
             return file_database
 
@@ -119,13 +142,13 @@ class PeregrineDB(Database):
 
     def get_plate_size(self):
         """Load the (x,y) build plate size in meters"""
-        with np.load(os.path.join(self.path, "simulation", "buildmeta.npz")) as data:
+        with np.load(os.path.join(self.simulation_dir, "buildmeta.npz")) as data:
             value = [x / 1e3 for x in data["actual_size"]]
         return value
 
     def get_sync_image_size(self):
         """Load the (x,y) image size in pixels"""
-        with np.load(os.path.join(self.path, "simulation", "buildmeta.npz")) as data:
+        with np.load(os.path.join(self.simulation_dir, "buildmeta.npz")) as data:
             value = data["image_size"]
         return value
 
