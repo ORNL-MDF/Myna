@@ -30,3 +30,4 @@ logs/
 
 # expected modifications to the example Peregrine resource directory
 *.parquet
+resources/Myna

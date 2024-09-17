@@ -73,7 +73,7 @@ class MynaApp:
         )
         self.parser.add_argument(
             "--skip",
-            dest="batch",
+            dest="skip",
             default=False,
             action="store_true",
             help="(flag) if parsed by the app, skip the corresponding"
