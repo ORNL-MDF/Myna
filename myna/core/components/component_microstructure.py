@@ -17,6 +17,7 @@ Available subclasses:
 from .component import *
 from myna.core.files.file_reduced_solidification import *
 from myna.core.files.file_vtk import *
+from myna.core.files.file_grains import *
 
 
 class ComponentMicrostructure(Component):
@@ -52,3 +53,14 @@ class ComponentMicrostructureRegion(ComponentMicrostructurePart):
     def __init__(self):
         ComponentMicrostructurePart.__init__(self)
         self.types.append("region")
+
+
+class ComponentMicrostructureRegionSlice(ComponentMicrostructureRegion):
+    """Region-wise Component that outputs information on a 2D slice of the
+    simulated microstructure in the `FileGrainSlice` class format and
+    requires input in the `FileReducedSolidification` class format.
+    """
+
+    def __init__(self):
+        ComponentMicrostructureRegion.__init__(self)
+        self.output_requirement = FileGrainSlice

@@ -8,7 +8,6 @@
 #
 """Defines `myna config` functionality"""
 
-import argparse
 import os
 import yaml
 import copy
@@ -17,6 +16,8 @@ from myna.core import components
 from myna.core import metadata
 from myna import database
 from importlib.metadata import version
+import datetime
+import getpass
 
 
 # Parser comes from the top-level command parsing
@@ -325,6 +326,19 @@ def config(input_file, output_file=None, show_avail=False, overwrite=False):
         step_obj_prev = step_obj
 
         print(f'  > "{step_name}" complete\n')
+
+    # Write out configuration metadata
+    if settings.get("myna") is None:
+        settings["myna"] = {}
+    user_name = ""
+    try:
+        user_name = getpass.getuser()  # may fail when run by service manager, e.g., CI
+    except:
+        pass
+    settings["myna"]["configure"] = {
+        "date": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "user-login": user_name,
+    }
 
     with open(output_file, "w") as f:
         yaml.dump(settings, f, sort_keys=False, default_flow_style=None)

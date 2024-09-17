@@ -43,6 +43,7 @@ def return_step_class(step_name):
         "cluster_supervoxel": ComponentClusterSupervoxel(),
         "microstructure_part": ComponentMicrostructurePart(),
         "microstructure_region": ComponentMicrostructureRegion(),
+        "microstructure_region_slice": ComponentMicrostructureRegionSlice(),
         "rve": ComponentRVE(),
         "mesh_part": ComponentPartMesh(),
         "mesh_part_vtk": ComponentPartMeshVTK(),

@@ -10,6 +10,7 @@ import vtk
 from vtk.util.numpy_support import numpy_to_vtk
 from .color import add_pyebsd_rgb_color
 from .id import convert_id_to_rotation
+from .vtk import grain_id_reader
 import numpy as np
 
 
@@ -28,10 +29,7 @@ def add_rgb_to_vtk(
     """
 
     # Read the VTK file
-    reader = vtk.vtkDataSetReader()
-    reader.SetFileName(vtk_file_path)
-    reader.ReadAllScalarsOn()
-    reader.Update()
+    reader = grain_id_reader(vtk_file_path)
     structured_points = reader.GetOutput()
     dims = structured_points.GetDimensions()
     origin = structured_points.GetOrigin()
