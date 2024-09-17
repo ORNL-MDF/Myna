@@ -27,6 +27,9 @@ class Database:
         """Set the path for the database"""
         raise NotImplementedError
 
+    def get_cui_info(self):
+        return NotImplementedError
+
     def exists(self):
         """Check if database exists at the specified path"""
         raise NotImplementedError

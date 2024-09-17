@@ -63,6 +63,18 @@ class PeregrineDB(Database):
             and os.path.isdir(self.simulation_dir)
         )
 
+    def get_cui_info(self):
+        """Get any markings about controlled unclassified information (CUI)"""
+        cui_dict = {"flag_sensitive": None, "bannerLine": None, "signatureBlock": None}
+        try:
+            with np.load("meta.npz") as data:
+                cui_dict["flag_sensitive"] = data["flag_sensitive"]
+                cui_dict["bannerLine"] = data["bannerLine"]
+                cui_dict["signatureBlock"] = data["signatureBlock"]
+        except:
+            pass
+        return cui_dict
+
     def load(self, metadata_type, part=None, layer=None):
         """Load and return a metadata value from the database
 
@@ -139,7 +151,7 @@ class PeregrineDB(Database):
 
         elif metadata_type == metadata.PartIDMap:
             file_database = os.path.join(
-                self.path, "simulation", f"part_id_map_{self.layer_str(layer)}.parquet"
+                self.simulation_dir, f"part_id_map_{self.layer_str(layer)}.parquet"
             )
             if not os.path.exists(file_database):
                 df = pl.DataFrame(
@@ -147,7 +159,7 @@ class PeregrineDB(Database):
                 )
                 for p in list(part):
                     file_database_part = os.path.join(
-                        self.path, "simulation", p, f"{self.layer_str(layer)}.txt"
+                        self.simulation_dir, p, f"{self.layer_str(layer)}.txt"
                     )
                     df_p = pl.read_csv(file_database_part, separator="\t")
                     df_p = df_p.with_columns(pl.lit(p).alias("part_id"))
