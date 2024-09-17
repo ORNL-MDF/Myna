@@ -135,7 +135,7 @@ def launch_from_peregrine(parser):
 
         # Construct myna config command
         lines.append("\nStarting configuration of simulation cases:\n")
-        cmd = f"myna config --input {input_file_configured}"
+        cmd = f'myna config --input "{input_file_configured}"'
         p = subprocess.run(
             cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT
         )
@@ -154,7 +154,7 @@ def launch_from_peregrine(parser):
 
         # Construct myna run command
         lines.append("\nStarting simulation pipeline execution:\n")
-        cmd = f"myna run --input {input_file_configured}"
+        cmd = f'myna run --input "{input_file_configured}"'
         p = subprocess.run(
             cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT
         )
@@ -173,7 +173,7 @@ def launch_from_peregrine(parser):
 
         # Construct myna sync command
         lines.append("Syncing simulation results to Peregrine:\n")
-        cmd = f"myna sync --input {input_file_configured}"
+        cmd = f'myna sync --input "{input_file_configured}"'
         p = subprocess.run(
             cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT
         )
