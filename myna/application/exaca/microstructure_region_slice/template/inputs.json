@@ -5,14 +5,14 @@
   "RandomSeed": 0.0,
   "Domain": {
     "CellSize": 2.5,
-    "TimeStep": 0.0625,
+    "TimeStep": 0.125,
     "NumberOfLayers": 10,
-    "LayerOffset": 20.0
+    "LayerOffset": 20
   },
   "Nucleation": {
     "Density": 250.0,
-    "MeanUndercooling": 21.0,
-    "StDev": 3.0
+    "MeanUndercooling": 5.0,
+    "StDev": 0.5
   },
   "TemperatureData": {
     "TemperatureFiles": [],
@@ -30,7 +30,7 @@
         "GrainID",
         "LayerID",
         "GrainMisorientation",
-        "MeltTimeStep"
+        "MeltPoolEdge"
       ]
     }
   }
