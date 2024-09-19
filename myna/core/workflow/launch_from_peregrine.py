@@ -43,6 +43,7 @@ def launch_from_peregrine(parser):
     parser.add_argument(
         "--build",
         default=None,
+        nargs="+",
         type=str,
         help="path to the desired build to simulate",
     )
@@ -61,6 +62,7 @@ def launch_from_peregrine(parser):
     parser.add_argument(
         "--workspace",
         default=None,
+        nargs="+",
         type=str,
         help="path to the desired workspace to use",
     )
@@ -74,11 +76,13 @@ def launch_from_peregrine(parser):
     args = parser.parse_args()
 
     # Parse the arguments passed from Peregrine
-    build_path = os.path.abspath(args.build)
     layers = args.layers
     exported_parts = args.parts
     mode = args.mode
-    workspace = os.path.abspath(args.workspace)
+
+    # For paths, handle spaces by parsing as lists of arguments
+    build_path = os.path.abspath(" ".join(args.build))
+    workspace = os.path.abspath(" ".join(args.workspace))
 
     # Check if build path includes Peregrine as the last directory
     if any([build_path[-1] == sep for sep in [os.path.sep, os.path.altsep]]):
