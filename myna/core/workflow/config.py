@@ -136,6 +136,12 @@ def config(input_file, output_file=None, show_avail=False, overwrite=False):
                 step_obj.input_template = step_obj_prev.output_template
         step_obj.output_template = step.get(step_name).get("output_template")
 
+        # Get any CUI labels for the build
+        try:
+            settings["data"]["build"]["cui-markings"] = datatype.get_cui_info()
+        except NotImplementedError:
+            pass
+
         # Get the data requirements associated with that class
         for data_req in step_obj.data_requirements:
             # For each data requirements, lookup the corresponding data object
