@@ -1,0 +1,37 @@
+{
+  "SimulationType": "FromFile",
+  "MaterialFileName": "",
+  "GrainOrientationFile": "",
+  "RandomSeed": 0.0,
+  "Domain": {
+    "CellSize": 2.5,
+    "TimeStep": 0.125,
+    "NumberOfLayers": 10,
+    "LayerOffset": 20
+  },
+  "Nucleation": {
+    "Density": 250.0,
+    "MeanUndercooling": 5.0,
+    "StDev": 0.5
+  },
+  "TemperatureData": {
+    "TemperatureFiles": [],
+    "LayerwiseTempRead": true
+  },
+  "Substrate": {
+    "MeanSize": 12.3
+  },
+  "Printing": {
+    "PathToOutput": "./",
+    "OutputFile": "exaca",
+    "PrintBinary": true,
+    "Interlayer": {
+      "Fields": [
+        "GrainID",
+        "LayerID",
+        "GrainMisorientation",
+        "MeltPoolEdge"
+      ]
+    }
+  }
+}

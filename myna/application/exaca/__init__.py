@@ -12,4 +12,5 @@ from .id import *
 from .subgrain import *
 from .meltpool import *
 from .vtk import *
+from .grainstats import *
 from .exaca import ExaCA

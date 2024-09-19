@@ -9,6 +9,24 @@
 import numpy as np
 import pandas as pd
 from vtk.util.numpy_support import vtk_to_numpy
+from vtk import vtkDataSetReader
+
+
+def grain_id_reader(grain_id_file):
+    """Returns the VTK reader for the grain ID file
+
+    Args:
+        grain_id_file: path to grain ID file output by an ExaCA simulation
+
+    Returns:
+        vtkDatasetReader
+    """
+    reader = vtkDataSetReader()
+    reader.SetFileName(grain_id_file)
+    reader.ReadAllScalarsOn()
+    reader.Update()
+
+    return reader
 
 
 def vtk_structure_points_locs(structured_points):

@@ -329,11 +329,13 @@ class Component:
         synced_files = []
 
         # Check if layerwise syncing is possible
-        if "layer" not in self.types:
+        if "layer" in self.types:
+            print("Syncing layer-wise files:")
+        elif "region" in self.types:
+            print("Syncing region-wise files:")
+        else:
             print(f"  - Skipping sync for step {self.name}, no layer-wise fields")
             return synced_files
-        else:
-            print("Syncing files:")
 
         # Get output files for the step
         files = self.check_output_files(self.data["output_paths"][self.name])

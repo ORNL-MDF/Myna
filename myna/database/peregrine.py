@@ -10,7 +10,8 @@
 
 from myna.core.db import Database
 from myna.core import metadata
-from myna.core.utils import downsample_to_image, get_synonymous_key
+from myna.core.utils import downsample_to_image, get_synonymous_key, nested_get
+from myna.core.workflow import load_input
 import matplotlib.pyplot as plt
 import os
 import numpy as np
@@ -208,6 +209,7 @@ class PeregrineDB(Database):
         is_layer_type = "layer" in step_types
         is_region_type = "region" in step_types
         synced_files = []
+        layer_files = {}
         if is_layer_type:
             # Get layers associated with each file
             layers = [
@@ -215,130 +217,166 @@ class PeregrineDB(Database):
                 for f in files
             ]
             unique_layers = sorted(set(layers))
-            layer_files = {}
             for layer in unique_layers:
                 layer_files[str(layer)] = []
             for f, layer in zip(files, layers):
                 layer_files[str(layer)].append(f)
 
-            # Get build plate size (assume square)
-            plate_size = self.get_plate_size()[0]
-
-            # Write data to NPZ file
-            for key in layer_files.keys():
-                print(f"  - layer: {key}")
-
-                # Get the output fields
-                prefix = f"myna_{component_type}"
-                try:
-                    var_names, var_units = output_class(f).get_names_for_sync(
-                        prefix=prefix
+        elif is_region_type:
+            # Get middle layer associated with each region
+            regions = [
+                os.path.basename(os.path.dirname(os.path.dirname(f))) for f in files
+            ]
+            parts = [
+                os.path.basename(os.path.dirname(os.path.dirname(os.path.dirname(f))))
+                for f in files
+            ]
+            filebase = os.path.basename(files[0])
+            builddir = os.path.dirname(
+                os.path.dirname(os.path.dirname(os.path.dirname(files[0])))
+            )
+            component_name = os.path.basename(os.path.dirname(files[0]))
+            unique_regions = sorted(set(regions))
+            unique_parts = sorted(set(parts))
+            settings = load_input(os.environ["MYNA_SYNC_INPUT"])
+            for region in unique_regions:
+                for part in unique_parts:
+                    part_dict = nested_get(settings, ["data", "build", "parts"]).get(
+                        part
                     )
-                except:
-                    print("    - Sync not implemented for any files")
-                    continue
+                    regions_dict = part_dict.get("regions")
+                    if regions_dict is not None:
+                        region_dict = regions_dict.get(region)
+                        if region_dict is not None:
+                            layers = region_dict.get("layers")
+                            if layers is not None:
+                                layers = sorted(layers)
+                                index = int(
+                                    min(np.ceil(len(layers) / 2), len(layers) - 1)
+                                )
+                                filename = os.path.join(
+                                    builddir, part, region, component_name, filebase
+                                )
+                                layer_files[str(layers[index])] = [filename]
 
-                # Loop through the output fields
-                for var_name, var_unit in zip(var_names, var_units):
-                    print(f"    - field: {var_name}")
+        # Get build plate size (assume square)
+        plate_size = self.get_plate_size()[0]
 
-                    # Make target output_path
-                    output_path = os.path.join(self.path_dir, "registered", var_name)
-                    if not os.path.exists(output_path):
-                        os.makedirs(output_path)
+        # Write data to NPZ file
+        for key in layer_files.keys():
+            print(f"  - layer: {key}")
 
-                    # Get file path
-                    npz_filepath = f"{self.layer_str(key)}.npz"
-                    fullpath = os.path.join(output_path, npz_filepath)
+            # Get the output fields
+            prefix = f"myna_{component_type}"
+            try:
+                var_names, var_units = output_class(
+                    layer_files[key][0]
+                ).get_names_for_sync(prefix=prefix)
+            except NotImplementedError:
+                print("    - Sync not implemented for any files")
+                continue
 
-                    # Open NPZ file and get existing data or initialize data
-                    if os.path.exists(fullpath):
-                        with np.load(fullpath, allow_pickle=True) as data:
-                            xcoords = data["coords_x"]
-                            ycoords = data["coords_y"]
-                            partnumbers = data["part_num"]
-                            values = data["values"]
+            # Loop through the output fields
+            for var_name, var_unit in zip(var_names, var_units):
+                print(f"    - field: {var_name}")
+
+                # Make target output_path
+                output_path = os.path.join(self.path_dir, "registered", var_name)
+                if not os.path.exists(output_path):
+                    os.makedirs(output_path)
+
+                # Get file path
+                npz_filepath = f"{self.layer_str(key)}.npz"
+                fullpath = os.path.join(output_path, npz_filepath)
+
+                # Open NPZ file and get existing data or initialize data
+                if os.path.exists(fullpath):
+                    with np.load(fullpath, allow_pickle=True) as data:
+                        xcoords = data["coords_x"]
+                        ycoords = data["coords_y"]
+                        partnumbers = data["part_num"]
+                        values = data["values"]
+                else:
+                    xcoords = np.array([])
+                    ycoords = np.array([])
+                    partnumbers = np.array([])
+                    values = np.array([])
+
+                # Loop through all the files for the layer to add data
+                for f in layer_files[key]:
+                    out = output_class(f)
+                    (
+                        x,
+                        y,
+                        file_values,
+                        value_names,
+                        _,
+                    ) = out.get_values_for_sync(prefix=prefix)
+
+                    # Get values only from the relevant variable
+                    var_index = value_names.index(var_name)
+                    sim_values = file_values[var_index]
+
+                    # Get metadata from file path
+                    split_path = f.split(os.path.sep)
+                    app = split_path[-2]
+                    if is_region_type:
+                        region = split_path[-3]
+                        part = split_path[-4]
                     else:
-                        xcoords = np.array([])
-                        ycoords = np.array([])
-                        partnumbers = np.array([])
-                        values = np.array([])
-
-                    # Loop through all the files for the layer to add data
-                    for f in layer_files[key]:
-                        out = output_class(f)
-                        (
-                            x,
-                            y,
-                            file_values,
-                            value_names,
-                            _,
-                        ) = out.get_values_for_sync(prefix=prefix)
-
-                        # Get values only from the relevant variable
-                        var_index = value_names.index(var_name)
-                        sim_values = file_values[var_index]
-
-                        # Get metadata from file path
-                        split_path = f.split(os.path.sep)
-                        app = split_path[-2]
+                        region = None
                         layer = int(split_path[-3])
-                        if is_region_type:
-                            region = split_path[-4]
-                            part = split_path[-5]
-                        else:
-                            region = None
-                            part = split_path[-4]
+                        part = split_path[-4]
 
-                        partnumber = int(part.replace("P", ""))
+                    partnumber = int(part.replace("P", ""))
 
-                        # If a there is existing data, then empty any previous
-                        # data with same part number and add new data
+                    # If a there is existing data, then empty any previous
+                    # data with same part number and add new data
 
-                        # Mask current part number
-                        other_parts_in_layer = partnumbers != partnumber
+                    # Mask current part number
+                    other_parts_in_layer = partnumbers != partnumber
 
-                        # Get coordinates and values outside the masked region
-                        xcoords = xcoords[other_parts_in_layer]
-                        ycoords = ycoords[other_parts_in_layer]
-                        other_partnumbers = partnumbers[other_parts_in_layer]
-                        values = values[other_parts_in_layer]
+                    # Get coordinates and values outside the masked region
+                    xcoords = xcoords[other_parts_in_layer]
+                    ycoords = ycoords[other_parts_in_layer]
+                    other_partnumbers = partnumbers[other_parts_in_layer]
+                    values = values[other_parts_in_layer]
 
-                        # Add new values to masked region
-                        xcoords = np.concatenate([xcoords, x])
-                        ycoords = np.concatenate([ycoords, y])
-                        partnumbers = np.concatenate(
-                            [other_partnumbers, np.ones(x.shape) * partnumber]
-                        )
-                        values = np.concatenate([values, sim_values])
-
-                    # Calculate "m" and "b" for Peregrine color map
-                    y1 = np.min(values)
-                    y2 = np.max(values)
-                    x1 = np.iinfo(np.uint8).min
-                    x2 = np.iinfo(np.uint8).max
-                    m = (y2 - y1) / (x2 - x1)
-                    b = y1 - m * x1
-
-                    # Save using the Peregrine expected field
-                    np.savez_compressed(
-                        fullpath,
-                        dtype="points",
-                        units=f"{var_name} ({var_unit})",
-                        shape_x=plate_size,
-                        shape_y=plate_size,
-                        part_num=partnumbers,
-                        coords_x=xcoords,
-                        coords_y=ycoords,
-                        values=values,
-                        m=m,
-                        b=b,
+                    # Add new values to masked region
+                    xcoords = np.concatenate([xcoords, x])
+                    ycoords = np.concatenate([ycoords, y])
+                    partnumbers = np.concatenate(
+                        [other_partnumbers, np.ones(x.shape) * partnumber]
                     )
+                    values = np.concatenate([values, sim_values])
 
-                    # Make image of data (required for Peregrine)
-                    output_file = self.make_thumbnail_image(int(key), var_name)
-                    print(f"    - output_file: {output_file}")
-                    synced_files.append(output_file)
+                # Calculate "m" and "b" for Peregrine color map
+                y1 = np.min(values)
+                y2 = np.max(values)
+                x1 = np.iinfo(np.uint8).min
+                x2 = np.iinfo(np.uint8).max
+                m = (y2 - y1) / (x2 - x1)
+                b = y1 - m * x1
+
+                # Save using the Peregrine expected field
+                np.savez_compressed(
+                    fullpath,
+                    dtype="points",
+                    units=f"{var_name} ({var_unit})",
+                    shape_x=plate_size,
+                    shape_y=plate_size,
+                    part_num=partnumbers,
+                    coords_x=xcoords,
+                    coords_y=ycoords,
+                    values=values,
+                    m=m,
+                    b=b,
+                )
+
+                # Make image of data (required for Peregrine)
+                output_file = self.make_thumbnail_image(int(key), var_name)
+                print(f"    - output_file: {output_file}")
+                synced_files.append(output_file)
 
         return synced_files
 

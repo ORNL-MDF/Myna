@@ -220,10 +220,7 @@ def merge_melt_times_with_rgb(
     # Read the RGB file
     if verbose:
         print("- loading ExaCA VTK file with RGB coloring")
-    vtk_rgb_reader = vtk.vtkDataSetReader()
-    vtk_rgb_reader.SetFileName(file_rgb)
-    vtk_rgb_reader.ReadAllScalarsOn()
-    vtk_rgb_reader.Update()
+    vtk_rgb_reader = grain_id_reader(file_rgb)
     vtk_rgb_data = vtk_rgb_reader.GetOutput()
     dims = vtk_rgb_data.GetDimensions()
     origin = vtk_rgb_data.GetOrigin()
