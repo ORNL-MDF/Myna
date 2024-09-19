@@ -48,7 +48,7 @@ def rotate_grains(
         )
         t3 = time.perf_counter()
 
-        # Update grain IDs in merged DataFrame to match the
+        # Update Reference IDs in merged DataFrame to match the
         # rotated grain orientation vectors (if specified)
         if update_ids:
             chunk_size = 25000
@@ -81,8 +81,8 @@ def rotate_grains(
                 # Find index of minimum difference for each rotated grain orientation vector
                 min_indices = np.argmin(norms, axis=1)
 
-                # Update grain IDs in merged DataFrame
-                col_id = dfMerged.columns.get_loc("Grain ID")
+                # Update reference IDs in merged DataFrame
+                col_id = dfMerged.columns.get_loc("Reference ID")
                 if i1 >= len(grain_indices):
                     dfMerged.iloc[grain_indices[i0:], col_id] = ref_id[min_indices]
                 else:
