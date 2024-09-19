@@ -84,9 +84,18 @@ def config(input_file, output_file=None, show_avail=False, overwrite=False):
 
     # Get part names
     parts = settings["data"]["build"]["parts"]
+    all_parts = list(parts.keys())
     if len(parts) < 1:
         print(f"ERROR: No data/parts specified in {input_file}")
         raise ValueError
+
+    # Get list of all layers in build
+    all_layers = []
+    for part in parts.keys():
+        part_layers = parts[part].get("layers")
+        if part_layers is not None:
+            all_layers.extend(part_layers)
+    all_layers = list(set(all_layers))
 
     # Check if {"data": {"output_paths":}} key  and create if not
     value = settings["data"].get("output_paths")
@@ -157,6 +166,21 @@ def config(input_file, output_file=None, show_avail=False, overwrite=False):
                     "file_database": data_obj.file_database,
                 }
                 settings["data"]["build"][data_req] = datum
+            elif constructor.__base__ == metadata.BuildLayerPartsetFile:
+                for layer in all_layers:
+                    data_obj = constructor(datatype, all_parts, layer)
+                    data_obj.copy_file()
+                    datum = {
+                        "file_local": data_obj.file_local,
+                        "file_database": data_obj.file_database,
+                    }
+                    if settings["data"]["build"].get("layer_data") is None:
+                        settings["data"]["build"]["layer_data"] = {}
+                    if settings["data"]["build"]["layer_data"].get(f"{layer}") is None:
+                        settings["data"]["build"]["layer_data"][f"{layer}"] = {}
+                    settings["data"]["build"]["layer_data"][f"{layer}"][
+                        data_req
+                    ] = datum
             elif constructor.__base__ == metadata.PartFile:
                 for part in parts.keys():
                     data_obj = constructor(datatype, part)

@@ -82,7 +82,7 @@ def run_case(
     return [result_file, procs]
 
 
-def main(argv=None):
+def main():
     # Set up simulation object
     sim = Thesis("melt_pool_geometry_part")
 
@@ -121,4 +121,4 @@ def main(argv=None):
 
 
 if __name__ == "__main__":
-    main(sys.argv[1:])
+    main()

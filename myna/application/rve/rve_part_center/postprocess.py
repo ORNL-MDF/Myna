@@ -6,17 +6,16 @@
 #
 # License: 3-clause BSD, see https://opensource.org/licenses/BSD-3-Clause.
 #
-import os
-import pandas as pd
-from myna.core.workflow import config
 from myna.application.rve import RVE
-import numpy as np
+import os
+import polars as pl
 import yaml
+from myna.core.workflow import config
 
 
 def main():
 
-    app = RVE("rve_selection")
+    app = RVE("rve_part_center")
 
     # Get expected Myna output files
     step_name = os.environ["MYNA_STEP_NAME"]
@@ -30,21 +29,11 @@ def main():
 
     for myna_file in myna_files:
         # Get RVE file data
-        df = pd.read_csv(
-            myna_file,
-            dtype={
-                "id": np.int64,
-                "x (m)": np.float64,
-                "y (m)": np.float64,
-                "layer_starts": np.int64,
-                "layer_ends": np.int64,
-                "part": "string",
-            },
-        )
+        df = pl.read_csv(myna_file)
 
         # Use itertuples to iterate while preserving dtype for all columns
         # Note: using iterrows creates a pd.Series, which only has one dtype for all values
-        for row in df.itertuples(index=False):
+        for row in df.iter_rows(named=True):
             part = str(row["part"])
             region = f'rve_{row["id"]}'
             app.settings["data"]["build"]["parts"][part]["regions"][region] = {
