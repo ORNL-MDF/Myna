@@ -3,7 +3,7 @@ additivefoam:
     configure:
       coarse: 80e-6
       pad-sub: 1e-3
-      pad-xy: 0.00125
+      pad-xy: 0.0015
       pad-z: 0.0005
       refine-layer: 1
       refine-region: 1
@@ -16,6 +16,16 @@ exaca:
       cell-size: 2.5
       nd: 250
       sub-size: 12.3
+      mu: 5
+      std: 0.5
+    executable: ExaCA
+  microstructure_region_slice:
+    configure:
+      cell-size: 2.5
+      nd: 250
+      sub-size: 12.3
+      mu: 5
+      std: 0.5
     executable: ExaCA
 thesis:
   melt_pool_geometry_part:
