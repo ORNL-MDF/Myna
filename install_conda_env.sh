@@ -14,6 +14,6 @@ else
   conda activate $CONDA_ENV
   conda install pip
   conda install -c conda-forge pyyaml
-  pip install .
+  pip install -e .
 fi
 echo ""

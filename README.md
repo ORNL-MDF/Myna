@@ -21,25 +21,22 @@ requirements of the defined Myna workflow steps
 
 ## Installation
 
-Myna is a Python package which requires Python 3. You can install it locally using `pip install .`,
-since the package is not on PyPI. To install `myna` follow the instructions below.
+Myna is a Python package which requires Python 3. You must install it locally as an
+editable package using `pip install -e .`, which is a temporary requirement that will
+be changed in future releases. The `myna` package is not on PyPI. To install `myna`
+follow the instructions below.
 
 ```bash
 # clone repository and change directory to cloned repository
 git clone https://github.com/ORNL-MDF/Myna
-cd myna
+cd Myna
 
-# To install as a static package
-pip install .
-
-# Or to install as an editable package
+# Myna MUST be installed as an editable package using the `-e` flag
 pip install -e .
-
-# Install with all optional dependencies
-pip install -e .[dev]
 ```
 
-External dependencies are required depending on which applications you wish to use:
+External, non-Python dependencies are required depending on which applications you
+intend to use:
 
 - [3DThesis](https://gitlab.com/JamieStumpORNL/3DThesis)
 - [AdditiveFOAM](https://github.com/ORNL/AdditiveFOAM)
@@ -47,8 +44,7 @@ External dependencies are required depending on which applications you wish to u
 
 If you have anaconda3 installed, you can use the `install_conda_env.sh`
 script to create a conda environment named "myna" for use with
-the workflow. If you want to install the package as an editable package,
-then you will have to change line 17 of the script to be `pip install -e .`
+the workflow.
 
 For developers, `pip install -e .[dev]` will install the optional `pytest` dependency,
 as well as `black` for autoformatting. The repository currently uses the default `black`
@@ -121,7 +117,6 @@ available Peregrine v2023-10 dataset:
 ## Development
 
 See the [guidelines](CONTRIBUTING.md) on how to contribute.
-
 
 ## License
 
