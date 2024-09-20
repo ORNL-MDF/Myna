@@ -1,0 +1,10 @@
+steps:
+- rve_center:
+    class: rve_part_center
+    application: rve
+- additivefoam:
+    class: solidification_region_reduced
+    application: additivefoam
+- exaca:
+    class: microstructure_region_slice
+    application: exaca
