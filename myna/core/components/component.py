@@ -151,7 +151,7 @@ class Component:
                 workspace_dict = load_input(self.workspace)
                 workspace_dict = workspace_dict.get(self.component_application, {})
                 workspace_dict = workspace_dict.get(self.component_class, {})
-                self.executable = workspace_dict["executable"]
+                self.executable = workspace_dict.get("executable", self.executable)
             self.executable = step_settings.get("executable", self.executable)
 
             # If an output_template is specified, use it.
