@@ -42,7 +42,10 @@ class BuildFile:
     def set_local_resource_dir(self):
         """Get the local resource directory and make if it doesn't exist"""
 
-        resource_dir = os.path.abspath(os.path.join(".", "myna_resources"))
+        input_dir = os.path.abspath(os.path.dirname(os.environ["MYNA_INPUT"]))
+        if input_dir is None:
+            input_dir = "."
+        resource_dir = os.path.abspath(os.path.join(input_dir, "myna_resources"))
         os.makedirs(resource_dir, exist_ok=True)
         self.resource_dir = resource_dir
 

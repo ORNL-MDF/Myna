@@ -68,6 +68,10 @@ def config(input_file, output_file=None, show_avail=False, overwrite=False):
       show_avail: only shows available data files, but does not copy
       overwrite: flag to overwrite existing files in Myna resources"""
 
+    # Set environmental variable for input file location
+    os.environ["MYNA_INPUT"] = os.path.abspath(input_file)
+
+    # Set output file
     if output_file is None:
         output_file = input_file
 
@@ -286,6 +290,9 @@ def config(input_file, output_file=None, show_avail=False, overwrite=False):
             build_struct = (
                 os.path.abspath(case_dir).replace(base_path, "").split(os.sep)
             )
+            print(f"{build_struct=}")
+            print(f"{base_path=}")
+            print(f"{case_dir=}")
             if "part" in step_obj.types:
                 part = build_struct[2]
                 keys = list(data_dict_case["build"]["parts"].keys())

@@ -337,7 +337,7 @@ def main(argv=None):
 
     # Parse command line arguments
     args = parser.parse_args(argv)
-    settings = load_input(os.environ["MYNA_RUN_INPUT"])
+    settings = load_input(os.environ["MYNA_INPUT"])
     train_model = args.train_model
     overwrite = args.overwrite
     resolution = args.res
