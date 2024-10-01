@@ -35,6 +35,8 @@ def test_peregrine_cli():
         f"{myna_path}/cli/peregrine_launcher/peregrine_default_workspace.yaml",
         "--mode",
         "meltpool_geometry",
+        "--tmp-dir",
+        "~/myna_tmp",
     ]
     myna.core.workflow.launch_from_peregrine(parser)
 

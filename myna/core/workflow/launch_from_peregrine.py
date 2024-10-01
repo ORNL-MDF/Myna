@@ -8,14 +8,13 @@
 #
 """Defines myna launch_peregrine functionality"""
 
-import sys
 import os
 import subprocess
 import datetime
 import contextlib
 from pathlib import Path
 import yaml
-import myna.core.utils
+import shutil
 
 
 @contextlib.contextmanager
@@ -72,6 +71,12 @@ def launch_from_peregrine(parser):
         type=str,
         help="simulation mode to use",
     )
+    parser.add_argument(
+        "--tmp-dir",
+        default="/mnt/peregrine",
+        type=str,
+        help="directory to create Myna_Temporary_Files folder to store temporary files, cannot contain spaces",
+    )
 
     args = parser.parse_args()
 
@@ -79,6 +84,7 @@ def launch_from_peregrine(parser):
     layers = args.layers
     exported_parts = args.parts
     mode = args.mode
+    tmp_dir = args.tmp_dir
 
     # For paths, handle spaces by parsing as lists of arguments
     build_path = os.path.abspath(" ".join(args.build))
@@ -90,11 +96,7 @@ def launch_from_peregrine(parser):
     if os.path.basename(build_path) == "Peregrine":
         build_path = os.path.dirname(build_path)
 
-    # Create Myna directory if it doesn't already exist
-    myna_working_dir = os.path.join(build_path, "Myna")
-    os.makedirs(myna_working_dir, exist_ok=True)
-
-    # Write Peregrine input to log file
+    # Write Peregrine input to log file lines
     lines = []
     lines.append(f"Peregrine inputs:\n")
     lines.append(f"- {build_path=}\n")
@@ -108,6 +110,10 @@ def launch_from_peregrine(parser):
     now_str_pretty = now.strftime("%Y-%m-%d %H:%M:%S")
     now_str_id = now.strftime("%Y-%m-%d-%Hh-%Mm")
     lines.append(f"\nSimulation started at {now_str_pretty}\n")
+
+    # Create a temp Myna working directory in the tmp_dir if it doesn't already exist
+    myna_working_dir = os.path.join(tmp_dir, "Myna_Temporary_Files", now_str_id)
+    os.makedirs(myna_working_dir, exist_ok=True)
 
     # Set input file paths
     input_file = os.path.join(peregrine_launcher_path, f"input_{mode}.yaml")
@@ -197,3 +203,10 @@ def launch_from_peregrine(parser):
         # Write log file
         with open(f"launch_from_peregrine_{now_str_id}.log", "w") as f:
             f.writelines(lines)
+
+    # Copy temporary files to the build directory
+    myna_build_dir = os.path.join(build_path, "Myna")
+    shutil.copytree(myna_working_dir, myna_build_dir, dirs_exist_ok=True)
+
+    # Clean the temporary directory
+    shutil.rmtree(myna_working_dir)

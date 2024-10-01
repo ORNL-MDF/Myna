@@ -49,6 +49,9 @@ def run(input_file, step=None):
 
     # Set environmental variable for input file location
     os.environ["MYNA_INPUT"] = os.path.abspath(input_file)
+    os.environ["MYNA_RUN_INPUT"] = os.path.abspath(
+        input_file
+    )  # MYNA_RUN_INPUT will be deprecated in future versions
 
     # Load the initial input file to get the steps
     initial_settings = load_input(input_file)

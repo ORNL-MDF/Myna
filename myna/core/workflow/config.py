@@ -70,6 +70,9 @@ def config(input_file, output_file=None, show_avail=False, overwrite=False):
 
     # Set environmental variable for input file location
     os.environ["MYNA_INPUT"] = os.path.abspath(input_file)
+    os.environ["MYNA_CONFIG_INPUT"] = os.path.abspath(
+        input_file
+    )  # MYNA_CONFIG_INPUT will be deprecated in future versions
 
     # Set output file
     if output_file is None:
@@ -290,9 +293,6 @@ def config(input_file, output_file=None, show_avail=False, overwrite=False):
             build_struct = (
                 os.path.abspath(case_dir).replace(base_path, "").split(os.sep)
             )
-            print(f"{build_struct=}")
-            print(f"{base_path=}")
-            print(f"{case_dir=}")
             if "part" in step_obj.types:
                 part = build_struct[2]
                 keys = list(data_dict_case["build"]["parts"].keys())
