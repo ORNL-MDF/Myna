@@ -52,7 +52,7 @@ def add_rgb_to_vtk(
     vtk_dataset.SetOrigin(origin)
 
     # Add scalar data to vtk_dataset from dataframe
-    scalar_names = ["gid", "Reference ID"]
+    scalar_names = ["Grain ID", "Reference ID"]
     scalar_types = [vtk.VTK_INT, vtk.VTK_INT]
     for col, val_type in zip(scalar_names, scalar_types):
         vtk_data = numpy_to_vtk(num_array=df[col].to_numpy(), array_type=val_type)

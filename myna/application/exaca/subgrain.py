@@ -22,7 +22,7 @@ def rotate_grains(
         # Get grain points
         if gid == 0:
             continue
-        grain_indices = dfMerged[dfMerged["gid"] == gid].index
+        grain_indices = dfMerged[dfMerged["Grain ID"] == gid].index
         if len(grain_indices) < 100:
             continue
         print(f"\tProcessing {len(grain_indices)} grains")
