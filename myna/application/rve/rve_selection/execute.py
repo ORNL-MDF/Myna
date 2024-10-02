@@ -372,7 +372,7 @@ def main(argv=None):
     bid = args.bid
 
     # Get input settings
-    input_file = os.environ["MYNA_RUN_INPUT"]
+    input_file = os.environ["MYNA_INPUT"]
     settings = load_input(input_file)
 
     # Get expected Myna output files

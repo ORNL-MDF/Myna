@@ -186,6 +186,7 @@ class Component:
         files = []
 
         # Get build name
+        input_dir = os.path.abspath(os.path.dirname(os.environ["MYNA_INPUT"]))
         build = self.data["build"]["name"]
 
         # Get all other names that are set by the component
@@ -216,14 +217,25 @@ class Component:
                                 layers = r["layers"]
                                 filelist = [
                                     os.path.join(
-                                        build, part, region, str(x), self.name, template
+                                        input_dir,
+                                        build,
+                                        part,
+                                        region,
+                                        str(x),
+                                        self.name,
+                                        template,
                                     )
                                     for x in layers
                                 ]
                             else:
                                 filelist = [
                                     os.path.join(
-                                        build, part, region, self.name, template
+                                        input_dir,
+                                        build,
+                                        part,
+                                        region,
+                                        self.name,
+                                        template,
                                     )
                                 ]
                             files.extend(filelist)
@@ -231,15 +243,21 @@ class Component:
                         if "layer" in vars:
                             layers = self.data["build"]["parts"][part]["layers"]
                             filelist = [
-                                os.path.join(build, part, str(x), self.name, template)
+                                os.path.join(
+                                    input_dir, build, part, str(x), self.name, template
+                                )
                                 for x in layers
                             ]
                         else:
-                            filelist = [os.path.join(build, part, self.name, template)]
+                            filelist = [
+                                os.path.join(
+                                    input_dir, build, part, self.name, template
+                                )
+                            ]
                         files.extend(filelist)
 
         elif len(self.types) == 1:
-            files.append(os.path.join(build, self.name, template))
+            files.append(os.path.join(input_dir, build, self.name, template))
 
         else:
             print(

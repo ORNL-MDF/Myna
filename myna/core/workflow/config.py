@@ -68,6 +68,13 @@ def config(input_file, output_file=None, show_avail=False, overwrite=False):
       show_avail: only shows available data files, but does not copy
       overwrite: flag to overwrite existing files in Myna resources"""
 
+    # Set environmental variable for input file location
+    os.environ["MYNA_INPUT"] = os.path.abspath(input_file)
+    os.environ["MYNA_CONFIG_INPUT"] = os.path.abspath(
+        input_file
+    )  # MYNA_CONFIG_INPUT will be deprecated in future versions
+
+    # Set output file
     if output_file is None:
         output_file = input_file
 

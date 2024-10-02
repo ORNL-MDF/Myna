@@ -68,7 +68,7 @@ def main(argv=None):
     args = parser.parse_args(argv)
     cores = args.cores
     batch = args.batch
-    settings = load_input(os.environ["MYNA_RUN_INPUT"])
+    settings = load_input(os.environ["MYNA_INPUT"])
     overwrite = args.overwrite
 
     # Get expected Myna output files

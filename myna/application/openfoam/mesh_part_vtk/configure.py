@@ -44,7 +44,7 @@ def main(argv=None):
 
     # Parse command line arguments and get Myna settings
     args = parser.parse_args(argv)
-    settings = load_input(os.environ["MYNA_RUN_INPUT"])
+    settings = load_input(os.environ["MYNA_INPUT"])
     template = args.template
 
     # Get expected Myna output files to identify output directories

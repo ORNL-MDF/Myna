@@ -79,7 +79,7 @@ def main():
     overwrite = args.overwrite
     batch = args.batch
     ranks = args.ranks
-    settings = load_input(os.environ["MYNA_RUN_INPUT"])
+    settings = load_input(os.environ["MYNA_INPUT"])
 
     # Get expected Myna output files
     step_name = os.environ["MYNA_STEP_NAME"]

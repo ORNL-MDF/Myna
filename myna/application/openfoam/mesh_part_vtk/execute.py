@@ -78,7 +78,7 @@ def main(argv=None):
     scale = args.scale
     coarse_res = args.coarse
     refinement_level = args.refine
-    settings = load_input(os.environ["MYNA_RUN_INPUT"])
+    settings = load_input(os.environ["MYNA_INPUT"])
 
     # Get expected Myna output files
     step_name = os.environ["MYNA_STEP_NAME"]
@@ -97,7 +97,7 @@ def main(argv=None):
         shutil.rmtree(os.path.join(case_dir, "VTK"), ignore_errors=True)
 
         # Clean .obj files if they were created
-        input_dir = os.path.dirname(os.environ["MYNA_RUN_INPUT"])
+        input_dir = os.path.dirname(os.environ["MYNA_INPUT"])
         obj_files = glob.glob(os.path.join(input_dir, "*.obj"))
         for obj_file in obj_files:
             os.remove(obj_file)

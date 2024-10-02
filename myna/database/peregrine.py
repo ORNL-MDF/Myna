@@ -238,7 +238,7 @@ class PeregrineDB(Database):
             component_name = os.path.basename(os.path.dirname(files[0]))
             unique_regions = sorted(set(regions))
             unique_parts = sorted(set(parts))
-            settings = load_input(os.environ["MYNA_SYNC_INPUT"])
+            settings = load_input(os.environ["MYNA_INPUT"])
             for region in unique_regions:
                 for part in unique_parts:
                     part_dict = nested_get(settings, ["data", "build", "parts"]).get(
