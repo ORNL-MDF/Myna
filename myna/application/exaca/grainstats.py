@@ -25,7 +25,7 @@ def get_mean_grain_area(df2D, cell_size, threshold_grain_size=6):
         mean_grain_area: in square meters
     """
     # Get unique grains and their value counts
-    grains = df2D["gid"].value_counts()
+    grains = df2D["Grain ID"].value_counts()
 
     # Subset of the grains with sizes less than a threshold size
     small_grain_pixels = sum(grains[grains.values < threshold_grain_size])
@@ -51,7 +51,7 @@ def get_fract_nucleated_grains(df2D):
         very small grains thresholded out in the mean area calculation are not
         filtered out here - but could be in the future
     """
-    fract_nucleated_grains = len(df2D[df2D["gid"] < 0]) / len(df2D)
+    fract_nucleated_grains = len(df2D[df2D["Grain ID"] < 0]) / len(df2D)
     return fract_nucleated_grains
 
 
@@ -90,7 +90,7 @@ def get_misorientation_z_ref(reference_id_filename):
 
 def get_misorientation_z(df, misorientation_z_ref):
     """args:
-        df: dataframe containing gid values
+        df: dataframe containing "Grain ID" values
         misorientation_z_ref: np array of misorientation values, in degrees,
         for each possible grain orientation
 
@@ -98,11 +98,11 @@ def get_misorientation_z(df, misorientation_z_ref):
         misorientation_z_list: np array of misorientation values, in degrees,
         for each cell in the df"""
     # Absolute value of grain ID used for conversion
-    gid_abs = abs(df["gid"].values)
+    gid_abs = abs(df["Grain ID"].values)
     num_gid_values = len(gid_abs)
     misorientation_z_list = np.zeros(num_gid_values)
     num_reference_ids = len(misorientation_z_ref)
-    # gid_index can be replaced with the stored gid value
+    # gid_index can be replaced with the stored grain id value
     # from the df after indexing bug is fixed
     for i in range(num_gid_values):
         gid_index = int((gid_abs[i] - 1) % num_reference_ids)
@@ -115,14 +115,14 @@ def get_bin_centers_fre_dia(df2D, misorientation_z_list):
     nature of both the untextured and actual misorientation distributions
     Bin data based on the number of unique grains in the data
     Args:
-        df: dataframe containing gid values
+        df: dataframe containing "Grain ID" values
         misorientation_z_list: list of grain misorientations with <100>, in
         degrees, used to map gid values
 
     Returns:
         bin_edges: edges for binned misorientation data
         bin_centers: center location of bins for misorientation data"""
-    num_grains = len(df2D["gid"].unique())
+    num_grains = len(df2D["Grain ID"].unique())
     bin_width_ideal = 2 * iqr(misorientation_z_list) / (num_grains ** (1 / 3))
     # Get edges of bins for misorientation data (0 to 54.7 degrees)
     num_bins = round(54.7 / bin_width_ideal)
