@@ -168,6 +168,7 @@ def setup_case(case_dir, app):
         settings,
         use_existing_stl_mesh,
         use_existing_region_mesh,
+        app,
     )
 
     return
@@ -178,6 +179,7 @@ def generate(
     myna_settings,
     use_existing_stl_mesh,
     use_existing_region_mesh,
+    app,
 ):
     # Set paths
     case_dir = additivefoam_input_dict["case_dir"]
@@ -322,6 +324,11 @@ def generate(
             f" -set '( ({refinement} {refinement}) );' {refine_dict_path}"
         )
         openfoam.mesh.refine_RVE(template_dir, additivefoam_input_dict["region_box"])
+
+    ###############################
+    # Set the material properties #
+    ###############################
+    app.update_material_properties(template_dir)
 
     ##############################
     # Copy template to case  dir #

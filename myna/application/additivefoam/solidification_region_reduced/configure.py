@@ -132,12 +132,12 @@ def setup_case(case_dir, app):
     }
 
     # Generate cases based on inputs
-    generate(additivefoam_input_dict, settings, use_existing_mesh)
+    generate(additivefoam_input_dict, settings, use_existing_mesh, app)
 
     return
 
 
-def generate(additivefoam_input_dict, myna_settings, use_existing_mesh):
+def generate(additivefoam_input_dict, myna_settings, use_existing_mesh, app):
     # Set paths
     case_dir = additivefoam_input_dict["case_dir"]
     template_dir = os.path.abspath(additivefoam_input_dict["template"]["template_dir"])
@@ -254,9 +254,14 @@ def generate(additivefoam_input_dict, myna_settings, use_existing_mesh):
         bb = bb_min + bb_max
         bbDict = {"bb_min": bb_min, "bb_max": bb_max, "bb": bb}
 
-    ##############################
-    # Copy template to case  dir #
-    ##############################
+    ###############################
+    # Set the material properties #
+    ###############################
+    app.update_material_properties(template_dir)
+
+    #############################
+    # Copy template to case dir #
+    #############################
     shutil.copytree(template_dir, case_dir, dirs_exist_ok=True)
 
     ##############################
