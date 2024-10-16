@@ -10,6 +10,7 @@
 
 from myna.database.peregrine import PeregrineDB
 from myna.database.peregrine_hdf5 import PeregrineHDF5
+from myna.database.nist_ambench_2022 import AMBench2022DB
 
 
 def return_datatype_class(datatype_str):
@@ -36,6 +37,14 @@ def return_datatype_class(datatype_str):
             return PeregrineHDF5(version=version)
         else:
             return PeregrineHDF5()
+    elif datatype_str.lower() in [
+        "ambench2022",
+        "ambench-2022",
+        "ambench_2022",
+        "am-bench-2022",
+        "am-bench_2022",
+    ]:
+        return AMBench2022DB()
     else:
         print(f"Error: {datatype_str} does not correspond to any implemented database")
         raise NotImplementedError
