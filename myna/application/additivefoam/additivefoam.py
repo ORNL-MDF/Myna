@@ -8,6 +8,7 @@
 #
 import os, shutil
 import yaml
+import mistlib as mist
 
 from myna.core.app.base import MynaApp
 
@@ -126,3 +127,19 @@ class AdditiveFOAM(MynaApp):
                     yaml.dump(mesh_dict, f, default_flow_style=None)
 
         return use_existing_mesh
+
+    def update_material_properties(self, case_dir):
+
+        material = self.settings["data"]["build"]["build_data"]["material"]["value"]
+        material_data = os.path.join(
+            os.environ["MYNA_INSTALL_PATH"],
+            "resources",
+            "mist_material_data",
+            f"{material}.json",
+        )
+        mat = mist.core.MaterialInformation(material_data)
+        transport_filepath = os.path.join(case_dir, "constant", "transportProperties")
+        thermo_filepath = os.path.join(case_dir, "constant", "thermoPath")
+        mat.write_additivefoam_input(
+            transport_file=transport_filepath, thermo_file=thermo_filepath
+        )
