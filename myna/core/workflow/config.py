@@ -149,6 +149,7 @@ def config(input_file, output_file=None, show_avail=False, overwrite=False):
         try:
             settings["data"]["build"]["cui-markings"] = datatype.get_cui_info()
         except NotImplementedError:
+            settings["data"]["build"]["cui-markings"] = "N/A"
             pass
 
         # Get the data requirements associated with that class
