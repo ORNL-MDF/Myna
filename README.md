@@ -28,7 +28,7 @@ Myna is a Python package which requires Python 3. You must install it locally as
 editable package using `pip install -e .`, which is a temporary requirement that will
 be changed in future releases. The `myna` package is not on PyPI. To install `myna`
 follow the instructions below. For additional details, see
-[Getting Started](docs/getting_started.md).
+[Getting Started](https://ornl-mdf.github.io/myna-docs/getting_started).
 
 ```bash
 git clone https://github.com/ORNL-MDF/Myna
