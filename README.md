@@ -5,6 +5,9 @@ development may change directory structures, output files, etc. from previous ve
 
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
+Detailed documentation for Myna can be found at
+[https://ornl-mdf.github.io/myna-docs/](https://ornl-mdf.github.io/myna-docs/).
+
 ## Description
 
 Myna is a framework to facilitate modeling and simulation workflows for additive
@@ -24,40 +27,21 @@ requirements of the defined Myna workflow steps
 Myna is a Python package which requires Python 3. You must install it locally as an
 editable package using `pip install -e .`, which is a temporary requirement that will
 be changed in future releases. The `myna` package is not on PyPI. To install `myna`
-follow the instructions below.
+follow the instructions below. For additional details, see
+[Getting Started](https://ornl-mdf.github.io/myna-docs/getting_started).
 
 ```bash
-# clone repository and change directory to cloned repository
 git clone https://github.com/ORNL-MDF/Myna
 cd Myna
-
-# Myna MUST be installed as an editable package using the `-e` flag
 pip install -e .
 ```
 
 External, non-Python dependencies are required depending on which applications you
 intend to use:
 
-- [3DThesis](https://gitlab.com/JamieStumpORNL/3DThesis)
-- [AdditiveFOAM](https://github.com/ORNL/AdditiveFOAM)
-- [ExaCA](https://github.com/LLNL/ExaCA)
-
-If you have anaconda3 installed, you can use the `install_conda_env.sh`
-script to create a conda environment named "myna" for use with
-the workflow.
-
-For developers, `pip install -e .[dev]` will install the optional `pytest` dependency,
-as well as `black` for autoformatting. The repository currently uses the default `black`
-formatting. Test scripts are included with the repository in the "tests" directory.
-Examples of using pytest are given below.
-
-```bash
-# Default tests for aspects myna Python package installation
-pytest
-
-# Include optional tests that check application functionality
-pytest --apps
-```
+- [3DThesis](https://github.com/ORNL-MDF/3DThesis), commit 646d461 or later
+- [AdditiveFOAM](https://github.com/ORNL/AdditiveFOAM), version 1.0
+- [ExaCA](https://github.com/LLNL/ExaCA), version 1.3 or later
 
 ## Usage
 
@@ -65,27 +49,14 @@ Myna input files define the order of simulation steps and the options for each s
 Optional workspaces can also be created as `.yaml` or `.myna-workspace` files that can
 be referenced to share common settings across multiple input files. See
 [examples/solidification_part/readme.md](examples/solidification_part/readme.md) for
-more details. Note: Before running this example, ensure that the external 3DThesis
-dependency is installed and that the 3DThesis executable is in your path.
-
-### Available components and applications
-
-To get a summary of the available classes and applications, use the `myna status`
-command line tool.
-
-```bash
-# write myna component and application status to <filename>
-myna status --output status.md
-```
-
-The `--output <filename>` argument is optional and defaults to "status.md" if not
-specified. Text in the output file is formatted as Markdown.
+details on running an example case.
 
 ## Attribution
 
-If you use Myna in your work, please [cite this repository](https://zenodo.org/doi/10.5281/zenodo.13345124). In addition, there is a
-preliminary work that introduces the concept of leverging the digital thread for
-simulations and uses the precursor to Myna:
+If you use Myna in your work, please
+[cite this repository](https://zenodo.org/doi/10.5281/zenodo.13345124).
+In addition, there is a preliminary work that introduces the concept of leverging the
+digital thread for simulations and uses the precursor to Myna:
 
 ```tex
 @article{Knapp2023DigitalThread,
@@ -102,7 +73,8 @@ simulations and uses the precursor to Myna:
 ```
 
 The `resources/Peregrine` directory used for examples are from the publicly
-available Peregrine v2023-10 dataset:
+available Peregrine v2023-10 dataset. If you use this data,
+please cite:
 
 ```tex
 @misc{Peregrine202310,

@@ -1,11 +1,12 @@
 # 3DThesis application example for layer-wise solidification of a full part
 
-To configure the example, first update the path to your 3DThesis executable in
-the input file, "input.yaml" by either:
+To configure the example, first update the path to your 3DThesis executable by either:
 
-- a) setting the path to the 3DThesis executable in (`exec`) under
-    the `3dthesis` step's `execute` entry
-- b) setting the path in the example workspace `../example-workspace.yaml`
+- a) setting the path to the 3DThesis executable in the `steps:3dthesis:executable`
+  entry in `input.yaml`
+- b) setting the executable path under the `thesis:solidification_part:executable`
+  entry in the example workspace `../example-workspace.yaml` and ensuring that the
+  workspace file is set in the `myna:workspace` entry in `input.yaml`.
 
 For instructions on building 3DThesis, see the documentation on the
 [3DThesis repository](https://gitlab.com/JamieStumpORNL/3DThesis).
