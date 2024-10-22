@@ -19,7 +19,7 @@ def test_database_PeregrineHDF5():
 
     db = myna.database.PeregrineHDF5()
     path = os.path.dirname(os.path.abspath(__file__))
-    db.set_path(os.path.join(path, "..", "resources", "PeregrineHDF5", "minimal.hdf5"))
+    db.set_path(os.path.join(path, "..", "examples", "PeregrineHDF5", "minimal.hdf5"))
     test_metadata_types = [
         myna.core.metadata.LaserPower,
         myna.core.metadata.LayerThickness,
@@ -38,7 +38,7 @@ def test_database_Peregrine():
 
     db = myna.database.PeregrineDB()
     path = os.path.dirname(os.path.abspath(__file__))
-    db.set_path(os.path.join(path, "..", "resources"))
+    db.set_path(os.path.join(path, "..", "examples"))
     test_metadata_types = [
         myna.core.metadata.LaserPower,
         myna.core.metadata.LayerThickness,

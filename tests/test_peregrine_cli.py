@@ -18,7 +18,7 @@ import sys
 def test_peregrine_cli():
     test_path = os.path.dirname(os.path.abspath(__file__))
     myna_path = os.path.abspath(os.path.join(test_path, ".."))
-    build_dir = os.path.join(myna_path, "resources")
+    build_dir = os.path.join(myna_path, "examples")
     output_dir = os.path.join(build_dir, "Myna")
 
     # Set up command line argument

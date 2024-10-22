@@ -21,11 +21,10 @@ template_dir = os.path.join(
 working_dir = os.path.abspath(os.path.join(".", "example_case"))
 shutil.copytree(template_dir, working_dir, dirs_exist_ok=True)
 
-# Get example STL location from Myna resources
+# Get example STL location from Myna example directory (assuming this is running from
+# this script's example directory)
 myna_path = os.environ["MYNA_INSTALL_PATH"]
-stl_path = os.path.join(
-    myna_path, "resources", "Peregrine", "simulation", "P5", "part.stl"
-)
+stl_path = os.path.join("..", "Peregrine", "simulation", "P5", "part.stl")
 
 # Preprocess STL and create background mesh
 working_stl_path = mesh.preprocess_stl(working_dir, stl_path, convert_to_meters=0.001)

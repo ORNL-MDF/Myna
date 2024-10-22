@@ -25,7 +25,7 @@ A variety of files will be generated. These are described in the list below.
 of all the metadata that was required by the Myna workflow from the database.
 - The "myna_output" directory contains all of the cases specified by the input file,
 which include the input files for the case and the Myna-formatted output file.
-- The database directory ("myna/resources/Peregrine"), contains new files in the
+- The database directory ("myna/examples/Peregrine"), contains new files in the
 "registered" directory after the `myna sync` step that are the results from the
 Myna simulation(s) converted to a format readable by Peregrine. Each field that is
 output has both a .png file with the Peregrine pixel-level values and an .npz file

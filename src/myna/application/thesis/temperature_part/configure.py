@@ -40,9 +40,7 @@ def configure_case(case_dir, res, nout, myna_input="myna_data.yaml"):
 
     # Set up material properties
     material = settings["build"]["build_data"]["material"]["value"]
-    material_dir = os.path.join(
-        os.environ["MYNA_INSTALL_PATH"], "resources", "mist_material_data"
-    )
+    material_dir = os.path.join(os.environ["MYNA_APP_PATH"], "mist_material_data")
     try:
         mistPath = os.path.join(material_dir, f"{material}.json")
         mistMat = mist.core.MaterialInformation(mistPath)

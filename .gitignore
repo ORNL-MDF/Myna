@@ -10,6 +10,7 @@ status.md
 # Python package files
 __pycache__
 *.egg-info
+build
 
 # VS Code
 *.code-workspace
@@ -18,16 +19,14 @@ __pycache__
 myna_resources/
 demo_build/
 myna_output/
-resources/Peregrine/registered
-resources/PeregrineHDF5/simulation
-resources/PeregrineHDF5/registered
+examples/Peregrine/registered
+examples/Peregrine/simulation
+examples/PeregrineHDF5/simulation
+examples/PeregrineHDF5/registered
+*.parquet
 
 # other typical case file names
 *configured.yaml
 log.*
 *.log
 logs/
-
-# expected modifications to the example Peregrine resource directory
-*.parquet
-resources/Myna

@@ -72,7 +72,7 @@ digital thread for simulations and uses the precursor to Myna:
 }
 ```
 
-The `resources/Peregrine` directory used for examples are from the publicly
+The `examples/Peregrine` directory used for examples are from the publicly
 available Peregrine v2023-10 dataset. If you use this data,
 please cite:
 

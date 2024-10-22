@@ -10,7 +10,7 @@ data:
   build:
     datatype: PeregrineHDF5
     name: myna_output
-    path: ../../resources/PeregrineHDF5/minimal.hdf5
+    path: ../PeregrineHDF5/minimal.hdf5
     parts:
       P1:
         layers: [0]
