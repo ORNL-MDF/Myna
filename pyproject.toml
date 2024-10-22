@@ -41,7 +41,10 @@ dev = [
 myna = "myna.core.workflow.all:main"
 
 [tool.setuptools]
-py-modules = ["myna"]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+where = ["src"]
 
 [tool.pytest.ini_options]
 addopts = [
@@ -49,5 +52,4 @@ addopts = [
 
 [tool.codespell]
 ignore-words-list = 'mater,nd'
-skip = './resources'
 quiet-level = 3

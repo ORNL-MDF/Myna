@@ -9,14 +9,16 @@
 import mistlib as mist
 import os
 from myna.core.workflow.load_input import load_input
+from myna.application.thesis.parse import adjust_parameter
 import argparse
 import sys
 import shutil
 import numpy as np
-from myna.application.thesis import get_scan_stats, adjust_parameter, Thesis
+
+from myna.application.thesis import Thesis
 
 
-def configure_case(case_dir, res, nout, myna_input="myna_data.yaml"):
+def configure_case(case_dir, res, myna_input="myna_data.yaml"):
     # Load input file
     input_path = os.path.join(case_dir, myna_input)
     settings = load_input(input_path)
@@ -27,7 +29,7 @@ def configure_case(case_dir, res, nout, myna_input="myna_data.yaml"):
 
     # Copy template to case directory
     template_dir = os.path.join(
-        os.environ["MYNA_APP_PATH"], "thesis", "temperature_part", "template"
+        os.environ["MYNA_APP_PATH"], "thesis", "solidification_part", "template"
     )
     shutil.copytree(template_dir, case_dir, dirs_exist_ok=True)
 
@@ -40,9 +42,7 @@ def configure_case(case_dir, res, nout, myna_input="myna_data.yaml"):
 
     # Set up material properties
     material = settings["build"]["build_data"]["material"]["value"]
-    material_dir = os.path.join(
-        os.environ["MYNA_INSTALL_PATH"], "resources", "mist_material_data"
-    )
+    material_dir = os.path.join(os.environ["MYNA_INSTALL_PATH"], "mist_material_data")
     try:
         mistPath = os.path.join(material_dir, f"{material}.json")
         mistMat = mist.core.MaterialInformation(mistPath)
@@ -75,25 +75,20 @@ def configure_case(case_dir, res, nout, myna_input="myna_data.yaml"):
     domain_file = os.path.join(case_dir, "Domain.txt")
     adjust_parameter(domain_file, "Res", res)
 
-    # Update output times
-    mode_file = os.path.join(case_dir, "Mode.txt")
-    elapsed_time, _ = get_scan_stats(case_scanfile)
-    times = np.linspace(0, elapsed_time, nout)
-    adjust_parameter(mode_file, "Times", ",".join([str(x) for x in times]))
-
     return
 
 
 def main():
 
-    sim = Thesis("temperature_part")
+    sim = Thesis("solidification_part")
 
     # Get expected Myna output files
+    step_name = os.environ["MYNA_STEP_NAME"]
     myna_files = sim.settings["data"]["output_paths"][sim.step_name]
 
-    # Configure each case
+    # Run each case
     for case_dir in [os.path.dirname(x) for x in myna_files]:
-        configure_case(case_dir, sim.args.res, sim.args.nout)
+        configure_case(case_dir, sim.args.res)
 
 
 if __name__ == "__main__":

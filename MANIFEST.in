@@ -1,0 +1,9 @@
+# CLI files
+include src/myna/cli/peregrine_launcher/*.yaml
+
+# Material data files
+include src/myna/mist_material_data/*.json
+include src/myna/application/exaca/materials/*.json
+
+# Template files for all applications
+recursive-include src/myna/application/*/*/template *

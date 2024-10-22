@@ -133,7 +133,6 @@ class AdditiveFOAM(MynaApp):
         material = self.settings["data"]["build"]["build_data"]["material"]["value"]
         material_data = os.path.join(
             os.environ["MYNA_INSTALL_PATH"],
-            "resources",
             "mist_material_data",
             f"{material}.json",
         )
