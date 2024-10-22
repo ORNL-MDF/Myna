@@ -43,7 +43,7 @@ data:
   build:
     datatype: Peregrine
     name: demo_build
-    path: ../../resources
+    path: ..
     parts:
       P5:
         layers: [51, 52, 53, 54]

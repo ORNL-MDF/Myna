@@ -40,7 +40,7 @@ import os
 
 # Set environment variables on package import
 os.environ["MYNA_INSTALL_PATH"] = os.path.sep.join(
-    os.path.abspath(__file__).split(os.path.sep)[:-3]
+    os.path.abspath(__file__).split(os.path.sep)[:-2]
 )
 
 os.environ["MYNA_APP_PATH"] = os.path.join(
