@@ -48,6 +48,7 @@ def pd_normalized_histogram(dataframe, scaledRanges, xmin=0, xmax=1, dpi=150):
         print(f"Generating normalized histogram for distribution of {col}")
         minVal = scaledRanges["Min Value"][i]
         maxVal = scaledRanges["Max Value"][i]
+        plt.figure(dpi=dpi)
         n, x, _ = plt.hist(
             (dataframe[col] - xmin) / (xmax - xmin),
             bins=101,
@@ -74,6 +75,7 @@ def pd_histogram(dataframe, scaledRanges, dpi=150):
         print(f"Generating histogram for distribution of {col}")
         minVal = scaledRanges["Min Value"][i]
         maxVal = scaledRanges["Max Value"][i]
+        plt.figure(dpi=dpi)
         n, x, _ = plt.hist(
             minVal + dataframe[col] * (maxVal - minVal),
             bins=101,
@@ -93,7 +95,7 @@ def voxel_GV_plot(df, colors, cmap, exportName, dpi=150):
     """
     Plot GV plot for a cluster pandas.dataFrame with the given colormap
     """
-    fig = plt.figure(figsize=(9, 4))
+    fig = plt.figure(figsize=(9, 4), dpi=dpi)
     ax = plt.gca()
 
     for i in df["id"].unique():
@@ -158,7 +160,7 @@ def voxel_id_stacked_histogram(
         labelList = ids
     if verbose:
         print(f"Generating voxel class stacked histogram for {field}")
-    plt.figure(1)
+    plt.figure(1, dpi=dpi)
     xmin, xmax = [df[field].min(), df[field].max()]
     labels = []
     hists = []
@@ -195,6 +197,7 @@ def cluster_composition_map(xx, yy, mesh, cluster, exportName, dpi=150):
     """
     Plot the spatial map of supervoxel composition for a specific cluster given a supervoxel mesh
     """
+    plt.figure(dpi=dpi)
     plt.pcolormesh(
         xx,
         yy,
@@ -217,6 +220,7 @@ def supervoxel_composition_hist(meshData, col, exportName, xmin=0, xmax=1, dpi=1
     """
     Plot a histogram of the volume fraction of composition for each cluster given a supervoxel mesh
     """
+    plt.figure(dpi=dpi)
     n, x, _ = plt.hist(
         (meshData[col] - xmin) / (xmax - xmin),
         bins=101,
@@ -308,7 +312,9 @@ def combined_composition_colormesh(id, nrows=3, ncols=5, dpi=150):
         if col[:5] == "comp_":
             clusters.append(col[5:])
 
-    fig, axs = plt.subplots(nrows=nrows, ncols=ncols, sharex="col", sharey="row")
+    fig, axs = plt.subplots(
+        nrows=nrows, ncols=ncols, sharex="col", sharey="row", dpi=dpi
+    )
 
     # Set up numpy meshgrid
     nx = len(mesh["X(mm)"].unique())
@@ -405,7 +411,7 @@ def combined_composition_colormesh(id, nrows=3, ncols=5, dpi=150):
     plt.close()
 
     # Plot colorbar for figures
-    fig, ax = plt.subplots(figsize=(6, 1))
+    fig, ax = plt.subplots(figsize=(6, 1), dpi=dpi)
     fig.subplots_adjust(bottom=0.75)
     norm = mpl.colors.Normalize(vmin=cmin, vmax=cmax)
     fig.colorbar(
