@@ -17,6 +17,18 @@ from myna.application.bnpy import Bnpy
 from myna.application.bnpy import bnpy_module_dependency_error_msg
 
 
+def reduce_voxel_file_to_df(voxel_file):
+    return
+
+
+def calculate_supervoxel_composition(df):
+    return
+
+
+def train_supervoxel_model(myna_voxel_files, sF, gamma):
+    return
+
+
 def run(
     case_dir,
     cluster_file,
@@ -331,24 +343,9 @@ def main():
         + ", for example: "
         + "--res 250.0e-6",
     )
-    parser.add_argument(
-        "--no-training",
-        dest="train_model",
-        default=True,
-        action="store_false",
-        help="flag to use pre-trained clustering model (error will "
-        + "be thrown is no clustering model exists), default = True",
-    )
-    parser.add_argument(
-        "--overwrite",
-        dest="overwrite",
-        default=False,
-        action="store_true",
-        help="flag to force overwrite of existing cluster IDs, default = False",
-    )
 
     # Parse command line arguments
-    args = parser.parse_args(argv)
+    args = parser.parse_args()
     settings = load_input(os.environ["MYNA_INPUT"])
     train_model = args.train_model
     overwrite = args.overwrite
@@ -398,4 +395,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main(sys.argv[1:])
+    main()
