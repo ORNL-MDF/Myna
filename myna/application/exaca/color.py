@@ -7,11 +7,25 @@
 # License: 3-clause BSD, see https://opensource.org/licenses/BSD-3-Clause.
 #
 import numpy as np
-import pyebsd
+from .exaca import exaca_module_dependency_error_msg
 
 
 # Get RGB values for each orientation
 def add_pyebsd_rgb_color(df, refDir=[0, 0, 1], suffix=""):
+    """Adds RGB color columns to a pandas DataFrame
+
+    Args:
+      df: pandas DataFrame containing Bunge-convention Euler angles (phi1, Phi, phi2)
+      refDir: (default [0,0,1]) reference direction for calculating the IPF-coloring
+      suffix: suffix for added columns, f"R{suffix}", f"G{suffix}", f"B{suffix}"
+
+    Returns:
+      df: pandas DataFrame with the calculated RGB columns added
+    """
+    try:
+        import pyebsd.ebsd
+    except:
+        exaca_module_dependency_error_msg()
 
     # Get column ids for Euler angles
     ref_cols = ["phi1", "Phi", "phi2"]

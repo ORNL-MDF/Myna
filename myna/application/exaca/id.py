@@ -8,7 +8,6 @@
 #
 import numpy as np
 import pandas as pd
-import pyebsd
 from vtk.util.numpy_support import vtk_to_numpy
 import time
 from .subgrain import rotate_grains
