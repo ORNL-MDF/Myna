@@ -28,14 +28,16 @@ dependencies = [
     'vtk',
     'h5py',
     'polars',
-    'bnpy @ git+https://github.com/gknapp1/bnpy',
-    'pyebsd @ git+https://github.com/arthursn/pyebsd.git',]
+    'bnpy @ git+https://github.com/gknapp1/bnpy',]
 
 [project.optional-dependencies]
 dev = [
   'pytest',
   'black',
   'licenseheaders']
+exaca = [
+  'pyebsd @ git+https://github.com/arthursn/pyebsd.git',
+]
 
 [project.scripts]
 myna = "myna.core.workflow.all:main"

@@ -52,3 +52,8 @@ class ExaCA(MynaApp):
         )
 
         super().set_template_path("exaca", self.simulation_type)
+
+
+def exaca_module_dependency_error_msg():
+    print('!! Install "exaca" optional dependencies !!')
+    raise ImportError
