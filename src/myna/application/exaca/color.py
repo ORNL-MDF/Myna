@@ -7,7 +7,6 @@
 # License: 3-clause BSD, see https://opensource.org/licenses/BSD-3-Clause.
 #
 import numpy as np
-from .exaca import exaca_module_dependency_error_msg
 
 
 # Get RGB values for each orientation
@@ -24,8 +23,10 @@ def add_pyebsd_rgb_color(df, refDir=[0, 0, 1], suffix=""):
     """
     try:
         import pyebsd.ebsd
-    except:
-        exaca_module_dependency_error_msg()
+    except ImportError as exc:
+        raise ImportError(
+            'Myna exaca app requires "pip install .[exaca]" optional dependencies!'
+        ) from exc
 
     # Get column ids for Euler angles
     ref_cols = ["phi1", "Phi", "phi2"]
