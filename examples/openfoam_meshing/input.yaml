@@ -9,7 +9,7 @@ data:
   build:
     datatype: Peregrine
     name: myna_output
-    path: ../../resources
+    path: ..
     parts:
       P5:
         layers: []
