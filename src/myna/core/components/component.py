@@ -195,32 +195,86 @@ class Component:
 
         # Get all possible file names based on template
         if len(vars) >= 1:
+            build_regions = None
             parts = None
             regions = None
             layers = []
-            if "part" in vars:
-                parts = list(self.data["build"]["parts"].keys())
-            if parts is not None:
-                for part in parts:
-                    if "region" in vars:
-                        try:
-                            regions = list(
-                                self.data["build"]["parts"][part]["regions"].keys()
+            if "build_region" in vars:
+                build_regions = list(self.data["build"]["build_regions"].keys())
+            if build_regions is not None:
+                for build_region in build_regions:
+                    if "layer" in vars:
+                        layers = self.data["build"]["build_regions"][build_region][
+                            "layers"
+                        ]
+                        filelist = [
+                            os.path.join(
+                                input_dir,
+                                build,
+                                build_region,
+                                str(x),
+                                self.name,
+                                template,
                             )
-                        except:
-                            print("    - No regions specified in input file")
-                            return []
-                    if regions is not None:
-                        for region in regions:
-                            r = self.data["build"]["parts"][part]["regions"][region]
+                            for x in layers
+                        ]
+                    else:
+                        filelist = [
+                            os.path.join(
+                                input_dir, build, build_region, self.name, template
+                            )
+                        ]
+                    files.extend(filelist)
+            else:
+                if "part" in vars:
+                    parts = list(self.data["build"]["parts"].keys())
+                if parts is not None:
+                    for part in parts:
+                        if "region" in vars:
+                            try:
+                                regions = list(
+                                    self.data["build"]["parts"][part]["regions"].keys()
+                                )
+                            except:
+                                print("    - No regions specified in input file")
+                                return []
+                        if regions is not None:
+                            for region in regions:
+                                r = self.data["build"]["parts"][part]["regions"][region]
+                                if "layer" in vars:
+                                    layers = r["layers"]
+                                    filelist = [
+                                        os.path.join(
+                                            input_dir,
+                                            build,
+                                            part,
+                                            region,
+                                            str(x),
+                                            self.name,
+                                            template,
+                                        )
+                                        for x in layers
+                                    ]
+                                else:
+                                    filelist = [
+                                        os.path.join(
+                                            input_dir,
+                                            build,
+                                            part,
+                                            region,
+                                            self.name,
+                                            template,
+                                        )
+                                    ]
+                                files.extend(filelist)
+                        else:
                             if "layer" in vars:
-                                layers = r["layers"]
+                                layers = self.data["build"]["parts"][part]["layers"]
                                 filelist = [
                                     os.path.join(
                                         input_dir,
                                         build,
                                         part,
-                                        region,
                                         str(x),
                                         self.name,
                                         template,
@@ -230,31 +284,10 @@ class Component:
                             else:
                                 filelist = [
                                     os.path.join(
-                                        input_dir,
-                                        build,
-                                        part,
-                                        region,
-                                        self.name,
-                                        template,
+                                        input_dir, build, part, self.name, template
                                     )
                                 ]
                             files.extend(filelist)
-                    else:
-                        if "layer" in vars:
-                            layers = self.data["build"]["parts"][part]["layers"]
-                            filelist = [
-                                os.path.join(
-                                    input_dir, build, part, str(x), self.name, template
-                                )
-                                for x in layers
-                            ]
-                        else:
-                            filelist = [
-                                os.path.join(
-                                    input_dir, build, part, self.name, template
-                                )
-                            ]
-                        files.extend(filelist)
 
         elif len(self.types) == 1:
             files.append(os.path.join(input_dir, build, self.name, template))

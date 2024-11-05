@@ -52,3 +52,48 @@ class FileRegion(File):
             ]
             expected_cols_types = [int, float, float, int, int, str]
             return self.columns_are_valid(cols, expected_cols, expected_cols_types)
+
+
+class FileBuildRegion(File):
+    """File format class for CSV file with a rectangular region of interest location
+    data in a build that can span multiple parts"""
+
+    def __init__(self, file):
+        File.__init__(self, file)
+        self.filetype = ".csv"
+
+    def file_is_valid(self):
+        """Determines if the associated file is valid
+
+        Requires the columns below, additional columns are ignored:
+        - "id": int
+        - "x_min (m)": float
+        - "y_min (m)": float
+        - "x_max (m)": float
+        - "y_max (m)": float
+        - "layer_starts": int
+        - "layer_ends": int
+        - "parts": str ("all" or part name separated by underscores, e.g., "P1_P2")
+
+        Returns:
+           Boolean
+        """
+
+        if (self.filetype is not None) and (
+            os.path.splitext(self.file)[-1] != self.filetype
+        ):
+            return False
+        else:
+            df = pd.read_csv(self.file)
+            cols = [x.lower() for x in df.columns]
+            expected_cols = [
+                "id",
+                "x_min (m)",
+                "y_min (m)",
+                "x_max (m)",
+                "y_max (m)",
+                "layer_starts",
+                "layer_ends",
+            ]
+            expected_cols_types = [int, float, float, float, float, int, int, str]
+            return self.columns_are_valid(cols, expected_cols, expected_cols_types)

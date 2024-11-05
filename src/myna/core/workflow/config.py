@@ -89,10 +89,35 @@ def config(input_file, output_file=None, show_avail=False, overwrite=False):
         print(f"ERROR: Could not find valid {datatype} in" + f" {build_path}")
         raise FileNotFoundError
 
-    # Get part names
-    parts = settings["data"]["build"]["parts"]
+    # Get part names at build level
+    parts = settings["data"]["build"].get("parts", {})
     all_parts = list(parts.keys())
-    if len(parts) < 1:
+
+    # Get part names from build_regions
+    build_regions = settings["data"]["build"]["build_regions"]
+    for build_region in build_regions.keys():
+        build_region_parts = build_regions[build_region].get("parts")
+        if build_region_parts is not None:
+            all_parts.extend(build_region_parts)
+            for part in build_region_parts:
+                if parts == {}:
+                    settings["data"]["build"]["parts"] = {}
+                build_region_part_layers = build_regions[build_region].get("layers")
+                part_dict = settings["data"]["build"]["parts"].get(part, {})
+                part_layers = part_dict.get("layers", [])
+                if part_dict == {}:
+                    settings["data"]["build"]["parts"][part] = {}
+                if part_layers == []:
+                    part_layers = build_region_part_layers
+                else:
+                    part_layers.extend(build_region_part_layers)
+                    part_layers = sorted(list(set(part_layers)), key=lambda x: int(x))
+                settings["data"]["build"]["parts"][part]["layers"] = part_layers
+                parts[part] = settings["data"]["build"]["parts"][part]
+    all_parts = list(set(all_parts))
+
+    # Check that some amount of parts were specified
+    if len(all_parts) < 1:
         print(f"ERROR: No data/parts specified in {input_file}")
         raise ValueError
 
@@ -294,6 +319,34 @@ def config(input_file, output_file=None, show_avail=False, overwrite=False):
             build_struct = (
                 os.path.abspath(case_dir).replace(base_path, "").split(os.sep)
             )
+            if "build_region" in step_obj.types:
+                build_region = build_struct[2]
+                build_region_parts = data_dict_case["build"]["build_regions"][
+                    build_region
+                ]["parts"]
+                keys = list(data_dict_case["build"]["build_regions"].keys())
+                for key in keys:
+                    if key != build_region:
+                        data_dict_case["build"]["build_regions"].pop(key, None)
+                    else:
+                        for part in data_dict_case["build"]["parts"]:
+                            if part not in build_region_parts:
+                                data_dict_case["build"]["parts"].pop(part, None)
+                            elif "layer" in step_obj.types:
+                                layer = build_struct[3]
+                                keys = list(
+                                    data_dict_case["build"]["parts"][part]
+                                    .get("layer_data", {})
+                                    .keys()
+                                )
+                                for key in keys:
+                                    if int(key) != int(layer):
+                                        data_dict_case["build"]["parts"][part][
+                                            "layer_data"
+                                        ].pop(key, None)
+                                data_dict_case["build"]["parts"][part]["layers"] = [
+                                    int(layer)
+                                ]
             if "part" in step_obj.types:
                 part = build_struct[2]
                 keys = list(data_dict_case["build"]["parts"].keys())

@@ -1,0 +1,14 @@
+Simulation
+{
+	Name		thermal_3dthesis
+	Mode		Mode.txt
+	Material	Material.txt
+	Beam		Beam_*.txt
+	Path		Path_*.txt
+}
+Options
+{
+	Domain		Domain.txt
+	Output		Output.txt
+	Settings	Settings.txt
+}

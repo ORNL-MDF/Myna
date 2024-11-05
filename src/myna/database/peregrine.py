@@ -171,6 +171,15 @@ class PeregrineDB(Database):
                 df.write_parquet(file_database, compression="lz4")
             return file_database
 
+        elif metadata_type == metadata.MeltOrder:
+            # Assume that the print order is the same as the part ID order if there is
+            # no other information
+            value = []
+            part_names = [os.path.basename(d) for d in os.listdir(self.simulation_dir)]
+            part_names = [d for d in part_names if d[0] == "P"]
+            value = sorted(part_names, key=lambda x: int(x[1:]))
+            return value
+
         else:
             print(f"Error loading: {metadata_type}")
             raise NotImplementedError

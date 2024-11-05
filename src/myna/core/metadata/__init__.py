@@ -29,6 +29,7 @@ from .data_material import *
 from .data_laser_power import *
 from .data_layer_thickness import *
 from .data_preheat import *
+from .data_melt_order import *
 
 # Import all metadata file classes
 from .file import *
