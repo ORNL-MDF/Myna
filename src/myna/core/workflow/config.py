@@ -94,7 +94,7 @@ def config(input_file, output_file=None, show_avail=False, overwrite=False):
     all_parts = list(parts.keys())
 
     # Get part names from build_regions
-    build_regions = settings["data"]["build"]["build_regions"]
+    build_regions = settings["data"]["build"].get("build_regions", {})
     for build_region in build_regions.keys():
         build_region_parts = build_regions[build_region].get("parts")
         if build_region_parts is not None:
