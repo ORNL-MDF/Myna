@@ -40,6 +40,47 @@ def cluster_colormap(n_digits, colorspace="tab20"):
     return [colors, cmap, colorValues]
 
 
+def get_scatter_marker_size(fig, ax, axis_distance, magic_number=7):
+    """Get marker size so that adjacent square markers are just touching without overlapping.
+    Calibrated at 300 dpi and 250e-6 axis_distance, approximately correct at other values
+    """
+    marker_point_width = (
+        ax.transData.transform([axis_distance, 0])[0]
+        - ax.transData.transform([0, 0])[0]
+    )
+    marker_size = (
+        (300 / fig.dpi) * (axis_distance / 250e-6) * magic_number * marker_point_width
+    ) ** 0.5
+    return marker_size
+
+
+def add_cluster_colormap_colorbar(fig, ax, colors, cmap, n_clusters):
+    # Create the colorbar
+    divider1 = make_axes_locatable(ax)
+    cax1 = divider1.append_axes("right", size="5%", pad=0.05)
+    mappable1 = ax.collections[0]
+
+    # Draw colorbar for cluster IDs
+    bounds = np.arange(len(colors) + 1)
+    norm = mpl.colors.BoundaryNorm(bounds, cmap.N)
+    cbar = mpl.colorbar.ColorbarBase(
+        cax1,
+        cmap=cmap,
+        norm=norm,
+        boundaries=bounds,
+        ticks=bounds + 0.5,
+        spacing="proportional",
+        orientation="vertical",
+        label="Cluster ID",
+    )
+
+    cbarTicks = cbar.get_ticks()
+    cbarLabels = [f"{int(x)}" for x in np.arange(0, n_clusters)]
+    cbar.locator = mpl.ticker.FixedLocator(cbarTicks)
+    cbar.formatter = mpl.ticker.FixedFormatter(cbarLabels)
+    cbar.update_ticks()
+
+
 def pd_normalized_histogram(dataframe, scaledRanges, xmin=0, xmax=1, dpi=150):
     """
     Plot distribution of values for each column in a pandas.dataFrame
@@ -48,6 +89,7 @@ def pd_normalized_histogram(dataframe, scaledRanges, xmin=0, xmax=1, dpi=150):
         print(f"Generating normalized histogram for distribution of {col}")
         minVal = scaledRanges["Min Value"][i]
         maxVal = scaledRanges["Max Value"][i]
+        plt.figure(dpi=dpi)
         n, x, _ = plt.hist(
             (dataframe[col] - xmin) / (xmax - xmin),
             bins=101,
@@ -74,6 +116,7 @@ def pd_histogram(dataframe, scaledRanges, dpi=150):
         print(f"Generating histogram for distribution of {col}")
         minVal = scaledRanges["Min Value"][i]
         maxVal = scaledRanges["Max Value"][i]
+        plt.figure(dpi=dpi)
         n, x, _ = plt.hist(
             minVal + dataframe[col] * (maxVal - minVal),
             bins=101,
@@ -93,7 +136,7 @@ def voxel_GV_plot(df, colors, cmap, exportName, dpi=150):
     """
     Plot GV plot for a cluster pandas.dataFrame with the given colormap
     """
-    fig = plt.figure(figsize=(9, 4))
+    fig = plt.figure(figsize=(9, 4), dpi=dpi)
     ax = plt.gca()
 
     for i in df["id"].unique():
@@ -158,7 +201,7 @@ def voxel_id_stacked_histogram(
         labelList = ids
     if verbose:
         print(f"Generating voxel class stacked histogram for {field}")
-    plt.figure(1)
+    plt.figure(1, dpi=dpi)
     xmin, xmax = [df[field].min(), df[field].max()]
     labels = []
     hists = []
@@ -195,6 +238,7 @@ def cluster_composition_map(xx, yy, mesh, cluster, exportName, dpi=150):
     """
     Plot the spatial map of supervoxel composition for a specific cluster given a supervoxel mesh
     """
+    plt.figure(dpi=dpi)
     plt.pcolormesh(
         xx,
         yy,
@@ -217,6 +261,7 @@ def supervoxel_composition_hist(meshData, col, exportName, xmin=0, xmax=1, dpi=1
     """
     Plot a histogram of the volume fraction of composition for each cluster given a supervoxel mesh
     """
+    plt.figure(dpi=dpi)
     n, x, _ = plt.hist(
         (meshData[col] - xmin) / (xmax - xmin),
         bins=101,
@@ -308,7 +353,9 @@ def combined_composition_colormesh(id, nrows=3, ncols=5, dpi=150):
         if col[:5] == "comp_":
             clusters.append(col[5:])
 
-    fig, axs = plt.subplots(nrows=nrows, ncols=ncols, sharex="col", sharey="row")
+    fig, axs = plt.subplots(
+        nrows=nrows, ncols=ncols, sharex="col", sharey="row", dpi=dpi
+    )
 
     # Set up numpy meshgrid
     nx = len(mesh["X(mm)"].unique())
@@ -405,7 +452,7 @@ def combined_composition_colormesh(id, nrows=3, ncols=5, dpi=150):
     plt.close()
 
     # Plot colorbar for figures
-    fig, ax = plt.subplots(figsize=(6, 1))
+    fig, ax = plt.subplots(figsize=(6, 1), dpi=dpi)
     fig.subplots_adjust(bottom=0.75)
     norm = mpl.colors.Normalize(vmin=cmin, vmax=cmax)
     fig.colorbar(
@@ -418,6 +465,160 @@ def combined_composition_colormesh(id, nrows=3, ncols=5, dpi=150):
         os.path.join(
             "training_supervoxels", f"Supervoxel.Dataset_{id}.Composition.Colorbar.png"
         ),
+        dpi=dpi,
+    )
+    plt.close()
+
+
+def combined_supervoxel_composition_scatter(
+    df,
+    n_voxel_clusters,
+    supervoxel_size,
+    nrows=3,
+    ncols=5,
+    dpi=150,
+    export_name="supervoxel_composition_map.png",
+):
+
+    # Get possible cluster ids
+    clusters = np.arange(n_voxel_clusters)
+
+    # Get max and min values
+    minVal = 0
+    maxVal = -1e6
+    minValLog = 1e6
+    maxValLog = -1e6
+    for i, cluster in enumerate(clusters):
+        maxVal = max(df[f"c_{cluster}"].max(), maxVal)
+        minVal = min(df[f"c_{cluster}"].min(), minVal)
+        with np.errstate(divide="ignore"):
+            mx = np.log10(df[f"c_{cluster}"].max())
+            mn = np.log10(df[df[f"c_{cluster}"] > 0][f"c_{cluster}"].min())
+            if not np.isinf(mx):
+                maxValLog = max(mx, maxValLog)
+            if not np.isinf(mn):
+                minValLog = min(mn, minValLog)
+
+    fig, axs = plt.subplots(
+        nrows=nrows,
+        ncols=ncols,
+        sharex="col",
+        sharey="row",
+        dpi=dpi,
+        figsize=(ncols * 3.5, nrows * 3.5),
+    )
+
+    # Set XY plot bounds
+    pad = 1e-3
+    x_min = df["x (m)"].min() - pad
+    x_max = df["x (m)"].max() + pad
+    y_min = df["y (m)"].min() - pad
+    y_max = df["y (m)"].max() + pad
+
+    # Set cmap
+    cmap = copy.copy(mpl.cm.get_cmap("viridis"))
+    cmin = -4.0
+    cmax = -0.1
+    cmap.set_bad("black", 1.0)
+
+    # Iterate through clusters to generate subplots
+    singleColorScale = True
+    showLabels = False
+    for i, cluster in enumerate(clusters):
+        col = i % ncols
+        row = int(i / ncols)
+        axs[row, col].scatter(
+            [x_min, x_min, x_max, x_max],
+            [y_min, y_max, y_min, y_max],
+            color="white",
+            marker="+",
+        )
+        with np.errstate(divide="ignore"):
+            z = np.log10(df[f"c_{cluster}"])
+        if singleColorScale:
+            axs[row, col].scatter(
+                df["x (m)"],
+                df["y (m)"],
+                c=z,
+                cmap=cmap,
+                vmin=cmin,
+                vmax=cmax,
+                s=get_scatter_marker_size(fig, axs[row, col], supervoxel_size),
+                ec="none",
+                marker="s",
+            )
+        else:
+            axs[row, col].scatter(
+                df["x (m)"],
+                df["y (m)"],
+                c=z,
+                cmap=cmap,
+                s=get_scatter_marker_size(fig, axs[row, col], supervoxel_size),
+                ec="none",
+                marker="s",
+            )
+        if showLabels:
+            if row == int(nrows / 2) and col == 0:
+                axs[row, col].set_ylabel("Y (m)")
+            elif col == 0:
+                axs[row, col].yaxis.set_major_formatter(
+                    mticker.FuncFormatter(emptyTicks)
+                )
+            if col == int(ncols / 2) and row == nrows - 1:
+                axs[row, col].set_xlabel("X (m)")
+            elif row == nrows - 1:
+                axs[row, col].xaxis.set_major_formatter(
+                    mticker.FuncFormatter(emptyTicks)
+                )
+        else:
+            axs[row, col].xaxis.set_major_formatter(mticker.FuncFormatter(emptyTicks))
+            axs[row, col].yaxis.set_major_formatter(mticker.FuncFormatter(emptyTicks))
+        axs[row, col].set_aspect("equal")
+        if i == 0:
+            xlims = axs[row, col].get_xlim()
+        else:
+            axs[row, col].set_xlim(xlims)
+        axs[row, col].text(
+            0.01,
+            0.99,
+            f"{cluster}",
+            fontsize=18,
+            c="black",
+            transform=axs[row, col].transAxes,
+            ha="left",
+            va="top",
+        )
+
+    if ncols * nrows > len(clusters):
+        for i in range(len(clusters), ncols * nrows):
+            col = i % (ncols)
+            row = int(i / ncols)
+            axs[row, col].scatter(
+                [x_min, x_min, x_max, x_max],
+                [y_min, y_max, y_min, y_max],
+                color="white",
+                marker="+",
+            )
+            axs[row, col].set_visible(False)
+
+    plt.savefig(
+        export_name,
+        dpi=dpi,
+    )
+    plt.close()
+
+    # Plot colorbar for figures
+    fig, ax = plt.subplots(figsize=(6, 1), dpi=dpi)
+    fig.subplots_adjust(bottom=0.75)
+    norm = mpl.colors.Normalize(vmin=cmin, vmax=cmax)
+    fig.colorbar(
+        mpl.cm.ScalarMappable(norm=norm, cmap=cmap),
+        cax=ax,
+        orientation="horizontal",
+        label="$log_{10}(V_i)$",
+    )
+    plt.savefig(
+        export_name.replace(".png", "_colorbar.png"),
         dpi=dpi,
     )
     plt.close()

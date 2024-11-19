@@ -8,18 +8,17 @@ steps:
     execute:
       np: 8
       maxproc: 32
-- cluster_relabel:
+      batch: True
+- voxel:
     class: cluster_solidification
     application: bnpy
     execute:
-        thermal: 3dthesis
-        no-training: True
-- cluster_supervoxel_relabel:
+      no-training: False
+- supervoxel:
     class: cluster_supervoxel
     application: bnpy
     execute:
-        cluster: cluster_relabel
-        no-training: True
+      no-training: False
 - rve:
     class: rve
     application: rve_selection
@@ -37,7 +36,7 @@ steps:
         refine-layer: 2
         refine-region: 1
     execute:
-        batch:True
+        batch: True
         cores: 24
 data:
   build:
