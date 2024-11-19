@@ -2,7 +2,14 @@ import numpy as np
 
 
 def get_representative_distribution(
-    data, n0=1000, dn=1000, conv_abs=1e-3, conv_rel=1e-1, conv_count=3, bins=10
+    data,
+    n0=1000,
+    dn=1000,
+    conv_abs=1e-3,
+    conv_rel=1e-1,
+    conv_count=3,
+    bins=10,
+    verbose=False,
 ):
 
     # Load app-specific dependencies
@@ -32,12 +39,15 @@ def get_representative_distribution(
             )
         )
 
-    while consecutive_counter <= conv_count:
+    all_data_sampled = False
+    while (consecutive_counter <= conv_count) and (not all_data_sampled):
 
         # Randomly sample from dataset
-        sample = data[
-            np.random.choice(data.shape[0], n0 + dn * iteration, replace=False)
-        ]
+        n_samples = n0 + dn * iteration
+        if n_samples > data.shape[0]:
+            n_samples = data.shape[0]
+            all_data_sampled = True
+        sample = data[np.random.choice(data.shape[0], n_samples, replace=False)]
 
         # Compute the histograms
         hist_data = np.histogramdd(data, bins=bins, range=data_range, density=True)
@@ -57,7 +67,10 @@ def get_representative_distribution(
         B = hist_sample[0].reshape(xt.shape[0])
         wasserstein = ot.emd2(A, B, M)
 
-        residue_rel = np.abs((wasserstein_last - wasserstein) / wasserstein)
+        if wasserstein != wasserstein_last:
+            residue_rel = np.abs((wasserstein_last - wasserstein) / wasserstein)
+        else:
+            residue_rel = 0.0
         residue_abs = np.abs(wasserstein_last - wasserstein)
         distances.append(wasserstein)
         if (residue_rel < conv_rel) and (residue_abs < conv_abs):
@@ -67,7 +80,12 @@ def get_representative_distribution(
 
     n_sample = len(sample)
     n_data = len(data)
-    print(
-        f"{n_sample} / {n_data} ({n_sample/n_data*100:.1f}%):\t{wasserstein:.3g}\trel = {residue_rel:.2g}\tabs = {residue_abs:.2g}"
-    )
+    if verbose:
+        print(
+            f"- Sample size reduction: {n_sample} / {n_data}"
+            + f"\t({n_sample/n_data*100:.1f}%),"
+            + f"\twasserstein = {wasserstein:.3g},"
+            + f"\trel = {residue_rel:.2g},"
+            + f"\tabs = {residue_abs:.2g}"
+        )
     return sample, distances
