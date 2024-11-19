@@ -39,7 +39,7 @@ def run_case(
     case_directory = os.path.abspath(sim.input_dir)
     output_name = read_parameter(sim.input_file, "Name")[0]
     result_file = os.path.join(
-        case_directory, "Data", f"{output_name}{sim.output_suffix}.Final.csv"
+        case_directory, "Data", f"{output_name}{sim.output_suffix}.Final.0.csv"
     )
     initial_working_dir = os.getcwd()
     os.chdir(case_directory)
