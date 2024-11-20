@@ -20,6 +20,7 @@ def test_peregrine_cli():
     myna_path = os.path.abspath(os.path.join(test_path, ".."))
     build_dir = os.path.join(myna_path, "examples")
     output_dir = os.path.join(build_dir, "Myna")
+    tmp_dir = os.path.abspath("myna_tmp")
 
     # Set up command line argument
     parser = argparse.ArgumentParser("test")
@@ -32,13 +33,14 @@ def test_peregrine_cli():
         "--layers",
         "[50]",
         "--workspace",
-        f"{myna_path}/cli/peregrine_launcher/peregrine_default_workspace.yaml",
+        f"{myna_path}/src/myna/cli/peregrine_launcher/peregrine_default_workspace.yaml",
         "--mode",
         "meltpool_geometry",
         "--tmp-dir",
-        "~/myna_tmp",
+        f"{tmp_dir}",
     ]
     myna.core.workflow.launch_from_peregrine(parser)
 
     assert os.path.exists(output_dir)
     shutil.rmtree(output_dir)
+    shutil.rmtree(tmp_dir)
