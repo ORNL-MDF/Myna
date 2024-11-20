@@ -6,13 +6,13 @@
 #
 # License: 3-clause BSD, see https://opensource.org/licenses/BSD-3-Clause.
 #
-"""Define loading of part melt order from databases"""
+"""Define loading of part print order from databases"""
 
 from .data import *
 
 
-class MeltOrder(BuildMetadata):
-    """BuildMetadata subclass for melt order of parts, list of strings (unitless)"""
+class PrintOrder(BuildMetadata):
+    """BuildMetadata subclass for print order of parts, list of strings (unitless)"""
 
     def __init__(self, datatype):
         BuildMetadata.__init__(self, datatype)

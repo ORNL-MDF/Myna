@@ -83,7 +83,7 @@ class ComponentSolidificationBuildRegion(ComponentSolidification):
 
     def __init__(self):
         ComponentSolidification.__init__(self)
-        self.data_requirements.extend(["melt_order"])
+        self.data_requirements.extend(["print_order"])
         self.input_requirement = FileBuildRegion
         self.types.extend(["build_region", "layer"])
 

@@ -33,10 +33,10 @@ def configure_case(case_dir, res, myna_input="myna_data.yaml"):
     # Get relevant data from all parts in the build_region
     # Configuration ensures that only the relevant part & layer data is present
     parts = list(settings["build"]["parts"].keys())
-    melt_order = settings["build"]["build_data"]["melt_order"]["value"]
+    print_order = settings["build"]["build_data"]["print_order"]["value"]
     elapsed_time = 0.0
     beam_index = 1
-    for part in melt_order:
+    for part in print_order:
         if part in parts:
 
             # Set up scan path
