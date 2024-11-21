@@ -357,6 +357,7 @@ def config(input_file, output_file=None, show_avail=False, overwrite=False):
                 os.path.abspath(case_dir).replace(base_path, "").split(os.sep)
             )
             if "build_region" in step_obj.types:
+                data_dict_case["build"].pop("parts", None)
                 build_region = build_struct[2]
                 build_region_parts = data_dict_case["build"]["build_regions"][
                     build_region
@@ -366,61 +367,68 @@ def config(input_file, output_file=None, show_avail=False, overwrite=False):
                     if key != build_region:
                         data_dict_case["build"]["build_regions"].pop(key, None)
                     else:
-                        nested_buildregion_keys = [
-                            "build",
-                            "build_regions",
-                            build_region,
-                            "parts",
-                        ]
-                        build_region_parts = nested_get(
-                            data_dict_case, nested_buildregion_keys, {}
-                        )
-                        for part in build_region_parts.keys():
-                            if "layer" in step_obj.types:
-                                layer = build_struct[3]
-                                nested_layerdata_keys = nested_buildregion_keys + [
-                                    part,
-                                    "layer_data",
-                                ]
-                                part_layer_data = nested_get(
-                                    data_dict_case, nested_layerdata_keys, {}
-                                )
-                                for key in part_layer_data.keys():
-                                    if int(key) != int(layer):
-                                        data_dict_case["build"]["parts"][part][
-                                            "layer_data"
-                                        ].pop(key, None)
-                                nested_layerlist_keys = nested_buildregion_keys + [
-                                    part,
-                                    "layerlist",
-                                ]
-                                nested_set(
-                                    data_dict_case, nested_layerlist_keys, [int(layer)]
-                                )
-            if "part" in step_obj.types:
+                        if "part" in step_obj.types:
+                            nested_buildregion_keys = [
+                                "build",
+                                "build_regions",
+                                build_region,
+                                "parts",
+                            ]
+                            build_region_parts = nested_get(
+                                data_dict_case, nested_buildregion_keys, {}
+                            )
+                            for part in build_region_parts.keys():
+                                if "layer" in step_obj.types:
+                                    layer = build_struct[3]
+                                    nested_layerdata_keys = nested_buildregion_keys + [
+                                        part,
+                                        "layer_data",
+                                    ]
+                                    part_layer_data = nested_get(
+                                        data_dict_case, nested_layerdata_keys, {}
+                                    )
+                                    for key in part_layer_data.keys():
+                                        if int(key) != int(layer):
+                                            data_dict_case["build"]["parts"][part][
+                                                "layer_data"
+                                            ].pop(key, None)
+                                    nested_layerlist_keys = nested_buildregion_keys + [
+                                        part,
+                                        "layerlist",
+                                    ]
+                                    nested_set(
+                                        data_dict_case,
+                                        nested_layerlist_keys,
+                                        [int(layer)],
+                                    )
+            elif "part" in step_obj.types:
                 part = build_struct[2]
                 keys = list(data_dict_case["build"]["parts"].keys())
                 for key in keys:
                     if key != part:
                         data_dict_case["build"]["parts"].pop(key, None)
-            if "region" in step_obj.types:
-                region = build_struct[3]
-                keys = list(data_dict_case["build"]["parts"][part]["regions"].keys())
-                for key in keys:
-                    if key != region:
-                        data_dict_case["build"]["parts"][part]["regions"].pop(key, None)
-                if "layer" in step_obj.types:
-                    layer = build_struct[4]
+                if "region" in step_obj.types:
+                    region = build_struct[3]
                     keys = list(
-                        data_dict_case["build"]["parts"][part]["regions"][region][
-                            "layer_data"
-                        ].keys()
+                        data_dict_case["build"]["parts"][part]["regions"].keys()
                     )
                     for key in keys:
-                        if key != layer:
+                        if key != region:
+                            data_dict_case["build"]["parts"][part]["regions"].pop(
+                                key, None
+                            )
+                    if "layer" in step_obj.types:
+                        layer = build_struct[4]
+                        keys = list(
                             data_dict_case["build"]["parts"][part]["regions"][region][
                                 "layer_data"
-                            ].pop(key, None)
+                            ].keys()
+                        )
+                        for key in keys:
+                            if key != layer:
+                                data_dict_case["build"]["parts"][part]["regions"][
+                                    region
+                                ]["layer_data"].pop(key, None)
             else:
                 if "layer" in step_obj.types:
                     layer = build_struct[3]
