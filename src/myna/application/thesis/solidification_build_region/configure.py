@@ -32,7 +32,9 @@ def configure_case(case_dir, res, myna_input="myna_data.yaml"):
 
     # Get relevant data from all parts in the build_region
     # Configuration ensures that only the relevant part & layer data is present
-    parts = list(settings["build"]["parts"].keys())
+    build_region = list(settings["build"].get("build_regions").keys())[0]
+    build_region_dict = settings["build"]["build_regions"][build_region]
+    parts = build_region_dict["partlist"]
     print_order = settings["build"]["build_data"]["print_order"]["value"]
     elapsed_time = 0.0
     beam_index = 1
@@ -40,8 +42,8 @@ def configure_case(case_dir, res, myna_input="myna_data.yaml"):
         if part in parts:
 
             # Set up scan path
-            layer = list(settings["build"]["parts"][part]["layer_data"].keys())[0]
-            myna_scanfile = settings["build"]["parts"][part]["layer_data"][layer][
+            layer = list(build_region_dict["parts"][part]["layer_data"].keys())[0]
+            myna_scanfile = build_region_dict["parts"][part]["layer_data"][layer][
                 "scanpath"
             ]["file_local"]
             case_scanfile = os.path.join(case_dir, f"Path_{beam_index}.txt")
@@ -61,9 +63,9 @@ def configure_case(case_dir, res, myna_input="myna_data.yaml"):
             # Set beam data
             beam_file = os.path.join(case_dir, f"Beam_{beam_index}.txt")
             shutil.copy(beam_file_template, beam_file)
-            power = settings["build"]["parts"][part]["laser_power"]["value"]
-            spot_size = settings["build"]["parts"][part]["spot_size"]["value"]
-            spot_unit = settings["build"]["parts"][part]["spot_size"]["unit"]
+            power = build_region_dict["parts"][part]["laser_power"]["value"]
+            spot_size = build_region_dict["parts"][part]["spot_size"]["value"]
+            spot_unit = build_region_dict["parts"][part]["spot_size"]["unit"]
             spot_scale = 1
             if spot_unit == "mm":
                 spot_scale = 1e-3
