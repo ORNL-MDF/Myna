@@ -32,15 +32,10 @@ def run_case(
         output_files = glob.glob(os.path.join(sim.input_dir, "Data", "*.csv"))
         if (len(output_files) > 0) and not sim.args.overwrite:
             print(f"{sim.input_dir} has already been simulated. Skipping.")
-            result_file = output_files[0]
-            return [result_file, proc_list]
+            return proc_list
 
     # Run Simulation
     case_directory = os.path.abspath(sim.input_dir)
-    output_name = read_parameter(sim.input_file, "Name")[0]
-    result_file = os.path.join(
-        case_directory, "Data", f"{output_name}{sim.output_suffix}.Final.csv"
-    )
     initial_working_dir = os.getcwd()
     os.chdir(case_directory)
     procs = proc_list.copy()
@@ -80,7 +75,7 @@ def run_case(
         exit()
     os.chdir(initial_working_dir)
 
-    return [result_file, procs]
+    return procs
 
 
 def main(argv=None):
@@ -95,12 +90,10 @@ def main(argv=None):
     myna_files = sim.settings["data"]["output_paths"][sim.step_name]
 
     # Run each case
-    output_files = []
     proc_list = []
     for case_dir in [os.path.dirname(x) for x in myna_files]:
         sim.set_case(case_dir, case_dir)
-        result_file, proc_list = run_case(proc_list, sim)
-        output_files.append(result_file)
+        proc_list = run_case(proc_list, sim)
 
     # Wait for any remaining processes
     for proc in proc_list:
@@ -110,14 +103,27 @@ def main(argv=None):
         print(f"\t{pid=}: Simulation complete")
 
     # Post-process results to convert to Myna format
-    for filepath, mynafile in zip(output_files, myna_files):
-        df = pd.read_csv(filepath)
-        df["x (m)"] = df["x"]
-        df["y (m)"] = df["y"]
-        df["G (K/m)"] = df["G"]
-        df["V (m/s)"] = df["V"]
-        df = df[["x (m)", "y (m)", "G (K/m)", "V (m/s)"]]
-        df.to_csv(mynafile, index=False)
+    for mynafile in myna_files:
+
+        # Get list of result file(s), accounting for MPI ranks
+        case_directory = os.path.dirname(mynafile)
+        output_name = read_parameter(sim.input_file, "Name")[0]
+        result_file_pattern = os.path.join(
+            case_directory, "Data", f"{output_name}{sim.output_suffix}.Final*.csv"
+        )
+        output_files = sorted(glob.glob(result_file_pattern))
+        for i, filepath in enumerate(output_files):
+            df = pd.read_csv(filepath)
+            df["x (m)"] = df["x"]
+            df["y (m)"] = df["y"]
+            df["G (K/m)"] = df["G"]
+            df["V (m/s)"] = df["V"]
+            df = df[["x (m)", "y (m)", "G (K/m)", "V (m/s)"]]
+            if i == 0:
+                df_all = df.copy()
+            else:
+                df_all = pd.concat([df_all, df])
+        df_all.to_csv(mynafile, index=False)
 
 
 if __name__ == "__main__":

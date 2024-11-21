@@ -40,20 +40,6 @@ def configure_case(case_dir, res, myna_input="myna_data.yaml"):
     case_scanfile = os.path.join(case_dir, "Path.txt")
     shutil.copy(myna_scanfile, case_scanfile)
 
-    # Set up material properties
-    material = settings["build"]["build_data"]["material"]["value"]
-    material_dir = os.path.join(os.environ["MYNA_INSTALL_PATH"], "mist_material_data")
-    try:
-        mistPath = os.path.join(material_dir, f"{material}.json")
-        mistMat = mist.core.MaterialInformation(mistPath)
-        mistMat.write_3dthesis_input(os.path.join(case_dir, "Material.txt"))
-    except:
-        raise Exception(f'Material "{material}" not found in mist material database.')
-
-    # Set preheat temperature
-    preheat = settings["build"]["build_data"]["preheat"]["value"]
-    adjust_parameter(os.path.join(case_dir, "Material.txt"), "T_0", preheat)
-
     # Set beam data
     beam_file = os.path.join(case_dir, "Beam.txt")
     power = settings["build"]["parts"][part]["laser_power"]["value"]
@@ -70,6 +56,22 @@ def configure_case(case_dir, res, myna_input="myna_data.yaml"):
     adjust_parameter(beam_file, "Width_X", 0.25 * np.sqrt(6) * spot_size * spot_scale)
     adjust_parameter(beam_file, "Width_Y", 0.25 * np.sqrt(6) * spot_size * spot_scale)
     adjust_parameter(beam_file, "Power", power)
+
+    # Set up material properties
+    material = settings["build"]["build_data"]["material"]["value"]
+    material_dir = os.path.join(os.environ["MYNA_INSTALL_PATH"], "mist_material_data")
+    try:
+        mistPath = os.path.join(material_dir, f"{material}.json")
+        mistMat = mist.core.MaterialInformation(mistPath)
+        mistMat.write_3dthesis_input(os.path.join(case_dir, "Material.txt"))
+        laser_absorption = mistMat.get_property("laser_absorption", None, None)
+        adjust_parameter(beam_file, "Efficiency", laser_absorption)
+    except:
+        raise Exception(f'Material "{material}" not found in mist material database.')
+
+    # Set preheat temperature
+    preheat = settings["build"]["build_data"]["preheat"]["value"]
+    adjust_parameter(os.path.join(case_dir, "Material.txt"), "T_0", preheat)
 
     # Update domain resolution
     domain_file = os.path.join(case_dir, "Domain.txt")
