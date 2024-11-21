@@ -218,8 +218,15 @@ class PeregrineDB(Database):
         """
         is_layer_type = "layer" in step_types
         is_region_type = "region" in step_types
+        is_build_region_type = "build_region" in step_types
         synced_files = []
         layer_files = {}
+
+        # If build_region type, then return because there is not currently a way to get
+        # the `partnumbers` array from a layer in a build_region
+        if is_build_region_type:
+            return synced_files
+
         if is_layer_type:
             # Get layers associated with each file
             layers = [
