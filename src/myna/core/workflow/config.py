@@ -12,6 +12,7 @@ import os
 import yaml
 import copy
 from myna.core.workflow.load_input import load_input
+from myna.core.utils import nested_set, nested_get
 from myna.core import components
 from myna.core import metadata
 from myna import database
@@ -89,50 +90,10 @@ def config(input_file, output_file=None, show_avail=False, overwrite=False):
         print(f"ERROR: Could not find valid {datatype} in" + f" {build_path}")
         raise FileNotFoundError
 
-    # Get part names at build level
-    parts = settings["data"]["build"].get("parts", {})
-    all_parts = list(parts.keys())
-
-    # Get part names from build_regions
-    build_regions = settings["data"]["build"].get("build_regions", {})
-    for build_region in build_regions.keys():
-        build_region_parts = build_regions[build_region].get("parts")
-        if build_region_parts is not None:
-            all_parts.extend(build_region_parts)
-            for part in build_region_parts:
-                if parts == {}:
-                    settings["data"]["build"]["parts"] = {}
-                build_region_part_layers = build_regions[build_region].get("layers")
-                part_dict = settings["data"]["build"]["parts"].get(part, {})
-                part_layers = part_dict.get("layers", [])
-                if part_dict == {}:
-                    settings["data"]["build"]["parts"][part] = {}
-                if part_layers == []:
-                    part_layers = build_region_part_layers
-                else:
-                    part_layers.extend(build_region_part_layers)
-                    part_layers = sorted(list(set(part_layers)), key=lambda x: int(x))
-                settings["data"]["build"]["parts"][part]["layers"] = part_layers
-                parts[part] = settings["data"]["build"]["parts"][part]
-    all_parts = list(set(all_parts))
-
-    # Check that some amount of parts were specified
-    if len(all_parts) < 1:
-        print(f"ERROR: No data/parts specified in {input_file}")
-        raise ValueError
-
-    # Get list of all layers in build
-    all_layers = []
-    for part in parts.keys():
-        part_layers = parts[part].get("layers")
-        if part_layers is not None:
-            all_layers.extend(part_layers)
-    all_layers = list(set(all_layers))
-
-    # Check if {"data": {"output_paths":}} key  and create if not
-    value = settings["data"].get("output_paths")
-    if value is None:
-        settings["data"]["output_paths"] = {}
+    # Check if necessary paths exist and create if not
+    nested_get(settings, ["data", "output_paths"], {})
+    nested_get(settings, ["data", "build", "parts"], {})
+    nested_get(settings, ["data", "build", "build_regions"], {})
 
     # If specified, get available data. Otherwise extract necessary data
     if show_avail:
@@ -147,10 +108,38 @@ def config(input_file, output_file=None, show_avail=False, overwrite=False):
                     last_path = path
         return
 
+    # Get part names at build level and build region levels
+    all_parts = list(settings["data"]["build"].get("parts", {}).keys())
+    build_regions = nested_get(settings, ["data", "build", "build_regions"], {})
+    for build_region in build_regions.keys():
+        build_region_parts = build_regions[build_region].get("partlist", [])
+        all_parts.extend(build_region_parts)
+    all_parts = list(set(all_parts))
+
+    # Check that some amount of parts were specified
+    if len(all_parts) < 1:
+        print(f"ERROR: No parts specified in {input_file}")
+        raise ValueError
+
+    # Get list of all layers in build parts and build_region parts
+    all_layers = []
+    for part in nested_get(settings, ["data", "build", "parts"], []):
+        part_layers = nested_get(
+            settings, ["data", "build", "parts", part, "layers"], []
+        )
+        all_layers.extend(part_layers)
+    for build_region in nested_get(settings, ["data", "build", "build_regions"], []):
+        build_region_layers = nested_get(
+            settings, ["data", "build", "build_regions", build_region, "layerlist"], []
+        )
+        all_layers.extend(build_region_layers)
+    all_layers = list(set(all_layers))
+
     # Determine which data needs to be added based on component class requirements
     step_obj_prev = None
     for i, step in enumerate(settings["steps"]):
-        # Get the step component class name
+
+        # Get the step component class name and class object
         step_name = [x for x in step.keys()][0]
         component_class_name = step[step_name]["class"]
         print(f"\n- Configuring step {step_name} ({component_class_name})")
@@ -159,7 +148,7 @@ def config(input_file, output_file=None, show_avail=False, overwrite=False):
         step_obj.component_class = component_class_name
         step_obj.component_application = step[step_name]["application"]
 
-        # Raise error if there is an input requirement and it is the first step
+        # Raise warning if there is an input requirement and it is the first step
         if (i == 0) and step_obj.input_requirement is not None:
             print(f"Warning: Step {step_name} requires input, but is the first step.")
 
@@ -179,22 +168,47 @@ def config(input_file, output_file=None, show_avail=False, overwrite=False):
 
         # Get the data requirements associated with that class
         for data_req in step_obj.data_requirements:
+
             # For each data requirements, lookup the corresponding data object
             data_class_name = metadata.return_data_class_name(data_req)
             constructor = vars(metadata)[data_class_name]
 
             # Construct the relevant data object
             if constructor.__base__ == metadata.BuildMetadata:
-                if settings["data"]["build"].get("build_data") is None:
-                    settings["data"]["build"]["build_data"] = {}
+                nested_keys = ["data", "build", "build_data"]
+                nested_get(settings, nested_keys, {})
                 data_obj = constructor(datatype)
                 datum = {"value": data_obj.value, "unit": data_obj.unit}
-                settings["data"]["build"]["build_data"][data_req] = datum
+                nested_keys.append(data_req)
+                nested_set(settings, nested_keys, datum)
             elif constructor.__base__ == metadata.PartMetadata:
-                for part in parts.keys():
-                    data_obj = constructor(datatype, part)
-                    datum = {"value": data_obj.value, "unit": data_obj.unit}
-                    settings["data"]["build"]["parts"][part][data_req] = datum
+                if "build_region" in step_obj.types:
+                    nested_keys = ["data", "build", "build_regions"]
+                    build_regions = list(nested_get(settings, nested_keys, {}).keys())
+                    for build_region in build_regions:
+                        nested_keys_buildregion = nested_keys + [
+                            build_region,
+                            "partlist",
+                        ]
+                        parts = nested_get(settings, nested_keys_buildregion, [])
+                        for part in parts:
+                            data_obj = constructor(datatype, str(part))
+                            datum = {"value": data_obj.value, "unit": data_obj.unit}
+                            nested_partkeys = nested_keys + [
+                                build_region,
+                                "parts",
+                                part,
+                                data_req,
+                            ]
+                            nested_set(settings, nested_partkeys, datum)
+                else:
+                    nested_keys = ["data", "build", "parts"]
+                    parts = nested_get(settings, nested_keys, {})
+                    for part in parts.keys():
+                        data_obj = constructor(datatype, part)
+                        datum = {"value": data_obj.value, "unit": data_obj.unit}
+                        nested_partkeys = nested_keys + [part, data_req]
+                        nested_set(settings, nested_partkeys, datum)
 
             # Construct the relevant file object
             elif constructor.__base__ == metadata.BuildFile:
@@ -204,8 +218,10 @@ def config(input_file, output_file=None, show_avail=False, overwrite=False):
                     "file_local": data_obj.file_local,
                     "file_database": data_obj.file_database,
                 }
-                settings["data"]["build"][data_req] = datum
+                nested_set(settings, ["data", "build", data_req], datum)
             elif constructor.__base__ == metadata.BuildLayerPartsetFile:
+                nested_keys = ["data", "build", "layer_data"]
+                nested_get(settings, nested_keys, {})
                 for layer in all_layers:
                     data_obj = constructor(datatype, all_parts, layer)
                     data_obj.copy_file()
@@ -213,92 +229,113 @@ def config(input_file, output_file=None, show_avail=False, overwrite=False):
                         "file_local": data_obj.file_local,
                         "file_database": data_obj.file_database,
                     }
-                    if settings["data"]["build"].get("layer_data") is None:
-                        settings["data"]["build"]["layer_data"] = {}
-                    if settings["data"]["build"]["layer_data"].get(f"{layer}") is None:
-                        settings["data"]["build"]["layer_data"][f"{layer}"] = {}
-                    settings["data"]["build"]["layer_data"][f"{layer}"][
-                        data_req
-                    ] = datum
+                    nested_layerkey = nested_keys + [f"{layer}", data_req]
+                    nested_set(settings, nested_layerkey, datum)
             elif constructor.__base__ == metadata.PartFile:
-                for part in parts.keys():
-                    data_obj = constructor(datatype, part)
+
+                def set_partfile_entry(datatype, part, input_dict, nested_keys):
+                    data_obj = constructor(datatype, str(part))
                     data_obj.copy_file(overwrite=overwrite)
-                    datum = {
+                    partfile_dict = {
                         "file_local": data_obj.file_local,
                         "file_database": data_obj.file_database,
                     }
-                    settings["data"]["build"]["parts"][part][data_req] = datum
+                    nested_set(input_dict, nested_keys, partfile_dict)
+
+                if "build_region" in step_obj.types:
+                    nested_keys = ["data", "build", "build_regions"]
+                    for build_region in nested_get(settings, nested_keys, {}):
+                        nested_buildregion_keys = nested_keys + [build_region, "parts"]
+                        parts = nested_get(settings, nested_buildregion_keys, {})
+                        for part in parts.keys():
+                            nested_partkeys = nested_buildregion_keys + [part, data_req]
+                            set_partfile_entry(
+                                datatype, part, settings, nested_partkeys
+                            )
+                else:
+                    nested_keys = ["data", "build", "parts"]
+                    parts = nested_get(settings, nested_keys, {})
+                    for part in parts.keys():
+                        nested_partkeys = nested_keys + [part, data_req]
+                        set_partfile_entry(datatype, part, settings, nested_partkeys)
+
             elif constructor.__base__ == metadata.LayerFile:
-                for part in parts.keys():
-                    # Check for layers in part dictionary
-                    part_layers = parts[part].get("layers")
-                    if part_layers is not None:
+
+                def set_layerfile_entry(datatype, part, layer, input_dict, nested_keys):
+                    data_obj = constructor(datatype, part, layer)
+                    data_obj.copy_file(overwrite=overwrite)
+                    layerfile_dict = {
+                        "file_local": data_obj.file_local,
+                        "file_database": data_obj.file_database,
+                    }
+                    nested_set(input_dict, nested_keys, layerfile_dict)
+
+                if "build_region" in step_obj.types:
+                    nested_keys = ["data", "build", "build_regions"]
+                    builds_regions = list(nested_get(settings, nested_keys, {}).keys())
+                    for build_region in builds_regions:
+                        parts = nested_get(
+                            settings, nested_keys + [build_region, "partlist"], []
+                        )
+                        for part in parts:
+                            part_layers = nested_get(
+                                settings, nested_keys + [build_region, "layerlist"], []
+                            )
+                            for l in part_layers:
+                                layer = f"{l}"
+                                nested_layerkeys = nested_keys + [
+                                    build_region,
+                                    "parts",
+                                    part,
+                                    "layer_data",
+                                    layer,
+                                    data_req,
+                                ]
+                                set_layerfile_entry(
+                                    datatype, part, layer, settings, nested_layerkeys
+                                )
+                else:
+                    parts = nested_get(settings, ["data", "build", "parts"], {})
+                    for part in parts.keys():
+                        # Check for layers in part dictionary
+                        part_layers = nested_get(parts, [part, "layers"], [])
                         for l in part_layers:
                             layer = f"{l}"
-                            if (
-                                settings["data"]["build"]["parts"][part].get(
-                                    "layer_data"
-                                )
-                                is None
-                            ):
-                                settings["data"]["build"]["parts"][part][
-                                    "layer_data"
-                                ] = {}
-                            if (
-                                settings["data"]["build"]["parts"][part][
-                                    "layer_data"
-                                ].get(layer)
-                                is None
-                            ):
-                                settings["data"]["build"]["parts"][part]["layer_data"][
-                                    layer
-                                ] = {}
-                            data_obj = constructor(datatype, part, layer)
-                            data_obj.copy_file(overwrite=overwrite)
-                            datum = {
-                                "file_local": data_obj.file_local,
-                                "file_database": data_obj.file_database,
-                            }
-                            settings["data"]["build"]["parts"][part]["layer_data"][
-                                layer
-                            ][data_req] = datum
+                            nested_keys = [
+                                "data",
+                                "build",
+                                "parts",
+                                part,
+                                "layer_data",
+                                layer,
+                                data_req,
+                            ]
+                            set_layerfile_entry(
+                                datatype, part, layer, settings, nested_keys
+                            )
 
-                    # Check for layers in region dictionary
-                    regions = parts[part].get("regions")
-                    if regions is not None:
-                        for region in regions:
-                            region_layers = parts[part]["regions"][region].get("layers")
-                            if region_layers is not None:
-                                for l in region_layers:
-                                    layer = f"{l}"
-                                    if (
-                                        settings["data"]["build"]["parts"][part][
-                                            "regions"
-                                        ][region].get("layer_data")
-                                        is None
-                                    ):
-                                        settings["data"]["build"]["parts"][part][
-                                            "regions"
-                                        ][region]["layer_data"] = {}
-                                    if (
-                                        settings["data"]["build"]["parts"][part][
-                                            "regions"
-                                        ][region]["layer_data"].get(layer)
-                                        is None
-                                    ):
-                                        settings["data"]["build"]["parts"][part][
-                                            "regions"
-                                        ][region]["layer_data"][layer] = {}
-                                    data_obj = constructor(datatype, part, layer)
-                                    data_obj.copy_file(overwrite=overwrite)
-                                    datum = {
-                                        "file_local": data_obj.file_local,
-                                        "file_database": data_obj.file_database,
-                                    }
-                                    settings["data"]["build"]["parts"][part]["regions"][
-                                        region
-                                    ]["layer_data"][layer][data_req] = datum
+                        # Check for layers in region dictionary
+                        regions = nested_get(parts, [part, "regions"], {})
+                        for region in regions.keys():
+                            region_layers = nested_get(
+                                part, [part, "regions", region, "layers"], []
+                            )
+                            for l in region_layers:
+                                layer = f"{l}"
+                                nested_keys = [
+                                    "data",
+                                    "build",
+                                    "parts",
+                                    part,
+                                    "regions",
+                                    region,
+                                    "layer_data",
+                                    layer,
+                                    data_req,
+                                ]
+                                set_layerfile_entry(
+                                    datatype, part, layer, settings, nested_keys
+                                )
 
         # Save data to step object
         step_obj.apply_settings(
@@ -329,24 +366,37 @@ def config(input_file, output_file=None, show_avail=False, overwrite=False):
                     if key != build_region:
                         data_dict_case["build"]["build_regions"].pop(key, None)
                     else:
-                        for part in data_dict_case["build"]["parts"]:
-                            if part not in build_region_parts:
-                                data_dict_case["build"]["parts"].pop(part, None)
-                            elif "layer" in step_obj.types:
+                        nested_buildregion_keys = [
+                            "build",
+                            "build_regions",
+                            build_region,
+                            "parts",
+                        ]
+                        build_region_parts = nested_get(
+                            data_dict_case, nested_buildregion_keys, {}
+                        )
+                        for part in build_region_parts.keys():
+                            if "layer" in step_obj.types:
                                 layer = build_struct[3]
-                                keys = list(
-                                    data_dict_case["build"]["parts"][part]
-                                    .get("layer_data", {})
-                                    .keys()
+                                nested_layerdata_keys = nested_buildregion_keys + [
+                                    part,
+                                    "layer_data",
+                                ]
+                                part_layer_data = nested_get(
+                                    data_dict_case, nested_layerdata_keys, {}
                                 )
-                                for key in keys:
+                                for key in part_layer_data.keys():
                                     if int(key) != int(layer):
                                         data_dict_case["build"]["parts"][part][
                                             "layer_data"
                                         ].pop(key, None)
-                                data_dict_case["build"]["parts"][part]["layers"] = [
-                                    int(layer)
+                                nested_layerlist_keys = nested_buildregion_keys + [
+                                    part,
+                                    "layerlist",
                                 ]
+                                nested_set(
+                                    data_dict_case, nested_layerlist_keys, [int(layer)]
+                                )
             if "part" in step_obj.types:
                 part = build_struct[2]
                 keys = list(data_dict_case["build"]["parts"].keys())
@@ -375,7 +425,9 @@ def config(input_file, output_file=None, show_avail=False, overwrite=False):
                 if "layer" in step_obj.types:
                     layer = build_struct[3]
                     keys = list(
-                        data_dict_case["build"]["parts"][part]["layer_data"].keys()
+                        nested_get(
+                            data_dict_case, ["build", "parts", part, "layer_data"], {}
+                        ).keys()
                     )
                     for key in keys:
                         if key != layer:
@@ -411,7 +463,7 @@ def config(input_file, output_file=None, show_avail=False, overwrite=False):
             if len(files) > 0:
                 for f, e, v in zip(files, exists, valid):
                     print(f"    - {f} (exists = {e}, valid = {v})")
-            settings["data"]["output_paths"][step_name] = files
+            nested_set(settings, ["data", "output_paths", step_name], files)
 
         # Save step as previous step to get input files for next step
         step_obj_prev = step_obj

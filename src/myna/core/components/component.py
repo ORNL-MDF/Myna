@@ -12,6 +12,7 @@ import os
 import myna
 import myna.database
 from myna.core.workflow import load_input
+from myna.core.utils import nested_set, nested_get
 import logging
 
 
@@ -200,13 +201,14 @@ class Component:
             regions = None
             layers = []
             if "build_region" in vars:
-                build_regions = list(self.data["build"]["build_regions"].keys())
-            if build_regions is not None:
-                for build_region in build_regions:
+                build_regions = nested_get(self.data, ["build", "build_regions"], {})
+                for build_region in build_regions.keys():
                     if "layer" in vars:
-                        layers = self.data["build"]["build_regions"][build_region][
-                            "layers"
-                        ]
+                        layers = nested_get(
+                            self.data,
+                            ["build", "build_regions", build_region, "layerlist"],
+                            [],
+                        )
                         filelist = [
                             os.path.join(
                                 input_dir,

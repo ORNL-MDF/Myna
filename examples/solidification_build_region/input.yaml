@@ -6,6 +6,13 @@ steps:
       res: 50.0e-6
     execute:
       np: 8
+- 3dthesis_part:
+    class: solidification_part
+    application: thesis
+    configure:
+      res: 50.0e-6
+    execute:
+      np: 8
 data:
   build:
     datatype: Peregrine
@@ -13,10 +20,13 @@ data:
     path: ..
     build_regions:
       test_1:
-        parts: [P5]
-        layers: [51]
+        partlist: [P5]
+        layerlist: [51]
       test_2:
-        parts: [P5]
-        layers: [52]
+        partlist: [P5]
+        layerlist: [52]
+    parts:
+      P5:
+        layers: [51]
 myna:
   workspace: ../example-workspace.yaml
