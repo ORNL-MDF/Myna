@@ -318,7 +318,7 @@ def config(input_file, output_file=None, show_avail=False, overwrite=False):
                         regions = nested_get(parts, [part, "regions"], {})
                         for region in regions.keys():
                             region_layers = nested_get(
-                                part, [part, "regions", region, "layers"], []
+                                parts, [part, "regions", region, "layers"], []
                             )
                             for l in region_layers:
                                 layer = f"{l}"
