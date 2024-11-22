@@ -32,16 +32,23 @@ class PeregrineHDF5(PeregrineDB):
         "laser_power": [
             "parts/process_parameters/laser_power",
             "parts/process_parameters/power",
+            "parts/process_parameters/bulk_laser_power",
         ],
         "laser_spot_size": [
             "parts/process_parameters/laser_spot_size",
             "parts/process_parameters/spot_size",
+            "parts/process_parameters/bulk_laser_spot_size",
         ],
         "laser_scan_speed": [
             "parts/process_parameters/laser_beam_speed",
             "parts/process_parameters/scan_speed",
             "parts/process_parameters/speed",
             "parts/process_parameters/velocity",
+            "parts/process_parameters/bulk_laser_beam_speed",
+        ],
+        "material_name": [
+            "material/composition",
+            "material/feedstock_0/type",
         ],
     }
 
@@ -57,7 +64,7 @@ class PeregrineHDF5(PeregrineDB):
         Args:
           path: filepath to the HDF5 File
         """
-        self.path = path
+        self.path = os.path.abspath(path)
         self.path_dir = os.path.dirname(path)
 
     def exists(self):
@@ -91,7 +98,8 @@ class PeregrineHDF5(PeregrineDB):
 
         elif metadata_type == metadata.Material:
             with h5py.File(self.path, "r") as data:
-                value = str(data.attrs["material/composition"])
+                name = get_synonymous_key(data.attrs, self.synonyms["material_name"])
+                value = str(data.attrs[name])
             return value
 
         elif metadata_type == metadata.Preheat:
