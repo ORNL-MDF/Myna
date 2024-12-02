@@ -83,34 +83,22 @@ def setup_case(case_dir, app):
 
     # Write template STL mesh dict as needed, and if the template
     # STL mesh dict exists, then check if it matches current mesh settings
-    use_existing_stl_mesh = app.copy(
-        resource_template_dir, template_region_mesh_dict_path, template_stl_mesh_dict
+    use_existing_stl_mesh = app.has_matching_template_mesh_dict(
+        template_stl_mesh_dict_path, template_stl_mesh_dict
     )
+    if not use_existing_stl_mesh:
+        app.copy_template_to_dir(resource_template_dir)
+        with open(template_stl_mesh_dict_path, "w", encoding="utf-8") as f:
+            yaml.dump(template_stl_mesh_dict, f, default_flow_style=None)
 
     # Write template region mesh dict as needed, and if the template region
     # mesh dict exists, then check if it matches current mesh settings
-    use_existing_region_mesh = False
-    if not os.path.exists(template_region_mesh_dict_path):
-        with open(template_region_mesh_dict_path, "w") as f:
-            yaml.dump(template_region_mesh_dict, f, default_flow_style=False)
-    else:
-        with open(template_region_mesh_dict_path, "r") as f:
-            existing_dict = yaml.safe_load(f)
-        try:
-            matches = []
-            for key in template_region_mesh_dict.keys():
-                entry_match = template_region_mesh_dict.get(key) == existing_dict.get(
-                    key
-                )
-                matches.append(entry_match)
-            if all(matches):
-                use_existing_region_mesh = True
-            else:
-                with open(template_region_mesh_dict_path, "w") as f:
-                    yaml.dump(template_region_mesh_dict, f, default_flow_style=None)
-        except:
-            with open(template_region_mesh_dict_path, "w") as f:
-                yaml.dump(template_region_mesh_dict, f, default_flow_style=None)
+    use_existing_region_mesh = app.has_matching_template_mesh_dict(
+        template_region_mesh_dict_path, template_region_mesh_dict
+    )
+    if not use_existing_region_mesh:
+        with open(template_region_mesh_dict_path, "w", encoding="utf-8") as f:
+            yaml.dump(template_region_mesh_dict_name, f, default_flow_style=None)
 
     # Set input dictionary in format required by functions
     additivefoam_input_dict = {
@@ -401,7 +389,7 @@ def generate(
     )
     shutil.move(os.path.join(case_dir, "0"), os.path.join(case_dir, f"{start_time}"))
     os.system(
-        f"foamDictionary -entry beam/pathName -set"
+        "foamDictionary -entry beam/pathName -set"
         + f""" '"{path_name}"' """
         + f"{case_dir}/constant/heatSourceDict"
     )

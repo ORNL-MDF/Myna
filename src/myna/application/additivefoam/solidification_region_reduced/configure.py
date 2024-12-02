@@ -82,10 +82,14 @@ def setup_case(case_dir, app):
         resource_template_dir, template_mesh_dict_name
     )
 
-    # Copy template files
-    use_existing_mesh = app.copy(
-        resource_template_dir, template_mesh_dict_path, template_mesh_dict
+    # Copy template files if needed
+    use_existing_mesh = app.has_matching_template_mesh_dict(
+        template_mesh_dict_path, template_mesh_dict
     )
+    if not use_existing_mesh:
+        app.copy_template_to_dir(resource_template_dir)
+        with open(template_mesh_dict_path, "w", encoding="utf-8") as f:
+            yaml.dump(template_mesh_dict, f, default_flow_style=None)
 
     # Set input dictionary in format required by functions
     additivefoam_input_dict = {
@@ -295,7 +299,7 @@ def generate(additivefoam_input_dict, myna_settings, use_existing_mesh, app):
                 end_time = None
             if in_region and (start_time is None):
                 start_time = elapsed_time
-            elif (not in_region) and (end_time is None):
+            if (not in_region) and (end_time is None):
                 end_time = elapsed_time
             elapsed_time += np.linalg.norm(np.array([x1 - x0, y1 - y0])) / v
 
