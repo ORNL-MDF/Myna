@@ -83,7 +83,7 @@ def setup_case(case_dir, app):
 
     # Write template STL mesh dict as needed, and if the template
     # STL mesh dict exists, then check if it matches current mesh settings
-    use_existing_stl_mesh = app.copy(
+    use_existing_stl_mesh = app.has_useable_template_mesh(
         resource_template_dir, template_region_mesh_dict_path, template_stl_mesh_dict
     )
 
@@ -380,6 +380,7 @@ def generate(
         start_time = 0.0
     if end_time is None:
         end_time = elapsed_time
+    print(f"{end_time=}")
 
     # 4. Set the simulation parameters:
     # - start and end times of the simulation
@@ -387,6 +388,7 @@ def generate(
     # - scan path directory
     start_time = np.round(start_time, 5)
     end_time = np.round(end_time, 5)
+    print(f"{end_time=}")
     os.system(
         f"foamDictionary -entry startTime -set {start_time} "
         + f"{case_dir}/system/controlDict"
@@ -401,7 +403,7 @@ def generate(
     )
     shutil.move(os.path.join(case_dir, "0"), os.path.join(case_dir, f"{start_time}"))
     os.system(
-        f"foamDictionary -entry beam/pathName -set"
+        "foamDictionary -entry beam/pathName -set"
         + f""" '"{path_name}"' """
         + f"{case_dir}/constant/heatSourceDict"
     )

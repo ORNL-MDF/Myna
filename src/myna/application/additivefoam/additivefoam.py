@@ -94,36 +94,36 @@ class AdditiveFOAM(MynaApp):
             "additiveFoam",
         )
 
-    def copy(self, case_dir, mesh_path, mesh_dict):
+    def has_useable_template_mesh(self, case_dir, mesh_path, mesh_dict):
+        # Initialize return value
         use_existing_mesh = False
+
+        # Ensure directory to output path exists
+        os.makedirs(os.path.dirname(mesh_path), exist_ok=True)
+
         # If no template mesh dict exists, write it
         if (not os.path.exists(mesh_path)) or (self.args.overwrite):
             shutil.copytree(self.args.template, case_dir, dirs_exist_ok=True)
 
-            with open(mesh_path, "w") as f:
-                yaml.dump(mesh_path, f, default_flow_style=False)
+            with open(mesh_path, "w", encoding="utf-8") as f:
+                yaml.dump(mesh_dict, f, default_flow_style=False)
 
         # If template mesh dict exists, then check if it matches current
         # build, part, and region
         else:
             print(f"Warning: NOT overwriting existing case in: {case_dir}")
 
-            with open(mesh_path, "r") as f:
+            with open(mesh_path, "r", encoding="utf-8") as f:
                 existing_dict = yaml.safe_load(f)
-            try:
-                matches = []
-                for key in mesh_dict.keys():
-                    entry_match = mesh_dict.get(key) == existing_dict.get(key)
-                    matches.append(entry_match)
-                if all(matches):
-                    use_existing_mesh = True
-                else:
-                    shutil.copytree(self.args.template, case_dir, dirs_exist_ok=True)
-                    with open(mesh_path, "w") as f:
-                        yaml.dump(mesh_dict, f, default_flow_style=None)
-            except:
+            matches = []
+            for key in mesh_dict.keys():
+                entry_match = mesh_dict.get(key) == existing_dict.get(key)
+                matches.append(entry_match)
+            if all(matches):
+                use_existing_mesh = True
+            else:
                 shutil.copytree(self.args.template, case_dir, dirs_exist_ok=True)
-                with open(mesh_path, "w") as f:
+                with open(mesh_path, "w", encoding="utf-8") as f:
                     yaml.dump(mesh_dict, f, default_flow_style=None)
 
         return use_existing_mesh
