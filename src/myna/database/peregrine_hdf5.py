@@ -192,11 +192,11 @@ class PeregrineHDF5(PeregrineDB):
                 max_y = np.max(inds[:, iy]) + 1
 
                 # Convert bounds to millimeters
-                pad = 2  # px
-                min_x = 0.5 * dx + dx * (min_x - pad)
-                min_y = 0.5 * dy + dy * (min_y - pad)
-                max_x = 0.5 * dx + dx * (max_x + pad)
-                max_y = 0.5 * dy + dy * (max_y + pad)
+                pad = 3  # px
+                min_x = dx * (min_x - pad - 0.5)
+                min_y = dy * (min_y - pad - 0.5)
+                max_x = dx * (max_x + pad + 0.5)
+                max_y = dy * (max_y + pad + 0.5)
 
                 # Invert the y-axis to match part_id map
                 df_scan["ys"] = y_dim - df_scan["ys"]
