@@ -83,7 +83,7 @@ def setup_case(case_dir, app):
     )
 
     # Copy template files
-    use_existing_mesh = app.copy(
+    use_existing_mesh = app.has_useable_template_mesh(
         resource_template_dir, template_mesh_dict_path, template_mesh_dict
     )
 
@@ -269,13 +269,17 @@ def generate(additivefoam_input_dict, myna_settings, use_existing_mesh, app):
     ##############################
     # 1. Read scan path
     df = pd.read_csv(new_scan_path_file, sep="\s+")
+    print(df.dtypes)
+    print(df)
 
     # 2. Iterate through rows to determine intersection with
     # the region's bounding box
     elapsed_time = 0.0
     start_time = None
     end_time = None
+    print(f"{end_time=}")
     for index, row in df.iloc[1:].iterrows():
+        print(elapsed_time)
         # 2A. If scan path row is a scan vector (Pmod == 1)
         if row["Mode"] == 0:
             v = row["tParam"]
@@ -291,12 +295,17 @@ def generate(additivefoam_input_dict, myna_settings, use_existing_mesh, app):
                 & (ys > bbDict["bb_min"][1])
                 & (ys < bbDict["bb_max"][1])
             )
+            print(bbDict)
+            print(in_region, start_time, end_time, elapsed_time)
             if in_region:
                 end_time = None
+                print(".")
             if in_region and (start_time is None):
                 start_time = elapsed_time
-            elif (not in_region) and (end_time is None):
+                print("..")
+            if (not in_region) and (end_time is None):
                 end_time = elapsed_time
+                print("...")
             elapsed_time += np.linalg.norm(np.array([x1 - x0, y1 - y0])) / v
 
         # 2B. If scan path row is a spot (Pmod == 0)
@@ -309,6 +318,7 @@ def generate(additivefoam_input_dict, myna_settings, use_existing_mesh, app):
         start_time = 0.0
     if end_time is None:
         end_time = elapsed_time
+    print(f"{end_time=}")
 
     # 4. Set the simulation parameters:
     # - start and end times of the simulation
@@ -316,6 +326,7 @@ def generate(additivefoam_input_dict, myna_settings, use_existing_mesh, app):
     # - scan path directory
     start_time = np.round(start_time, 5)
     end_time = np.round(end_time, 5)
+    print(f"{end_time=}")
     os.system(
         f"foamDictionary -entry startTime -set {start_time} "
         + f"{case_dir}/system/controlDict"
