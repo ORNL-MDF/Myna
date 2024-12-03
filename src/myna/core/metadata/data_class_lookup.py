@@ -28,6 +28,7 @@ def return_data_class_name(data_name):
         "stl": "STL",
         "layer_thickness": "LayerThickness",
         "part_id_map": "PartIDMap",
+        "print_order": "PrintOrder",
     }
     try:
         data_class_name = data_class_lookup[data_name]

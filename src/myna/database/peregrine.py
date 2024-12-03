@@ -171,6 +171,16 @@ class PeregrineDB(Database):
                 df.write_parquet(file_database, compression="lz4")
             return file_database
 
+        elif metadata_type == metadata.PrintOrder:
+            # TODO: Currently there is not a clear way of how to extract this metadata
+            # from a Peregrine database, but it is needed for a project.
+            # - For now, assume that the print order equivalent to the sorted part names
+            value = []
+            part_names = [os.path.basename(d) for d in os.listdir(self.simulation_dir)]
+            part_names = [d for d in part_names if d[0] == "P"]
+            value = sorted(part_names, key=lambda x: int(x[1:]))
+            return value
+
         else:
             print(f"Error loading: {metadata_type}")
             raise NotImplementedError
@@ -208,8 +218,15 @@ class PeregrineDB(Database):
         """
         is_layer_type = "layer" in step_types
         is_region_type = "region" in step_types
+        is_build_region_type = "build_region" in step_types
         synced_files = []
         layer_files = {}
+
+        # If build_region type, then return because there is not currently a way to get
+        # the `partnumbers` array from a layer in a build_region
+        if is_build_region_type:
+            return synced_files
+
         if is_layer_type:
             # Get layers associated with each file
             layers = [

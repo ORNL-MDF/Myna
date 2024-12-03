@@ -5,6 +5,12 @@ thesis:
          res: 25e-6
       execute:
          batch: True
+   solidification_build_region:
+      executable: 3DThesis
+      configure:
+         res: 25e-6
+      execute:
+         batch: True
 exaca:
    microstructure_region:
       executable: ExaCA

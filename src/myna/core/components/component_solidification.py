@@ -74,6 +74,20 @@ class ComponentSolidificationRegion(ComponentSolidification):
         self.types.extend(["part", "region", "layer"])
 
 
+class ComponentSolidificationBuildRegion(ComponentSolidification):
+    """Layer-wise Component that outputs the spatial varying solidification
+    characteristics for a region in the format of the class `FileGV`
+    based on input of the region location in the format
+    `FileRegion`
+    """
+
+    def __init__(self):
+        ComponentSolidification.__init__(self)
+        self.data_requirements.extend(["print_order"])
+        self.input_requirement = FileBuildRegion
+        self.types.extend(["build_region", "layer"])
+
+
 ############################
 # STL-requiring Components #
 ############################

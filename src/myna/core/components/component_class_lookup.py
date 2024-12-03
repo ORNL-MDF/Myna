@@ -33,6 +33,7 @@ def return_step_class(step_name):
     step_class_lookup = {
         "general": Component(),
         "solidification_part": ComponentSolidificationPart(),
+        "solidification_build_region": ComponentSolidificationBuildRegion(),
         "solidification_region_reduced": ComponentSolidificationRegion(),
         "solidification_part_solidification": ComponentSolidificationPartReduced(),
         "solidification_region_reduced": ComponentSolidificationRegionReduced(),
