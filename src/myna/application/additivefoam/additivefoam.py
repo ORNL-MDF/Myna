@@ -6,10 +6,9 @@
 #
 # License: 3-clause BSD, see https://opensource.org/licenses/BSD-3-Clause.
 #
-import os, shutil
+import os, shutil, subprocess
 import yaml
 import mistlib as mist
-
 from myna.core.app.base import MynaApp
 
 
@@ -129,6 +128,11 @@ class AdditiveFOAM(MynaApp):
         return use_existing_mesh
 
     def update_material_properties(self, case_dir):
+        """Update the material properties for the AdditiveFOAM case based on Mist data
+
+        Args:
+            case_dir: path to the case directory to update
+        """
 
         material = self.settings["data"]["build"]["build_data"]["material"]["value"]
         material_data = os.path.join(
@@ -141,4 +145,24 @@ class AdditiveFOAM(MynaApp):
         thermo_filepath = os.path.join(case_dir, "constant", "thermoPath")
         mat.write_additivefoam_input(
             transport_file=transport_filepath, thermo_file=thermo_filepath
+        )
+
+        # Update the base material laser absorption for the heat source
+        absorption = mat.get_property("laser_absorption", None, None)
+        absorption_model = (
+            subprocess.check_output(
+                "foamDictionary -entry beam/absorptionModel -value "
+                + f"{case_dir}/constant/heatSourceDict",
+                shell=True,
+            )
+            .decode("utf-8")
+            .strip()
+        )
+        os.system(
+            f"foamDictionary -entry beam/{absorption_model}Coeffs/eta0"
+            + f' -set "{absorption}" {case_dir}/constant/heatSourceDict'
+        )
+        os.system(
+            f"foamDictionary -entry beam/{absorption_model}Coeffs/etaMin"
+            + f' -set "{absorption}" {case_dir}/constant/heatSourceDict'
         )
