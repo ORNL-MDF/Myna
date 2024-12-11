@@ -93,39 +93,38 @@ class AdditiveFOAM(MynaApp):
             "additiveFoam",
         )
 
-    def copy(self, case_dir, mesh_path, mesh_dict):
-        use_existing_mesh = False
-        # If no template mesh dict exists, write it
-        if (not os.path.exists(mesh_path)) or (self.args.overwrite):
-            shutil.copytree(self.args.template, case_dir, dirs_exist_ok=True)
+    def copy_template_to_dir(self, target_dir):
+        """Copies the specified template directory to the specified target directory"""
+        # Ensure directory structure to target exists
+        os.makedirs(os.path.dirname(target_dir), exist_ok=True)
+        if self.args.template is not None:
+            shutil.copytree(self.args.template, target_dir, dirs_exist_ok=True)
 
-            with open(mesh_path, "w") as f:
-                yaml.dump(mesh_path, f, default_flow_style=False)
+    def has_matching_template_mesh_dict(self, mesh_path, mesh_dict):
+        """Checks if there is a usable mesh dictionary in the case directory
+
+        Args:
+            mesh_path: path to the template mesh dictionary
+            mesh_dict: dictionary object containing the template mesh dictionary
+
+        Return:
+            Boolean: True/False if template mesh dict matches
+        """
+        if (not os.path.exists(mesh_path)) or (self.args.overwrite):
+            return False
 
         # If template mesh dict exists, then check if it matches current
         # build, part, and region
+        with open(mesh_path, "r", encoding="utf-8") as f:
+            existing_dict = yaml.safe_load(f)
+        matches = []
+        for key in mesh_dict.keys():
+            entry_match = mesh_dict.get(key) == existing_dict.get(key)
+            matches.append(entry_match)
+        if all(matches):
+            return True
         else:
-            print(f"Warning: NOT overwriting existing case in: {case_dir}")
-
-            with open(mesh_path, "r") as f:
-                existing_dict = yaml.safe_load(f)
-            try:
-                matches = []
-                for key in mesh_dict.keys():
-                    entry_match = mesh_dict.get(key) == existing_dict.get(key)
-                    matches.append(entry_match)
-                if all(matches):
-                    use_existing_mesh = True
-                else:
-                    shutil.copytree(self.args.template, case_dir, dirs_exist_ok=True)
-                    with open(mesh_path, "w") as f:
-                        yaml.dump(mesh_dict, f, default_flow_style=None)
-            except:
-                shutil.copytree(self.args.template, case_dir, dirs_exist_ok=True)
-                with open(mesh_path, "w") as f:
-                    yaml.dump(mesh_dict, f, default_flow_style=None)
-
-        return use_existing_mesh
+            return False
 
     def update_material_properties(self, case_dir):
         """Update the material properties for the AdditiveFOAM case based on Mist data
