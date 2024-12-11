@@ -3,15 +3,15 @@ steps:
     class: solidification_region_stl
     application: additivefoam
     configure:
-      coarse: 160.0e-6
+      coarse: 0.64e-3
       rx: 1.0e-3
       ry: 1.0e-3
-      rz: 300.0e-6
-      pad-xy: 0.75e-3
-      pad-z: 0.4e-3
-      pad-sub: 2.5e-3
-      refine-layer: 3
-      refine-region: 1
+      rz: 0.5e-3
+      pad-xy: 2.0e-3
+      pad-z: 1.0e-3
+      pad-sub: 1.0e-3
+      refine-layer: 2
+      refine-region: 3
     execute:
       batch: True
       cores: 24
@@ -25,5 +25,5 @@ data:
         regions:
           r1:
             layers: [51, 52]
-            x: 0.1725
-            y: 0.0725
+            x: 0.2
+            y: 0.017
