@@ -4,22 +4,25 @@
                       Created for simulation with Myna
   ---------------------------------------------------------------------------*/
 
-FoamFile
+topSurface
 {
-    version         2;
-    format          ascii;
-    class           dictionary;
-    object          foamToExaCADict;
+    type            surfaces;
+    libs            ("libsampling.so");
+
+    surfaceFormat   raw;
+
+    fields          ( T alpha.solid );
+
+    interpolationScheme cellPoint;
+
+    surfaces
+    (
+        top
+        {
+            type            patch;
+            patches         ( "top" );
+        }
+    );
 }
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-execute         on;
-
-box             ( 0.172 0.072 -0.0003 ) ( 0.173 0.073 0 );
-
-dx              2.5e-06;
-
-isotherm        1730;
-
 
 // ************************************************************************* //

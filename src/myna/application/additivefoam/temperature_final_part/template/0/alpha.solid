@@ -9,38 +9,26 @@ FoamFile
     format      binary;
     class       volScalarField;
     location    "0";
-    object      T;
+    object      alpha.solid;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 dimensions      [0 0 0 1 0 0 0];
 
-internalField   uniform 300;
+internalField   uniform 1;
 
 boundaryField
 {
     bottom
     {
-        type            mixedTemperature;
-        h               500.0;
-        emissivity      0.4;
-        Tinf            uniform 300;
-        value           uniform 300;
+        type            zeroGradient;
     }
     top
     {
-        type            mixedTemperature;
-        h               25.0;
-        emissivity      0.4;
-        Tinf            uniform 300;
-        value           uniform 300;
+        type            zeroGradient;
     }
     sides
     {
         type            zeroGradient;
-        value           uniform 300;
     }
 }
-
-
-// ************************************************************************* //

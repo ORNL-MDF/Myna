@@ -18,21 +18,16 @@ sources         ( beam );
 beam
 {
     pathName        scanpath.txt;
-    absorptionModel Kelly;
-    KellyCoeffs
+    absorptionModel constant;
+    constantyCoeffs
     {
-        geometry        cylinder;
-        eta0            0.3;
-        etaMin          0.35;
+        eta            0.3;
     }
-    heatSourceModel modifiedSuperGaussian;
-    modifiedSuperGaussianCoeffs
+    heatSourceModel Gaussian;
+    GaussianCoeffs
     {
         dimensions      ( 6.5e-05 6.5e-05 3e-05 );
-        m               2;
-        k               2;
-        transient       true;
-        isoValue        1670;
+       nPoints          ( 2 2 2 );
     }
 }
 

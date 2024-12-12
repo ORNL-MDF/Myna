@@ -4,32 +4,17 @@
                       Created for simulation with Myna
   ---------------------------------------------------------------------------*/
 
-FoamFile
+  FoamFile
 {
     version         2;
     format          ascii;
     class           dictionary;
-    object          surfaceFeaturesDict;
+    location        "system";
+    object          mapFieldsDict;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-includedAngle   180;
-
-subsetFeatures
-{
-    nonManifoldEdges yes;
-    openEdges       yes;
-}
-
-trimFeatures
-{
-    minElem         0;
-    minLen          0;
-}
-
-writeObj        yes;
-
-surfaces        ( "part.stl" );
-
+patchMap        ();
+cuttingPatches  ( bottom top sides );
 
 // ************************************************************************* //
