@@ -19,7 +19,7 @@ beam
 {
     pathName        scanpath.txt;
     absorptionModel constant;
-    constantyCoeffs
+    constantCoeffs
     {
         eta            0.3;
     }
