@@ -1,0 +1,28 @@
+/*---------------------------------------------------------------------------
+     AdditiveFOAM template input file (compatible with 1.0, OpenFOAM 10)
+
+                      Created for simulation with Myna
+  ---------------------------------------------------------------------------*/
+
+topSurface
+{
+    type            surfaces;
+    libs            ("libsampling.so");
+
+    surfaceFormat   raw;
+
+    fields          ( T alpha.solid );
+
+    interpolationScheme cellPoint;
+
+    surfaces
+    (
+        top
+        {
+            type            patch;
+            patches         ( "top" );
+        }
+    );
+}
+
+// ************************************************************************* //

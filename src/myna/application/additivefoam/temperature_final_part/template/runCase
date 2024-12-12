@@ -1,0 +1,11 @@
+#!/bin/bash
+
+cd ${0%/*} || exit 1
+
+# Source tutorial run functions
+. $WM_PROJECT_DIR/bin/tools/RunFunctions
+
+# AdditiveFOAM
+runApplication blockMesh
+
+python run_layers.py -n_layers 10 -n_cells_per_layer 1 -layer_thickness 50e-6 -layer_time 60
