@@ -99,7 +99,7 @@ def main():
     """Assembles and runs coarse heat transfer simulation for all specified layers.
 
     Due to each layer relying on the output of the previous layer, this app requires
-    each layer to run sequentially. Batch will operate on a part-wise basis."""
+    each layer to run sequentially."""
 
     # Create app instance
     app = AdditiveFOAM("temperature_final_part")
