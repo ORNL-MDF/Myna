@@ -24,6 +24,23 @@ def nested_get(dict, keys, default_value=None):
     return dict[keys[-1]]
 
 
+def nested_find_all(dictionary, target_key):
+    """Gets the values of all matching keys in the nested dictionary at any level
+
+    Args:
+        dictionary: dictionary to parse
+        key: key to match
+    """
+    matches = []
+    if target_key in dictionary:
+        matches.append(dictionary[target_key])
+    for key, value in dictionary.items():
+        if isinstance(value, dict):
+            nested_matches = nested_find_all(dictionary[key], target_key)
+            matches.extend(nested_matches)
+    return matches
+
+
 def get_synonymous_key(dict_obj, synonym_list):
     """Returns the object at the first matching key from a dictionary-like object
     given a list of synonymous keys

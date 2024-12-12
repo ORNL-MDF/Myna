@@ -189,7 +189,7 @@ def create_cube_mesh(case_dir, spacing, tolerance, rve, rve_pad):
     origin = [a + b / 2.0 for (a, b) in zip(bb_min, span)]
 
     # update the background mesh file
-    blockMeshDict = os.path.join(case_dir, "system/blockMeshDict")
+    blockMeshDict = os.path.join(case_dir, "system", "blockMeshDict")
     lines = open(blockMeshDict, "r").readlines()
 
     keys = ["xmin", "ymin", "zmin", "xmax", "ymax", "zmax"]

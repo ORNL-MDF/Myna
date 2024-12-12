@@ -38,3 +38,41 @@ def convert_peregrine_scanpath(filename, export_path, power=1):
         sep="\t",
         index=False,
     )
+
+
+def get_scanpath_bounding_box(scanpath, file_format="myna"):
+    """Returns the bounding box for given scanpath file(s) in meters
+
+    Args:
+        scanpath: file or list of files of scanpaths to find the bounding box
+        format: the format of the scanpath file ("myna" or "additivefoam")
+
+    Returns:
+        [[minx, miny, minz],[maxx, maxy, maxz]]
+    """
+    if not isinstance(scanpath, list) and isinstance(scanpath, str):
+        scanpath = [scanpath]
+
+    xmin, ymin, zmin = [1e10] * 3
+    xmax, ymax, zmax = [-1e10] * 3
+
+    if file_format.lower() == "myna":
+        xcol, ycol, zcol = ["X(mm)", "Y(mm)", "Z(mm)"]
+        scale = 1e-3
+    elif file_format.lower() == "additivefoam":
+        xcol, ycol, zcol = ["X(m)", "Y(m)", "Z(m)"]
+        scale = 1
+
+    else:
+        assert file_format.lower() in ["myna", "additivefoam"]
+
+    for f in scanpath:
+        df = pd.read_csv(f, sep="\t")
+        xmin = min(xmin, df[xcol].min() * scale)
+        xmax = max(xmax, df[xcol].max() * scale)
+        ymin = min(ymin, df[ycol].min() * scale)
+        ymax = max(ymax, df[ycol].max() * scale)
+        zmin = min(zmin, df[zcol].min() * scale)
+        zmax = max(zmax, df[zcol].max() * scale)
+
+    return [[xmin, ymin, zmin], [xmax, ymax, zmax]]
