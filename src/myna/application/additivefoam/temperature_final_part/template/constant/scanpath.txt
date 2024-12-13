@@ -1,0 +1,2 @@
+Mode	X(m)	Y(m)	Z(m)	Power(W)	tParam
+1	0.0	0.0	0.0	0	0.0
