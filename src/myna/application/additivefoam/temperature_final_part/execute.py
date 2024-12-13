@@ -124,8 +124,13 @@ def main():
     myna_files = app.settings["data"]["output_paths"][app.step_name]
     parts = list(app.settings["data"]["build"]["parts"].keys())
     for part in parts:
-        part_files = sorted([f for f in myna_files if get_myna_file_part(f) == part])
+        # Get list of files associated with the part and extract layer numbers
+        part_files = [f for f in myna_files if get_myna_file_part(f) == part]
         layers = [int(get_myna_file_layer(f)) for f in part_files]
+
+        # Sort the lists by layer integers
+        part_files = [x for _, x in sorted(zip(layers, part_files))]
+        layers = sorted(layers)
 
         # Create a resource directory for the part's background mesh
         template_dir = os.path.abspath(app.get_part_resource_template_dir(part))
