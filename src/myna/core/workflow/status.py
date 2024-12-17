@@ -29,7 +29,7 @@ def format_class_string_to_list(
     indent = ""
     emphasis = ""
     obj_type = object_instance.__mro__[-2]
-    link = f'https://github.com/ORNL-MDF/Myna/tree/{branch}/{object_instance.__mro__[0].__module__.replace(".", "/")}.py'
+    link = f'https://github.com/ORNL-MDF/Myna/tree/{branch}/src/{object_instance.__mro__[0].__module__.replace(".", "/")}.py'
     depth = len(object_instance.__mro__)
     if depth == 2:
         emphasis = "**"
