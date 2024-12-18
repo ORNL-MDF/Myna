@@ -42,11 +42,18 @@ timeFormat      general;
 
 timePrecision   8;
 
-runTimeModifiable yes;
+runTimeModifiable no;
 
 adjustTimeStep  yes;
 
 maxCo           0.5;
-maxFo           50;
-maxAlphaCo      0.5;
+
+maxDi           100;
+
+maxAlphaCo      1;
+
+functions
+{
+    #includeFunc    ExaCA
+}
 // ************************************************************************* //
