@@ -4,22 +4,14 @@
                       Created for simulation with Myna
   ---------------------------------------------------------------------------*/
 
-FoamFile
+ExaCA
 {
-    version         2;
-    format          ascii;
-    class           dictionary;
-    object          foamToExaCADict;
+    type ExaCA;
+    libs ("libExaCAFunctionObject.so");
+    
+    box         ( 0.0495 -0.0495 -0.0003 ) ( 0.0505 -0.0485 0 );
+    dx          2.5e-6;
+    isoValue    1730;
 }
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-execute         on;
-
-box             ( 0.0495 -0.0495 -0.0003 ) ( 0.0505 -0.0485 0 );
-
-dx              2.5e-06;
-
-isotherm        1730;
-
 
 // ************************************************************************* //
