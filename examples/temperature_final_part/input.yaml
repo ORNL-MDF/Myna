@@ -1,0 +1,19 @@
+steps:
+- macroadditivefoam:
+    class: temperature_final_part
+    application: additivefoam
+    execute:
+      coarse: 0.5e-3
+      pad-xy: 5e-3
+      pad-sub: 12.7e-3
+      np: 24
+      n-cells-per-layer: 1
+      layer-time: 5
+data:
+  build:
+    datatype: Peregrine
+    name: myna_output
+    path: ..
+    parts:
+      P5:
+        layers: [51, 52]

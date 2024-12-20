@@ -1,0 +1,48 @@
+/*---------------------------------------------------------------------------
+     AdditiveFOAM template input file (compatible with 1.0, OpenFOAM 10)
+
+                      Created for simulation with Myna
+  ---------------------------------------------------------------------------*/
+
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    location    "system";
+    object      fvSolution;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+solvers
+{
+    "T.*"
+    {
+        solver          PBiCGStab;
+        preconditioner  DIC;
+        tolerance       1e-10;
+        relTol          0;
+        minIter         1;
+        maxIter         20;
+    }
+}
+
+PIMPLE
+{
+    momentumPredictor no;
+    nOuterCorrectors 0;
+    nCorrectors     1;
+    nNonOrthogonalCorrectors 0;
+    pRefCell        0;
+    pRefValue       0;
+}
+
+relaxationFactors
+{
+    equations
+    {
+        ".*"   1;
+    }
+}
+
+// ************************************************************************* //
