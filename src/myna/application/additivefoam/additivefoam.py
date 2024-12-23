@@ -89,6 +89,12 @@ class AdditiveFOAM(MynaApp):
             type=float,
             help="Multiple by which to scale the STL file dimensions (default = 0.001, mm -> m)",
         )
+        self.parser.add_argument(
+            "--exaca-mesh",
+            default=2.5e-6,
+            type=float,
+            help="Mesh size for the ExaCA simulations, in meters",
+        )
 
         self.args = self.parser.parse_args()
 
@@ -360,4 +366,15 @@ class AdditiveFOAM(MynaApp):
             "foamDictionary -entry beam/pathName -set"
             + f""" '"{scanpath_name}"' """
             + f"{case_dir}/constant/heatSourceDict"
+        )
+
+    def update_exaca_mesh_size(self, case_dir):
+        """Updates the ExaCA/dx value based on the app settings
+
+        Args:
+            case_dir: AdditiveFOAM case directory to update
+        """
+        os.system(
+            "foamDictionary -entry ExaCA/dx -set"
+            + f" {self.args.exaca_mesh} {case_dir}/system/ExaCA"
         )

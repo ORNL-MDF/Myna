@@ -202,6 +202,7 @@ def setup_case(case_dir, app):
     app.update_material_properties(case_dir)
     app.update_region_start_and_end_times(case_dir, bb_dict, path_name)
     app.update_heatsource_scanfile(case_dir, path_name)
+    app.update_exaca_mesh_size(case_dir)
 
     return
 
