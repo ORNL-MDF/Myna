@@ -317,10 +317,10 @@ def slice(case_dir, height):
 
 def refine_RVE(case_dir, bb):
     os.system(
-        f"foamDictionary -entry box -set "
+        f"foamDictionary -entry ExaCA/box -set "
         f'"( {bb[0][0]} {bb[0][1]} {bb[0][2]} ) '
         f'( {bb[1][0]} {bb[1][1]} {bb[1][2]} )" '
-        f"{case_dir}/constant/foamToExaCADict"
+        f"{case_dir}/system/ExaCA"
     )
 
     os.system(
