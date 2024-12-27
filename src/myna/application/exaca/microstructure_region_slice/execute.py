@@ -29,24 +29,23 @@ def nested_set(dict, keys, value):
     dict[keys[-1]] = value
 
 
-def run_case(case_dir, batch, ranks):
+def run_case(app, case_dir):
 
     # Update number of cores to use
     run_script = os.path.join(case_dir, "runCase.sh")
-    with open(run_script, "r") as f:
+    with open(run_script, "r", encoding="utf-8") as f:
         lines = f.readlines()
     for i, line in enumerate(lines):
-        lines[i] = line.replace("{{RANKS}}", f"{ranks}")
-    with open(run_script, "w") as f:
+        lines[i] = line.replace("{{RANKS}}", f"{app.args.np}")
+    with open(run_script, "w", encoding="utf-8") as f:
         f.writelines(lines)
 
     # Run case using "runCase.sh" script
-    pid = None
     process = None
     os.system(f'chmod 755 {os.path.join(case_dir, "runCase.sh")}')
-    if not batch:
+    if not app.args.batch:
         os.system(f'{os.path.join(case_dir, "runCase.sh")}')
-    elif batch:
+    else:
         command = f'{os.path.join(case_dir, "runCase.sh")}'
         print(f"{command=}")
         process = subprocess.Popen(command, shell=True)
@@ -56,28 +55,22 @@ def run_case(case_dir, batch, ranks):
 
 
 def main():
+    """Main functionality for the exaca/microstructure_region_slice app"""
 
     # Create ExaCA app instance
     app = ExaCA("microstructure_region_slice")
 
-    # Parse command line arguments and get Myna settings
-    overwrite = app.args.overwrite
-    batch = app.args.batch
-    ranks = app.args.np
-    settings = app.settings
-
     # Get expected Myna output files
-    step_name = os.environ["MYNA_STEP_NAME"]
-    myna_files = settings["data"]["output_paths"][app.step_name]
+    myna_files = app.settings["data"]["output_paths"][app.step_name]
 
     # Check if case already has valid output
     step_obj = return_step_class(os.environ["MYNA_STEP_CLASS"])
     step_obj.apply_settings(
-        settings["steps"][int(os.environ["MYNA_STEP_INDEX"])],
-        settings["data"],
-        settings["myna"],
+        app.settings["steps"][int(os.environ["MYNA_STEP_INDEX"])],
+        app.settings["data"],
+        app.settings["myna"],
     )
-    files, exists, files_are_valid = step_obj.get_output_files()
+    _, _, files_are_valid = step_obj.get_output_files()
 
     # Run ExaCA for each Myna case, as needed
     output_files = []
@@ -85,26 +78,26 @@ def main():
     for myna_file, case_dir, file_is_valid in zip(
         myna_files, [os.path.dirname(x) for x in myna_files], files_are_valid
     ):
-        if not file_is_valid or overwrite:
-            output_file, proc = run_case(case_dir, batch, ranks)
+        if not file_is_valid or app.args.overwrite:
+            output_file, proc = run_case(app, case_dir)
             output_files.append(output_file)
             processes.append(proc)
         else:
             output_files.append(myna_file)
-    if batch:
+    if app.args.batch:
         for proc in processes:
             print(f"Waiting on {proc.pid=}")
             proc.wait()
 
     # Extract information from result files to the expected Myna 2D slice CSV format
-    for filepath, mynafile, file_is_valid in zip(
+    for filepath, myna_file, file_is_valid in zip(
         output_files, myna_files, files_are_valid
     ):
         if not file_is_valid and os.path.exists(filepath):
 
             # Get reference file
             input_file = os.path.join(os.path.dirname(myna_file), "inputs.json")
-            with open(input_file, "r") as f:
+            with open(input_file, "r", encoding="utf-8") as f:
                 input_dict = json.load(f)
             ref_file = input_dict["GrainOrientationFile"]
 
@@ -143,7 +136,7 @@ def main():
             )
 
             # CSV grain slice data from VTK grain file
-            df_stats.to_csv(mynafile, index=False)
+            df_stats.to_csv(myna_file, index=False)
 
 
 if __name__ == "__main__":

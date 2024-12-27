@@ -9,8 +9,6 @@
 import os
 from myna.core.workflow.load_input import load_input
 from myna.core.utils import nested_get, nested_set
-import argparse
-import sys
 import shutil
 import json
 import numpy as np

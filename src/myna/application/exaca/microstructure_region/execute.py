@@ -48,7 +48,7 @@ def run_case(app, case_dir):
 
 
 def main():
-    """Main ExaCA/microstructure_region execution function"""
+    """Main exaca/microstructure_region execution function"""
 
     # Create ExaCA instance
     app = ExaCA("microstructure_region")
