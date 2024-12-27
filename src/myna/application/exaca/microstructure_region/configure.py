@@ -96,6 +96,8 @@ def setup_case(
     df = pl.read_csv(
         nested_get(input_settings, ["TemperatureData", "TemperatureFiles"])[0]
     )
+    if df.is_empty():
+        return
     xmin, xmax = [df["x"].min(), df["x"].max()]
     ymin, ymax = [df["y"].min(), df["y"].max()]
     spacing = nested_get(input_settings, ["Domain", "CellSize"])
@@ -125,7 +127,7 @@ def setup_case(
 def main():
 
     # Create ExaCA instance
-    app = ExaCA()
+    app = ExaCA("microstructure_region")
 
     # Get expected Myna output files
     settings = app.settings
