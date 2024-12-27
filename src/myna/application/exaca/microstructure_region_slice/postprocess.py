@@ -17,20 +17,20 @@ from myna.application.exaca import (
 
 
 def main():
+    """Main postprocessing functionality for exaca/microstructure_region_slice"""
 
     # Create ExaCA instance
     app = ExaCA("microstructure_region_slice")
 
     # Get expected Myna output files
-    settings = app.settings
-    myna_files = settings["data"]["output_paths"][app.step_name]
+    myna_files = app.settings["data"]["output_paths"][app.step_name]
 
     # Check if case already has valid output
     step_obj = return_step_class(os.environ["MYNA_STEP_CLASS"])
-    step_dict = settings["steps"][int(os.environ["MYNA_STEP_INDEX"])]
+    step_dict = app.settings["steps"][int(os.environ["MYNA_STEP_INDEX"])]
     step_obj.name = list(step_dict.keys())[0]
     step_obj.apply_settings(
-        step_dict[step_obj.name], settings["data"], settings["myna"]
+        step_dict[step_obj.name], app.settings["data"], app.settings["myna"]
     )
     _, _, files_are_valid = step_obj.get_output_files()
 
@@ -38,23 +38,23 @@ def main():
     for myna_file, valid in zip(myna_files, files_are_valid):
         if not valid:
             continue
-        else:
-            # Get reference file from the inputs.json for the case
-            input_file = os.path.join(os.path.dirname(myna_file), "inputs.json")
-            with open(input_file, "r") as f:
-                input_dict = json.load(f)
-            ref_file = input_dict["GrainOrientationFile"]
 
-            # Get VTK output file
-            output_vtk = os.path.join(
-                os.path.dirname(myna_file),
-                nested_get(input_dict, ["Printing", "PathToOutput"]),
-                nested_get(input_dict, ["Printing", "OutputFile"]) + ".vtk",
-            )
+        # Get reference file from the inputs.json for the case
+        input_file = os.path.join(os.path.dirname(myna_file), "inputs.json")
+        with open(input_file, "r", encoding="utf-8") as f:
+            input_dict = json.load(f)
+        ref_file = input_dict["GrainOrientationFile"]
 
-            # Add RGB coloring
-            export_file = output_vtk.replace(".vtk", "_rgb.vtk")
-            add_rgb_to_vtk(output_vtk, export_file, ref_file)
+        # Get VTK output file
+        output_vtk = os.path.join(
+            os.path.dirname(myna_file),
+            nested_get(input_dict, ["Printing", "PathToOutput"]),
+            nested_get(input_dict, ["Printing", "OutputFile"]) + ".vtk",
+        )
+
+        # Add RGB coloring
+        export_file = output_vtk.replace(".vtk", "_rgb.vtk")
+        add_rgb_to_vtk(output_vtk, export_file, ref_file)
 
 
 if __name__ == "__main__":
