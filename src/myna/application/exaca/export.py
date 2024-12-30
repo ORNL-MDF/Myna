@@ -12,6 +12,7 @@ from .color import add_pyebsd_rgb_color
 from .id import convert_id_to_rotation
 from .vtk import grain_id_reader
 import numpy as np
+import matplotlib.pyplot as plt
 
 
 def add_rgb_to_vtk(
@@ -124,3 +125,171 @@ def extract_subregion(
     writer.Write()
 
     return
+
+
+def plot_euler_angles(df, im_height, im_width, export_file="euler_angle_plots.png"):
+    """Plot the three Euler angles (Bunge notation: phi1, Phi, phi2) from a pandas
+    DataFrame
+
+    Args:
+      df: pandas DataFrame containing, at least, columns "phi1", "Phi", and "phi2"
+      im_height: height of the data image in pixels
+      im_width: width of the data image in pixels
+      export_file: path to the exported plot
+    """
+    # Calculate and plot euler angles
+    fig, axs = plt.subplots(nrows=1, ncols=3)
+    for i, euler_angle in enumerate(["phi1", "Phi", "phi2"]):
+        data = df[euler_angle].to_numpy().reshape(im_height, im_width)
+        axs[i].imshow(data)
+        axs[i].set_title(euler_angle)
+        axs[i].axis("off")
+    plt.tight_layout()
+    plt.savefig(export_file)
+    plt.close()
+    return
+
+
+def plot_poles(M, direction, export_file="poles.png"):
+    """Plot the pole figure and return the pole data in Cartesian coordinates
+
+    Args:
+      M: Rotation matrix for sample -> crystal coordinates (passive reference frame)
+      direction: array-like (3,) describing the normal for the spherical projection
+      export_file: path to the file to export
+
+    Returns:
+      pole_data: numpy array of XY locations of the calculate poles. X=data[:,0]
+        and Y=data[:,0].
+    """
+
+    try:
+        from pyebsd.ebsd import plot_PF
+    except ImportError as exc:
+        raise ImportError(
+            'Myna exaca app requires "pip install .[exaca]" optional dependencies!'
+        ) from exc
+
+    plt.figure()
+    ax = plot_PF(
+        M=M,
+        proj=direction,
+        ax=plt.gca(),
+        sel=None,
+        rotation=None,
+        contour=False,
+        verbose=True,
+        color="k",
+    )
+    pole_data = np.array(ax.lines[0].get_xydata())
+    circle = plt.Circle((0.0, 0.0), 1.0, fc="none", ec="k")
+    ax.add_patch(circle)
+    ax.set_title(f"{tuple(direction)}")
+    ax.set_aspect(1)
+    ax.axis("off")
+    plt.savefig(export_file)
+    plt.close()
+    return pole_data
+
+
+def plot_pole_density(
+    M,
+    direction,
+    export_file="pole_histogram.png",
+    bins=256,
+    use_multiples_of_random=True,
+    levels=None,
+):
+    """Calculates and plots the pole density histogram in Cartesian coordinates
+
+    Args:
+      M: Rotation matrix for sample -> crystal coordinates (passive reference frame)
+      direction: array-like (3,) describing the normal for the spherical projection
+      export_file: path to save exported plot
+      bins: number of bins to use for density calculation
+      use_multiples_of_random: (default True) if True, will divide the histogram counts
+        by the expected counts for a uniform/random distribution across the projection
+        to plot the "multiples of random distribution" instead of histogram counts
+      levels: (default None) array-like (N,) of levels to use in the contour plot. If
+        None, levels will be chosen automatically based on data bounds.
+    """
+    try:
+        from pyebsd.ebsd import plot_PF
+    except ImportError as exc:
+        raise ImportError(
+            'Myna exaca app requires "pip install .[exaca]" optional dependencies!'
+        ) from exc
+
+    # Get pole locations
+    fig_temp, ax_temp = plt.subplots()
+    ax_temp = plot_PF(
+        M=M,
+        proj=direction,
+        ax=ax_temp,
+        sel=None,
+        rotation=None,
+        contour=False,
+        verbose=True,
+    )
+    pole_data = np.array(ax_temp.lines[0].get_xydata())
+    plt.close(fig_temp)
+
+    # Calculate histogram and get mesh centroids
+    hist, xedges, yedges = np.histogram2d(
+        pole_data[:, 1], pole_data[:, 0], bins=bins, range=[[-1, 1], [-1, 1]]
+    )
+    X, Y = np.meshgrid(
+        (xedges[:-1] + xedges[1:]) / 2.0, (yedges[:-1] + yedges[1:]) / 2.0
+    )
+
+    # Adjust hist to multiples of random distribution
+    if use_multiples_of_random:
+        random_point_density = np.sum(hist) / (np.pi * np.power(1, 2))
+        hist_element_area = (xedges[1] - xedges[0]) * (yedges[1] - yedges[0])
+        hist = hist / (random_point_density * hist_element_area)
+
+    # Plot contours
+    fig, ax = plt.subplots()
+    if levels is None:
+        vmax = np.ceil(np.quantile(hist, 0.99))
+        nlevels = 5
+        levels = np.linspace(1, vmax, nlevels)
+        levels = np.insert(levels, 0, 0.75)
+        levels = np.insert(levels, 0, 0.5)
+        levels = np.insert(levels, 0, 0.25)
+    else:
+        vmax = levels[-1]
+    ax.contourf(
+        hist,
+        extent=(-1, 1, -1, 1),
+        levels=levels,
+        cmap="turbo",
+        vmin=0,
+        vmax=vmax,
+        extend="max",
+    )
+
+    # Create mask
+    xs = np.linspace(-1, 1, 1000)
+    y0 = -np.ones_like(xs)
+    y1 = np.ones_like(xs)
+    yc_upper = np.where(xs <= 1, np.sqrt(1 - np.power(xs, 2)), 0)
+    yc_lower = -yc_upper
+    plt.fill_between(xs, y0, yc_lower, fc="w", ec="w")
+    plt.fill_between(xs, yc_upper, y1, fc="w", ec="w")
+
+    # Add border and format axes
+    circle = plt.Circle((0.0, 0.0), 1.0, fc="none", ec="k", linewidth=3)
+    ax.add_patch(circle)
+    ax.set_title(f"{tuple(direction)}")
+    ax.set_aspect(1)
+    ax.set_xlim(-1.05, 1.05)
+    ax.set_ylim(-1.05, 1.05)
+    ax.axis("off")
+    if use_multiples_of_random:
+        label = "MRD"
+    else:
+        label = "Count"
+    plt.colorbar(mappable=ax.collections[0], label=label)
+    plt.savefig(export_file)
+    plt.close()

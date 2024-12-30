@@ -28,7 +28,6 @@ dependencies = [
     'vtk',
     'h5py',
     'polars',
-    'pyebsd @ git+https://github.com/arthursn/pyebsd.git',
     'scipy']
 
 [project.optional-dependencies]
@@ -36,6 +35,9 @@ dev = [
   'pytest',
   'black',
   'licenseheaders']
+exaca = [
+  'pyebsd @ git+https://github.com/arthursn/pyebsd.git',
+]
 bnpy = [
     'bnpy @ git+https://github.com/gknapp1/bnpy',
     'opencv-python',
