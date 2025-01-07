@@ -1,0 +1,18 @@
+steps:
+- 3dthesis:
+    class: solidification_part
+    application: thesis
+    configure:
+      res: 50.0e-6
+    execute:
+      np: 8
+data:
+  build:
+    datatype: MynaJSON
+    name: myna_output
+    path: ../MynaJSON/MynaJSON_database_example.json
+    parts:
+      P5:
+        layers: [51,52]
+myna:
+  workspace: ../example-workspace.yaml

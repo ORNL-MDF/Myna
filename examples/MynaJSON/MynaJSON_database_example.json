@@ -1,0 +1,42 @@
+{
+    "preheat": 298.15,
+    "material": "SS316L",
+    "layer_thickness": 5.0e-05,
+    "P5":
+    {
+        "spot_size": 0.13,
+        "laser_power": 350.0,
+        "51":
+        {
+            "scanpath":
+            {
+                "type": "mynafile",
+                "file": "../Peregrine/simulation/meltpool/P5/0000051.txt"
+            }
+        },
+        "52":
+        {
+            "scanpath":
+            {
+                "type": "mynafile",
+                "file": "../Peregrine/simulation/meltpool/P5/0000052.txt"
+            }
+        },
+        "53":
+        {
+            "scanpath":
+            {
+                "type": "mynafile",
+                "file": "../Peregrine/simulation/meltpool/P5/0000053.txt"
+            }
+        },
+        "54":
+        {
+            "scanpath":
+            {
+                "type": "mynafile",
+                "file": "../Peregrine/simulation/meltpool/P5/0000054.txt"
+            }
+        }
+    }
+}

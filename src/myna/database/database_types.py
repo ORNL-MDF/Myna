@@ -11,6 +11,7 @@
 from myna.database.peregrine import PeregrineDB
 from myna.database.peregrine_hdf5 import PeregrineHDF5
 from myna.database.nist_ambench_2022 import AMBench2022
+from myna.database.myna_json import MynaJSON
 
 
 def return_datatype_class(datatype_str):
@@ -45,6 +46,8 @@ def return_datatype_class(datatype_str):
             return PeregrineHDF5()
     elif remove_text_format(datatype_str) in ["ambench2022"]:
         return AMBench2022()
+    elif remove_text_format(datatype_str) in ["mynajson"]:
+        return MynaJSON()
     else:
         print(f"Error: {datatype_str} does not correspond to any implemented database")
         raise NotImplementedError
