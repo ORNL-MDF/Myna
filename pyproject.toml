@@ -29,7 +29,8 @@ dependencies = [
     'h5py',
     'polars',
     'pyebsd @ git+https://github.com/arthursn/pyebsd.git',
-    'scipy']
+    'scipy',
+    'gitpython']
 
 [project.optional-dependencies]
 dev = [

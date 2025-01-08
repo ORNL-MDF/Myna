@@ -19,6 +19,7 @@ from myna import database
 from importlib.metadata import version
 import datetime
 import getpass
+from git import Repo, InvalidGitRepositoryError
 
 
 # Parser comes from the top-level command parsing
@@ -89,6 +90,21 @@ def config(input_file, output_file=None, show_avail=False, overwrite=False):
     if not datatype.exists():
         print(f"ERROR: Could not find valid {datatype} in" + f" {build_path}")
         raise FileNotFoundError
+
+    # Write out initial Myna configuration metadata
+    nested_set(settings, ["myna", "version"], version("myna"))
+    user_name = ""
+    try:
+        user_name = getpass.getuser()  # may fail when run by service manager, e.g., CI
+    except:
+        pass
+    configure_dict = {
+        "datetime-start": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "user-login": user_name,
+        "input-file": os.path.abspath(input_file),
+        "output-file": os.path.abspath(output_file),
+    }
+    nested_set(settings, ["myna", "configure"], configure_dict)
 
     # Check if necessary paths exist and create if not
     nested_get(settings, ["data", "output_paths"], {})
@@ -443,10 +459,56 @@ def config(input_file, output_file=None, show_avail=False, overwrite=False):
                                 key, None
                             )
 
-            # Add basic information about the Myna workflow
-            data_dict_case["myna"] = {}
-            data_dict_case["myna"]["version"] = version("myna")
-            data_dict_case["myna"]["input"] = os.path.abspath(input_file)
+            # Copy basic information about the Myna workflow
+            data_dict_case["myna"] = nested_get(settings, ["myna"])
+
+            # Add information about the git repository (if present)
+            try:
+                repo_path = os.path.abspath(
+                    os.path.join(os.environ["MYNA_INSTALL_PATH"], "..", "..")
+                )
+                repo = Repo(repo_path)
+                nested_set(
+                    data_dict_case, ["myna", "git", "commit"], repo.head.commit.hexsha
+                )
+                nested_set(
+                    data_dict_case, ["myna", "git", "branch"], str(repo.active_branch)
+                )
+                nested_set(
+                    data_dict_case, ["myna", "git", "origin"], repo.remotes.origin.url
+                )
+                is_dirty = repo.is_dirty()
+                nested_set(data_dict_case, ["myna", "git", "is_dirty"], is_dirty)
+                if is_dirty:
+                    dirty_files = []
+                    untracked_files = []
+                    diffs = repo.head.commit.diff(None)
+                    for d in diffs:
+                        dirty_files.append(str(d.a_path))
+                    for untracked in repo.untracked_files:
+                        untracked_files.append(untracked)
+                    nested_set(
+                        data_dict_case, ["myna", "git", "dirty_files"], dirty_files
+                    )
+                    nested_set(
+                        data_dict_case,
+                        ["myna", "git", "untracked_files"],
+                        untracked_files,
+                    )
+                nested_set(
+                    settings,
+                    ["myna", "git"],
+                    nested_get(data_dict_case, ["myna", "git"]),
+                )
+            except InvalidGitRepositoryError:
+                pass
+
+            # Set configure data
+            nested_set(
+                data_dict_case,
+                ["myna", "configure"],
+                nested_get(settings, ["myna", "configure"]),
+            )
 
             # Write data to case directory
             with open(os.path.join(case_dir, "myna_data.yaml"), "w") as f:
@@ -479,17 +541,11 @@ def config(input_file, output_file=None, show_avail=False, overwrite=False):
         print(f'  > "{step_name}" complete\n')
 
     # Write out configuration metadata
-    if settings.get("myna") is None:
-        settings["myna"] = {}
-    user_name = ""
-    try:
-        user_name = getpass.getuser()  # may fail when run by service manager, e.g., CI
-    except:
-        pass
-    settings["myna"]["configure"] = {
-        "date": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-        "user-login": user_name,
-    }
+    nested_set(
+        settings,
+        ["myna", "configure", "datetime-end"],
+        datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+    )
 
     with open(output_file, "w") as f:
         yaml.dump(settings, f, sort_keys=False, default_flow_style=None)
