@@ -31,6 +31,10 @@ def convert_peregrine_scanpath(filename, export_path, power=1):
     # set the laser power
     df["Power(W)"] = df["Pmod"] * power
 
+    # set spot melts with zero time to have some small dwell time
+    zero_melt_filter = (df["Mode"] == 1) & (df["tParam"] == 0.0)
+    df.loc[zero_melt_filter, "tParam"] = 1e-8
+
     # write the converted path to a new file
     df.to_csv(
         export_path,

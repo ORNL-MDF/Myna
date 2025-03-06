@@ -5,7 +5,7 @@ cd ${0%/*} || exit 1
 # Run AdditiveFOAM solver in parallel
 decomposePar > log.decomposePar 2>&1
 cores=$(foamDictionary -entry numberOfSubdomains -value system/decomposeParDict)
-mpirun -np $cores additiveFoam -parallel > log.additiveFoam 2>&1
+mpirun -np $cores --bind-to none additiveFoam -parallel > log.additiveFoam 2>&1
 
 # Reconstruct ExaCA data into a single file
 reconstructPar > log.reconstructPar 2>&1
