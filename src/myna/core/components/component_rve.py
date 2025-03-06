@@ -6,7 +6,7 @@
 #
 # License: 3-clause BSD, see https://opensource.org/licenses/BSD-3-Clause.
 #
-""" Define subclasses for selection of region(s) of interest"""
+"""Define subclasses for selection of region(s) of interest"""
 
 from .component import *
 from myna.core.files.file_id import *

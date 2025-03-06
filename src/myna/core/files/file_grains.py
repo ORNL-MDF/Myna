@@ -6,8 +6,7 @@
 #
 # License: 3-clause BSD, see https://opensource.org/licenses/BSD-3-Clause.
 #
-"""Define grain statistics data
-"""
+"""Define grain statistics data"""
 import pandas as pd
 import os
 from .file import *

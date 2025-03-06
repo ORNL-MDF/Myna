@@ -6,7 +6,6 @@
 #
 # License: 3-clause BSD, see https://opensource.org/licenses/BSD-3-Clause.
 #
-"""Package for setting up and running RVE selection
-"""
+"""Package for setting up and running RVE selection"""
 
 from .rve import *

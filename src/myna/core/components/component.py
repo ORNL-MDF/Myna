@@ -6,7 +6,7 @@
 #
 # License: 3-clause BSD, see https://opensource.org/licenses/BSD-3-Clause.
 #
-""" Base class for workflow components"""
+"""Base class for workflow components"""
 
 import os
 import myna
