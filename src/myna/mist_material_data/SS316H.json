@@ -100,17 +100,17 @@
         },
         "liquidus_temperature": {
             "print_name": "Liquidus temperature",
-            "value": 1730,
+            "value": 1709,
             "unit": "K",
-            "reference": "C.S. Kim, Thermophysical properties of stainless steels, Argonne National Laboratory, Argonne, Illinois, 1975.",
+            "reference": "S. Kwon, CALPHAD Scheil Solidification Calculations using ThermoCalc TCFE11 Database, Oak Ridge National Laboratory, Personal Communications, 2025 (Composition: 65.4 Fe, 17 Cr, 2.5 Mo, 2 Mn, 1 Si, 0.04 P, 0.03 C, 0.03 S [wt.%])",
             "uncertainty": "None",
             "print_symbol": "T_{l}"
         },
         "solidus_eutectic_temperature": {
             "print_name": "Solidus/eutecic temperature",
-            "value": 1670,
+            "value": 1471,
             "unit": "K",
-            "reference": "C.S. Kim, Thermophysical properties of stainless steels, Argonne National Laboratory, Argonne, Illinois, 1975.",
+            "reference": "S. Kwon, CALPHAD Scheil Solidification Calculations using ThermoCalc TCFE11 Database, Oak Ridge National Laboratory, Personal Communications, 2025 (Composition: 65.4 Fe, 17 Cr, 2.5 Mo, 2 Mn, 1 Si, 0.04 P, 0.03 C, 0.03 S [wt.%])",
             "uncertainty": "None",
             "print_symbol": "T_{s}"
         },
