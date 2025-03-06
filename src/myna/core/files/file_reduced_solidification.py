@@ -6,7 +6,7 @@
 #
 # License: 3-clause BSD, see https://opensource.org/licenses/BSD-3-Clause.
 #
-""" Define the file format class for reduced solidification data."""
+"""Define the file format class for reduced solidification data."""
 
 import pandas as pd
 import os

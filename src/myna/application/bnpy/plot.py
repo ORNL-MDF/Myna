@@ -6,8 +6,7 @@
 #
 # License: 3-clause BSD, see https://opensource.org/licenses/BSD-3-Clause.
 #
-""" Functions for generating plots of clustering data
-"""
+"""Functions for generating plots of clustering data"""
 
 import pandas as pd
 import matplotlib.pyplot as plt

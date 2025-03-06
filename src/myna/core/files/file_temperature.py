@@ -6,8 +6,7 @@
 #
 # License: 3-clause BSD, see https://opensource.org/licenses/BSD-3-Clause.
 #
-"""Define file format class related to the spatial distribution of temperature (T)
-"""
+"""Define file format class related to the spatial distribution of temperature (T)"""
 
 import pandas as pd
 import os

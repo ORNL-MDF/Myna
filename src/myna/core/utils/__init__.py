@@ -6,8 +6,7 @@
 #
 # License: 3-clause BSD, see https://opensource.org/licenses/BSD-3-Clause.
 #
-"""Utility functions for Myna.
-"""
+"""Utility functions for Myna."""
 
 from .nested_dict_tools import *
 from .conversion import str_to_list
