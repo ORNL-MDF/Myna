@@ -13,7 +13,7 @@ authors = [
     { name="Stephen DeWitt", email="dewittsj@ornl.gov"}]
 description = "A structured interface between Additive Manufacturing build database(s) and multi-stage modeling and simulation workflows"
 readme = "README.md"
-requires-python = ">=3.6"
+requires-python = ">=3.9"
 classifiers = [
     "Programming Language :: Python :: 3",
     "Operating System :: OS Independent"]
@@ -35,7 +35,7 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
   'pytest',
-  'black',
+  'black>24.10.0',
   'licenseheaders']
 bnpy = [
     'bnpy @ git+https://github.com/gknapp1/bnpy',
