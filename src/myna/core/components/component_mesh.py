@@ -13,7 +13,7 @@ Available subclasses:
 """
 
 from .component import *
-from myna.core.files.file_vtk import *
+from myna.core.files import FileVTK, FileExodus
 
 
 class ComponentMesh(Component):
@@ -38,3 +38,12 @@ class ComponentPartMeshVTK(ComponentPartMesh):
     def __init__(self):
         ComponentPartMesh.__init__(self)
         self.output_requirement = FileVTK
+
+
+class ComponentVTKToExodusMesh(Component):
+    """Meshing operation"""
+
+    def __init__(self):
+        Component.__init__(self)
+        self.input_requirement = FileVTK
+        self.output_requirement = FileExodus
