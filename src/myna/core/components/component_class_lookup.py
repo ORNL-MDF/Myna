@@ -51,6 +51,7 @@ def return_step_class(step_name):
         "mesh_part": ComponentPartMesh(),
         "mesh_part_vtk": ComponentPartMeshVTK(),
         "melt_pool_geometry_part": ComponentMeltPoolGeometryPart(),
+        "vtk_to_exodus": ComponentVTKToExodusMesh(),
     }
     try:
         step_class = step_class_lookup[step_name]
