@@ -79,6 +79,13 @@ class MynaApp:
             help="(flag) if parsed by the app, skip the corresponding"
             + " stage of the component, default = False",
         )
+        self.parser.add_argument(
+            "--mpiexec",
+            default=None,
+            type=str,
+            help="(str) MPI command to prepend to executable if running in parallel",
+        )
+        self.args, _ = self.parser.parse_known_args()
 
     # Check if executable exists
     def check_exe(self, default):
