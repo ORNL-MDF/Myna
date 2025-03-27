@@ -80,8 +80,34 @@ def add_rgb_to_vtk(
     return
 
 
+def read_exaca_vtk_structured_points(vtk_file_path):
+    # Read the VTK file
+    reader = vtk.vtkDataSetReader()
+    reader.SetFileName(vtk_file_path)
+    reader.ReadAllScalarsOn()
+    reader.Update()
+    return reader.GetOutput()
+
+
+def get_extent_of_structured_points(
+    structured_points, bounds=np.array([[0, 1], [0, 1], [0, 1]])
+):
+    # Set the volume of interest
+    dims = structured_points.GetDimensions()
+    x0 = np.clip(int(bounds[0][0] * dims[0]), 0, dims[0] - 1)
+    x1 = np.clip(int(bounds[0][1] * dims[0]), 0, dims[0] - 1)
+    y0 = np.clip(int(bounds[1][0] * dims[1]), 0, dims[1] - 1)
+    y1 = np.clip(int(bounds[1][1] * dims[1]), 0, dims[1] - 1)
+    z0 = np.clip(int(bounds[2][0] * dims[2]), 0, dims[2] - 1)
+    z1 = np.clip(int(bounds[2][1] * dims[2]), 0, dims[2] - 1)
+    return [x0, x1, y0, y1, z0, z1]
+
+
 def extract_subregion(
-    vtk_file_path, vtk_export_path, bounds=np.array([[0, 1], [0, 1], [0, 1]])
+    vtk_file_path,
+    vtk_export_path,
+    bounds=np.array([[0, 1], [0, 1], [0, 1]]),
+    sample_rate=[1, 1, 1],
 ):
     """Extract a subvolume from the given VTK file
 
@@ -91,28 +117,15 @@ def extract_subregion(
         bounds: array of X, Y, and Z min & max bounds in terms of fraction of the overall volume dimensions
     """
 
-    # Read the VTK file
-    reader = vtk.vtkDataSetReader()
-    reader.SetFileName(vtk_file_path)
-    reader.ReadAllScalarsOn()
-    reader.Update()
-    structured_points = reader.GetOutput()
-
-    # Get the dimensions of the data
-    dims = structured_points.GetDimensions()
-
-    # Set the volume of interest
-    x0 = np.clip(int(bounds[0][0] * dims[0]), 0, dims[0] - 1)
-    x1 = np.clip(int(bounds[0][1] * dims[0]), 0, dims[0] - 1)
-    y0 = np.clip(int(bounds[1][0] * dims[1]), 0, dims[1] - 1)
-    y1 = np.clip(int(bounds[1][1] * dims[1]), 0, dims[1] - 1)
-    z0 = np.clip(int(bounds[2][0] * dims[2]), 0, dims[2] - 1)
-    z1 = np.clip(int(bounds[2][1] * dims[2]), 0, dims[2] - 1)
+    # Load the structure points and get the dimensions of the data
+    structured_points = read_exaca_vtk_structured_points(vtk_file_path)
+    extent = get_extent_of_structured_points(structured_points, bounds)
 
     # Extract the subvolume
     extractor = vtk.vtkExtractVOI()
     extractor.SetInputData(structured_points)
-    extractor.SetVOI(x0, x1, y0, y1, z0, z1)
+    extractor.SetVOI(*extent)
+    extractor.SetSampleRate(*sample_rate)
     extractor.Update()
     subvolume = extractor.GetOutput()
 
