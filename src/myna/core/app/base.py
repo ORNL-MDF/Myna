@@ -33,6 +33,7 @@ class MynaApp:
         )
         self.parser.add_argument(
             "--template",
+            default=None,
             type=str,
             help="(str) path to template, if not specified"
             + " then assume default location",
@@ -46,7 +47,10 @@ class MynaApp:
             + " default = False",
         )
         self.parser.add_argument(
-            "--exec", type=str, help=f"(str) Path to {self.name} executable"
+            "--exec",
+            default=None,
+            type=str,
+            help=f"(str) Path to {self.name} executable",
         )
         self.parser.add_argument(
             "--np",
