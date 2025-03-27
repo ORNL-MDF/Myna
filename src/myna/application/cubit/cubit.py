@@ -19,6 +19,12 @@ class CubitApp(MynaApp):
     ):
         super().__init__("Cubit")
         self.simulation_type = sim_type
+        self.parser.add_argument(
+            "--cubitpath",
+            default="",
+            type=str,
+            help="Path to the root Cubit install directory",
+        )
         self.args, _ = self.parser.parse_known_args()
         super().set_procs()
         self.update_template_path()
