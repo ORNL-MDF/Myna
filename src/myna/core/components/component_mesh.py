@@ -40,10 +40,19 @@ class ComponentPartMeshVTK(ComponentPartMesh):
         self.output_requirement = FileVTK
 
 
-class ComponentVTKToExodusMesh(Component):
-    """Meshing operation"""
+class ComponentVTKToExodusMeshPart(Component):
+    """Meshing operation on a part"""
 
     def __init__(self):
         Component.__init__(self)
         self.input_requirement = FileVTK
         self.output_requirement = FileExodus
+        self.types.append("part")
+
+
+class ComponentVTKToExodusMeshRegion(ComponentVTKToExodusMeshPart):
+    """Meshing operation"""
+
+    def __init__(self):
+        ComponentVTKToExodusMeshPart.__init__(self)
+        self.types.append("region")

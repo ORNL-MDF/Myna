@@ -7,7 +7,7 @@
 # License: 3-clause BSD, see https://opensource.org/licenses/BSD-3-Clause.
 #
 
-from myna.application.cubit.vtk_to_exodus import CubitVtkToExodusApp
+from myna.application.cubit.vtk_to_exodus_region import CubitVtkToExodusApp
 
 
 def execute():
