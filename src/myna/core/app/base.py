@@ -50,7 +50,7 @@ class MynaApp:
         )
         self.parser.add_argument(
             "--np",
-            default=8,
+            default=1,
             type=int,
             help="(int) processors to use per job, will "
             + "correct to the maximum available processors if "
