@@ -80,7 +80,7 @@ class MynaApp:
             + " stage of the component, default = False",
         )
 
-    def check_exe(self, default):
+    def validate_executable(self, default):
         """Check if the specified executable exists and raise error if not"""
         # Get the name of the executable
         exe = self.args.exec

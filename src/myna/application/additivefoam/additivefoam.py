@@ -99,7 +99,7 @@ class AdditiveFOAM(MynaApp):
         self.args = self.parser.parse_args()
 
         super().set_procs()
-        super().check_exe(
+        super().validate_executable(
             "additiveFoam",
         )
         self.update_template_path()
