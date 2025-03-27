@@ -8,8 +8,8 @@
 #
 import argparse
 import os, shutil
-
 from myna.core.workflow.load_input import load_input
+from myna.core.utils import is_executable
 
 
 class MynaApp:
@@ -80,25 +80,27 @@ class MynaApp:
             + " stage of the component, default = False",
         )
 
-    # Check if executable exists
     def check_exe(self, default):
-        # Try user-specified location or find it in the PATH.
+        """Check if the specified executable exists and raise error if not"""
+        # Get the name of the executable
         exe = self.args.exec
-        # Try to find it in the path.
         if exe is None:
-            exe = shutil.which(default)
-            # Try a Windows exe just in case.
-            if exe is None:
-                exe = shutil.which(default + ".exe")
+            exe = default
+        exe_windows = exe + ".exe"  # Try a Windows exe just in case
 
-            if exe is None or not os.path.exists(exe):
-                raise Exception(f"{self.name} executable was not found.")
-        else:
-            exe = shutil.which(exe)
+        # If an executable is found, return
+        if any(is_executable(x) for x in [exe, exe_windows]):
+            return
 
-        # Check that it can be used
-        if not os.access(exe, os.X_OK):
-            raise Exception(f'{self.name} executable "{exe}" is not executable.')
+        # If not found, raise the appropriate errors
+        if shutil.which(exe, mode=os.F_OK) is None:
+            raise FileNotFoundError(
+                f'{self.name} app executable "{exe}" was not found.'
+            )
+        if shutil.which(exe, mode=os.X_OK) is None:
+            raise PermissionError(
+                f'{self.name} app executable "{shutil.which(exe, mode=os.F_OK)}" does not have execute permissions.'
+            )
 
     # args must have been parsed
     def set_procs(self):

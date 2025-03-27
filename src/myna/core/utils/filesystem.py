@@ -8,6 +8,7 @@
 #
 """Tools for file system operations"""
 import os
+import shutil
 from pathlib import Path
 import contextlib
 
@@ -21,3 +22,12 @@ def working_directory(path):
         yield
     finally:
         os.chdir(prev_cwd)
+
+
+def is_executable(executable):
+    """Checks if executable is valid, either as absolute path or accessible through PATH"""
+    full_path = shutil.which(executable, mode=os.X_OK)
+    if full_path is not None:
+        return True
+    else:
+        return False
