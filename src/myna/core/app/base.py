@@ -85,9 +85,17 @@ class MynaApp:
         )
         self.parser.add_argument(
             "--mpiexec",
-            default=None,
+            default="mpiexec",
             type=str,
-            help="(str) MPI command to prepend to executable if running in parallel",
+            help="(str) MPI executable to prepend for MPI parallel execution"
+            + " (for use with --mpiflags)",
+        )
+        self.parser.add_argument(
+            "--mpiflags",
+            default="",
+            type=str,
+            help="(str) MPI flags to append for MPI parallel execution"
+            + " (for use with --mpiexec)",
         )
         self.args, _ = self.parser.parse_known_args()
 
