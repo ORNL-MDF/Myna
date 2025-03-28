@@ -47,7 +47,7 @@ class ExaCA(MynaApp):
 
         self.args = self.parser.parse_args()
 
-        super().check_exe(
+        super().validate_executable(
             "ExaCA",
         )
 

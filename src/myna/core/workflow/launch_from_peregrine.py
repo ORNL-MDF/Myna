@@ -11,26 +11,9 @@
 import os
 import subprocess
 import datetime
-import contextlib
-from pathlib import Path
 import yaml
 import shutil
-
-
-@contextlib.contextmanager
-def working_directory(path):
-    """
-    Changes working directory and returns to previous on exit.
-
-    Reference:
-    - https://stackoverflow.com/questions/41742317/how-can-i-change-directory-with-python-pathlib
-    """
-    prev_cwd = Path.cwd()
-    os.chdir(path)
-    try:
-        yield
-    finally:
-        os.chdir(prev_cwd)
+from myna.core.utils import working_directory
 
 
 def launch_from_peregrine(parser):
