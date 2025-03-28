@@ -33,6 +33,7 @@ class MynaApp:
         )
         self.parser.add_argument(
             "--template",
+            default=None,
             type=str,
             help="(str) path to template, if not specified"
             + " then assume default location",
@@ -46,11 +47,14 @@ class MynaApp:
             + " default = False",
         )
         self.parser.add_argument(
-            "--exec", type=str, help=f"(str) Path to {self.name} executable"
+            "--exec",
+            default=None,
+            type=str,
+            help=f"(str) Path to {self.name} executable",
         )
         self.parser.add_argument(
             "--np",
-            default=8,
+            default=1,
             type=int,
             help="(int) processors to use per job, will "
             + "correct to the maximum available processors if "
@@ -79,6 +83,21 @@ class MynaApp:
             help="(flag) if parsed by the app, skip the corresponding"
             + " stage of the component, default = False",
         )
+        self.parser.add_argument(
+            "--mpiexec",
+            default="mpiexec",
+            type=str,
+            help="(str) MPI executable to prepend for MPI parallel execution"
+            + " (for use with --mpiflags)",
+        )
+        self.parser.add_argument(
+            "--mpiflags",
+            default="",
+            type=str,
+            help="(str) MPI flags to append for MPI parallel execution"
+            + " (for use with --mpiexec)",
+        )
+        self.args, _ = self.parser.parse_known_args()
 
     def validate_executable(self, default):
         """Check if the specified executable exists and raise error if not"""
