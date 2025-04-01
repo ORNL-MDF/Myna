@@ -152,16 +152,16 @@ def plot_euler_angles(df, im_height, im_width, export_file="euler_angle_plots.pn
 
 
 def plot_poles(M, direction, export_file="poles.png"):
-    """Plot the pole figure and return the pole data in Cartesian coordinates
+    """Plot the pole figure for all N rotation matrices and return the pole data in Cartesian coordinates
 
     Args:
-      M: Rotation matrix for sample -> crystal coordinates (passive reference frame)
+      M: array-like (N,3,3,) of rotation matrices for sample -> crystal coordinates (passive reference frame)
       direction: array-like (3,) describing the normal for the spherical projection
       export_file: path to the file to export
 
     Returns:
-      pole_data: numpy array of XY locations of the calculate poles. X=data[:,0]
-        and Y=data[:,0].
+      pole_data: numpy array of XY locations of the calculate poles such that
+        `X=pole_data[:,0]` and `Y=pole_data[:,0]`.
     """
 
     try:
@@ -207,7 +207,7 @@ def plot_pole_density(
     specified axis
 
     Args:
-      M: Rotation matrix for sample -> crystal coordinates (passive reference frame)
+      M: array-like (N,3,3,) of rotation matrices for sample -> crystal coordinates (passive reference frame)
       direction: array-like (3,) describing the normal for the spherical projection
       bins: number of bins to use for density calculation
       use_multiples_of_random: (default True) if True, will divide the histogram counts
