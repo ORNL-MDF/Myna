@@ -42,7 +42,7 @@ def reduce_thermal_file_to_df(thermal_file):
     return df_reduced, df_training
 
 
-def train_voxel_model(myna_files, thermal_files, sF, gamma):
+def train_voxel_model(myna_files, thermal_files, sF, gamma, input_dir):
     # Load app-specific dependencies
     try:
         import bnpy
@@ -66,7 +66,6 @@ def train_voxel_model(myna_files, thermal_files, sF, gamma):
 
         # Get case myna_data
         myna_data = load_input(os.path.join(case_dir, "myna_data.yaml"))
-        input_dir = os.path.dirname(myna_data["myna"]["input"])
         resource_dir = os.path.join(input_dir, "myna_resources")
 
         # Generate case information from myna_data
@@ -214,7 +213,7 @@ def run_clustering(
     sF,
     gamma,
     overwrite,
-    app,
+    input_dir,
 ):
     # Load app-specific dependencies
     try:
@@ -230,7 +229,6 @@ def run_clustering(
 
     # Get case myna_data
     myna_data = load_input(os.path.join(case_dir, "myna_data.yaml"))
-    input_dir = os.path.dirname(myna_data["myna"]["input"])
     resource_dir = os.path.join(input_dir, "myna_resources")
 
     # Generate case information from myna_data
@@ -383,7 +381,9 @@ def main():
     gamma = 8
     sF = 0.5
     if train_model:
-        train_voxel_model(myna_files, thermal_files, sF, gamma)
+        train_voxel_model(
+            myna_files, thermal_files, sF, gamma, os.path.dirname(app.input_file)
+        )
 
     # Run clustering using trained model
     output_files = []
