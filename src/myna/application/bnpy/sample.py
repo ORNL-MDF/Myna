@@ -67,7 +67,7 @@ def get_representative_distribution(
         B = hist_sample[0].reshape(xt.shape[0])
         wasserstein = ot.emd2(A, B, M)
 
-        if wasserstein != wasserstein_last:
+        if (wasserstein != wasserstein_last) and (wasserstein != 0):
             residue_rel = np.abs((wasserstein_last - wasserstein) / wasserstein)
         else:
             residue_rel = 0.0
