@@ -151,13 +151,14 @@ def plot_euler_angles(df, im_height, im_width, export_file="euler_angle_plots.pn
     return
 
 
-def plot_poles(M, direction, export_file="poles.png"):
+def plot_poles(M, direction, ax=None):
     """Plot the pole figure for all N rotation matrices and return the pole data in Cartesian coordinates
 
     Args:
       M: array-like (N,3,3,) of rotation matrices for sample -> crystal coordinates (passive reference frame)
       direction: array-like (3,) describing the normal for the spherical projection
-      export_file: path to the file to export
+      ax: (default None) axis to use for plotting, if none, will create a new figure
+        with a single axis.
 
     Returns:
       pole_data: numpy array of XY locations of the calculate poles such that
@@ -171,26 +172,25 @@ def plot_poles(M, direction, export_file="poles.png"):
             'Myna exaca app requires "pip install .[exaca]" optional dependencies!'
         ) from exc
 
-    plt.figure()
-    ax = plot_PF(
+    if ax is None:
+        _, ax = plt.subplots()
+
+    plot_PF(
         M=M,
         proj=direction,
-        ax=plt.gca(),
+        ax=ax,
         sel=None,
         rotation=None,
         contour=False,
         verbose=True,
         color="k",
     )
-    pole_data = np.array(ax.lines[0].get_xydata())
     circle = plt.Circle((0.0, 0.0), 1.0, fc="none", ec="k")
     ax.add_patch(circle)
     ax.set_title(f"{tuple(direction)}")
     ax.set_aspect(1)
     ax.axis("off")
-    plt.savefig(export_file)
-    plt.close()
-    return pole_data
+    return ax
 
 
 def plot_pole_density(
@@ -201,7 +201,7 @@ def plot_pole_density(
     levels=5,
     smooth_sigma=None,
     annotate_xy=True,
-    plot_ax=None,
+    ax=None,
 ):
     """Calculates and plots the pole density histogram in Cartesian coordinates on the
     specified axis
@@ -219,7 +219,7 @@ def plot_pole_density(
       smooth_sigma: (default None) scalar or sequence of scalars input to the
         scipy.ndimage.gaussian_filter() sigma parameter for smooth the data along
         axes uniformly (scalar) or along each specified axis (sequence of scalars).
-      plot_ax: (default None) axis to use for plotting, if none, will create a new figure
+      ax: (default None) axis to use for plotting, if none, will create a new figure
         with a single axis.
 
     Returns:
@@ -279,10 +279,8 @@ def plot_pole_density(
         vmax = levels[-1]
 
     # Plot contours
-    if plot_ax is None:
+    if ax is None:
         _, ax = plt.subplots()
-    else:
-        ax = plot_ax
     ax.contourf(
         hist,
         extent=(-1, 1, -1, 1),
