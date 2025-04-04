@@ -196,7 +196,7 @@ def plot_poles(M, direction, ax=None):
 def plot_pole_density(
     M,
     direction,
-    bins=256,
+    bins=None,
     use_multiples_of_random=True,
     levels=5,
     smooth_sigma=None,
@@ -209,7 +209,8 @@ def plot_pole_density(
     Args:
       M: array-like (N,3,3,) of rotation matrices for sample -> crystal coordinates (passive reference frame)
       direction: array-like (3,) describing the normal for the spherical projection
-      bins: number of bins to use for density calculation
+      bins: (default None) integer number of bins to use for density calculation. If
+        None, then calculate the number of bins as `int(sqrt(N))`.
       use_multiples_of_random: (default True) if True, will divide the histogram counts
         by the expected counts for a uniform/random distribution across the projection
         to plot the "multiples of random distribution" instead of histogram counts
@@ -247,6 +248,8 @@ def plot_pole_density(
     plt.close(fig_temp)
 
     # Calculate histogram and get mesh centroids
+    if bins is None:
+        bins = int(np.sqrt(M.shape[0]))
     hist, xedges, yedges = np.histogram2d(
         pole_data[:, 1], pole_data[:, 0], bins=bins, range=[[-1, 1], [-1, 1]]
     )
