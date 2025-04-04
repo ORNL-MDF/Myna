@@ -13,6 +13,25 @@ import time
 def rotate_grains(
     dfMerged, gids, misorientation, update_ids, ref_or, ref_id, ref_cols_ids
 ):
+    """Given a pandas DataFrame with Euler angles `phi1`, `Phi`, and `phi2`, rotate each
+    grain voxel by the specified misorientation rate
+
+    Args:
+        dfMerged: (pandas DataFrame) DataFrame containing at least,
+            `X (m)`, `Y (m)`, `Z (m)`, `phi1`, `Phi`, and `phi2`
+        gids: (list of int) list of grain IDs contained within `dfMerged` to which to
+            apply the misorientations
+        misorientation: (float) misorientation rate (angle/meter) in the same angular
+            units as `phi1`, with standard for ExaCA being degrees
+        update_ids: (bool) whether to update the IDs of each voxel to match to closest
+            ID to their new orientation
+        ref_or: (numpy array) (N, 3) array of `phi1`, `Phi`, `phi2` of the reference
+            orientations, with default ExaCA being N=10000
+        ref_id: (numpy array) (N, 1) array of `Reference ID` of the reference
+            orientations, with default ExaCA being N=10000
+        ref_cols_ids: (list of ints) array of column indices for `phi1`, `Phi`, and
+            `phi2` in `dfMerged`
+    """
 
     for grain_index, gid in enumerate(gids):
         # Print progress
