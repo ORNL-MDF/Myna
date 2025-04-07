@@ -20,6 +20,17 @@ from myna.core.utils import nested_get
 def aggregate_melt_times(
     exaca_input, export_name="melt_time.vtu", verbose=False, decimal_precision=8
 ):
+    """Reads an ExaCA input file to load the associated temperature files and generate
+    a VTK file with the melt times of each point (`"ts"`) and the gradient of the melt
+    times (`"dts_x"`, `"dts_y"`, `"dts_z"`)
+
+    Args:
+        exaca_input: (str) path to ExaCA input file
+        export_name: (str) name of exported .vtu file
+        verbose: (bool) controls output written to stdout
+        decimal_precision: (int) controls the precision for merging XYZ coordinates
+            between different temperature files
+    """
 
     # Get input settings
     with open(exaca_input, "r") as f:
@@ -213,6 +224,19 @@ def merge_melt_times_with_rgb(
     verbose=False,
     num_ref_ids=10000,
 ):
+    """Merges an ExaCA VTK file with RGB values with the melt time .vtu file generated
+    by `aggregate_melt_times()`.
+
+    Args:
+        file_rgb: (str) path to ExaCA VTK with RGB values
+        file_melt: (str) path to the .vtu file with melt times
+        export_file: (str) name of exported .vtk file
+        decimal_precision: (int) controls the precision for merging XYZ coordinates
+            between different temperature files
+        verbose: (bool) controls output written to stdout
+        num_ref_ids: (int) number of reference ids used for ExaCA grain ids, allows for
+            adding a "Reference ID" as a data field
+    """
 
     if verbose:
         print("\nLoading data:\n")
