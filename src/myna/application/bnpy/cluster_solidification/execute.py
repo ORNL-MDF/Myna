@@ -394,7 +394,14 @@ def main():
         print(f"- {case_dir=}")
         print(f"- {thermal_file=}")
         output_files.append(
-            run_clustering(case_dir, thermal_file, sF, gamma, overwrite, app)
+            run_clustering(
+                case_dir,
+                thermal_file,
+                sF,
+                gamma,
+                overwrite,
+                os.path.dirname(app.input_file),
+            )
         )
 
     # Post-process results to convert to Myna format

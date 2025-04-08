@@ -208,12 +208,12 @@ def setup_case(case_dir, app):
 
 
 def main():
-    """Configure all additivefoam/solidification_region_stl case directories into
+    """Configure all additivefoam/solidification_region_reduced_stl case directories into
     valid AdditiveFOAM cases
     """
 
     # Create app instance
-    app = AdditiveFOAM("solidification_region_stl")
+    app = AdditiveFOAM("solidification_region_reduced_stl")
 
     # Get expected Myna output files
     myna_files = app.settings["data"]["output_paths"][app.step_name]

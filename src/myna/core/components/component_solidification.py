@@ -140,3 +140,15 @@ class ComponentSolidificationRegionReduced(ComponentSolidificationRegion):
     def __init__(self):
         ComponentSolidificationRegion.__init__(self)
         self.output_requirement = FileReducedSolidification
+
+
+class ComponentSolidificationRegionReducedSTL(ComponentSolidificationRegionReduced):
+    """Layer-wise Component that outputs the spatial varying solidification
+    characteristics for a region in the format of the class
+    `FileReducedSolidification` based on input of the region location
+    in the format `FileRegion` and requiring an STL.
+    """
+
+    def __init__(self):
+        ComponentSolidificationRegionReduced.__init__(self)
+        self.data_requirements.extend(["stl"])

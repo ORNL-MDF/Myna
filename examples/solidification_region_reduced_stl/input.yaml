@@ -1,6 +1,6 @@
 steps:
 - additivefoam:
-    class: solidification_region_stl
+    class: solidification_region_reduced_stl
     application: additivefoam
     configure:
       coarse: 0.64e-3

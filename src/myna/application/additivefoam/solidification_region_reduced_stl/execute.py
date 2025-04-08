@@ -40,7 +40,7 @@ def run_case(case_dir, cores, batch):
 def main(argv=None):
     # Set up argparse
     parser = argparse.ArgumentParser(
-        description="Launch additivefoam/solidification_region_stl for "
+        description="Launch additivefoam/solidification_region_reduced_stl for "
         + "specified input file"
     )
     parser.add_argument(
