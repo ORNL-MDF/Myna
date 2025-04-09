@@ -88,7 +88,7 @@ class MynaApp:
         )
         self.parser.add_argument(
             "--mpiexec",
-            default="mpiexec",
+            default=None,
             type=str,
             help="(str) MPI executable to prepend for MPI parallel execution"
             + " (for use with --mpiflags)",
@@ -110,6 +110,7 @@ class MynaApp:
 
     def validate_executable(self, default):
         """Check if the specified executable exists and raise error if not"""
+
         # Get the name of the executable
         exe = self.args.exec
         if exe is None:
@@ -136,7 +137,8 @@ class MynaApp:
             )
         if shutil.which(exe, mode=os.X_OK) is None:
             raise PermissionError(
-                f'{self.name} app executable "{shutil.which(exe, mode=os.F_OK)}" does not have execute permissions.'
+                f'{self.name} app executable "{shutil.which(exe, mode=os.F_OK)}"'
+                + "does not have execute permissions."
             )
 
     # args must have been parsed
