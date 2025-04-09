@@ -1,0 +1,30 @@
+<!--For Stainless Steel 316H (simplified model)-->
+<materials>
+  <cpdeformation type="SingleCrystalModel">
+    <kinematics type="StandardKinematicModel">
+      <emodel type="IsotropicLinearElasticModel">
+        <m1_type>youngs</m1_type>
+        <m1>101300</m1>
+        <m2_type>poissons</m2_type>
+        <m2>0.39</m2>
+      </emodel>
+      <imodel type="AsaroInelasticity">
+        <rule type="PowerLawSlipRule">
+          <resistance type="VoceSlipHardening">
+            <tau_sat>11.467</tau_sat>
+            <b>56.68</b>
+            <tau_0>37.93</tau_0>
+          </resistance>
+          <gamma0>9.55470706737e-08</gamma0>
+          <n>12</n>
+        </rule>
+      </imodel>
+    </kinematics>
+    <lattice type="CubicLattice">
+      <a>1.0</a>
+      <slip_systems>
+        1 1 0 ; 1 1 1
+      </slip_systems>
+    </lattice>
+  </cpdeformation>
+</materials>
