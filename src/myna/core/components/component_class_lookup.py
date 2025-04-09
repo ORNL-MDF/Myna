@@ -16,6 +16,7 @@ from .component_cluster import *
 from .component_mesh import *
 from .component_temperature import *
 from .component_melt_pool_geometry import *
+from .component_creep import *
 
 
 def return_step_class(step_name):
@@ -53,6 +54,9 @@ def return_step_class(step_name):
         "melt_pool_geometry_part": ComponentMeltPoolGeometryPart(),
         "vtk_to_exodus_part": ComponentVTKToExodusMeshPart(),
         "vtk_to_exodus_region": ComponentVTKToExodusMeshRegion(),
+        "creep_timeseries": ComponentCreepTimeSeries(),
+        "creep_timeseries_part": ComponentCreepTimeSeriesPart(),
+        "creep_timeseries_region": ComponentCreepTimeSeriesRegion(),
     }
     try:
         step_class = step_class_lookup[step_name]
