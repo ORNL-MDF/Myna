@@ -45,6 +45,9 @@ bnpy = [
     'opencv-python',
     'POT',
 ]
+deer = [
+    'netCDF4',
+]
 
 [project.scripts]
 myna = "myna.core.workflow.all:main"
