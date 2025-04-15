@@ -11,6 +11,7 @@ import os
 import glob
 import copy
 import shutil
+import json
 import subprocess
 import numpy as np
 import vtk
@@ -18,6 +19,7 @@ from vtk.util.numpy_support import vtk_to_numpy
 from netCDF4 import Dataset
 from myna.application.cubit import CubitApp
 from myna.core.utils import working_directory
+from myna.application.exaca import grain_id_to_reference_id, load_grain_ids
 
 
 class CubitVtkToExodusApp(CubitApp):
@@ -52,6 +54,12 @@ class CubitVtkToExodusApp(CubitApp):
             default="-S 2 -CS 5 -LI 2 -OI 150 -df 1 -rb 0.2 -A 7 -SS 5",
             type=str,
             help="(str) flags to pass to `psculpt` to control mesh generation",
+        )
+        self.parser.add_argument(
+            "--exacainput",
+            default="inputs.json",
+            type=str,
+            help="(str) name of input file in ExaCA Myna workflow step template that generated the VTK file",
         )
         self.args, _ = self.parser.parse_known_args()
 
@@ -187,7 +195,7 @@ class CubitVtkToExodusApp(CubitApp):
                 elif len(tmp_files) == 1:
                     shutil.move(tmp_files[0], exodus_prefix + ".e")
 
-                # Append grain ID array to Exodus file
+                # Append grain ID array and Euler angles to Exodus file
                 with Dataset(exodus_prefix + ".e", "r+") as exodus_object:
 
                     # Get ID array data to write
@@ -195,19 +203,36 @@ class CubitVtkToExodusApp(CubitApp):
                     elem_orig_ids = np.array(
                         [new_id_dict[key] for key in elem_block_ids]
                     )
-                    print(f"{elem_orig_ids.shape=}")
-                    print(f"{elem_orig_ids[:10]=}")
 
-                    # Create new variable in Exodus file
-                    block_data_name = "id_array"
-                    if block_data_name not in exodus_object.variables:
-                        block_data = exodus_object.createVariable(
-                            block_data_name, elem_orig_ids.dtype, ("num_el_blk",)
-                        )
-                        block_data.long_name = "ID array passed to Myna step"
+                    # Get Euler angle data to write
+                    # This assumes that ExaCA is the program that generated the VTK file
+                    exaca_input_file = os.path.join(
+                        os.path.dirname(vtk_file), self.args.exacainput
+                    )
+                    with open(exaca_input_file, "r", encoding="utf-8") as f:
+                        exaca_inputs = json.load(f)
+                    ref_id_file = exaca_inputs["GrainOrientationFile"]
+                    df_ref_ids = load_grain_ids(ref_id_file)
+                    elem_ref_ids = grain_id_to_reference_id(
+                        elem_orig_ids, len(df_ref_ids)
+                    )
+                    df_elems = df_ref_ids.loc[elem_ref_ids]
 
-                        # Write data to the new variable
-                        block_data[:] = elem_orig_ids
+                    # Create new variables in Exodus file
+                    block_data_dict = {
+                        "id_array": elem_orig_ids,
+                        "euler_bunge_zxz_phi1": df_elems["phi1"].to_numpy(),
+                        "euler_bunge_zxz_Phi": df_elems["Phi"].to_numpy(),
+                        "euler_bunge_zxz_phi2": df_elems["phi2"].to_numpy(),
+                    }
+                    for block_data_name, block_data_value in block_data_dict.items():
+                        if block_data_name not in exodus_object.variables:
+                            block_data = exodus_object.createVariable(
+                                block_data_name, block_data_value.dtype, ("num_el_blk",)
+                            )
+
+                            # Write data to the new variable
+                            block_data[:] = block_data_value
 
     def mesh_all_cases(self):
         """Generate Exodus mesh files for all cases in the Myna workflow step"""
