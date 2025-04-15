@@ -15,11 +15,15 @@ import subprocess
 import numpy as np
 import vtk
 from vtk.util.numpy_support import vtk_to_numpy
+from netCDF4 import Dataset
 from myna.application.cubit import CubitApp
 from myna.core.utils import working_directory
 
 
 class CubitVtkToExodusApp(CubitApp):
+    """Myna application to convert a VTK file with an ID array into an Exodus mesh
+    with the original ID array stored on the corresponding mesh blocks."""
+
     def __init__(
         self,
         sim_type="vtk_to_exodus",
@@ -94,14 +98,18 @@ class CubitVtkToExodusApp(CubitApp):
         """Convert a VTK file with a material ID field into a Cubit-compatible material
         id file (.spn) and return dictionary with metadata"""
 
+        # original list of grain ids
+        gids = vtk_to_numpy(vtk_data_array.GetPointData().GetArray(self.args.idarray))
+
         # Get unique integers for each id in the `idarray` for .spn file
-        gids = vtk_to_numpy(
-            vtk_data_array.GetPointData().GetArray(self.args.idarray)
-        )  # original list of grain ids
+        # (removes issues in the case where ids are negative)
         spn_ids = copy.copy(gids)  # list to renumber grains starting from 1
         unique_gids = np.unique(spn_ids)
+        new_id_dict = {}
         for i, gid in enumerate(unique_gids):
-            spn_ids = np.where(gids == gid, (i + 1) * np.ones_like(gids), spn_ids)
+            new_id = i + 1
+            spn_ids = np.where(gids == gid, new_id * np.ones_like(gids), spn_ids)
+            new_id_dict[new_id] = gid
 
         # Write out spn file from the 1D array
         spn_file = os.path.join(output_directory, self.args.spn)
@@ -113,7 +121,7 @@ class CubitVtkToExodusApp(CubitApp):
             newline=" ",
         )
 
-        return
+        return new_id_dict
 
     def mesh_vtk_file(self, vtk_file, exodus_file):
         """Meshes a VTK file containing a structured points array based on the specified
@@ -123,7 +131,7 @@ class CubitVtkToExodusApp(CubitApp):
         case_directory = os.path.dirname(exodus_file)
         data = self.get_vtk_file_data(vtk_file)
         nx, ny, nz = data.GetDimensions()
-        self.generate_material_id_file(data, case_directory)
+        new_id_dict = self.generate_material_id_file(data, case_directory)
 
         # Set exodus variables
         exodus_prefix = os.path.basename(exodus_file).replace(".e", "")
@@ -179,7 +187,30 @@ class CubitVtkToExodusApp(CubitApp):
                 elif len(tmp_files) == 1:
                     shutil.move(tmp_files[0], exodus_prefix + ".e")
 
+                # Append grain ID array to Exodus file
+                with Dataset(exodus_prefix + ".e", "r+") as exodus_object:
+
+                    # Get ID array data to write
+                    elem_block_ids = exodus_object.variables["eb_prop1"][:]
+                    elem_orig_ids = np.array(
+                        [new_id_dict[key] for key in elem_block_ids]
+                    )
+                    print(f"{elem_orig_ids.shape=}")
+                    print(f"{elem_orig_ids[:10]=}")
+
+                    # Create new variable in Exodus file
+                    block_data_name = "id_array"
+                    if block_data_name not in exodus_object.variables:
+                        block_data = exodus_object.createVariable(
+                            block_data_name, elem_orig_ids.dtype, ("num_el_blk",)
+                        )
+                        block_data.long_name = "ID array passed to Myna step"
+
+                        # Write data to the new variable
+                        block_data[:] = elem_orig_ids
+
     def mesh_all_cases(self):
+        """Generate Exodus mesh files for all cases in the Myna workflow step"""
         vtk_files = self.settings["data"]["output_paths"][self.last_step_name]
         exodus_files = self.settings["data"]["output_paths"][self.step_name]
         for vtk_file, exodus_file in zip(vtk_files, exodus_files):
