@@ -95,7 +95,7 @@ class MynaApp:
         )
         self.parser.add_argument(
             "--mpiflags",
-            default="",
+            default=None,
             type=str,
             help="(str) MPI flags to append for MPI parallel execution"
             + " (for use with --mpiexec)",
@@ -187,6 +187,8 @@ class MynaApp:
                 modified_cmd_args.extend([self.args.mpiexec, "-n", self.args.np])
             else:
                 modified_cmd_args.extend([self.args.mpiexec, "-np", self.args.np])
+            if self.args.mpiflags is not None:
+                modified_cmd_args.append(self.args.mpiflags)
         modified_cmd_args.extend(cmd_args)
         modified_cmd_args = [str(x) for x in modified_cmd_args]
         return self.start_subprocess(modified_cmd_args, **kwargs)
