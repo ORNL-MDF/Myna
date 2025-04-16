@@ -99,6 +99,12 @@ class MynaApp:
             help="(str) MPI flags to append for MPI parallel execution"
             + " (for use with --mpiexec)",
         )
+        self.parser.add_argument(
+            "--execenv",
+            default=None,
+            type=str,
+            help="(str) file to source to set up environment for executable",
+        )
         self.args, _ = self.parser.parse_known_args()
 
     def validate_executable(self, default):
@@ -156,7 +162,10 @@ class MynaApp:
             print(f"Warning: NOT overwriting existing case in: {case_dir}")
 
     def start_subprocess(self, cmd_args, **kwargs):
-        """Starts a subprocess"""
+        """Starts a subprocess, activating an environment if present"""
+        if self.args.execenv is not None:
+            popen_args = [f". {self.args.execenv}; " + " ".join(cmd_args)]
+            return subprocess.Popen(popen_args, shell=True, **kwargs)
         return subprocess.Popen(cmd_args, **kwargs)
 
     def start_subprocess_with_MPI_args(self, cmd_args, **kwargs):
