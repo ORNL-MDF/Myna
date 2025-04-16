@@ -10,6 +10,7 @@ import argparse
 import os
 import shutil
 import subprocess
+import warnings
 from myna.core.workflow.load_input import load_input
 from myna.core.utils import is_executable
 
@@ -99,6 +100,12 @@ class MynaApp:
             help="(str) MPI flags to append for MPI parallel execution"
             + " (for use with --mpiexec)",
         )
+        self.parser.add_argument(
+            "--env",
+            default=None,
+            type=str,
+            help="(str) file to source to set up environment for executable",
+        )
         self.args, _ = self.parser.parse_known_args()
 
     def validate_executable(self, default):
@@ -111,6 +118,15 @@ class MynaApp:
 
         # If an executable is found, return
         if any(is_executable(x) for x in [exe, exe_windows]):
+            return
+
+        # If there is an `env` set, then assume that it sets a valid executable path
+        if self.args.env is not None:
+            warning_msg = (
+                f"Warning: {self.name} app executable was not found,"
+                + " but `env` option was set. Assuming the environment sets valid path."
+            )
+            warnings.warn(warning_msg)
             return
 
         # If not found, raise the appropriate errors
@@ -156,7 +172,10 @@ class MynaApp:
             print(f"Warning: NOT overwriting existing case in: {case_dir}")
 
     def start_subprocess(self, cmd_args, **kwargs):
-        """Starts a subprocess"""
+        """Starts a subprocess, activating an environment if present"""
+        if self.args.env is not None:
+            popen_args = [f". {self.args.env}; " + " ".join(cmd_args)]
+            return subprocess.Popen(popen_args, shell=True, **kwargs)
         return subprocess.Popen(cmd_args, **kwargs)
 
     def start_subprocess_with_MPI_args(self, cmd_args, **kwargs):
