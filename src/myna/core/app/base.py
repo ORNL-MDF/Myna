@@ -7,7 +7,9 @@
 # License: 3-clause BSD, see https://opensource.org/licenses/BSD-3-Clause.
 #
 import argparse
-import os, shutil
+import os
+import shutil
+import subprocess
 from myna.core.workflow.load_input import load_input
 from myna.core.utils import is_executable
 
@@ -92,10 +94,16 @@ class MynaApp:
         )
         self.parser.add_argument(
             "--mpiflags",
-            default="",
+            default=None,
             type=str,
             help="(str) MPI flags to append for MPI parallel execution"
             + " (for use with --mpiexec)",
+        )
+        self.parser.add_argument(
+            "--execenv",
+            default=None,
+            type=str,
+            help="(str) file to source to set up environment for executable",
         )
         self.args, _ = self.parser.parse_known_args()
 
@@ -152,3 +160,25 @@ class MynaApp:
             shutil.copytree(self.args.template, case_dir, dirs_exist_ok=True)
         else:
             print(f"Warning: NOT overwriting existing case in: {case_dir}")
+
+    def start_subprocess(self, cmd_args, **kwargs):
+        """Starts a subprocess, activating an environment if present"""
+        if self.args.execenv is not None:
+            popen_args = [f". {self.args.execenv}; " + " ".join(cmd_args)]
+            return subprocess.Popen(popen_args, shell=True, **kwargs)
+        return subprocess.Popen(cmd_args, **kwargs)
+
+    def start_subprocess_with_MPI_args(self, cmd_args, **kwargs):
+        """Starts a subprocess using `Popen` while taking into account the MynaApp
+        MPI-related options. **kwargs are passed to `subprocess.Popen`"""
+        modified_cmd_args = []
+        if self.args.mpiexec is not None:
+            if os.path.basename(self.args.mpiexec) == "srun":
+                modified_cmd_args.extend([self.args.mpiexec, "-n", self.args.np])
+            else:
+                modified_cmd_args.extend([self.args.mpiexec, "-np", self.args.np])
+            if self.args.mpiflags is not None:
+                modified_cmd_args.append(self.args.mpiflags)
+        modified_cmd_args.extend(cmd_args)
+        modified_cmd_args = [str(x) for x in modified_cmd_args]
+        return self.start_subprocess(modified_cmd_args, **kwargs)
