@@ -40,5 +40,5 @@ jobs:
       - name: Format Check
         uses: psf/black@stable
       - name: Analyzing code with pylint
-        uses: |
+        run: |
           pylint $(git ls-files '*.py') --fail-under=7.25
