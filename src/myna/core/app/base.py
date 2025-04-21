@@ -164,7 +164,7 @@ class MynaApp:
         MPI-related options. **kwargs are passed to `subprocess.Popen`"""
         modified_cmd_args = []
         if self.args.mpiexec is not None:
-            if os.path.basename(self.args.mpiexec) == "srun":
+            if os.path.basename(self.args.mpiexec) in ["srun", "mpirun"]:
                 modified_cmd_args.extend([self.args.mpiexec, "-n", self.args.np, self])
             else:
                 modified_cmd_args.extend([self.args.mpiexec, "-np", self.args.np])
