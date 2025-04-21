@@ -45,7 +45,7 @@ bnpy = [
     'opencv-python',
     'POT',
 ]
-deer = [
+netcdf = [
     'netCDF4',
 ]
 

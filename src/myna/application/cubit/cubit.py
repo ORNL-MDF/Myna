@@ -35,6 +35,27 @@ class CubitApp(MynaApp):
         super().set_procs()
         self.update_template_path()
 
+        # Check that all needed executables are accessible. This overrides the
+        # assumed behavior that each app only has one executable passed through the
+        # `--exec` argument, because the user passes a Cubit install path
+        path_prefix = ""
+        if self.args.cubitpath is not None:
+            path_prefix = os.path.join(self.args.cubitpath, "bin")
+        self.exe_psculpt = os.path.join(path_prefix, "psculpt")
+        self.exe_epu = os.path.join(path_prefix, "epu")
+        original_executable_arg = self.args.exec
+        for executable in [self.exe_psculpt, self.exe_epu]:
+            self.args.exec = executable
+            self.validate_executable(executable)
+        # Set original value back to exec commented out since it is ignored
+        if original_executable_arg is not None:
+            self.args.exec = (
+                f"# (ignored by {self.name}/{self.simulation_type} app) "
+                + original_executable_arg
+            )
+        else:
+            self.args.exec = original_executable_arg
+
     def update_template_path(self):
         """Updates the template path parameter"""
         if self.args.template is None:

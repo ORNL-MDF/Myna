@@ -14,20 +14,19 @@ import shutil
 import json
 import subprocess
 import numpy as np
-from vtk import (
+from vtk import (  # pylint: disable=no-name-in-module
     vtkStructuredPointsReader,
     vtkExtractVOI,
-)  # pylint: disable=no-name-in-module
+)
 from vtkmodules.util.numpy_support import vtk_to_numpy
-from netCDF4 import Dataset  # pylint: disable=no-name-in-module
 from myna.application.cubit import CubitApp
 from myna.core.utils import working_directory
 from myna.application.exaca import grain_id_to_reference_id, load_grain_ids
 
 
 class CubitVtkToExodusApp(CubitApp):
-    """Myna application to convert a VTK file with an ID array into an Exodus mesh
-    with the original ID array stored on the corresponding mesh blocks."""
+    """Myna application to convert an ExaCA VTK file with an ID array into an Exodus
+    mesh with the original ID array stored on the corresponding mesh blocks."""
 
     def __init__(
         self,
@@ -35,10 +34,11 @@ class CubitVtkToExodusApp(CubitApp):
     ):
         super().__init__(sim_type)
         self.parser.add_argument(
-            "--idarray",
+            "--field",
             default="GrainID",
             type=str,
-            help="(str) array name of material ids in VTK file to use for conformal meshing",
+            help="(str) field name of material ids in ExaCA VTK file to use for "
+            + "conformal meshing",
         )
         self.parser.add_argument(
             "--spn",
@@ -67,27 +67,6 @@ class CubitVtkToExodusApp(CubitApp):
         )
         self.args, _ = self.parser.parse_known_args()
 
-        # Check that all needed executables are accessible. This overrides the
-        # assumed behavior that each app only has one executable passed through the
-        # `--exec` argument, because the user passes a Cubit path
-        path_prefix = ""
-        if self.args.cubitpath is not None:
-            path_prefix = os.path.join(self.args.cubitpath, "bin")
-        self.exe_psculpt = os.path.join(path_prefix, "psculpt")
-        self.exe_epu = os.path.join(path_prefix, "epu")
-        original_executable_arg = self.args.exec
-        for executable in [self.exe_psculpt, self.exe_epu]:
-            self.args.exec = executable
-            self.validate_executable(executable)
-        # Set original value back to exec commented out since it is
-        if original_executable_arg is not None:
-            self.args.exec = (
-                f"# (ignored by {self.name}/{self.simulation_type} app) "
-                + original_executable_arg
-            )
-        else:
-            self.args.exec = original_executable_arg
-
     def get_vtk_file_data(self, vtk_file):
         """Extract the data object from a VTK file
         containing structured points"""
@@ -111,9 +90,9 @@ class CubitVtkToExodusApp(CubitApp):
         id file (.spn) and return dictionary with metadata"""
 
         # original list of grain ids
-        gids = vtk_to_numpy(vtk_data_array.GetPointData().GetArray(self.args.idarray))
+        gids = vtk_to_numpy(vtk_data_array.GetPointData().GetArray(self.args.field))
 
-        # Get unique integers for each id in the `idarray` for .spn file
+        # Get unique integers for each id in the `field` for .spn file
         # (removes issues in the case where ids are negative)
         spn_ids = copy.copy(gids)  # list to renumber grains starting from 1
         unique_gids = np.unique(spn_ids)
@@ -137,7 +116,15 @@ class CubitVtkToExodusApp(CubitApp):
 
     def mesh_vtk_file(self, vtk_file, exodus_file):
         """Meshes a VTK file containing a structured points array based on the specified
-        array name (self.args.idarray)"""
+        array name (self.args.field)"""
+
+        try:
+            from netCDF4 import Dataset  # pylint: disable=import-outside-toplevel
+        except ImportError as exc:
+            raise ImportError(
+                'Myna cubit/vtk_to_exodus_region app requires "pip install .[netcdf]"'
+                + "optional dependencies!"
+            ) from exc
 
         # Pre-process VTK data file
         case_directory = os.path.dirname(exodus_file)
@@ -215,7 +202,11 @@ class CubitVtkToExodusApp(CubitApp):
                     )
 
                     # Get Euler angle data to write
-                    # This assumes that ExaCA is the program that generated the VTK file
+                    # > [! note]
+                    # > This is the section of the application that makes
+                    # > the application ExaCA-specific. Another method of passing
+                    # > grain orientation is needed if this app is to be generalized
+                    # > to other microstructure simulations.
                     exaca_input_file = os.path.join(
                         os.path.dirname(vtk_file), self.args.exacainput
                     )
