@@ -6,7 +6,7 @@
 #
 # License: 3-clause BSD, see https://opensource.org/licenses/BSD-3-Clause.
 #
-
+"""Define the application class functionality for the `CubitVtkToExodusApp` class"""
 import os
 import glob
 import copy
@@ -14,9 +14,12 @@ import shutil
 import json
 import subprocess
 import numpy as np
-import vtk
-from vtk.util.numpy_support import vtk_to_numpy
-from netCDF4 import Dataset
+from vtk import (
+    vtkStructuredPointsReader,
+    vtkExtractVOI,
+)  # pylint: disable=no-name-in-module
+from vtkmodules.util.numpy_support import vtk_to_numpy
+from netCDF4 import Dataset  # pylint: disable=no-name-in-module
 from myna.application.cubit import CubitApp
 from myna.core.utils import working_directory
 from myna.application.exaca import grain_id_to_reference_id, load_grain_ids
@@ -59,7 +62,8 @@ class CubitVtkToExodusApp(CubitApp):
             "--exacainput",
             default="inputs.json",
             type=str,
-            help="(str) name of input file in ExaCA Myna workflow step template that generated the VTK file",
+            help="(str) name of input file in ExaCA Myna workflow step template"
+            + "generated the VTK file",
         )
         self.args, _ = self.parser.parse_known_args()
 
@@ -88,12 +92,12 @@ class CubitVtkToExodusApp(CubitApp):
         """Extract the data object from a VTK file
         containing structured points"""
         # read the VTK structured points file and extract the downsampled data
-        reader = vtk.vtkStructuredPointsReader()
+        reader = vtkStructuredPointsReader()
         reader.SetFileName(vtk_file)
         reader.ReadAllScalarsOn()
         reader.Update()
         structured_points = reader.GetOutput()
-        extractor = vtk.vtkExtractVOI()
+        extractor = vtkExtractVOI()
         extractor.SetInputData(structured_points)
         extractor.SetVOI(structured_points.GetExtent())
         extractor.SetSampleRate(
@@ -171,7 +175,10 @@ class CubitVtkToExodusApp(CubitApp):
                 )
                 returncode = process.wait()
                 if returncode != 0:
-                    error_msg = f"Subprocess exited with return code {returncode}. Check {log_file} for details."
+                    error_msg = (
+                        f"Subprocess exited with return code {returncode}."
+                        + "Check {log_file} for details."
+                    )
                     raise subprocess.SubprocessError(error_msg)
 
                 # If mesh was generated in parallel, combine and clean the split mesh
@@ -185,7 +192,10 @@ class CubitVtkToExodusApp(CubitApp):
                     )
                     returncode = process.wait()
                     if returncode != 0:
-                        error_msg = f"Subprocess exited with return code {returncode}. Check {log_file} for details."
+                        error_msg = (
+                            f"Subprocess exited with return code {returncode}."
+                            + " Check {log_file} for details."
+                        )
                         raise subprocess.SubprocessError(error_msg)
 
                     for tmp_file in tmp_files:

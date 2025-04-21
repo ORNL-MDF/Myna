@@ -6,13 +6,19 @@
 #
 # License: 3-clause BSD, see https://opensource.org/licenses/BSD-3-Clause.
 #
-
+"""Define the application functionality for the base `CubitApp`, which should be
+inherited by all Myna Component applications in this module."""
 import os
 import shutil
 from myna.core.app.base import MynaApp
 
 
 class CubitApp(MynaApp):
+    """Defines Myna application behavior for Cubit&reg;-based applications. Cubit&reg;
+    is a toolkit for geometry and mesh generation developed by Sandia National
+    Laboratories: https://cubit.sandia.gov/
+    """
+
     def __init__(
         self,
         sim_type,
