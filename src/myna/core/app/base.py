@@ -7,7 +7,9 @@
 # License: 3-clause BSD, see https://opensource.org/licenses/BSD-3-Clause.
 #
 import argparse
-import os, shutil
+import os
+import shutil
+import subprocess
 from myna.core.workflow.load_input import load_input
 from myna.core.utils import is_executable
 
@@ -152,3 +154,20 @@ class MynaApp:
             shutil.copytree(self.args.template, case_dir, dirs_exist_ok=True)
         else:
             print(f"Warning: NOT overwriting existing case in: {case_dir}")
+
+    def start_subprocess(self, cmd_args, **kwargs):
+        """Starts a subprocess"""
+        return subprocess.Popen(cmd_args, **kwargs)
+
+    def start_subprocess_with_MPI_args(self, cmd_args, **kwargs):
+        """Starts a subprocess using `Popen` while taking into account the MynaApp
+        MPI-related options. **kwargs are passed to `subprocess.Popen`"""
+        modified_cmd_args = []
+        if self.args.mpiexec is not None:
+            if os.path.basename(self.args.mpiexec) in ["srun", "mpirun"]:
+                modified_cmd_args.extend([self.args.mpiexec, "-n", self.args.np, self])
+            else:
+                modified_cmd_args.extend([self.args.mpiexec, "-np", self.args.np])
+        modified_cmd_args.extend(cmd_args)
+        modified_cmd_args = [str(x) for x in modified_cmd_args]
+        return self.start_subprocess(modified_cmd_args, **kwargs)
