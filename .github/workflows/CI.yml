@@ -31,9 +31,14 @@ jobs:
       - name: Run pytest
         run: |
           python -m pytest
+      - name: Analyzing code with pylint
+        run: |
+          pylint $(git ls-files '*.py') --fail-under=7.25
 
   format:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: psf/black@stable
+      - name: Checkout myna
+        uses: actions/checkout@v4
+      - name: Format Check
+        uses: psf/black@stable
