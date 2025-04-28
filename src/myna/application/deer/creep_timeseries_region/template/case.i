@@ -304,11 +304,11 @@ RVE_length = {RVE_LENGTH}
   [../]
   [./out]
     type = Exodus
-    file_base = wCreep_out
+    file_base = {OUTPUT_NAME}
     time_step_interval = 1
   [../]
   [./out_csv]
     type = CSV
-    file_base = wCreep_out
+    file_base = {OUTPUT_NAME}
   [../]
 []

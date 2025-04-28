@@ -9,7 +9,6 @@
 """Defines the application behavior for the `deer/creep_timeseries_region` application"""
 
 import os
-import shutil
 import subprocess
 import numpy as np
 import polars as pl
@@ -158,10 +157,23 @@ class CreepTimeseriesRegionDeerApp(DeerApp):
                     raise subprocess.SubprocessError(error_msg)
 
         # Copy output to the Myna format
+        # Deer output has the following column names (units):
+        #
+        #   - "time": elapsed time (h)
+        #   - "D_avg","D_max","D_min"
+        #   - "a","b"
+        #   - "strain": engineering strain
+        #   - "strain_rate": (s^-1)
+
         for myna_file in csv_files:
             case_dir = os.path.dirname(myna_file)
             case_file = os.path.join(case_dir, self.output_csv_name)
-            shutil.copy(case_file, myna_file)
+            case_data = pl.read_csv(case_file)
+            case_data = case_data.with_columns(
+                (pl.col("time") * 3600).alias("time (s)")
+            )
+            myna_data = case_data.select(["time (s)", "strain"])
+            myna_data.write_csv(myna_file)
 
     def generate_orientation_file(self, case_dir, exodus_mesh_file):
         """Generates the orientation file for an Exodus file with stored Euler angle
@@ -207,6 +219,9 @@ class CreepTimeseriesRegionDeerApp(DeerApp):
         input_file_str = input_file_str.replace("{LOADDIR}", str(self.args.loaddir))
         input_file_str = input_file_str.replace("{LOAD}", str(self.args.load))
         input_file_str = input_file_str.replace("{RVE_LENGTH}", str(rve_length))
+        input_file_str = input_file_str.replace(
+            "{OUTPUT_NAME}", str(self.output_csv_name.replace(".csv", ""))
+        )
 
         with open(deer_case_input_file, "w", encoding="utf-8") as f:
             f.write(input_file_str)
