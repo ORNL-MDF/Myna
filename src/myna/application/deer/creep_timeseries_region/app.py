@@ -115,7 +115,7 @@ class CreepTimeseriesRegionDeerApp(DeerApp):
                     "Materials/stress/database"
                     + f"={os.path.join(case_dir, self.material_model_file_name)}",
                 ]
-                process = self.start_subprocess_with_MPI_args(
+                process = self.start_subprocess_with_mpi_args(
                     cmd_args,
                     stdout=f,
                     stderr=subprocess.STDOUT,

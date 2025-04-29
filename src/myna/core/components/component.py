@@ -9,11 +9,12 @@
 """Base class for workflow components"""
 
 import os
+import subprocess
 import myna
 import myna.database
 from myna.core.workflow import load_input
-from myna.core.utils import nested_set, nested_get
-import logging
+from myna.core.utils import nested_get, get_quoted_str
+import warnings
 
 
 class Component:
@@ -52,11 +53,12 @@ class Component:
             "configure.py",
         )
         if os.path.exists(configure_path):
-
-            # Submit configure.py command
-            cmd = f'python {configure_path} {self.get_step_args_str("configure")}'
+            cmd = ["python", configure_path]
+            cmd.extend(self.get_step_args_list("configure"))
             cmd = self.cmd_preformat(cmd)
-            os.system(cmd)
+            print(f"myna run: {cmd=}")
+            with subprocess.Popen(cmd) as p:
+                p.wait()
 
         # Run component execute.py script
         has_executed = False
@@ -67,9 +69,12 @@ class Component:
             "execute.py",
         )
         if os.path.exists(execute_path):
-            cmd = f'python {execute_path} {self.get_step_args_str("execute")}'
+            cmd = ["python", execute_path]
+            cmd.extend(self.get_step_args_list("execute"))
             cmd = self.cmd_preformat(cmd)
-            os.system(cmd)
+            print(f"myna run: {cmd=}")
+            with subprocess.Popen(cmd) as p:
+                p.wait()
             has_executed = True
 
         # Run component postprocess.py script
@@ -80,12 +85,15 @@ class Component:
             "postprocess.py",
         )
         if os.path.exists(postprocess_path):
-            cmd = f'python {postprocess_path} {self.get_step_args_str("postprocess")}'
+            cmd = ["python", postprocess_path]
+            cmd.extend(self.get_step_args_list("postprocess"))
             cmd = self.cmd_preformat(cmd)
-            os.system(cmd)
+            print(f"myna run: {cmd=}")
+            with subprocess.Popen(cmd) as p:
+                p.wait()
 
         # Check output of component
-        output_files, exists, valid = self.get_output_files()
+        output_files, _, valid = self.get_output_files()
         if len(output_files) > 0:
             if has_executed:
                 if all(valid):
@@ -107,7 +115,7 @@ class Component:
         if a custom executable path is specified.
 
         Args:
-            raw_cmd: a string of the command with placeholders
+            raw_cmd: a list of command arguments with (potential) placeholders
 
         Available placeholders:
             {name}: the name of the component
@@ -116,15 +124,19 @@ class Component:
             $MYNA_INSTALL_PATH: the location of the myna installation directory
         """
 
-        cmd = raw_cmd.replace("{name}", self.name)
-        cmd = cmd.replace("{build}", self.data["build"]["name"])
-        cmd = cmd.replace("$MYNA_APP_PATH", os.environ["MYNA_APP_PATH"])
-        cmd = cmd.replace("$MYNA_INSTALL_PATH", os.environ["MYNA_INSTALL_PATH"])
+        formatted_cmd = []
 
-        if self.executable is not None:
-            cmd += f" --exec {self.executable}"
+        if (self.executable is not None) and ("--exec" not in raw_cmd):
+            formatted_cmd.extend(["--exec", self.executable])
 
-        return cmd
+        for entry in raw_cmd:
+            cmd = entry.replace("{name}", self.name)
+            cmd = cmd.replace("{build}", self.data["build"]["name"])
+            cmd = cmd.replace("$MYNA_APP_PATH", os.environ["MYNA_APP_PATH"])
+            cmd = cmd.replace("$MYNA_INSTALL_PATH", os.environ["MYNA_INSTALL_PATH"])
+            formatted_cmd.append(cmd)
+
+        return formatted_cmd
 
     def apply_settings(self, step_settings, data_settings, myna_settings):
         """Update the step and data settings for the component from dictionaries
@@ -409,34 +421,36 @@ class Component:
 
         return synced_files
 
-    def get_step_args_str(self, operation):
-        """Get the command string for the configure, execute, or postprocess operation
+    def get_step_args_list(self, operation):
+        """Get the command list for the configure, execute, or postprocess operation
+        that can be passed to `subprocess.Popen`
 
         Args:
             operation: "configure", "execute", or "postprocess"
 
         Returns:
-            argstr: string of command arguments"""
+            arglist: list of command arguments to be passed to `subprocess.Popen`
+        """
 
         # Initialize
         assert operation in set(["configure", "execute", "postprocess"])
         arg_dict = getattr(self, f"{operation}_dict")
-        config_str = ""
+        arglist = []
 
         # Function to identify obsolete input dictionary keys:
         def check_obsolete_args(dict_key, value, operation):
             obsolete_keys = ["exec"]
             if dict_key in obsolete_keys:
-                logging.warn(
+                warning_msg = (
                     f" Step {self.name} {operation}"
                     f' argument "{dict_key}" for {operation} is'
                     + " obsolete. Using default value. Instead, use: "
                     + f"  \n\t{self.name}:"
                     + f"  \n\t  executable: {value}\n",
                 )
+                warnings.warn(warning_msg)
                 return True
-            else:
-                return False
+            return False
 
         # Get values from the workspace
         if self.workspace is not None:
@@ -448,26 +462,32 @@ class Component:
                 if key not in arg_dict.keys():
                     value = workspace_dict[key]
                     # Check for flag
-                    if (type(workspace_dict[key]) == bool) and (
+                    if isinstance(workspace_dict[key], bool) and (
                         not check_obsolete_args(key, value, operation)
                     ):
                         # Assume that default flag behavior is False
                         if value:
-                            config_str += f" --{key}"
+                            arglist.append(f"--{key}")
 
                     # Else, get value
                     elif not check_obsolete_args(key, value, operation):
-                        config_str += f" --{key} {value}"
+                        if " " in str(value):
+                            arglist.extend(["--" + str(key), get_quoted_str(value)])
+                        else:
+                            arglist.extend(["--" + str(key), str(value)])
 
         # Overwrite workspace with any values from the input file
         for key in arg_dict.keys():
             value = arg_dict[key]
-            if (type(value) == bool) and (
+            if isinstance(value, bool) and (
                 not check_obsolete_args(key, value, operation)
             ):
                 if value:
-                    config_str += f" --{key}"
+                    arglist.append(f"--{key}")
             elif not check_obsolete_args(key, value, operation):
-                config_str += f" --{key} {value}"
+                if " " in str(value):
+                    arglist.extend(["--" + str(key), get_quoted_str(value)])
+                else:
+                    arglist.extend(["--" + str(key), str(value)])
 
-        return config_str
+        return arglist
