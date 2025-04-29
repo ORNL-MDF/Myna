@@ -134,7 +134,7 @@ def setup_case(case_dir, app):
         )
 
         # Generate background mesh
-        origin, bb_dict = openfoam.mesh.create_background_mesh(
+        bb_dict = openfoam.mesh.create_stl_cube_mesh(
             template_dir,
             working_stl_path,
             [app.args.coarse, app.args.coarse, app.args.coarse],
@@ -144,7 +144,7 @@ def setup_case(case_dir, app):
             template_dir,
             working_stl_path,
             0,
-            origin,
+            bb_dict["origin"],
         )
 
         # Create mesh for part
@@ -174,7 +174,7 @@ def setup_case(case_dir, app):
         # Slice the mesh for the given layer
         height = float(layer_thickness) * float(layer)
         print("height = ", height)
-        openfoam.mesh.slice(template_dir, height)
+        openfoam.mesh.slice_part_mesh(template_dir, height)
 
         # Generate refined mesh in layer thickness
         refinement = app.args.refine_layer
@@ -184,7 +184,7 @@ def setup_case(case_dir, app):
             "foamDictionary -entry castellatedMeshControls/refinementRegions/refinementBox/levels"
             f" -set '( ({refinement} {refinement}) );' {refine_dict_path}"
         )
-        openfoam.mesh.refine_RVE(template_dir, layer_box)
+        openfoam.mesh.refine_mesh_in_box(template_dir, layer_box)
 
         # Archive copy of the layer refinement dict
         shutil.copy(refine_dict_path, copy_path)
@@ -196,7 +196,8 @@ def setup_case(case_dir, app):
             "foamDictionary -entry castellatedMeshControls/refinementRegions/refinementBox/levels"
             f" -set '( ({refinement} {refinement}) );' {refine_dict_path}"
         )
-        openfoam.mesh.refine_RVE(template_dir, region_box)
+        openfoam.mesh.refine_mesh_in_box(template_dir, region_box)
+        # openfoam.mesh.update_exaca_region_bounds(template_dir_abs, region_box) #TODO: change to app-based version
 
     # Copy template to case dir and then update the case parameters
     shutil.copytree(template_dir_abs, case_dir, dirs_exist_ok=True)

@@ -6,6 +6,7 @@
 #
 # License: 3-clause BSD, see https://opensource.org/licenses/BSD-3-Clause.
 #
+"""Defines the shared AdditiveFOAM app functionality for all simulation types"""
 import os
 import shutil
 import subprocess
@@ -19,70 +20,11 @@ from myna.core.app.base import MynaApp
 class AdditiveFOAM(MynaApp):
     def __init__(
         self,
-        sim_type,
+        name,
     ):
-        super().__init__("AdditiveFOAM")
-        self.simulation_type = sim_type
+        super().__init__(name)
 
-        self.parser.add_argument(
-            "--rx",
-            default=1e-3,
-            type=float,
-            help="(float) width of region along X-axis, in meters",
-        )
-        self.parser.add_argument(
-            "--ry",
-            default=1e-3,
-            type=float,
-            help="(float) width of region along Y-axis, in meters",
-        )
-        self.parser.add_argument(
-            "--rz",
-            default=1e-3,
-            type=float,
-            help="(float) depth of region along Z-axis, in meters",
-        )
-        self.parser.add_argument(
-            "--pad-xy",
-            default=2e-3,
-            type=float,
-            help="(float) size of single-refinement mesh region around"
-            + " the double-refined region in XY, in meters",
-        )
-        self.parser.add_argument(
-            "--pad-z",
-            default=1e-3,
-            type=float,
-            help="(float) size of single-refinement mesh region around"
-            + " the double-refined region in Z, in meters",
-        )
-        self.parser.add_argument(
-            "--pad-sub",
-            default=1e-3,
-            type=float,
-            help="(float) size of coarse mesh cubic region below"
-            + " the refined regions in Z, in meters",
-        )
-        self.parser.add_argument(
-            "--coarse",
-            default=640e-6,
-            type=float,
-            help="(float) size of fine mesh, in meters",
-        )
-        self.parser.add_argument(
-            "--refine-layer",
-            default=5,
-            type=int,
-            help="(int) number of region mesh refinement"
-            + " levels in layer (each level halves coarse mesh)",
-        )
-        self.parser.add_argument(
-            "--refine-region",
-            default=1,
-            type=int,
-            help="(int) additional refinement of region mesh"
-            + " level after layer refinement (each level halves coarse mesh)",
-        )
+        # Parse app-specific arguments
         self.parser.add_argument(
             "--scale",
             default=0.001,
@@ -108,7 +50,7 @@ class AdditiveFOAM(MynaApp):
             template_path = os.path.join(
                 os.environ["MYNA_APP_PATH"],
                 "additivefoam",
-                self.simulation_type,
+                self.name,
                 "template",
             )
             self.args.template = template_path
@@ -141,10 +83,7 @@ class AdditiveFOAM(MynaApp):
         for key in mesh_dict.keys():
             entry_match = mesh_dict.get(key) == existing_dict.get(key)
             matches.append(entry_match)
-        if all(matches):
-            return True
-        else:
-            return False
+        return bool(all(matches))
 
     def update_material_properties(self, case_dir):
         """Update the material properties for the AdditiveFOAM case based on Mist data
@@ -207,7 +146,7 @@ class AdditiveFOAM(MynaApp):
             part,
             region,
             "additivefoam",
-            self.simulation_type,
+            self.name,
             "template",
         )
 
@@ -375,4 +314,18 @@ class AdditiveFOAM(MynaApp):
         os.system(
             "foamDictionary -entry ExaCA/dx -set"
             + f" {self.args.exaca_mesh} {case_dir}/system/ExaCA"
+        )
+
+    def update_exaca_region_bounds(self, case_dir, bb):
+        """Updates the bounds for the ExaCA output for an AdditiveFOAM case
+
+        Args:
+            case_dir: (str) path to case directory
+            bb: (np.array, shape (2,3)) bounding box ((xmin, ymin, zmin),(xmax, ymax, zmax))
+        """
+        os.system(
+            f"foamDictionary -entry ExaCA/box -set "
+            f'"( {bb[0][0]} {bb[0][1]} {bb[0][2]} ) '
+            f'( {bb[1][0]} {bb[1][1]} {bb[1][2]} )" '
+            f"{case_dir}/system/ExaCA"
         )
