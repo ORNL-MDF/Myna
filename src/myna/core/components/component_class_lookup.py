@@ -63,7 +63,7 @@ def return_step_class(step_name):
     except KeyError as e:
         print(e)
         print(f'ERROR: Component name "{step_name}" is not valid. Valid step names:')
-        for key in step_class_lookup.keys():
-            print(f'\t- "{key}" ({step_class_lookup[key].__class__.__name__})')
-        exit()
+        for key, obj in step_class_lookup.items():
+            print(f'\t- "{key}" ({obj.__class__.__name__})')
+        raise KeyError(e) from e
     return step_class

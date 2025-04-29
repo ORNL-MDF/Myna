@@ -9,11 +9,13 @@
 """Module to define the base behavior of a Myna simulation application"""
 import argparse
 import os
+import time
 import shutil
 import subprocess
 import warnings
 from myna.core.workflow.load_input import load_input
-from myna.core.utils import is_executable
+from myna.core.utils import is_executable, get_quoted_str
+from myna.core.components import return_step_class
 
 
 class MynaApp:
@@ -35,7 +37,24 @@ class MynaApp:
         self.settings = load_input(self.input_file)
         self.path = os.environ["MYNA_APP_PATH"]
         self.step_name = os.environ["MYNA_STEP_NAME"]
+        self.step_number = [list(x.keys())[0] for x in self.settings["steps"]].index(
+            self.step_name
+        )
         self.last_step_name = os.environ["MYNA_LAST_STEP_NAME"]
+
+        # Check if there is a corresponding component class. This will be None if
+        # class is not in the Component lookup dictionary,
+        # e.g., `myna.application.AdditiveFOAM()`
+        self.sim_class_obj = None
+        try:
+            self.sim_class_obj = return_step_class(self.name)
+            self.sim_class_obj.apply_settings(
+                self.settings["steps"][self.step_number],
+                self.settings.get("data"),
+                self.settings.get("myna"),
+            )
+        except KeyError:
+            pass
 
         # Set up argparse
         self.parser = argparse.ArgumentParser(
@@ -196,24 +215,168 @@ class MynaApp:
         else:
             print(f"Warning: NOT overwriting existing case in: {case_dir}")
 
+    def get_mpi_implementation(self):
+        """Gets the MPI implementation associated with the specified `mpiexec`."""
+
+        if self.args.mpiexec is not None:
+            try:
+                # If the executable is an OpenMPI implementation, this should yield
+                # output "mpirun/mpiexec (Open MPI) #.#.#". If another implementation,
+                # this may throw an error
+                version = (
+                    subprocess.check_output(
+                        f"{self.args.mpiexec} --version",
+                        shell=True,
+                    )
+                    .decode("utf-8")
+                    .strip()
+                )
+                if "open mpi" in version.lower():
+                    return "openmpi"
+            except subprocess.CalledProcessError:
+                pass
+
+            # Otherwise, if the MPI executable is an MPICH implementation then
+            # `mpichversion` should be in path and will yield an "MPICH Version"
+            # line as part of the output. This works with the following cases:
+            #
+            # - Ubuntu 22.04: spack install mpich@4.2.3
+            # - OLCF Frontier: module load cray-mpich/8.1.31
+            try:
+                version = (
+                    subprocess.check_output(
+                        f"mpichversion",
+                        shell=True,
+                    )
+                    .decode("utf-8")
+                    .strip()
+                )
+                if "mpich version" in version.lower():
+                    return "mpich"
+            except subprocess.CalledProcessError:
+                pass
+
+            # Return None if not OpenMPI or MPICH
+            return None
+
+        # subprocess.check_output(f"mpiexec --version",shell=True,).decode("utf-8").strip()
+
     def start_subprocess(self, cmd_args, **kwargs):
         """Starts a subprocess, activating an environment if present"""
         if self.args.env is not None:
             popen_args = [f". {self.args.env}; " + " ".join(cmd_args)]
+            print(f"myna subprocess: {popen_args}")
             return subprocess.Popen(popen_args, shell=True, **kwargs)
+        print(f"myna subprocess: {cmd_args}")
         return subprocess.Popen(cmd_args, **kwargs)
 
-    def start_subprocess_with_MPI_args(self, cmd_args, **kwargs):
+    def start_subprocess_with_mpi_args(self, cmd_args, **kwargs):
         """Starts a subprocess using `Popen` while taking into account the MynaApp
-        MPI-related options. **kwargs are passed to `subprocess.Popen`"""
+        MPI-related options. **kwargs are passed to `subprocess.Popen`
+
+        > [!warning]
+        > If the `self.args.mpiexec` option points to an implementation that uses
+        > a non-standard implementation, then the construction of the argument may
+        > cause an error.
+        """
         modified_cmd_args = []
         if self.args.mpiexec is not None:
-            if os.path.basename(self.args.mpiexec) in ["srun", "mpirun"]:
+            mpi_implementation = self.get_mpi_implementation()
+            if mpi_implementation == "mpich":
                 modified_cmd_args.extend([self.args.mpiexec, "-n", self.args.np])
-            else:
+            elif mpi_implementation == "openmpi":
                 modified_cmd_args.extend([self.args.mpiexec, "-np", self.args.np])
+            else:
+                modified_cmd_args.extend([self.args.mpiexec])
+                warning_msg = (
+                    "Warning: Myna was unable to determine the MPI implementation for"
+                    + f"the `{self.args.mpiexec}` MPI executable. You must assign the"
+                    + "number of processors for the MPI call in the `mpiflags`"
+                    + f"parameters for step `{self.step_name}` to get expected behavior"
+                )
+                warnings.warn(warning_msg)
+
             if self.args.mpiflags is not None:
-                modified_cmd_args.append(self.args.mpiflags)
+                split_flags = self.args.mpiflags[1:-1].strip().split(" ")
+                modified_cmd_args.extend(split_flags)
         modified_cmd_args.extend(cmd_args)
         modified_cmd_args = [str(x) for x in modified_cmd_args]
         return self.start_subprocess(modified_cmd_args, **kwargs)
+
+    def wait_for_process_success(self, process, raise_error=True):
+        """Wait for a process to complete successfully, raising an error if the
+        process fails.
+
+        Args:
+            process: (subprocess.Popen) subprocess object
+            raise_error: (bool) if True, a failed subprocess will raise an error
+
+        Returns:
+            returncode: (int) process returncode from `Popen.wait()`
+        """
+
+        returncode = process.wait()
+        if returncode != 0:
+            error_msg = (
+                f"{self.name}: Subprocess exited with return code {returncode}."
+                + " Check case log files for details."
+            )
+            if raise_error:
+                raise subprocess.SubprocessError(error_msg)
+        return returncode
+
+    def wait_for_all_process_success(self, processes, raise_error=True):
+        """Wait for a process to complete successfully, raising an error if the
+        process fails.
+
+        Args:
+            process: (subprocess.Popen) subprocess object
+            raise_error: (bool) if True, a failed subprocess will raise an error
+
+        Returns:
+            returncode: (int) process returncode from `Popen.wait()`
+        """
+
+        returncodes = []
+        error_msg = ""
+        for process in processes:
+            returncodes.append(
+                self.wait_for_process_success(process, raise_error=False)
+            )
+        if any(returncodes):
+            error_msg = (
+                f"{self.name}: Batch subprocesses exited with return codes {returncodes}."
+                + " Check corresponding case log files for details."
+            )
+            if raise_error:
+                raise subprocess.SubprocessError(error_msg)
+
+    def wait_for_open_batch_resources(self, processes, poll_interval=1):
+        """Given a list of subprocesses, checks if there are available resources
+        to run another subprocess. If there are no open resources, then will wait
+        to return until there are.
+
+        > [!warning]
+        > When running in batch mode with MPI options, this will be ignored
+
+        Args:
+            processes: (list) of subprocess.Popen objects
+            poll_interval: (float) time to wait between process polls, in seconds
+        """
+
+        # If MPI arguments were specified assume that local resources, i.e.,
+        # `self.args.maxproc` are not accurate and that MPI is responsible for throwing
+        # errors about oversubscription of resources
+        open_resources = False
+        if self.args.mpiexec is not None:
+            open_resources = True
+
+        while not open_resources:
+            procs_in_use = 0
+            for process in processes:
+                # Add `self.args.np` to processors in use if process is still running
+                if process.poll() is None:
+                    procs_in_use += self.args.np
+            open_resources = procs_in_use <= (self.args.maxproc - self.args.np)
+            if not open_resources:
+                time.sleep(poll_interval)
