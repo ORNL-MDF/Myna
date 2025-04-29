@@ -6,6 +6,7 @@
 #
 # License: 3-clause BSD, see https://opensource.org/licenses/BSD-3-Clause.
 #
+"""Module to define the base behavior of a Myna simulation application"""
 import argparse
 import os
 import shutil
@@ -16,6 +17,13 @@ from myna.core.utils import is_executable
 
 
 class MynaApp:
+    """Myna application base class with functionality that could be used generally by
+    any application.
+
+    While applications are not required to inherit this class,
+    using the MynaApp functionality where possible for consistent behavior across apps.
+    """
+
     settings = "MYNA_INPUT"
     path = "MYNA_APP_PATH"
     step_name = "MYNA_STEP_NAME"
@@ -141,14 +149,23 @@ class MynaApp:
                 + "does not have execute permissions."
             )
 
-    # args must have been parsed
     def set_procs(self):
-        # Set processor information
+        """Set processor information based on the `maxproc` and `np` inputs. Regardless
+        of user inputs, the CPU count will be capped at `os.cpu_count()`
+        """
         if self.args.maxproc is None:
             self.args.maxproc = os.cpu_count()
         self.args.np = min(os.cpu_count(), self.args.np, self.args.maxproc)
 
     def set_template_path(self, *path_args):
+        """Set the path to the template directory
+
+        Args:
+            path_args: list of path parts to append to `self.path` if no template is
+                specified. For example, `path_args=["exaca", "microstructure_region"]`
+                gives a template with path
+                "{self.path}/exaca/microstructure_region/template"
+        """
         if self.args.template is None:
             self.args.template = os.path.join(
                 self.path,
@@ -159,6 +176,12 @@ class MynaApp:
             self.args.template = os.path.abspath(self.args.template)
 
     def copy(self, case_dir):
+        """Copies the set template directory to a case directory, with existing files
+        being overwritten depending on the app overwrite user setting.
+
+        Args:
+        - case_dir: (str) path to the case directory
+        """
 
         # Get list of files in case directory, except for the myna data file
         try:
