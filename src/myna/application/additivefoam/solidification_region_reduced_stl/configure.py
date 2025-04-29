@@ -6,10 +6,12 @@
 #
 # License: 3-clause BSD, see https://opensource.org/licenses/BSD-3-Clause.
 #
+"""Script to be executed by the configure stage of `myna.core.workflow.run` to set up
+a valid AdditiveFOAM case based on the specified user inputs and template
+"""
 import os
 import shutil
 import yaml
-
 from myna.core.workflow.load_input import load_input
 from myna.application import openfoam
 from myna.application.additivefoam import AdditiveFOAM
@@ -203,8 +205,6 @@ def setup_case(case_dir, app):
     app.update_region_start_and_end_times(case_dir, bb_dict, path_name)
     app.update_heatsource_scanfile(case_dir, path_name)
     app.update_exaca_mesh_size(case_dir)
-
-    return
 
 
 def main():
