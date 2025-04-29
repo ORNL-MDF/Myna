@@ -6,23 +6,39 @@
 #
 # License: 3-clause BSD, see https://opensource.org/licenses/BSD-3-Clause.
 #
+"""Script to be executed by the execute stage of `myna.core.workflow.run` to generate
+the solidification data Myna file in the format of `FileReducedSolidification`.
+"""
 import os
+import sys
+import shutil
+import argparse
+import subprocess
 from myna.core.workflow.load_input import load_input
 from myna.core.components import return_step_class
-import argparse
-import sys
-import subprocess
-import shutil
 
 
 def run_case(case_dir, cores, batch):
+    """Run an AdditiveFOAM case using the specified number of cores and batch option
+
+    Args:
+        case_dir: (str) path to the case directory
+        cores: (int) number of processors to use
+        batch: (bool) if True, then submits job in background, otherwise waits for job
+
+    Returns:
+        (result_file, process):
+        - result_file: (str) path to the solidificationData.csv file for the case
+        - process: (subprocess.Popen) if `batch==True`, the associated Popen object,
+            else `None`
+    """
+
     # Update cores
     os.system(
         f"foamDictionary -entry numberOfSubdomains -set {cores} {case_dir}/system/decomposeParDict"
     )
 
     # Run case using "runCase" script
-    pid = None
     process = None
     os.system(f'chmod 755 {os.path.join(case_dir, "runCase")}')
     if not batch:
@@ -30,7 +46,9 @@ def run_case(case_dir, cores, batch):
     elif batch:
         command = f'{os.path.join(case_dir, "runCase")}'
         print(f"{command=}")
-        process = subprocess.Popen(command, shell=True)
+        process = subprocess.Popen(
+            command, shell=True
+        )  # pylint: disable=consider-using-with
 
     # Return resulting solidification file
     result_file = os.path.join(case_dir, "solidificationData.csv")
@@ -38,6 +56,9 @@ def run_case(case_dir, cores, batch):
 
 
 def main(argv=None):
+    """Run all additivefoam/solidification_region_reduced case directories to generate
+    the solidification data and then convert to Myna files
+    """
     # Set up argparse
     parser = argparse.ArgumentParser(
         description="Launch additivefoam/solidification_region_reduced for "
@@ -82,7 +103,7 @@ def main(argv=None):
         settings["data"],
         settings["myna"],
     )
-    files, exists, files_are_valid = step_obj.get_output_files()
+    _, _, files_are_valid = step_obj.get_output_files()
 
     # Run AdditiveFOAM case for each Myna case, as needed
     output_files = []
