@@ -35,6 +35,13 @@ steps:
       downsample: 4
       mpiexec: /home/cloud/Cubit-17.02/bin/mpiexec
       np: 2
+- deer:
+    class: creep_timeseries_region
+    application: deer
+    executable: deer-opt
+    configure:
+      loaddir: z
+      load: 100
 data:
   build:
     datatype: Peregrine
