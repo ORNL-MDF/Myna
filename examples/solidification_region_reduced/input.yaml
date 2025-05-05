@@ -3,20 +3,22 @@ steps:
     class: solidification_region_reduced
     application: additivefoam
     configure:
-      coarse: 80.0e-6
-      rx: 1.0e-3
-      ry: 1.0e-3
-      rz: 300.0e-6
-      pad-xy: 0.75e-3
-      pad-z: 0.4e-3
-      pad-sub: 2.5e-3
-      refine-layer: 2
+      coarse: 160.0e-6
+      rx: 0.25e-3
+      ry: 0.25e-3
+      rz: 200.0e-6
+      pad-xy: 1.0e-3
+      pad-z: 0.05e-3
+      pad-sub: 1.0e-3
+      refine-layer: 1
       refine-region: 1
-      overwrite: True
+      overwrite: False
     execute:
       batch: True
       overwrite: True
-      cores: 16
+      mpiexec: mpirun
+      mpiflags: --bind-to none --oversubscribe
+      np: 16
 data:
   build:
     datatype: Peregrine
