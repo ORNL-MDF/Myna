@@ -28,6 +28,51 @@ def update_parameter(foamdict_file, entry, value):
     os.system(f"foamDictionary -entry {entry} -set '{value}' {foamdict_file}")
 
 
+def run_command(args, app=None, parallel=None, **kwargs):
+    """Runs the command, using app functions if they are present
+
+    Args:
+        args: (list) list of command arguments passed to Popen
+        app: (MynaApp instance) if provided, will use MynaApp job submission
+        parallel: (bool) if provided, will use parallel options for MynaApp job
+        **kwargs: additional options passed to subprocess.Popen"""
+
+    if app is not None:
+        if parallel is not None:
+            with app.start_subprocess_with_mpi_args(args) as p:
+                p.wait()
+        else:
+            with app.start_subprocess(args) as p:
+                p.wait()
+    else:
+        with subprocess.Popen(args, **kwargs) as p:
+            p.wait()
+
+
+def run_command_with_decompose_reconstruct(args, case_dir, app=None):
+
+    # Determine if parallel run
+    parallel = False
+    if app is not None:
+        parallel = app.args.np > 1
+
+    if parallel:
+        # Decompose the case for meshing
+        update_parameter(
+            f"{case_dir}/system/decomposeParDict", "numberOfSubdomains", app.args.np
+        )
+        run_command(["decomposePar", "-case", case_dir, "-force"])
+
+    if parallel:
+        args.append("-parallel")
+    run_command(args, app=app, parallel=parallel)
+
+    if parallel:
+        # Reconstruct the case
+        run_command(["reconstructParMesh", "-case", case_dir, "-withZero", "-constant"])
+        run_command(["rm", "-rf", f"{case_dir}/processor*"])
+
+
 def preprocess_stl(case_dir, stl_path, convert_to_meters=1):
     """Preprocesses an STL for meshing:
 
@@ -41,17 +86,22 @@ def preprocess_stl(case_dir, stl_path, convert_to_meters=1):
     working_stl_dir = os.path.join(case_dir, "constant", "triSurface")
     working_stl_path = os.path.join(working_stl_dir, stl_file_name)
 
-    os.system(f"mkdir -p {working_stl_dir}")
-    os.system(f"cp -rf {stl_path} {working_stl_path}")
+    run_command(["mkdir", "-p", working_stl_dir])
+    run_command(["cp", "-rf", stl_path, working_stl_dir])
 
     # scale the stl file to meters
     scaling = " ".join(str(convert_to_meters) for _ in range(3))
-    os.system(
-        f'surfaceTransformPoints "scale=({scaling})" {working_stl_path} {working_stl_path}'
+    run_command(
+        [
+            "surfaceTransformPoints",
+            f'"scale=({scaling})"',
+            working_stl_path,
+            working_stl_path,
+        ]
     )
 
     # generic surface clean (removes ambiguous patches in stl file)
-    os.system(f"surfaceClean {working_stl_path} {working_stl_path} 0 0")
+    run_command(["surfaceClean", working_stl_path, working_stl_path, "0", "0"])
 
     return working_stl_path
 
@@ -64,13 +114,12 @@ def extract_stl_features(case_dir, stl_path, refinement_level, origin):
     # extract the surface features from the stl file
     surface_features_dict = f"{case_dir}/system/surfaceFeaturesDict"
     update_parameter(surface_features_dict, "surfaces", f'( "{stl_file_name}" )')
-    os.system(f"surfaceFeatures -case {case_dir}")
+    run_command(["surfaceFeatures", "-case", case_dir])
     emesh_name = stl_file_name.split(".")[0] + ".eMesh"
 
     # update entries is snappyHexMeshDict
     snappyhexmesh_dict = f"{case_dir}/system/snappyHexMeshDict"
     origin = " ".join(list(map(str, origin)))
-    print("origin for stl features: ", origin)
 
     update_parameter(snappyhexmesh_dict, "geometry/part/file", f'"{stl_file_name}"')
     update_parameter(
@@ -106,7 +155,7 @@ def construct_bounding_box_dict(rve, rve_pad):
     return {
         "bb_min": bb_min,
         "bb_max": bb_max,
-        "bb": bb_min + bb_max,
+        "bb": np.array([bb_min, bb_max]),
         "span": span,
         "origin": origin,
     }
@@ -128,8 +177,10 @@ def construct_mesh_bounding_box_dict(case_dir, tolerance=1e-8):
     bb_str = re.findall(r"\(([^)]+)", s)
     tolerance = 1e-8
     rve = np.array(
-        [float(x) for x in bb_str[0].split(" ")],
-        [float(x) for x in bb_str[1].split(" ")],
+        [
+            [float(x) for x in bb_str[0].split(" ")],
+            [float(x) for x in bb_str[1].split(" ")],
+        ]
     )
     rve_pad = np.array([tolerance, tolerance, tolerance])
     bb_dict = construct_bounding_box_dict(rve, rve_pad)
@@ -165,12 +216,12 @@ def create_cube_mesh(case_dir, spacing, rve, rve_pad):
     block_mesh_dict = os.path.join(case_dir, "system/blockMeshDict")
     keys = ["xmin", "ymin", "zmin", "xmax", "ymax", "zmax"]
     for k, key in enumerate(keys):
-        update_parameter(block_mesh_dict, key, bb_dict["bb"][k])
+        update_parameter(block_mesh_dict, key, bb_dict["bb"].flatten()[k])
     keys = ["nx", "ny", "nz"]
     for k, key in enumerate(keys):
         update_parameter(block_mesh_dict, key, n_cells[k])
 
-    os.system(f"blockMesh -case {case_dir}")
+    run_command(["blockMesh", "-case", case_dir])
 
     return bb_dict
 
@@ -195,50 +246,27 @@ def create_stl_cube_mesh(case_dir, working_stl_path, spacing, tolerance):
     return bb_dict
 
 
-def create_part_mesh(case_dir, stl_path, bb_dict, mpi_args=None):
+def create_part_mesh(case_dir, stl_path, bb_dict, app=None):
     """create the part mesh"""
 
-    if mpi_args is None:
-        os.system(f"snappyHexMesh -case {case_dir} -overwrite")
-    else:
-        start = mpi_args.find("-np ") + len("-np ")
-
-        if start == -1:
-            start = mpi_args.find("-n ") + len("-n ")
-
-        end = mpi_args.find(" ", start)
-
-        if end == -1:
-            end = len(mpi_args)
-
-        nprocs = mpi_args[start:end]
-
-        # Decompose the case for meshing
-        update_parameter(
-            f"{case_dir}/system/decomposeParDict", "numberOfSubdomains", nprocs
-        )
-        os.system(f"decomposePar -case {case_dir} -force")
-
-        # Mesh and reconstruct the case, then remove decomposed files
-        os.system(f"{mpi_args} snappyHexMesh -case {case_dir} -parallel -overwrite")
-        os.system(f"reconstructParMesh -case {case_dir} -withZero -constant")
-        os.system(f"rm -rf {case_dir}/processor*")
+    snappy_args = ["snappyHexMesh", "-case", case_dir, "-overwrite"]
+    run_command_with_decompose_reconstruct(snappy_args, case_dir, app=app)
 
     # move bottom of mesh to z=0 plane
     translation = " ".join(str(t) for t in [0, 0, -bb_dict["bb_min"][2]])
-    os.system(f'transformPoints -case {case_dir} "translate=({translation})"')
+    run_command(["transformPoints", "-case", case_dir, f'"translate=({translation})"'])
 
     # save a copy of polyMesh for the part in the working directory
     stl_file_name = os.path.basename(stl_path)
     polymesh_copy = f"{case_dir}/{stl_file_name.split('.')[0]}.polyMesh"
-    os.system(f"cp -rf {case_dir}/constant/polyMesh {polymesh_copy}")
+    run_command(["cp", "-rf", f"{case_dir}/constant/polyMesh", polymesh_copy])
 
 
 def foam_to_adamantine(case_dir, precision=8):
     """convert OpenFOAM VTK format to adamantine VTK format"""
 
     # Create OpenFOAM VTK file
-    os.system(f"foamToVTK -case {case_dir} -constant -ascii")
+    run_command(["foamToVTK", "-case", case_dir, "-constant", "-ascii"])
     vtk_file_path = os.path.join(case_dir, "VTK", os.path.basename(case_dir) + "_0.vtk")
 
     # Read the OpenFOAM VTK file
@@ -290,20 +318,21 @@ def slice_part_mesh(case_dir, height):
 
     # Get the bounding box of the existing mesh
     bb_dict = construct_mesh_bounding_box_dict(case_dir)
-    bb_dict["bb"][-1] = height
+    bb_dict["bb"][1, 2] = height
 
     # Update topoSetDict parameters
     toposetdict = f"{case_dir}/system/topoSetDict"
     keys = ["xmin", "ymin", "zmin", "xmax", "ymax", "zmax"]
     for k, key in enumerate(keys):
-        update_parameter(toposetdict, key, bb_dict["bb"][k])
+        update_parameter(toposetdict, key, bb_dict["bb"].flatten()[k])
 
     # Remove the created cellSet and renumber new mesh
-    os.system(f"topoSet -case {case_dir}")
-    os.system(f"subsetMesh -case {case_dir} -overwrite c0 -patch part")
-    os.system(f"rm -rf {case_dir}/constant/polyMesh/sets")
-    os.system(f"rm -rf {case_dir}/constant/polyMesh/*Level")
-    os.system(f"renumberMesh -case {case_dir} -overwrite")
+    run_command(["topoSet", "-case", case_dir])
+    run_command(["subsetMesh", "-case", case_dir, "-overwrite", "c0", "-patch", "part"])
+    run_command(["rm", "-rf", f"{case_dir}/constant/polyMesh/sets"])
+    run_command(["rm", "-rf", f"{case_dir}/constant/polyMesh/cellLevel"])
+    run_command(["rm", "-rf", f"{case_dir}/constant/polyMesh/pointLevel"])
+    run_command(["renumberMesh", "-case", case_dir, "-overwrite"])
 
     # Align the sliced mesh with the top at z=0 plane
     s = subprocess.check_output(
@@ -311,17 +340,21 @@ def slice_part_mesh(case_dir, height):
         shell=True,
     ).decode("utf-8")
     zmax = float(re.findall(r"\(([^)]+)", s)[-1].split(" ")[-1])
-    translation = " ".join(list(map(str, [0, 0, -zmax])))
-    os.system(f'transformPoints -case {case_dir} "translate=({translation})"')
+    translation = " ".join(str(t) for t in [0, 0, -zmax])
+    run_command(["transformPoints", "-case", case_dir, f'"translate=({translation})"'])
 
 
-def refine_mesh_in_box(case_dir, bb):
+def refine_mesh_in_box(case_dir, bb, app=None, refinement_dict=None):
     """Refine the mesh for an OpenFOAM case within a bounding box using the
-    case's `system/refineMeshDict` settings.
+    specified refinement_dict settings
 
     Args:
         case_dir: (str) path to case directory
         bb: (np.array, shape (2,3)) bounding box ((xmin, ymin, zmin),(xmax, ymax, zmax))
+        app: (MynaApp object) MynaApp object for parallel run settings, if None will
+            run in serial
+        refinement_dict: (str) path to the snappyHexMesh refinement dictionary to use
+            for refinement. If None, will default to `system/refineMeshDict`.
     """
 
     center = [
@@ -330,7 +363,10 @@ def refine_mesh_in_box(case_dir, bb):
         0.5 * (bb[0][2] + bb[1][2]),
     ]
 
-    refine_mesh_dict = f"{case_dir}/system/refineMeshDict"
+    if refinement_dict is None:
+        refine_mesh_dict = f"{case_dir}/system/refineMeshDict"
+    else:
+        refine_mesh_dict = refinement_dict
     update_parameter(
         refine_mesh_dict,
         "geometry/refinementBox/min",
@@ -348,10 +384,11 @@ def refine_mesh_in_box(case_dir, bb):
     )
 
     with working_directory(case_dir):
-        os.system("snappyHexMesh -dict system/refineMeshDict -overwrite")
+        snappy_args = ["snappyHexMesh", "-dict", refine_mesh_dict, "-overwrite"]
+        run_command_with_decompose_reconstruct(snappy_args, case_dir, app=app)
 
 
-def refine_layer(case_dir, refinement_depth, refinement_level):
+def refine_layer(case_dir, refinement_depth, refinement_level, app=None):
     """Refine the mesh for an OpenFOAM case for a region near the max-z surface
 
     Args:
@@ -396,5 +433,11 @@ def refine_layer(case_dir, refinement_depth, refinement_level):
 
     # Run snappyHexMesh and renumber mesh
     with working_directory(case_dir):
-        os.system("snappyHexMesh -dict system/refineLayerMeshDict -overwrite")
-    os.system(f"renumberMesh -case {case_dir} -overwrite")
+        snappy_args = [
+            "snappyHexMesh",
+            "-dict",
+            refine_layer_mesh_dict,
+            "-overwrite",
+        ]
+        run_command_with_decompose_reconstruct(snappy_args, case_dir, app=app)
+    run_command(["renumberMesh", "-case", case_dir, "-overwrite"])

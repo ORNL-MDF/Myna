@@ -6,19 +6,20 @@
 #
 # License: 3-clause BSD, see https://opensource.org/licenses/BSD-3-Clause.
 #
-"""Script to be executed by the configure stage of `myna.core.workflow.run` to set up
-a valid AdditiveFOAM case based on the specified user inputs and template
+"""Script to be executed by the postprocess stage of `myna.core.workflow.run` to compile
+the AdditiveFOAM solidification data into Myna files in the format of
+`FileReducedSolidification`.
 """
 from myna.application.additivefoam.solidification_region_reduced_stl.app import (
     AdditiveFOAMRegionReducedSTL,
 )
 
 
-def configure():
-    """Configure all case directories"""
+def postprocess():
+    """Postprocess all case directories"""
     app = AdditiveFOAMRegionReducedSTL()
-    app.configure()
+    app.postprocess()
 
 
 if __name__ == "__main__":
-    configure()
+    postprocess()

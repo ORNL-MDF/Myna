@@ -23,8 +23,8 @@ from myna.core.utils import working_directory, nested_get
 class AdditiveFOAMRegionReduced(AdditiveFOAM):
     """Simulation type for generating solidification data for specified regions"""
 
-    def __init__(self):
-        super().__init__("solidification_region_reduced")
+    def __init__(self, name="solidification_region_reduced"):
+        super().__init__(name)
 
         # Define app-specific template file names
         self.mesh_dict_name = "mesh_dict.yaml"
@@ -98,6 +98,7 @@ class AdditiveFOAMRegionReduced(AdditiveFOAM):
             + " level after layer refinement (each level halves coarse mesh)",
         )
         self.args, _ = self.parser.parse_known_args()
+        self.mpiargs_to_current()
 
         # Update derived parameters
         self.set_procs()
@@ -167,6 +168,9 @@ class AdditiveFOAMRegionReduced(AdditiveFOAM):
         case_dict["region_dict"] = self.settings["data"]["build"]["parts"][
             case_dict["part"]
         ]["regions"][case_dict["region"]]
+
+        # Store case mesh information
+        case_dict["mesh_dict"] = self.construct_case_mesh_dict(case_dict)
 
         # Store region RVE mesh information
         case_dict["rve_mesh_dict"] = self.construct_rve_mesh_dict(
@@ -335,6 +339,70 @@ class AdditiveFOAMRegionReduced(AdditiveFOAM):
         self.update_heatsource_scanfile(case_dict["case_dir"], path_name)
         self.update_exaca_mesh_size(case_dict["case_dir"])
 
+    def create_coarse_mesh(self, case_dict):
+        """Creates the coarse mesh
+
+        Args:
+            case_dict: (dict) describes the case settings,
+                from `self.parse_mynafile_path_to_dict()`
+        """
+        # Generate coarse background mesh
+        openfoam.mesh.create_cube_mesh(
+            case_dict["resource_template_dir"],
+            [self.args.coarse, self.args.coarse, self.args.coarse],
+            case_dict["rve_mesh_dict"]["region_box"],
+            case_dict["rve_mesh_dict"]["rve_pad"],
+        )
+
+    def refine_layer_mesh(self, case_dict):
+        """Refines the coarse mesh
+
+        Args:
+            case_dict: (dict) describes the case settings,
+                from `self.parse_mynafile_path_to_dict()`
+        """
+        # Generate refined mesh in layer thickness
+        refine_dict_path = os.path.join(
+            case_dict["resource_template_dir"], "system", "refineLayerMeshDict"
+        )
+        openfoam.mesh.update_parameter(
+            refine_dict_path,
+            "castellatedMeshControls/refinementRegions/refinementBox/levels",
+            f"( ({self.args.refine_layer} {self.args.refine_layer}) )",
+        )
+        openfoam.mesh.refine_mesh_in_box(
+            case_dict["resource_template_dir"],
+            case_dict["rve_mesh_dict"]["layer_box"],
+            self,
+            refine_dict_path,
+        )
+
+    def refine_region_mesh(self, case_dict):
+        """Refines the already refined layer mesh in the region for the case
+
+        Args:
+            case_dict: (dict) describes the case settings,
+                from `self.parse_mynafile_path_to_dict()`
+        """
+        # Generate refined mesh in region
+        refine_dict_path = os.path.join(
+            case_dict["resource_template_dir"], "system", "refineRegionMeshDict"
+        )
+        openfoam.mesh.update_parameter(
+            refine_dict_path,
+            "castellatedMeshControls/refinementRegions/refinementBox/levels",
+            f"( ({self.args.refine_region} {self.args.refine_region}) )",
+        )
+        openfoam.mesh.refine_mesh_in_box(
+            case_dict["resource_template_dir"],
+            case_dict["rve_mesh_dict"]["region_box"],
+            self,
+            refine_dict_path,
+        )
+        self.update_exaca_region_bounds(
+            case_dict["resource_template_dir"], case_dict["rve_mesh_dict"]["region_box"]
+        )
+
     def generate_resource_mesh(self, case_dict):
         """Generates the mesh in the resource template directory based on the given
         case and mesh setting dictionaries
@@ -348,49 +416,11 @@ class AdditiveFOAMRegionReduced(AdditiveFOAM):
         self.copy_template_to_dir(case_dict["resource_template_dir"])
 
         # Generate coarse background mesh
-        bb_dict = openfoam.mesh.create_cube_mesh(
-            case_dict["resource_template_dir"],
-            [self.args.coarse, self.args.coarse, self.args.coarse],
-            case_dict["rve_mesh_dict"]["region_box"],
-            case_dict["rve_mesh_dict"]["rve_pad"],
-        )
+        self.create_coarse_mesh(case_dict)
 
-        # Generate refined mesh in layer thickness
-        refine_dict_path = os.path.join(
-            case_dict["resource_template_dir"], "system", "refineMeshDict"
-        )
-        openfoam.mesh.update_parameter(
-            refine_dict_path,
-            "castellatedMeshControls/refinementRegions/refinementBox/levels",
-            f'"( ({self.args.refine_layer} {self.args.refine_layer}) )',
-        )
-        openfoam.mesh.refine_mesh_in_box(
-            case_dict["resource_template_dir"], case_dict["rve_mesh_dict"]["layer_box"]
-        )
-
-        # Archive copy of the layer refinement dict
-        copy_path = os.path.join(
-            case_dict["resource_template_dir"], "system", "refineLayerMeshDict"
-        )
-        shutil.copy(refine_dict_path, copy_path)
-
-        # Generate refined mesh in region
-        refine_dict_path = os.path.join(
-            case_dict["resource_template_dir"], "system", "refineMeshDict"
-        )
-        os.system(
-            "foamDictionary -entry"
-            + " castellatedMeshControls/refinementRegions/refinementBox/levels"
-            + f" -set '( ({self.args.refine_region + self.args.refine_layer}"
-            + f" {self.args.refine_region + self.args.refine_layer}) );'"
-            + f" {refine_dict_path}"
-        )
-        openfoam.mesh.refine_mesh_in_box(
-            case_dict["resource_template_dir"], case_dict["rve_mesh_dict"]["region_box"]
-        )
-        self.update_exaca_region_bounds(
-            case_dict["resource_template_dir"], case_dict["rve_mesh_dict"]["region_box"]
-        )
+        # Refine the layer mesh
+        self.refine_layer_mesh(case_dict)
+        self.refine_region_mesh(case_dict)
 
         # After successful mesh generation, write out the mesh dict
         with open(
@@ -401,8 +431,6 @@ class AdditiveFOAMRegionReduced(AdditiveFOAM):
             yaml.dump(
                 self.construct_case_mesh_dict(case_dict), f, default_flow_style=None
             )
-
-        return bb_dict
 
     def execute_case(self, mynafile):
         """Run an AdditiveFOAM case using the specified number of cores and batch option
@@ -491,24 +519,25 @@ class AdditiveFOAMRegionReduced(AdditiveFOAM):
 
                     # Compile solidification data into single file
                     with open(mynafile, "w", encoding="utf-8") as mf:
-                        # Header
-                        process = self.start_subprocess(
-                            ["echo", "x,y,z,tm,ts,cr"],
-                            stdout=mf,
-                            stderr=f,
-                        )
-                        self.wait_for_process_success(process)
-                        # Data
+                        # Check data exists
                         datafiles = sorted(
                             glob.glob(f'{case_dict["case_dir"]}/ExaCA/*')
                         )
-                        print(datafiles)
-                        process = self.start_subprocess(
-                            ["cat", *datafiles],
-                            stdout=mf,
-                            stderr=f,
-                        )
-                        self.wait_for_process_success(process)
+                        if len(datafiles) > 0:
+                            # Header
+                            process = self.start_subprocess(
+                                ["echo", "x,y,z,tm,ts,cr"],
+                                stdout=mf,
+                                stderr=f,
+                            )
+                            self.wait_for_process_success(process)
+                            # Data
+                            process = self.start_subprocess(
+                                ["cat", *datafiles],
+                                stdout=mf,
+                                stderr=f,
+                            )
+                            self.wait_for_process_success(process)
 
                     # Clean up parallel case files
                     if parallel:
@@ -522,7 +551,7 @@ class AdditiveFOAMRegionReduced(AdditiveFOAM):
         # i.e., more than just the header, and clean files if safe to do
         # so using shutil.rmtree()
         if (os.path.getsize(case_dict["mynafile"]) > 1e5) and (
-            shutil.rmtree.avoids_symlink_attacks()
+            shutil.rmtree.avoids_symlink_attacks
         ):
             # 1. Get list of processor directories and remove recursively
             processor_dirs = glob.glob(
