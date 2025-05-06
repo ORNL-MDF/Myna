@@ -29,14 +29,14 @@ stl_path = os.path.join("..", "Peregrine", "simulation", "P5", "part.stl")
 # Preprocess STL and create background mesh
 working_stl_path = mesh.preprocess_stl(working_dir, stl_path, convert_to_meters=0.001)
 
-interior_point, bbDict = mesh.create_background_mesh(
+interior_point, bbDict = mesh.create_stl_cube_mesh(
     working_dir, working_stl_path, [4e-4, 4e-4, 4e-4], 1e-4
 )
 
 # Extract STL features and create part mesh
 mesh.extract_stl_features(working_dir, working_stl_path, 1, interior_point)
 
-mesh.create_part_mesh(working_dir, working_stl_path, bbDict, "mpirun -np 32")
+mesh.create_part_mesh(working_dir, working_stl_path, bbDict)
 
 # Slice mesh and refine layer at specified heights
 mesh.slice(working_dir, 0.005)
