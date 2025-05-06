@@ -126,15 +126,15 @@ class Component:
 
         formatted_cmd = []
 
-        if (self.executable is not None) and ("--exec" not in raw_cmd):
-            formatted_cmd.extend(["--exec", self.executable])
-
         for entry in raw_cmd:
             cmd = entry.replace("{name}", self.name)
             cmd = cmd.replace("{build}", self.data["build"]["name"])
             cmd = cmd.replace("$MYNA_APP_PATH", os.environ["MYNA_APP_PATH"])
             cmd = cmd.replace("$MYNA_INSTALL_PATH", os.environ["MYNA_INSTALL_PATH"])
             formatted_cmd.append(cmd)
+
+        if (self.executable is not None) and ("--exec" not in raw_cmd):
+            formatted_cmd.extend(["--exec", self.executable])
 
         return formatted_cmd
 
