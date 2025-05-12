@@ -37,7 +37,6 @@ def run_command(args, app=None, parallel=None, **kwargs):
         parallel: (bool) if provided, will use parallel options for MynaApp job
         **kwargs: additional options passed to subprocess.Popen"""
 
-    print(f"application/openfoam: {args}")
     if app is not None:
         if parallel is not None:
             with app.start_subprocess_with_mpi_args(args) as p:
@@ -121,7 +120,6 @@ def extract_stl_features(case_dir, stl_path, refinement_level, origin):
     # update entries is snappyHexMeshDict
     snappyhexmesh_dict = f"{case_dir}/system/snappyHexMeshDict"
     origin = " ".join(list(map(str, origin)))
-    print("origin for stl features: ", origin)
 
     update_parameter(snappyhexmesh_dict, "geometry/part/file", f'"{stl_file_name}"')
     update_parameter(
@@ -157,7 +155,7 @@ def construct_bounding_box_dict(rve, rve_pad):
     return {
         "bb_min": bb_min,
         "bb_max": bb_max,
-        "bb": bb_min + bb_max,
+        "bb": np.array([bb_min, bb_max]),
         "span": span,
         "origin": origin,
     }
@@ -218,7 +216,7 @@ def create_cube_mesh(case_dir, spacing, rve, rve_pad):
     block_mesh_dict = os.path.join(case_dir, "system/blockMeshDict")
     keys = ["xmin", "ymin", "zmin", "xmax", "ymax", "zmax"]
     for k, key in enumerate(keys):
-        update_parameter(block_mesh_dict, key, bb_dict["bb"][k])
+        update_parameter(block_mesh_dict, key, bb_dict["bb"].flatten()[k])
     keys = ["nx", "ny", "nz"]
     for k, key in enumerate(keys):
         update_parameter(block_mesh_dict, key, n_cells[k])
@@ -320,13 +318,13 @@ def slice_part_mesh(case_dir, height):
 
     # Get the bounding box of the existing mesh
     bb_dict = construct_mesh_bounding_box_dict(case_dir)
-    bb_dict["bb"][-1] = height
+    bb_dict["bb"][1, 2] = height
 
     # Update topoSetDict parameters
     toposetdict = f"{case_dir}/system/topoSetDict"
     keys = ["xmin", "ymin", "zmin", "xmax", "ymax", "zmax"]
     for k, key in enumerate(keys):
-        update_parameter(toposetdict, key, bb_dict["bb"][k])
+        update_parameter(toposetdict, key, bb_dict["bb"].flatten()[k])
 
     # Remove the created cellSet and renumber new mesh
     run_command(["topoSet", "-case", case_dir])
