@@ -36,6 +36,7 @@ class AdditiveFOAMRegionReducedSTL(AdditiveFOAMRegionReduced):
             help="Multiple by which to scale the STL file dimensions (default = 0.001, mm -> m)",
         )
         self.args, _ = self.parser.parse_known_args()
+        self.mpiargs_to_current()
 
         # Update derived parameters
         self.set_procs()

@@ -63,6 +63,7 @@ class CreepTimeseriesRegionDeerApp(DeerApp):
             help="(float) load in Newtons",
         )
         self.args, _ = self.parser.parse_known_args()
+        self.mpiargs_to_current()
         super().set_procs()
         self.update_template_path()
 

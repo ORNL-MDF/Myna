@@ -24,14 +24,28 @@ def get_quoted_str(str_value):
         str_value: string
     """
     assert isinstance(str_value, str)
+    fixed_str = str(str_value)
+
     for q in ["'", '"']:
-        if (str_value[0] == q) and (str_value[-1] == q):
+
+        # Check for bracing quotes
+        is_quoted = (str_value[0] == q) and (str_value[-1] == q)
+
+        # Check for dangling quotes
+        if (not is_quoted) and (str_value.count(q) % 2 == 1):
+            if str_value[0] == q:
+                fixed_str = str_value[1:]
+            elif str_value[-1] == q:
+                fixed_str = str_value[:-1]
+
+        if is_quoted:
             # if string contains no single- or double-quotes
-            if len(str_value.split(q)) == 1:
-                return str_value
+            if len(fixed_str.split(q)) == 1:
+                return fixed_str
             # if string contains single-quotes
             if q == "'":
-                return f'"{str_value}"'
+                return f'"{fixed_str}"'
             # if string contains double-quotes
-            return f"'{str_value}'"
-    return f'"{str_value}"'
+            return f"'{fixed_str}'"
+
+    return f'"{fixed_str}"'

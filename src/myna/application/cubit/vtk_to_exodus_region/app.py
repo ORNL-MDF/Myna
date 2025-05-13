@@ -66,6 +66,7 @@ class CubitVtkToExodusApp(CubitApp):
             + "generated the VTK file",
         )
         self.args, _ = self.parser.parse_known_args()
+        self.mpiargs_to_current()
 
     def get_vtk_file_data(self, vtk_file):
         """Extract the data object from a VTK file

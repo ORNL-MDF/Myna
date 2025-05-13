@@ -31,6 +31,7 @@ class AdditiveFOAM(MynaApp):
         # Parse app-specific arguments
         self.parser.set_defaults(exec="additiveFoam")
         self.args, _ = self.parser.parse_known_args()
+        self.mpiargs_to_current()
 
         # Update derived parameters
         self.set_procs()

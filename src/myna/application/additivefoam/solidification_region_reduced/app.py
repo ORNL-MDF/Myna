@@ -98,6 +98,7 @@ class AdditiveFOAMRegionReduced(AdditiveFOAM):
             + " level after layer refinement (each level halves coarse mesh)",
         )
         self.args, _ = self.parser.parse_known_args()
+        self.mpiargs_to_current()
 
         # Update derived parameters
         self.set_procs()
