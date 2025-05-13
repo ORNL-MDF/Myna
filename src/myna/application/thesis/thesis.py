@@ -37,7 +37,7 @@ class Thesis(MynaApp):
             help="(int) number of snapshot outputs",
         )
 
-        self.args = self.parser.parse_args()
+        self.parse_known_args()
 
         # Set case directories and input files
         self.input_filename = input_filename

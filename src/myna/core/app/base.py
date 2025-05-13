@@ -114,7 +114,47 @@ class MynaApp:
             type=str,
             help="(str) file to source to set up environment for executable",
         )
+        self.parser.add_argument(
+            "--mpiargs",
+            default=None,
+            type=str,
+            help="(str) [WARNING DEPRECATED!] full MPI command with flags, e.g.,"
+            "'mpirun --exclusive', excluding the number of processors to use",
+        )
+        self.parse_known_args()
+
+    def parse_known_args(self):
+        """Parse known command line arguments to update self.args and apply
+        any corrections"""
         self.args, _ = self.parser.parse_known_args()
+        self.set_procs()
+        self.mpiargs_to_current()
+
+    def mpiargs_to_current(self):
+        """Function to convert the deprecated `--mpiargs` option to the current
+        `--mpiexec`, `--np`, and `--mpiflags` options"""
+        if self.args.mpiargs is not None:
+            args = self.args.mpiargs.split(" ")
+            self.args.mpiexec = args[0].replace('"', "").replace("'", "")
+            for flag in ["-n", "--n", "-np", "--np"]:
+                try:
+                    np_flag_index = args.index(flag)
+                except ValueError:
+                    pass
+            self.args.np = int(args[np_flag_index + 1])
+            del args[np_flag_index + 1]
+            del args[np_flag_index]
+            del args[0]
+            self.args.mpiflags = get_quoted_str(" ".join(args))
+            warning_msg = (
+                f"The deprecated `mpiargs` parameter was used for {self.name}."
+                + " Update input file to use the `mpiexec`, `np`, and `mpiflags`"
+                + " parameters. Inputs are interpreted here as\n"
+                + f"\t- mpiexec: {self.args.mpiexec}\n"
+                + f"\t- np: {self.args.np}\n"
+                + f"\t- mpiflags: {self.args.mpiflags}\n"
+            )
+            warnings.warn(warning_msg)
 
     def validate_executable(self, default):
         """Check if the specified executable exists and raise error if not"""
