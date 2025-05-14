@@ -205,13 +205,11 @@ class MynaApp:
 
     def start_subprocess_with_MPI_args(self, cmd_args, **kwargs):
         """Starts a subprocess using `Popen` while taking into account the MynaApp
-        MPI-related options. **kwargs are passed to `subprocess.Popen`"""
+        MPI-related options. **kwargs are passed to `subprocess.Popen`
+        """
         modified_cmd_args = []
         if self.args.mpiexec is not None:
-            if os.path.basename(self.args.mpiexec) in ["srun", "mpirun"]:
-                modified_cmd_args.extend([self.args.mpiexec, "-n", self.args.np])
-            else:
-                modified_cmd_args.extend([self.args.mpiexec, "-np", self.args.np])
+            modified_cmd_args.extend([self.args.mpiexec, "-n", self.args.np])
             if self.args.mpiflags is not None:
                 modified_cmd_args.append(self.args.mpiflags)
         modified_cmd_args.extend(cmd_args)
