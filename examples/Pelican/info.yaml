@@ -1,0 +1,10 @@
+{
+    "preheat": 298.15,
+    "material": "SS316L",
+    "layer_thickness": 5.0e-05,
+    "P1":
+    {
+        "spot_size": 0.13,
+        "laser_power": 350.0,
+    }
+}
