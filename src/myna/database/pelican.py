@@ -157,6 +157,10 @@ class Pelican(Database):
             )
             os.makedirs(os.path.dirname(scan_export_name), exist_ok=True)
             df = self.load_pelican_data(datatype="raw")
+            if self.start_time is not None:
+                df = df.filter((pl.col("time (s)") >= self.start_time))
+            if self.end_time is not None:
+                df = df.filter((pl.col("time (s)") <= self.end_time))
             df = self.clean_pelican_data(df)
             df_myna = self.convert_dataframe_to_myna_scanpath(df)
             df_myna.write_csv(scan_export_name, separator="\t")
