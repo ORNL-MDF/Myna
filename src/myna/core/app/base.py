@@ -215,52 +215,6 @@ class MynaApp:
         else:
             print(f"Warning: NOT overwriting existing case in: {case_dir}")
 
-    def get_mpi_implementation(self):
-        """Gets the MPI implementation associated with the specified `mpiexec`."""
-
-        if self.args.mpiexec is not None:
-            try:
-                # If the executable is an OpenMPI implementation, this should yield
-                # output "mpirun/mpiexec (Open MPI) #.#.#". If another implementation,
-                # this may throw an error
-                version = (
-                    subprocess.check_output(
-                        f"{self.args.mpiexec} --version",
-                        shell=True,
-                    )
-                    .decode("utf-8")
-                    .strip()
-                )
-                if "open mpi" in version.lower():
-                    return "openmpi"
-            except subprocess.CalledProcessError:
-                pass
-
-            # Otherwise, if the MPI executable is an MPICH implementation then
-            # `mpichversion` should be in path and will yield an "MPICH Version"
-            # line as part of the output. This works with the following cases:
-            #
-            # - Ubuntu 22.04: spack install mpich@4.2.3
-            # - OLCF Frontier: module load cray-mpich/8.1.31
-            try:
-                version = (
-                    subprocess.check_output(
-                        f"mpichversion",
-                        shell=True,
-                    )
-                    .decode("utf-8")
-                    .strip()
-                )
-                if "mpich version" in version.lower():
-                    return "mpich"
-            except subprocess.CalledProcessError:
-                pass
-
-            # Return None if not OpenMPI or MPICH
-            return None
-
-        # subprocess.check_output(f"mpiexec --version",shell=True,).decode("utf-8").strip()
-
     def start_subprocess(self, cmd_args, **kwargs):
         """Starts a subprocess, activating an environment if present"""
         if self.args.env is not None:
@@ -273,29 +227,10 @@ class MynaApp:
     def start_subprocess_with_mpi_args(self, cmd_args, **kwargs):
         """Starts a subprocess using `Popen` while taking into account the MynaApp
         MPI-related options. **kwargs are passed to `subprocess.Popen`
-
-        > [!warning]
-        > If the `self.args.mpiexec` option points to an implementation that uses
-        > a non-standard implementation, then the construction of the argument may
-        > cause an error.
         """
         modified_cmd_args = []
         if self.args.mpiexec is not None:
-            mpi_implementation = self.get_mpi_implementation()
-            if mpi_implementation == "mpich":
-                modified_cmd_args.extend([self.args.mpiexec, "-n", self.args.np])
-            elif mpi_implementation == "openmpi":
-                modified_cmd_args.extend([self.args.mpiexec, "-np", self.args.np])
-            else:
-                modified_cmd_args.extend([self.args.mpiexec])
-                warning_msg = (
-                    "Warning: Myna was unable to determine the MPI implementation for"
-                    + f"the `{self.args.mpiexec}` MPI executable. You must assign the"
-                    + "number of processors for the MPI call in the `mpiflags`"
-                    + f"parameters for step `{self.step_name}` to get expected behavior"
-                )
-                warnings.warn(warning_msg)
-
+            modified_cmd_args.extend([self.args.mpiexec, "-n", self.args.np])
             if self.args.mpiflags is not None:
                 split_flags = self.args.mpiflags[1:-1].strip().split(" ")
                 modified_cmd_args.extend(split_flags)
