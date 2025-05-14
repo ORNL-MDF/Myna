@@ -66,6 +66,7 @@ class CubitVtkToExodusApp(CubitApp):
             + "generated the VTK file",
         )
         self.args, _ = self.parser.parse_known_args()
+        self.mpiargs_to_current()
 
     def get_vtk_file_data(self, vtk_file):
         """Extract the data object from a VTK file
@@ -155,7 +156,7 @@ class CubitVtkToExodusApp(CubitApp):
                     nz,
                     *sculpt_flags,
                 ]
-                process = self.start_subprocess_with_MPI_args(
+                process = self.start_subprocess_with_mpi_args(
                     [str(x) for x in sculpt_cmd],
                     stdout=f,
                     stderr=subprocess.STDOUT,

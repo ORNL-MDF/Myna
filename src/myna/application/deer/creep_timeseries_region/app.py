@@ -63,6 +63,7 @@ class CreepTimeseriesRegionDeerApp(DeerApp):
             help="(float) load in Newtons",
         )
         self.args, _ = self.parser.parse_known_args()
+        self.mpiargs_to_current()
         super().set_procs()
         self.update_template_path()
 
@@ -116,7 +117,7 @@ class CreepTimeseriesRegionDeerApp(DeerApp):
                     "Materials/stress/database"
                     + f"={os.path.join(case_dir, self.material_model_file_name)}",
                 ]
-                process = self.start_subprocess_with_MPI_args(
+                process = self.start_subprocess_with_mpi_args(
                     cmd_args,
                     stdout=f,
                     stderr=subprocess.STDOUT,

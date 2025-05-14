@@ -10,9 +10,9 @@ applications as modules within Myna in case only subsets of the
 application's functionality are needed.
 """
 
-from myna.application.openfoam import mesh
 import os
 import shutil
+from myna.application.openfoam import mesh
 
 # Copy template directory
 template_dir = os.path.join(
@@ -23,23 +23,21 @@ shutil.copytree(template_dir, working_dir, dirs_exist_ok=True)
 
 # Get example STL location from Myna example directory (assuming this is running from
 # this script's example directory)
-myna_path = os.environ["MYNA_INSTALL_PATH"]
-stl_path = os.path.join("..", "Peregrine", "simulation", "P5", "part.stl")
+stl_path = os.path.join("..", "Peregrine", "simulation", "meltpool", "P5", "part.stl")
 
 # Preprocess STL and create background mesh
 working_stl_path = mesh.preprocess_stl(working_dir, stl_path, convert_to_meters=0.001)
-
-interior_point, bbDict = mesh.create_background_mesh(
-    working_dir, working_stl_path, [4e-4, 4e-4, 4e-4], 1e-4
+bb_dict = mesh.create_stl_cube_mesh(
+    working_dir, working_stl_path, [1e-3, 1e-3, 1e-3], 1e-4
 )
 
 # Extract STL features and create part mesh
-mesh.extract_stl_features(working_dir, working_stl_path, 1, interior_point)
+mesh.extract_stl_features(working_dir, working_stl_path, 1, bb_dict["origin"])
 
-mesh.create_part_mesh(working_dir, working_stl_path, bbDict, "mpirun -np 32")
+mesh.create_part_mesh(working_dir, working_stl_path, bb_dict)
 
 # Slice mesh and refine layer at specified heights
-mesh.slice(working_dir, 0.005)
+mesh.slice_part_mesh(working_dir, 0.005)
 
 mesh.refine_layer(working_dir, 0.001, 1)
 

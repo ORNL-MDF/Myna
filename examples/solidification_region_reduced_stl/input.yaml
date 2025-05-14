@@ -2,19 +2,24 @@ steps:
 - additivefoam:
     class: solidification_region_reduced_stl
     application: additivefoam
+    executable: additiveFoam
     configure:
-      coarse: 0.64e-3
+      coarse: 0.32e-3
       rx: 1.0e-3
       ry: 1.0e-3
-      rz: 0.5e-3
-      pad-xy: 2.0e-3
-      pad-z: 1.0e-3
-      pad-sub: 1.0e-3
+      rz: 200.0e-6
+      pad-xy: 1.0e-3
+      pad-z: 0.15e-3
+      pad-sub: 3.0e-3
       refine-layer: 2
-      refine-region: 3
+      refine-region: 2
+      overwrite: True
     execute:
+      overwrite: True
       batch: True
-      cores: 24
+      np: 24
+      mpiexec: mpirun
+      mpiflags: --bind-to none --oversubscribe
 data:
   build:
     datatype: Peregrine

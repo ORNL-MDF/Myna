@@ -6,16 +6,26 @@
 #
 # License: 3-clause BSD, see https://opensource.org/licenses/BSD-3-Clause.
 #
+"""Module to define the base behavior of a Myna simulation application"""
 import argparse
 import os
+import time
 import shutil
 import subprocess
 import warnings
 from myna.core.workflow.load_input import load_input
-from myna.core.utils import is_executable
+from myna.core.utils import is_executable, get_quoted_str
+from myna.core.components import return_step_class
 
 
 class MynaApp:
+    """Myna application base class with functionality that could be used generally by
+    any application.
+
+    While applications are not required to inherit this class,
+    using the MynaApp functionality where possible for consistent behavior across apps.
+    """
+
     settings = "MYNA_INPUT"
     path = "MYNA_APP_PATH"
     step_name = "MYNA_STEP_NAME"
@@ -27,7 +37,24 @@ class MynaApp:
         self.settings = load_input(self.input_file)
         self.path = os.environ["MYNA_APP_PATH"]
         self.step_name = os.environ["MYNA_STEP_NAME"]
+        self.step_number = [list(x.keys())[0] for x in self.settings["steps"]].index(
+            self.step_name
+        )
         self.last_step_name = os.environ["MYNA_LAST_STEP_NAME"]
+
+        # Check if there is a corresponding component class. This will be None if
+        # class is not in the Component lookup dictionary,
+        # e.g., `myna.application.AdditiveFOAM()`
+        self.sim_class_obj = None
+        try:
+            self.sim_class_obj = return_step_class(self.name)
+            self.sim_class_obj.apply_settings(
+                self.settings["steps"][self.step_number],
+                self.settings.get("data"),
+                self.settings.get("myna"),
+            )
+        except KeyError:
+            pass
 
         # Set up argparse
         self.parser = argparse.ArgumentParser(
@@ -106,7 +133,41 @@ class MynaApp:
             type=str,
             help="(str) file to source to set up environment for executable",
         )
+        self.parser.add_argument(
+            "--mpiargs",
+            default=None,
+            type=str,
+            help="(str) [WARNING DEPRECATED!] full MPI command with flags, e.g.,"
+            "'mpirun --exclusive', excluding the number of processors to use",
+        )
         self.args, _ = self.parser.parse_known_args()
+        self.mpiargs_to_current()
+
+    def mpiargs_to_current(self):
+        """Function to convert the deprecated `--mpiargs` option to the current
+        `--mpiexec`, `--np`, and `--mpiflags` options"""
+        if self.args.mpiargs is not None:
+            args = self.args.mpiargs.split(" ")
+            self.args.mpiexec = args[0].replace('"', "").replace("'", "")
+            for flag in ["-n", "--n", "-np", "--np"]:
+                try:
+                    np_flag_index = args.index(flag)
+                except ValueError:
+                    pass
+            self.args.np = int(args[np_flag_index + 1])
+            del args[np_flag_index + 1]
+            del args[np_flag_index]
+            del args[0]
+            self.args.mpiflags = get_quoted_str(" ".join(args))
+            warning_msg = (
+                f"The deprecated `mpiargs` parameter was used for {self.name}."
+                + " Update input file to use the `mpiexec`, `np`, and `mpiflags`"
+                + " parameters. Inputs are interpreted here as\n"
+                + f"\t- mpiexec: {self.args.mpiexec}\n"
+                + f"\t- np: {self.args.np}\n"
+                + f"\t- mpiflags: {self.args.mpiflags}\n"
+            )
+            warnings.warn(warning_msg)
 
     def validate_executable(self, default):
         """Check if the specified executable exists and raise error if not"""
@@ -141,14 +202,23 @@ class MynaApp:
                 + "does not have execute permissions."
             )
 
-    # args must have been parsed
     def set_procs(self):
-        # Set processor information
+        """Set processor information based on the `maxproc` and `np` inputs. Regardless
+        of user inputs, the CPU count will be capped at `os.cpu_count()`
+        """
         if self.args.maxproc is None:
             self.args.maxproc = os.cpu_count()
         self.args.np = min(os.cpu_count(), self.args.np, self.args.maxproc)
 
     def set_template_path(self, *path_args):
+        """Set the path to the template directory
+
+        Args:
+            path_args: list of path parts to append to `self.path` if no template is
+                specified. For example, `path_args=["exaca", "microstructure_region"]`
+                gives a template with path
+                "{self.path}/exaca/microstructure_region/template"
+        """
         if self.args.template is None:
             self.args.template = os.path.join(
                 self.path,
@@ -159,6 +229,12 @@ class MynaApp:
             self.args.template = os.path.abspath(self.args.template)
 
     def copy(self, case_dir):
+        """Copies the set template directory to a case directory, with existing files
+        being overwritten depending on the app overwrite user setting.
+
+        Args:
+        - case_dir: (str) path to the case directory
+        """
 
         # Get list of files in case directory, except for the myna data file
         try:
@@ -177,20 +253,99 @@ class MynaApp:
         """Starts a subprocess, activating an environment if present"""
         if self.args.env is not None:
             popen_args = [f". {self.args.env}; " + " ".join(cmd_args)]
+            print(f"myna subprocess: {popen_args}")
             return subprocess.Popen(popen_args, shell=True, **kwargs)
+        print(f"myna subprocess: {cmd_args}")
         return subprocess.Popen(cmd_args, **kwargs)
 
-    def start_subprocess_with_MPI_args(self, cmd_args, **kwargs):
+    def start_subprocess_with_mpi_args(self, cmd_args, **kwargs):
         """Starts a subprocess using `Popen` while taking into account the MynaApp
-        MPI-related options. **kwargs are passed to `subprocess.Popen`"""
+        MPI-related options. **kwargs are passed to `subprocess.Popen`
+        """
         modified_cmd_args = []
         if self.args.mpiexec is not None:
-            if os.path.basename(self.args.mpiexec) in ["srun", "mpirun"]:
-                modified_cmd_args.extend([self.args.mpiexec, "-n", self.args.np])
-            else:
-                modified_cmd_args.extend([self.args.mpiexec, "-np", self.args.np])
+            modified_cmd_args.extend([self.args.mpiexec, "-n", self.args.np])
             if self.args.mpiflags is not None:
-                modified_cmd_args.append(self.args.mpiflags)
+                split_flags = self.args.mpiflags[1:-1].strip().split(" ")
+                modified_cmd_args.extend(split_flags)
         modified_cmd_args.extend(cmd_args)
         modified_cmd_args = [str(x) for x in modified_cmd_args]
         return self.start_subprocess(modified_cmd_args, **kwargs)
+
+    def wait_for_process_success(self, process, raise_error=True):
+        """Wait for a process to complete successfully, raising an error if the
+        process fails.
+
+        Args:
+            process: (subprocess.Popen) subprocess object
+            raise_error: (bool) if True, a failed subprocess will raise an error
+
+        Returns:
+            returncode: (int) process returncode from `Popen.wait()`
+        """
+
+        returncode = process.wait()
+        if returncode != 0:
+            error_msg = (
+                f"{self.name}: Subprocess exited with return code {returncode}."
+                + " Check case log files for details."
+            )
+            if raise_error:
+                raise subprocess.SubprocessError(error_msg)
+        return returncode
+
+    def wait_for_all_process_success(self, processes, raise_error=True):
+        """Wait for a process to complete successfully, raising an error if the
+        process fails.
+
+        Args:
+            process: (subprocess.Popen) subprocess object
+            raise_error: (bool) if True, a failed subprocess will raise an error
+
+        Returns:
+            returncode: (int) process returncode from `Popen.wait()`
+        """
+
+        returncodes = []
+        error_msg = ""
+        for process in processes:
+            returncodes.append(
+                self.wait_for_process_success(process, raise_error=False)
+            )
+        if any(returncodes):
+            error_msg = (
+                f"{self.name}: Batch subprocesses exited with return codes {returncodes}."
+                + " Check corresponding case log files for details."
+            )
+            if raise_error:
+                raise subprocess.SubprocessError(error_msg)
+
+    def wait_for_open_batch_resources(self, processes, poll_interval=1):
+        """Given a list of subprocesses, checks if there are available resources
+        to run another subprocess. If there are no open resources, then will wait
+        to return until there are.
+
+        > [!warning]
+        > When running in batch mode with MPI options, this will be ignored
+
+        Args:
+            processes: (list) of subprocess.Popen objects
+            poll_interval: (float) time to wait between process polls, in seconds
+        """
+
+        # If MPI arguments were specified assume that local resources, i.e.,
+        # `self.args.maxproc` are not accurate and that MPI is responsible for throwing
+        # errors about oversubscription of resources
+        open_resources = False
+        if self.args.mpiexec is not None:
+            open_resources = True
+
+        while not open_resources:
+            procs_in_use = 0
+            for process in processes:
+                # Add `self.args.np` to processors in use if process is still running
+                if process.poll() is None:
+                    procs_in_use += self.args.np
+            open_resources = procs_in_use <= (self.args.maxproc - self.args.np)
+            if not open_resources:
+                time.sleep(poll_interval)
