@@ -1,0 +1,12 @@
+steps:
+- test:
+    application: thesis
+    class: solidification_part
+data:
+  build:
+    datatype: Pelican
+    name: myna_output
+    path: ../Pelican
+    parts:
+      P1:
+        layers: [1]
