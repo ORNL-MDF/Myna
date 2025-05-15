@@ -1,10 +1,14 @@
-{
-    "preheat": 298.15,
-    "material": "SS316L",
-    "layer_thickness": 5.0e-05,
-    "P1":
-    {
-        "spot_size": 0.13,
-        "laser_power": 350.0,
-    }
-}
+# Build-wise parameters
+# =====================
+preheat: 298.15 # K, initial ambient temperature of build chamber
+material: "SS316L" # case insensitive, spaces are ignored
+layer_thickness: 5.0e-05 # m, (probably won't be used in Pelican)
+print_order": ["P1"] # list of part names, if printed in sequential order (only used if you want a single simulation to include multiple parts, not needed if scan path times are absolute for the build and not relative to the start of the part build time)
+
+# Part-wise parameters
+# =====================
+# Each part has a dictionary of parameters, with the part name being the dictionary key
+P1:
+    spot_size: 0.13 # mm, spot size of the beam, assumed to be D4sigma by all simulations so far
+    laser_power: 350.0 # W, constant laser power. Will assume transient power in data stream if not present
+    stl: "example.stl" # str, path to STL file associated with the part. Used by simulations that mesh the part geometry, rather than assume some simplistic boundary condition.
