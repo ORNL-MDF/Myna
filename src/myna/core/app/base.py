@@ -9,6 +9,7 @@
 """Module to define the base behavior of a Myna simulation application"""
 import argparse
 import os
+import sys
 import shutil
 import subprocess
 import warnings
@@ -129,6 +130,9 @@ class MynaApp:
         self.args, _ = self.parser.parse_known_args()
         self.set_procs()
         self.mpiargs_to_current()
+        if self.args.skip:
+            print(f"- Skipping part of step {self.name}")
+            sys.exit()
 
     def mpiargs_to_current(self):
         """Function to convert the deprecated `--mpiargs` option to the current
