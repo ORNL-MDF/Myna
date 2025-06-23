@@ -13,7 +13,7 @@ import shutil
 import subprocess
 import warnings
 from myna.core.workflow.load_input import load_input
-from myna.core.utils import is_executable
+from myna.core.utils import is_executable, get_quoted_str
 
 
 class MynaApp:
@@ -140,6 +140,8 @@ class MynaApp:
                 try:
                     np_flag_index = args.index(flag)
                 except ValueError:
+                    # Ignore ValueError if index is not found
+                    # (only one option should match if valid mpi )
                     pass
             self.args.np = int(args[np_flag_index + 1])
             del args[np_flag_index + 1]
