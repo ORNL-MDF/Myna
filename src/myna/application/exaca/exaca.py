@@ -45,7 +45,7 @@ class ExaCA(MynaApp):
             help="(float) Grain size of substrate, in microns",
         )
 
-        self.args = self.parser.parse_args()
+        self.parse_known_args()
 
         super().validate_executable(
             "ExaCA",

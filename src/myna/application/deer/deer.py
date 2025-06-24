@@ -29,8 +29,7 @@ class DeerApp(MynaApp):
             type=str,
             help="Path to the root Moose install directory",
         )
-        self.args, _ = self.parser.parse_known_args()
-        super().set_procs()
+        self.parse_known_args()
         self.update_template_path()
 
     def update_template_path(self):

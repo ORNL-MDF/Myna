@@ -96,9 +96,7 @@ class AdditiveFOAM(MynaApp):
             help="Mesh size for the ExaCA simulations, in meters",
         )
 
-        self.args = self.parser.parse_args()
-
-        super().set_procs()
+        self.parse_known_args()
         super().validate_executable(
             "additiveFoam",
         )

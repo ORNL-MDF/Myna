@@ -65,7 +65,7 @@ class CubitVtkToExodusApp(CubitApp):
             help="(str) name of input file in ExaCA Myna workflow step template"
             + "generated the VTK file",
         )
-        self.args, _ = self.parser.parse_known_args()
+        self.parse_known_args()
 
     def get_vtk_file_data(self, vtk_file):
         """Extract the data object from a VTK file

@@ -33,4 +33,4 @@ class RVE(MynaApp):
             help="(int) max number of layers to include in the region",
         )
 
-        self.args = self.parser.parse_args()
+        self.parse_known_args()

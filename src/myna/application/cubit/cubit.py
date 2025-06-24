@@ -31,8 +31,7 @@ class CubitApp(MynaApp):
             type=str,
             help="Path to the root Cubit install directory",
         )
-        self.args, _ = self.parser.parse_known_args()
-        super().set_procs()
+        self.parse_known_args()
         self.update_template_path()
 
         # Check that all needed executables are accessible. This overrides the
