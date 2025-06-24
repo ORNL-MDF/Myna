@@ -42,3 +42,18 @@ jobs:
         uses: actions/checkout@v4
       - name: Format Check
         uses: psf/black@stable
+
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    container:
+      image: ghcr.io/ornl-mdf/containers/ubuntu:dev
+    steps:
+      - name: Checkout myna
+        uses: actions/checkout@v4
+      - name: Install dependencies
+        run: |
+          pip install .[dev,exaca]
+      - name: Run pytest apps
+        run: |
+          python -m pytest -m apps --apps
