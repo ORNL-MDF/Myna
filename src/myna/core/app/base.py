@@ -136,31 +136,30 @@ class MynaApp:
 
     def mpiargs_to_current(self):
         """Function to convert the deprecated `--mpiargs` option to the current
-        `--mpiexec`, `--np`, and `--mpiflags` options"""
+        `--mpiexec`, `--np`, and `--mpiflags` options
+
+        TODO: Remove this function in next release"""
         if self.args.mpiargs is not None:
             args = self.args.mpiargs.split(" ")
             self.args.mpiexec = args[0].replace('"', "").replace("'", "")
-            for flag in ["-n", "--n", "-np", "--np"]:
-                try:
-                    np_flag_index = args.index(flag)
-                except ValueError:
-                    # Ignore ValueError if index is not found
-                    # (only one option should match if valid mpi )
-                    pass
-            self.args.np = int(args[np_flag_index + 1])
-            del args[np_flag_index + 1]
-            del args[np_flag_index]
             del args[0]
+            for flag in ["-n", "--n", "-np", "--np"]:
+                if flag in args:
+                    np_flag_index = args.index(flag)
+                    self.args.np = int(args[np_flag_index + 1])
+                    del args[np_flag_index + 1]
+                    del args[np_flag_index]
+                    continue
             self.args.mpiflags = get_quoted_str(" ".join(args))
             warning_msg = (
                 f"The deprecated `mpiargs` parameter was used for {self.name}."
-                + " Update input file to use the `mpiexec`, `np`, and `mpiflags`"
+                + " Update input file to use separate `mpiexec`, `np`, and `mpiflags`"
                 + " parameters. Inputs are interpreted here as\n"
                 + f"\t- mpiexec: {self.args.mpiexec}\n"
                 + f"\t- np: {self.args.np}\n"
                 + f"\t- mpiflags: {self.args.mpiflags}\n"
             )
-            warnings.warn(warning_msg)
+            warnings.warn(warning_msg, category=DeprecationWarning)
 
     def validate_executable(self, default):
         """Check if the specified executable exists and raise error if not"""
