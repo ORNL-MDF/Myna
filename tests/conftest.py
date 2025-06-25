@@ -17,30 +17,43 @@ def pytest_addoption(parser):
         help="Run tests which include simulation applications",
     )
     parser.addoption(
-        "--examples",
+        "--serial",
         action="store_true",
         default=False,
-        help="Run tests which include running examples",
+        help="Run tests which include running serial examples",
+    )
+    parser.addoption(
+        "--parallel",
+        action="store_true",
+        default=False,
+        help="Run tests which include running parallel examples",
     )
 
 
 def pytest_configure(config):
+    """Configure the marker INI-file marker values"""
     config.addinivalue_line(
         "markers", "apps: mark application test (needs external dependency)"
     )
     config.addinivalue_line(
-        "markers", "examples: mark example test (needs external dependency)"
+        "markers", "serial: mark serial example test (needs external dependency)"
+    )
+    config.addinivalue_line(
+        "markers", "parallel: mark parallel example test (needs external dependency)"
     )
 
 
 def pytest_collection_modifyitems(config, items):
     if config.getoption("--apps"):
         return
-    if config.getoption("--examples"):
+    if config.getoption("--serial"):
+        return
+    if config.getoption("--parallel"):
         return
     skip = {
         "apps": pytest.mark.skip(reason="Option --apps needed to run"),
-        "examples": pytest.mark.skip(reason="Option --examples needed to run"),
+        "serial": pytest.mark.skip(reason="Option --serial needed to run"),
+        "parallel": pytest.mark.skip(reason="Option --parallel needed to run"),
     }
     for key, markskip in skip.items():
         for item in items:

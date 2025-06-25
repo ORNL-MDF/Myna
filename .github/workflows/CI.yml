@@ -75,7 +75,11 @@ jobs:
         run: |
           . /root/.bashrc
           python -n 4 -m pytest -m apps --apps
-      - name: Check examples are working (pytest --examples)
+      - name: Check serial examples are working (pytest --serial)
         run: |
           . /root/.bashrc
-          python -n 4 -m pytest -m examples --examples
+          python -m pytest -n 4 -m examples --serial
+      - name: Check parallel examples are working (pytest --parallel)
+        run: |
+          . /root/.bashrc
+          python -m pytest -n 2 -m examples --parallel

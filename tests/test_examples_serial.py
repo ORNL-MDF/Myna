@@ -30,9 +30,9 @@ def get_run_cmd_str():
     )
 
 
-@pytest.mark.examples
+@pytest.mark.serial
 def test_solidification_part():
-    """This checks the solidification_part example"""
+    """This checks the solidification_part example. Estimated runtime ~20s."""
     with working_directory(get_example_dir("solidification_part")):
         output = subprocess.run(
             get_run_cmd_str(),
@@ -43,9 +43,9 @@ def test_solidification_part():
     assert "All output files are valid" in output
 
 
-@pytest.mark.examples
+@pytest.mark.serial
 def test_solidification_part_hdf5():
-    """This checks the solidification_part example"""
+    """This checks the solidification_part example. Estimated runtime ~20s."""
     with working_directory(get_example_dir("solidification_part_hdf5")):
         output = subprocess.run(
             get_run_cmd_str(),
@@ -56,9 +56,9 @@ def test_solidification_part_hdf5():
     assert "All output files are valid" in output
 
 
-@pytest.mark.examples
+@pytest.mark.serial
 def test_solidification_part_json():
-    """This checks the solidification_part example"""
+    """This checks the solidification_part example. Estimated runtime ~20s."""
     with working_directory(get_example_dir("solidification_part_json")):
         output = subprocess.run(
             get_run_cmd_str(),
