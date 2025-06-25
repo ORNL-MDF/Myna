@@ -10,10 +10,19 @@ on:
     - cron:  '1 6 * * *'
 
 jobs:
-  build:
 
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout myna
+        uses: actions/checkout@v4
+      - name: Format Check
+        uses: psf/black@stable
+
+  build:
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    needs: format
     strategy:
       matrix:
         python: ["3.10"]
@@ -35,17 +44,10 @@ jobs:
         run: |
           pylint $(git ls-files '*.py') --fail-under=7.25
 
-  format:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout myna
-        uses: actions/checkout@v4
-      - name: Format Check
-        uses: psf/black@stable
-
   run:
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    needs: build
     container:
       image: ghcr.io/ornl-mdf/containers/ubuntu:dev
       options: --user root
