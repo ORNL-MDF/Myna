@@ -500,7 +500,9 @@ def config(input_file, output_file=None, show_avail=False, overwrite=False):
                     ["myna", "git"],
                     nested_get(data_dict_case, ["myna", "git"]),
                 )
-            except InvalidGitRepositoryError:
+            except (InvalidGitRepositoryError, TypeError):
+                # InvalidGitRepositoryError: Not a Git repository
+                # TypeError: HEAD is detached
                 pass
 
             # Set configure data
