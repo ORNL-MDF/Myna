@@ -63,11 +63,17 @@ jobs:
           ls -l $GITHUB_WORKSPACE
       - name: Checkout myna
         uses: actions/checkout@v4
+      - name: Configure Git Safe Directory
+        run: git config --global --add safe.directory /__w/Myna/Myna
       - name: Install dependencies
         run: |
           . /root/.bashrc
           pip install -e .[dev,exaca]
-      - name: Run pytest apps
+      - name: Check executables are working (pytest --apps)
         run: |
           . /root/.bashrc
           python -m pytest -m apps --apps
+      - name: Check examples are working (pytest --examples)
+        run: |
+          . /root/.bashrc
+          python -m pytest -m examples --examples

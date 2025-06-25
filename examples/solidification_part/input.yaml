@@ -3,9 +3,9 @@ steps:
     class: solidification_part
     application: thesis
     configure:
-      res: 50.0e-6
+      res: 250.0e-6
     execute:
-      np: 8
+      np: 1
 data:
   build:
     datatype: Peregrine
