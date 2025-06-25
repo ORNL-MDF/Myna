@@ -74,8 +74,8 @@ jobs:
       - name: Check executables are working (pytest --apps)
         run: |
           . /root/.bashrc
-          python -m pytest -m apps --apps
+          python -n 4 -m pytest -m apps --apps
       - name: Check examples are working (pytest --examples)
         run: |
           . /root/.bashrc
-          python -m pytest -m examples --examples
+          python -n 4 -m pytest -m examples --examples
