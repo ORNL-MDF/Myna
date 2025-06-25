@@ -74,7 +74,7 @@ jobs:
       - name: Check executables are working (pytest --apps)
         run: |
           . /root/.bashrc
-          python -n 4 -m pytest -m apps --apps
+          python -m pytest -n 4 -m apps --apps
       - name: Check serial examples are working (pytest --serial)
         run: |
           . /root/.bashrc
