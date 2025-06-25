@@ -65,20 +65,20 @@ jobs:
         run: |
           . /root/.bashrc
           pip install -e .[dev,exaca]
-      - name: Check executables are working (pytest --apps)
-        # Need valid executables to run examples
+      - name: Check executables are working
+        # Don't want to run examples if there are no valid executables
         run: |
           . /root/.bashrc
-          python -m pytest -n 4 -m apps --apps
-      - name: Check serial examples are working (pytest --serial)
+          python -m pytest -n 4 -m "apps and not examples"
+      - name: Check serial examples are working
         # Each example will only use 1 processor, GitHub runners have 4
         # https://docs.github.com/en/actions/using-github-hosted-runners/using-github-hosted-runners/about-github-hosted-runners
         run: |
           . /root/.bashrc
-          python -m pytest -n 4 -m serial --serial
-      - name: Check parallel examples are working (pytest --parallel)
+          python -m pytest -n 4 -m "examples and not parallel"
+      - name: Check parallel examples are working
         # Each example will use 2 processors, GitHub runners have 4
         # https://docs.github.com/en/actions/using-github-hosted-runners/using-github-hosted-runners/about-github-hosted-runners
         run: |
           . /root/.bashrc
-          python -m pytest -n 2 -m parallel --parallel
+          python -m pytest -n 2 -m "examples and parallel"
