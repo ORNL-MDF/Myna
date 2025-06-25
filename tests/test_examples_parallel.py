@@ -30,9 +30,14 @@ def get_run_cmd_str():
 
 
 @pytest.mark.parallel
-def test_solidification_region_reduced():
-    """This checks the solidification_part example. Estimated runtime ~40s."""
-    with working_directory(get_example_dir("solidification_region_reduced")):
+def test_microstructure_region():
+    """This checks the microstructure_region example, which checks:
+
+        - additivefoam/solidification_region_reduced
+        - exaca/microstructure_region
+
+    Estimated runtime ~40s."""
+    with working_directory(get_example_dir("microstructure_region")):
         output = subprocess.run(
             get_run_cmd_str(),
             shell=True,
@@ -44,7 +49,11 @@ def test_solidification_region_reduced():
 
 @pytest.mark.parallel
 def test_solidification_region_reduced_stl():
-    """This checks the solidification_part example. Estimated runtime ~40s."""
+    """This checks the solidification_region_reduced_stl example, which checks:
+
+        - additivefoam/solidification_region_reduced_stl
+
+    Estimated runtime ~40s."""
     with working_directory(get_example_dir("solidification_region_reduced_stl")):
         output = subprocess.run(
             get_run_cmd_str(),

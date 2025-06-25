@@ -52,13 +52,6 @@ jobs:
       image: ghcr.io/ornl-mdf/containers/ubuntu:dev
       options: --user root
     steps:
-      - name: Debug runner environment
-        run: |
-          echo "My current working directory is $(pwd)"
-          echo "My current user is $USER"
-          echo "My current user shell is $SHELL ($0)"
-          echo "My current process shell is $(ps -p $$)"
-          echo "My GitHub workspace is $GITHUB_WORKSPACE"
       - name: Add permissions to GitHub workspace
         run: |
           chmod -R 777 $GITHUB_WORKSPACE
@@ -66,20 +59,26 @@ jobs:
       - name: Checkout myna
         uses: actions/checkout@v4
       - name: Configure Git Safe Directory
+        # Needed due to Myna's self-check if it is a git repo
         run: git config --global --add safe.directory /__w/Myna/Myna
       - name: Install dependencies
         run: |
           . /root/.bashrc
           pip install -e .[dev,exaca]
       - name: Check executables are working (pytest --apps)
+        # Need valid executables to run examples
         run: |
           . /root/.bashrc
           python -m pytest -n 4 -m apps --apps
       - name: Check serial examples are working (pytest --serial)
+        # Each example will only use 1 processor, GitHub runners have 4
+        # https://docs.github.com/en/actions/using-github-hosted-runners/using-github-hosted-runners/about-github-hosted-runners
         run: |
           . /root/.bashrc
           python -m pytest -n 4 -m serial --serial
       - name: Check parallel examples are working (pytest --parallel)
+        # Each example will use 2 processors, GitHub runners have 4
+        # https://docs.github.com/en/actions/using-github-hosted-runners/using-github-hosted-runners/about-github-hosted-runners
         run: |
           . /root/.bashrc
           python -m pytest -n 2 -m parallel --parallel

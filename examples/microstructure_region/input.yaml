@@ -3,30 +3,30 @@ steps:
     class: solidification_region_reduced
     application: additivefoam
     configure:
-      coarse: 80e-6
-      rx: 0.5e-3
-      ry: 0.5e-3
-      rz: 300.0e-6
-      pad-xy: 0.5e-3
-      pad-z: 0.1e-3
-      pad-sub: 2.5e-3
+      coarse: 0.16e-3
+      rx: 0.48e-3
+      ry: 0.48e-3
+      rz: 0.16e-3
+      pad-xy: 0.48e-3
+      pad-z: 0.08e-3
+      pad-sub: 0.64e-3
       refine-layer: 1
-      refine-region: 1
+      refine-region: 2
+      exaca-mesh: 10.0e-6
     execute:
-      batch: True
       cores: 2
 - exaca:
     class: microstructure_region
     application: exaca
     executable: ExaCA
     configure:
-      cell-size: 2.5
+      cell-size: 10.0
       sub-size: 12.3
       nd: 250
       mu: 21
       std: 3
     execute:
-      batch: True
+      np: 2
 data:
   build:
     datatype: Peregrine
@@ -36,6 +36,6 @@ data:
       P5:
         regions:
           r1:
-            layers: [51, 52]
+            layers: [51]
             x: 0.2
             y: 0.021
