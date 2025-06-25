@@ -29,6 +29,8 @@ def get_run_cmd_str():
     )
 
 
+@pytest.mark.apps
+@pytest.mark.examples
 @pytest.mark.parallel
 def test_microstructure_region():
     """This checks the microstructure_region example, which checks:
@@ -47,6 +49,8 @@ def test_microstructure_region():
     assert "All output files are valid" in output
 
 
+@pytest.mark.apps
+@pytest.mark.examples
 @pytest.mark.parallel
 def test_solidification_region_reduced_stl():
     """This checks the solidification_region_reduced_stl example, which checks:

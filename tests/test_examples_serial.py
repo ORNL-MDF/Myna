@@ -30,7 +30,8 @@ def get_run_cmd_str():
     )
 
 
-@pytest.mark.serial
+@pytest.mark.apps
+@pytest.mark.examples
 def test_solidification_part():
     """This checks the solidification_part example. Estimated runtime ~20s."""
     with working_directory(get_example_dir("solidification_part")):
@@ -43,7 +44,8 @@ def test_solidification_part():
     assert "All output files are valid" in output
 
 
-@pytest.mark.serial
+@pytest.mark.apps
+@pytest.mark.examples
 def test_solidification_part_hdf5():
     """This checks the solidification_part example. Estimated runtime ~20s."""
     with working_directory(get_example_dir("solidification_part_hdf5")):
@@ -56,7 +58,8 @@ def test_solidification_part_hdf5():
     assert "All output files are valid" in output
 
 
-@pytest.mark.serial
+@pytest.mark.apps
+@pytest.mark.examples
 def test_solidification_part_json():
     """This checks the solidification_part example. Estimated runtime ~20s."""
     with working_directory(get_example_dir("solidification_part_json")):
