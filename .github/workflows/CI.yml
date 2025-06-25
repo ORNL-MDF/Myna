@@ -78,8 +78,8 @@ jobs:
       - name: Check serial examples are working (pytest --serial)
         run: |
           . /root/.bashrc
-          python -m pytest -n 4 -m examples --serial
+          python -m pytest -n 4 -m serial --serial
       - name: Check parallel examples are working (pytest --parallel)
         run: |
           . /root/.bashrc
-          python -m pytest -n 2 -m examples --parallel
+          python -m pytest -n 2 -m parallel --parallel
