@@ -9,14 +9,14 @@
 """Database class for an ORNL MDF Peregrine build's file structure
 that corresponds to the PEregrine 2023-10 dataset"""
 
-from myna.core.db import Database
+import os
+import warnings
+import h5py
+import numpy as np
+import pandas as pd
 from myna.core import metadata
 from myna.database.peregrine import PeregrineDB
 from myna.core.utils import get_synonymous_key
-import os
-import numpy as np
-import h5py
-import pandas as pd
 
 
 class PeregrineHDF5(PeregrineDB):
@@ -54,7 +54,7 @@ class PeregrineHDF5(PeregrineDB):
 
     def __init__(self, version="v2023_10"):
 
-        Database.__init__(self)
+        super().__init__()
         self.description = "ORNL MDF Peregrine HDF5 archive structure"
         self.version = version
 
@@ -84,7 +84,9 @@ class PeregrineHDF5(PeregrineDB):
         """
 
         if metadata_type == metadata.LaserPower:
-            pid = int(str(part).split("P")[-1])  # remove "P" prefix from part name
+            pid = int(
+                str(part).split("P", maxsplit=1)[-1]
+            )  # remove "P" prefix from part name
             with h5py.File(self.path, "r") as data:
                 name = get_synonymous_key(data, self.synonyms["laser_power"])
                 value = float(data[name][pid])
@@ -104,11 +106,19 @@ class PeregrineHDF5(PeregrineDB):
 
         elif metadata_type == metadata.Preheat:
             with h5py.File(self.path, "r") as data:
-                value = float(data["temporal/bottom_chamber_temperature"][0]) + 273.15
+                try:
+                    value = (
+                        float(data["temporal/bottom_chamber_temperature"][0]) + 273.15
+                    )
+                except KeyError:
+                    warnings.warn("No `Preheat` metadata, assuming room temperature.")
+                    value = 293.15  # room temperature (20 C)
             return value
 
         elif metadata_type == metadata.SpotSize:
-            pid = int(str(part).split("P")[-1])  # remove "P" prefix from part name
+            pid = int(
+                str(part).split("P", maxsplit=1)[-1]
+            )  # remove "P" prefix from part name
             with h5py.File(self.path, "r") as data:
                 name = get_synonymous_key(data, self.synonyms["laser_spot_size"])
                 value = float(data[name][pid])
@@ -118,6 +128,11 @@ class PeregrineHDF5(PeregrineDB):
             # that it is stored in microns (not millimeters) and correct accordingly.
             if value > 10:
                 value = value * 1e-3
+                warn_msg = (
+                    f"Large spot size detected ({value} mm),"
+                    + f" assuming conversion um to mm (--> {value*1e-3} mm)"
+                )
+                warnings.warn(warn_msg)
 
             return value
 
@@ -140,7 +155,7 @@ class PeregrineHDF5(PeregrineDB):
     def get_sync_image_size(self):
         """Load the (x,y) image size in pixels"""
         with h5py.File(self.path, "r") as data:
-            return data["slices/part_ids"].shape[1:]
+            return data["slices/part_ids"].shape[1:]  # pylint: disable=no-member
 
     def create_scanfile(self, part, layer):
         """Create a scanpath file from the HDF5 archive
@@ -160,19 +175,24 @@ class PeregrineHDF5(PeregrineDB):
 
         # Only create scan files if files don't already exist
         if not os.path.exists(file_database):
-            pid = int(str(part).split("P")[-1])  # remove "P" prefix from part name
+            pid = int(
+                str(part).split("P", maxsplit=1)[-1]
+            )  # remove "P" prefix from part name
             with h5py.File(self.path, "r") as data:
 
                 # Get Part ID and scan path information
                 part_ids = data["slices/part_ids"][int(layer)]
-                scan_path = data[f"scans/{layer}"]
+                try:
+                    scan_path = data[f"scans/{layer} line"]
+                except KeyError:
+                    scan_path = data[f"scans/{layer}"]
                 df_scan = pd.DataFrame(
                     {
                         "xs": scan_path[:, 0],
                         "xe": scan_path[:, 1],
                         "ys": scan_path[:, 2],
                         "ye": scan_path[:, 3],
-                        "t": scan_path[:, 4],
+                        "time_end": scan_path[:, 4],
                     }
                 )
 
@@ -181,8 +201,8 @@ class PeregrineHDF5(PeregrineDB):
                 y_dim = data.attrs["printer/y_real_dimension"]
                 ix = 1
                 iy = 0
-                dx = x_dim / part_ids.shape[ix]
-                dy = y_dim / part_ids.shape[iy]
+                dx = x_dim / part_ids.shape[ix]  # pylint: disable=no-member
+                dy = y_dim / part_ids.shape[iy]  # pylint: disable=no-member
 
                 # Get bounds in pixel indices
                 inds = np.argwhere(part_ids == pid)
@@ -235,7 +255,18 @@ class PeregrineHDF5(PeregrineDB):
                 scan_speed = float(data[name][pid]) / 1e3
 
                 if len(df_scan) > 0:
-                    for _, row in df_scan.iterrows():
+                    for row_index, row in df_scan.iterrows():
+                        duration = np.power(
+                            np.power(row["xe"] - row["xs"], 2)
+                            + np.power(row["ye"] - row["ys"], 2),
+                            0.5,
+                        ) / (scan_speed * 1e3)
+                        # assume scan path starts from 0.0 elapsed time
+                        if row_index == 0:
+                            time_end_last = row["time_end"] - duration
+                        delay = max(
+                            row["time_end"] - duration - time_end_last, 0
+                        )  # pylint: disable=possibly-used-before-assignment
                         z = data.attrs["material/layer_thickness"] * float(layer)
                         df_row_move = pd.DataFrame(
                             {
@@ -244,7 +275,7 @@ class PeregrineHDF5(PeregrineDB):
                                 "Y(mm)": [row["ys"]],
                                 "Z(mm)": [z],
                                 "Pmod": [0],
-                                "tParam": [0],
+                                "tParam": [delay],
                             }
                         )
                         df_row_scan = pd.DataFrame(
@@ -257,6 +288,7 @@ class PeregrineHDF5(PeregrineDB):
                                 "tParam": [scan_speed],
                             }
                         )
+                        time_end_last = row["time_end"]
                         if len(df_converted) == 0:
                             df_converted = pd.concat([df_row_move, df_row_scan])
                         else:
