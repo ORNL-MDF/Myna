@@ -1,3 +1,11 @@
+"""Tests for configuring and running example cases. Each example test should be marked
+with `@pytest.mark.examples`. By default, it is assumed that each example uses a single
+processor. Additional markers should be specified to indicate test complexity:
+
+- @pytest.mark.apps: requires external dependency
+- @pytest.mark.parallel: example uses 2 processors instead of 1
+"""
+
 #
 # Copyright (c) 2024 Oak Ridge National Laboratory.
 #
@@ -38,16 +46,6 @@ def run_example_test(example_name):
         config("input.yaml")
         run("input.yaml")
         shutil.rmtree(tmp_dir, ignore_errors=True)
-
-
-def get_run_cmd_str():
-    """Returns a command string to launch and clean an example case. Assumes a clean
-    directory to begin with"""
-    return (
-        "myna config --output ic.yaml"
-        + " && myna run --input ic.yaml"
-        + " && rm -rf myna_output myna_resources ic.yaml"
-    )
 
 
 @pytest.mark.apps

@@ -55,12 +55,11 @@ jobs:
       - name: Add permissions to GitHub workspace
         run: |
           chmod -R 777 $GITHUB_WORKSPACE
-          ls -l $GITHUB_WORKSPACE
       - name: Checkout myna
         uses: actions/checkout@v4
       - name: Configure Git Safe Directory
         # Needed due to Myna's self-check if it is a git repo
-        run: git config --global --add safe.directory /__w/Myna/Myna
+        run: git config --global --add safe.directory $GITHUB_WORKSPACE
       - name: Install dependencies
         run: |
           . /root/.bashrc
