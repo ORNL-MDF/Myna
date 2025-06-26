@@ -3,9 +3,9 @@ steps:
     class: solidification_part
     application: thesis
     configure:
-      res: 50.0e-6
+      res: 250.0e-6
     execute:
-      np: 8
+      np: 1
 data:
   build:
     datatype: MynaJSON
@@ -13,6 +13,6 @@ data:
     path: ../MynaJSON/MynaJSON_database_example.json
     parts:
       P5:
-        layers: [51,52]
+        layers: [51]
 myna:
   workspace: ../example-workspace.yaml

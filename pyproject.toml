@@ -34,6 +34,7 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
   'pytest',
+  'pytest-xdist',
   'black>24.10.0',
   'pylint',
   'licenseheaders']
@@ -62,8 +63,12 @@ include-package-data = true
 where = ["src"]
 
 [tool.pytest.ini_options]
-addopts = [
-    "--import-mode=importlib"]
+addopts ='--import-mode=importlib -m "not apps"'
+markers = [
+    'apps: mark tests with external application dependency',
+    'examples: mark tests that run cases in the `examples` directory',
+    'parallel: mark tests that require multiple cores to run',
+]
 
 [tool.codespell]
 ignore-words-list = 'mater,nd'

@@ -4,17 +4,18 @@ steps:
     application: additivefoam
     configure:
       coarse: 0.64e-3
-      rx: 1.0e-3
-      ry: 1.0e-3
-      rz: 0.5e-3
-      pad-xy: 2.0e-3
-      pad-z: 1.0e-3
-      pad-sub: 1.0e-3
+      rx: 0.64e-3
+      ry: 0.64e-3
+      rz: 0.64e-3
+      pad-xy: 0.48e-3
+      pad-z: 0.48e-3
+      pad-sub: 0.64e-3
       refine-layer: 2
-      refine-region: 3
+      refine-region: 1
+      exaca-mesh: 10.0e-6
+      np: 2
     execute:
-      batch: True
-      cores: 24
+      cores: 2
 data:
   build:
     datatype: Peregrine
@@ -24,6 +25,6 @@ data:
       P5:
         regions:
           r1:
-            layers: [51, 52]
+            layers: [51]
             x: 0.2
             y: 0.017

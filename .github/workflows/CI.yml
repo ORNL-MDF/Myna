@@ -10,10 +10,19 @@ on:
     - cron:  '1 6 * * *'
 
 jobs:
-  build:
 
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout myna
+        uses: actions/checkout@v4
+      - name: Format Check
+        uses: psf/black@stable
+
+  build:
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    needs: format
     strategy:
       matrix:
         python: ["3.10"]
@@ -35,10 +44,40 @@ jobs:
         run: |
           pylint $(git ls-files '*.py') --fail-under=7.25
 
-  format:
+  run:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: build
+    container:
+      image: ghcr.io/ornl-mdf/containers/ubuntu:dev
+      options: --user root
     steps:
+      - name: Add permissions to GitHub workspace
+        run: |
+          chmod -R 777 $GITHUB_WORKSPACE
       - name: Checkout myna
         uses: actions/checkout@v4
-      - name: Format Check
-        uses: psf/black@stable
+      - name: Configure Git Safe Directory
+        # Needed due to Myna's self-check if it is a git repo
+        run: git config --global --add safe.directory $GITHUB_WORKSPACE
+      - name: Install dependencies
+        run: |
+          . /root/.bashrc
+          pip install -e .[dev,exaca]
+      - name: Check executables are working
+        # Don't want to run examples if there are no valid executables
+        run: |
+          . /root/.bashrc
+          python -m pytest -n 4 -vv -m "apps and not examples"
+      - name: Check serial examples are working
+        # Each example will only use 1 processor, GitHub runners have 4
+        # https://docs.github.com/en/actions/using-github-hosted-runners/using-github-hosted-runners/about-github-hosted-runners
+        run: |
+          . /root/.bashrc
+          python -m pytest -n 4 -vv -m "examples and not parallel"
+      - name: Check parallel examples are working
+        # Each example will use 2 processors, GitHub runners have 4
+        # https://docs.github.com/en/actions/using-github-hosted-runners/using-github-hosted-runners/about-github-hosted-runners
+        run: |
+          . /root/.bashrc
+          python -m pytest -n 2 -vv -m "examples and parallel"
