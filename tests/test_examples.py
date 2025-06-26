@@ -42,9 +42,11 @@ def run_example_test(example_name):
     )
 
     # Run and clean the example
-    with working_directory(tmp_dir):
-        config("input.yaml")
-        run("input.yaml")
+    try:
+        with working_directory(tmp_dir):
+            config("input.yaml")
+            run("input.yaml")
+    finally:
         shutil.rmtree(tmp_dir, ignore_errors=True)
 
 
