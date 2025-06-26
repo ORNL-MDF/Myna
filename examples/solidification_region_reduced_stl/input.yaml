@@ -2,6 +2,7 @@ steps:
 - additivefoam:
     class: solidification_region_reduced_stl
     application: additivefoam
+    executable: additiveFoam
     configure:
       coarse: 0.64e-3
       rx: 0.64e-3
