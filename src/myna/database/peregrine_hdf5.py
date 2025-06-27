@@ -164,15 +164,22 @@ class PeregrineHDF5(PeregrineDB):
             with h5py.File(self.path, "r") as data:
 
                 # Get Part ID and scan path information
+                # Older versions of Peregrine HDF5 files just have "scans/{layer}",
+                # but newer versions of the files have two formats of the scan data:
+                # - "scans/{layer} line" (Peregrine "raster" and "contour" lines)
+                # - "scans/{layer} point" (xyzt point representation)
                 part_ids = data["slices/part_ids"][int(layer)]
-                scan_path = data[f"scans/{layer}"]
+                try:
+                    scan_path = data[f"scans/{layer} line"]
+                except KeyError:
+                    scan_path = data[f"scans/{layer}"]
                 df_scan = pd.DataFrame(
                     {
                         "xs": scan_path[:, 0],
                         "xe": scan_path[:, 1],
                         "ys": scan_path[:, 2],
                         "ye": scan_path[:, 3],
-                        "t": scan_path[:, 4],
+                        "time_end": scan_path[:, 4],
                     }
                 )
 
@@ -235,7 +242,17 @@ class PeregrineHDF5(PeregrineDB):
                 scan_speed = float(data[name][pid]) / 1e3
 
                 if len(df_scan) > 0:
-                    for _, row in df_scan.iterrows():
+                    time_end_last = 0.0
+                    for row_index, row in df_scan.iterrows():
+                        duration = np.power(
+                            np.power(row["xe"] - row["xs"], 2)
+                            + np.power(row["ye"] - row["ys"], 2),
+                            0.5,
+                        ) / (scan_speed * 1e3)
+                        # assume scan path starts from 0.0 elapsed time
+                        if row_index == 0:
+                            time_end_last = row["time_end"] - duration
+                        delay = max(row["time_end"] - duration - time_end_last, 0)
                         z = data.attrs["material/layer_thickness"] * float(layer)
                         df_row_move = pd.DataFrame(
                             {
@@ -244,7 +261,7 @@ class PeregrineHDF5(PeregrineDB):
                                 "Y(mm)": [row["ys"]],
                                 "Z(mm)": [z],
                                 "Pmod": [0],
-                                "tParam": [0],
+                                "tParam": [delay],
                             }
                         )
                         df_row_scan = pd.DataFrame(
@@ -257,6 +274,7 @@ class PeregrineHDF5(PeregrineDB):
                                 "tParam": [scan_speed],
                             }
                         )
+                        time_end_last = row["time_end"]
                         if len(df_converted) == 0:
                             df_converted = pd.concat([df_row_move, df_row_scan])
                         else:
