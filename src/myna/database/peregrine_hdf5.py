@@ -9,6 +9,7 @@
 """Database class for an ORNL MDF Peregrine build's file structure
 that corresponds to the PEregrine 2023-10 dataset"""
 
+import warnings
 from myna.core.db import Database
 from myna.core import metadata
 from myna.database.peregrine import PeregrineDB
@@ -104,7 +105,15 @@ class PeregrineHDF5(PeregrineDB):
 
         elif metadata_type == metadata.Preheat:
             with h5py.File(self.path, "r") as data:
-                value = float(data["temporal/bottom_chamber_temperature"][0]) + 273.15
+                # Preheat data is not always stored in Peregrine, as most machines
+                # don't actually have a base plate heater
+                try:
+                    value = (
+                        float(data["temporal/bottom_chamber_temperature"][0]) + 273.15
+                    )
+                except LookupError:
+                    warnings.warn("No `Preheat` metadata, assuming room temperature.")
+                    value = 293.15  # room temperature (20 C)
             return value
 
         elif metadata_type == metadata.SpotSize:

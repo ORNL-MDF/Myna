@@ -114,13 +114,19 @@ class PeregrineDB(Database):
 
         elif metadata_type == metadata.Preheat:
             datafile = os.path.join(self.simulation_dir, "buildmeta.npz")
-            with np.load(datafile, allow_pickle=True) as data:
-                index = [
-                    ind
-                    for ind, x in enumerate(data["metadata_names"])
-                    if x == "Target Preheat (°C)"
-                ][0]
-                value = float(data["metadata_values"][index]) + 273.15
+            # Preheat data is not always stored in Peregrine, as most machines
+            # don't actually have a base plate heater
+            try:
+                with np.load(datafile, allow_pickle=True) as data:
+                    index = [
+                        ind
+                        for ind, x in enumerate(data["metadata_names"])
+                        if x == "Target Preheat (°C)"
+                    ][0]
+                    value = float(data["metadata_values"][index]) + 273.15
+            except LookupError:
+                warnings.warn("No `Preheat` metadata, assuming room temperature.")
+                value = 293.15  # room temperature (20 C)
             return value
 
         elif metadata_type == metadata.SpotSize:
