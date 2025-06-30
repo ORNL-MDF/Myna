@@ -30,6 +30,3 @@ examples/PeregrineHDF5/registered
 log.*
 *.log
 logs/
-
-# Pelican
-examples/Pelican
