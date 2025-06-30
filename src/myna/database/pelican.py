@@ -9,8 +9,8 @@
 """Database class for extracting data from MDF Pelican build data"""
 import os
 import glob
-import yaml
 from datetime import datetime, timedelta
+import yaml
 import zarr
 import numpy as np
 import polars as pl
@@ -29,7 +29,10 @@ class Pelican(Database):
         self.info_filepath = None
         self.scanpath_export_dir = None
         self.scan_export_dict = None
-        self.set_time_range()
+        self.build_segmentation_type = "time-based"
+        self.start_time = None
+        self.end_time = None
+        self.origin = None
 
     def set_path(self, path):
         """Set the path to the database
@@ -40,7 +43,7 @@ class Pelican(Database):
         self.path = path
         self.path_dir = self.path
         self.scan_data_dir = os.path.join(self.path_dir, "simulations")
-        self.info_filepath = os.path.join(self.path_dir, "info.yaml")
+        self.info_filepath = os.path.join(self.scan_data_dir, "settings.yaml")
         self.scanpath_export_dir = os.path.join(self.path_dir, "myna_scanpaths")
         self.scan_export_dict = os.path.join(
             self.scanpath_export_dir, "export_info.yaml"
@@ -53,11 +56,11 @@ class Pelican(Database):
         Args:
             start_time: (float, None) first time to consider in build, in seconds
             end_time: (float, None) last time to consider in build, in seconds
-            origin: ([x,y,z,t], None) starting x, y, z, and t values to use, given that
-                complete position information may not exist in the time frame specified.
-                If None, will crop simulated time frame to the largest completely
-                defined subset of times in the stated range, so simulation results may
-                not span the entire specified time.
+            origin: ([x,y,z,onoff,t], None) starting x, y, z, onoff, and t values to
+                use, given that complete position information may not exist in the
+                time frame specified. If None, will crop simulated time frame to the
+                largest completely defined subset of times in the stated range, so
+                simulation results may not span the entire specified time.
         """
         self.start_time = start_time
         self.end_time = end_time
@@ -83,13 +86,13 @@ class Pelican(Database):
             return nested_get(data, ["material"])
 
         if metadata_type == metadata.LayerThickness:
-            return nested_get(data, ["layer_thickness"])  # mm
+            return nested_get(data, ["layer thickness"])  # mm
 
         if metadata_type == metadata.Preheat:
             return nested_get(data, ["preheat"])  # K
 
         if metadata_type == metadata.PartIDMap:
-            return nested_get(data, ["print_order"])
+            return nested_get(data, ["print order"])
 
         if metadata_type == metadata.LaserPower:
             return nested_get(data, [part, "laser_power"])  # W
@@ -104,10 +107,7 @@ class Pelican(Database):
             return self.get_scan_path(part)
 
         if metadata_type == metadata.STL:
-            return nested_get(data, ["stl"])
-
-        if metadata_type == metadata.PartIDMap:
-            return nested_get(data, ["part_id_map"])
+            return nested_get(data, [part, "stl"])
 
         return None
 
@@ -232,13 +232,18 @@ class Pelican(Database):
 
         df = self.initialize_dataframe(self.origin, epoch)
         schema = df.schema
-        pelican_dims = ["x", "y", "z"]
+        pelican_dims = ["x", "y", "z", "onoff"]
 
         # Load raw Pelican data
         for dim in pelican_dims:
 
             # Get data
-            data = zarr.open(f"{self.scan_data_dir}/{dim}", mode="r")
+            data = zarr.open(
+                store=zarr.storage.ZipStore(
+                    f"{self.scan_data_dir}/{dim}.zip", mode="r"
+                ),
+                mode="r",
+            )
             locs = np.array(data[f"{datatype}/data"])
             times = np.array(data[f"{datatype}/times"])
             times_datetime = pl.Series(times * 1e6).cast(pl.Duration) + epoch  # s -> us
