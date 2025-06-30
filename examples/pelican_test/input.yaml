@@ -9,4 +9,10 @@ data:
     path: ../Pelican
     parts:
       P1:
-        layers: [1]
+        time_segments: [100.0-120.0]
+        starting_points:
+          from_settings: [false]
+          x: [415.93178]
+          y: [2.57593]
+          z: [100.284]
+          onoff: [true]
