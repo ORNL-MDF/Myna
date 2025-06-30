@@ -57,6 +57,7 @@ class PeregrineHDF5(PeregrineDB):
         Database.__init__(self)
         self.description = "ORNL MDF Peregrine HDF5 archive structure"
         self.version = version
+        self.build_segmentation_type = "layer-based"
 
     def set_path(self, path):
         """Set the path to the database
