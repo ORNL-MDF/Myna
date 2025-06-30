@@ -1,0 +1,14 @@
+preheat: 298.15
+material: Inconel 718
+layer thickness: 0.00039999999999999145
+print order:
+- P0
+starting x: 415.93178
+starting y: 2.57593
+starting z: 100.284
+starting onoff: true
+P0:
+  spot_size: 0.8
+  laser_power: 360.0
+  stl: C:\Users\7kz\Desktop\TEMP\DATA 2\Pelican Operations\BeAM\builds\2024\01\2024-01-26
+    ZeissCoupon_0p5so_0p4lh_360w_1300mmpm_MixPer_cg0p15_repeat4_10\Pelican\specimen\P000_S000
