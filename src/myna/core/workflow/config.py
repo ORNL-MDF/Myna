@@ -136,18 +136,38 @@ def config(input_file, output_file=None, show_avail=False, overwrite=False):
         print(f"ERROR: No parts specified in {input_file}")
         raise ValueError
 
-    # Get list of all layers in build parts and build_region parts
+    # Get list of all segments in build parts and build_region parts
+    # Possible options for types segments are:
+    # - datatype.build_segmentation_type == "layer-based": uses layers
+    # - datatype.build_segmentation_type == "time-based": uses time chunks
     all_layers = []
-    for part in nested_get(settings, ["data", "build", "parts"], []):
-        part_layers = nested_get(
-            settings, ["data", "build", "parts", part, "layers"], []
+    if datatype.build_segmentation_type == "layer-based":
+        for part in nested_get(settings, ["data", "build", "parts"], []):
+            part_layers = nested_get(
+                settings, ["data", "build", "parts", part, "layers"], []
+            )
+            all_layers.extend(part_layers)
+        for build_region in nested_get(
+            settings, ["data", "build", "build_regions"], []
+        ):
+            build_region_layers = nested_get(
+                settings,
+                ["data", "build", "build_regions", build_region, "layerlist"],
+                [],
+            )
+            all_layers.extend(build_region_layers)
+    elif datatype.build_segmentation_type == "time-based":
+        """
+        # input file --> data/build/part/time_segments: [100.0-122.5, 175.2-200.0]
+
+        """
+        pass
+    else:
+        msg = (
+            f"Database type {type(datatype)} has an invalid build_segmentation_type."
+            + '" Must be either "layer-based" or "time-based".'
         )
-        all_layers.extend(part_layers)
-    for build_region in nested_get(settings, ["data", "build", "build_regions"], []):
-        build_region_layers = nested_get(
-            settings, ["data", "build", "build_regions", build_region, "layerlist"], []
-        )
-        all_layers.extend(build_region_layers)
+        raise LookupError(msg)
     all_layers = list(set(all_layers))
 
     # Determine which data needs to be added based on component class requirements
