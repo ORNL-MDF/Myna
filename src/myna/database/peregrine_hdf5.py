@@ -9,15 +9,14 @@
 """Database class for an ORNL MDF Peregrine build's file structure
 that corresponds to the PEregrine 2023-10 dataset"""
 
+import os
 import warnings
-from myna.core.db import Database
+import h5py
+import numpy as np
+import pandas as pd
 from myna.core import metadata
 from myna.database.peregrine import PeregrineDB
 from myna.core.utils import get_synonymous_key
-import os
-import numpy as np
-import h5py
-import pandas as pd
 
 
 class PeregrineHDF5(PeregrineDB):
@@ -55,7 +54,7 @@ class PeregrineHDF5(PeregrineDB):
 
     def __init__(self, version="v2023_10"):
 
-        Database.__init__(self)
+        super().__init__()
         self.description = "ORNL MDF Peregrine HDF5 archive structure"
         self.version = version
 
@@ -85,25 +84,27 @@ class PeregrineHDF5(PeregrineDB):
         """
 
         if metadata_type == metadata.LaserPower:
-            pid = int(str(part).split("P")[-1])  # remove "P" prefix from part name
+            pid = int(
+                str(part).split("P", maxsplit=1)[-1]
+            )  # remove "P" prefix from part name
             with h5py.File(self.path, "r") as data:
                 name = get_synonymous_key(data, self.synonyms["laser_power"])
                 value = float(data[name][pid])
             return value
 
-        elif metadata_type == metadata.LayerThickness:
+        if metadata_type == metadata.LayerThickness:
             conversion = 1e-3  # millimeters -> meters
             with h5py.File(self.path, "r") as data:
                 value = float(data.attrs["material/layer_thickness"] * conversion)
             return value
 
-        elif metadata_type == metadata.Material:
+        if metadata_type == metadata.Material:
             with h5py.File(self.path, "r") as data:
                 name = get_synonymous_key(data.attrs, self.synonyms["material_name"])
                 value = str(data.attrs[name])
             return value
 
-        elif metadata_type == metadata.Preheat:
+        if metadata_type == metadata.Preheat:
             with h5py.File(self.path, "r") as data:
                 # Preheat data is not always stored in Peregrine, as most machines
                 # don't actually have a base plate heater
@@ -116,8 +117,10 @@ class PeregrineHDF5(PeregrineDB):
                     value = 293.15  # room temperature (20 C)
             return value
 
-        elif metadata_type == metadata.SpotSize:
-            pid = int(str(part).split("P")[-1])  # remove "P" prefix from part name
+        if metadata_type == metadata.SpotSize:
+            pid = int(
+                str(part).split("P", maxsplit=1)[-1]
+            )  # remove "P" prefix from part name
             with h5py.File(self.path, "r") as data:
                 name = get_synonymous_key(data, self.synonyms["laser_spot_size"])
                 value = float(data[name][pid])
@@ -127,17 +130,21 @@ class PeregrineHDF5(PeregrineDB):
             # that it is stored in microns (not millimeters) and correct accordingly.
             if value > 10:
                 value = value * 1e-3
+                warn_msg = (
+                    f"Large spot size detected ({value} mm),"
+                    + f" assuming conversion um to mm (--> {value*1e-3} mm)"
+                )
+                warnings.warn(warn_msg)
 
             return value
 
-        elif metadata_type == metadata.Scanpath:
+        if metadata_type == metadata.Scanpath:
             # Extract scan path data to file if it doesn't already exist
             file_database = self.create_scanfile(part, layer)
             return file_database
 
-        else:
-            print(f"Error loading: {metadata_type}")
-            raise NotImplementedError
+        print(f"Error loading: {metadata_type}")
+        raise NotImplementedError
 
     def get_plate_size(self):
         """Load the (x,y) build plate size in meters"""
@@ -149,7 +156,10 @@ class PeregrineHDF5(PeregrineDB):
     def get_sync_image_size(self):
         """Load the (x,y) image size in pixels"""
         with h5py.File(self.path, "r") as data:
-            return data["slices/part_ids"].shape[1:]
+            part_ids = data["slices/part_ids"]
+            if isinstance(part_ids, h5py.Dataset):
+                return part_ids.shape[1:]
+            raise TypeError(f"Expected a dataset but got {type(part_ids)}")
 
     def create_scanfile(self, part, layer):
         """Create a scanpath file from the HDF5 archive
@@ -169,7 +179,9 @@ class PeregrineHDF5(PeregrineDB):
 
         # Only create scan files if files don't already exist
         if not os.path.exists(file_database):
-            pid = int(str(part).split("P")[-1])  # remove "P" prefix from part name
+            pid = int(
+                str(part).split("P", maxsplit=1)[-1]
+            )  # remove "P" prefix from part name
             with h5py.File(self.path, "r") as data:
 
                 # Get Part ID and scan path information
@@ -178,6 +190,11 @@ class PeregrineHDF5(PeregrineDB):
                 # - "scans/{layer} line" (Peregrine "raster" and "contour" lines)
                 # - "scans/{layer} point" (xyzt point representation)
                 part_ids = data["slices/part_ids"][int(layer)]
+                part_ids_shape = None
+                if not isinstance(part_ids, h5py.Dataset):
+                    part_ids_shape = part_ids.shape  # pylint: disable=no-member
+                else:
+                    raise TypeError(f"Expected a dataset but got {type(part_ids)}")
                 try:
                     scan_path = data[f"scans/{layer} line"]
                 except KeyError:
@@ -197,8 +214,8 @@ class PeregrineHDF5(PeregrineDB):
                 y_dim = data.attrs["printer/y_real_dimension"]
                 ix = 1
                 iy = 0
-                dx = x_dim / part_ids.shape[ix]
-                dy = y_dim / part_ids.shape[iy]
+                dx = x_dim / part_ids_shape[ix]
+                dy = y_dim / part_ids_shape[iy]
 
                 # Get bounds in pixel indices
                 inds = np.argwhere(part_ids == pid)
