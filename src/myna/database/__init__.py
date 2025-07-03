@@ -11,3 +11,4 @@
 from .database_types import *
 from .peregrine import *
 from .peregrine_hdf5 import *
+from .pelican import *
