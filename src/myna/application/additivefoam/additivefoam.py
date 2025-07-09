@@ -6,6 +6,7 @@
 #
 # License: 3-clause BSD, see https://opensource.org/licenses/BSD-3-Clause.
 #
+"""Defines the shared AdditiveFOAM app functionality for all simulation types"""
 import os
 import shutil
 import subprocess
@@ -14,92 +15,26 @@ import mistlib as mist
 import pandas as pd
 import numpy as np
 from myna.core.app.base import MynaApp
+from myna.application.openfoam.mesh import update_parameter
 
 
 class AdditiveFOAM(MynaApp):
+    """Myna application defining the shared functionality accessible to all
+    AdditiveFOAM-based simulation types."""
+
     def __init__(
         self,
-        sim_type,
+        name,
     ):
-        super().__init__("AdditiveFOAM")
-        self.simulation_type = sim_type
+        super().__init__(name)
 
-        self.parser.add_argument(
-            "--rx",
-            default=1e-3,
-            type=float,
-            help="(float) width of region along X-axis, in meters",
-        )
-        self.parser.add_argument(
-            "--ry",
-            default=1e-3,
-            type=float,
-            help="(float) width of region along Y-axis, in meters",
-        )
-        self.parser.add_argument(
-            "--rz",
-            default=1e-3,
-            type=float,
-            help="(float) depth of region along Z-axis, in meters",
-        )
-        self.parser.add_argument(
-            "--pad-xy",
-            default=2e-3,
-            type=float,
-            help="(float) size of single-refinement mesh region around"
-            + " the double-refined region in XY, in meters",
-        )
-        self.parser.add_argument(
-            "--pad-z",
-            default=1e-3,
-            type=float,
-            help="(float) size of single-refinement mesh region around"
-            + " the double-refined region in Z, in meters",
-        )
-        self.parser.add_argument(
-            "--pad-sub",
-            default=1e-3,
-            type=float,
-            help="(float) size of coarse mesh cubic region below"
-            + " the refined regions in Z, in meters",
-        )
-        self.parser.add_argument(
-            "--coarse",
-            default=640e-6,
-            type=float,
-            help="(float) size of fine mesh, in meters",
-        )
-        self.parser.add_argument(
-            "--refine-layer",
-            default=5,
-            type=int,
-            help="(int) number of region mesh refinement"
-            + " levels in layer (each level halves coarse mesh)",
-        )
-        self.parser.add_argument(
-            "--refine-region",
-            default=1,
-            type=int,
-            help="(int) additional refinement of region mesh"
-            + " level after layer refinement (each level halves coarse mesh)",
-        )
-        self.parser.add_argument(
-            "--scale",
-            default=0.001,
-            type=float,
-            help="Multiple by which to scale the STL file dimensions (default = 0.001, mm -> m)",
-        )
-        self.parser.add_argument(
-            "--exaca-mesh",
-            default=2.5e-6,
-            type=float,
-            help="Mesh size for the ExaCA simulations, in meters",
-        )
-
+        # Parse app-specific arguments
         self.parse_known_args()
         super().validate_executable(
             "additiveFoam",
         )
+        if self.args.exec is None:
+            self.args.exec = "additiveFoam"
         self.update_template_path()
 
     def update_template_path(self):
@@ -108,7 +43,7 @@ class AdditiveFOAM(MynaApp):
             template_path = os.path.join(
                 os.environ["MYNA_APP_PATH"],
                 "additivefoam",
-                self.simulation_type,
+                self.name,
                 "template",
             )
             self.args.template = template_path
@@ -141,10 +76,7 @@ class AdditiveFOAM(MynaApp):
         for key in mesh_dict.keys():
             entry_match = mesh_dict.get(key) == existing_dict.get(key)
             matches.append(entry_match)
-        if all(matches):
-            return True
-        else:
-            return False
+        return bool(all(matches))
 
     def update_material_properties(self, case_dir):
         """Update the material properties for the AdditiveFOAM case based on Mist data
@@ -177,22 +109,22 @@ class AdditiveFOAM(MynaApp):
             .decode("utf-8")
             .strip()
         )
-        os.system(
-            f"foamDictionary -entry beam/{absorption_model}Coeffs/eta0"
-            + f' -set "{absorption}" {case_dir}/constant/heatSourceDict'
+        update_parameter(
+            f"{case_dir}/constant/heatSourceDict",
+            f"beam/{absorption_model}Coeffs/eta0",
+            absorption,
         )
-        os.system(
-            f"foamDictionary -entry beam/{absorption_model}Coeffs/etaMin"
-            + f' -set "{absorption}" {case_dir}/constant/heatSourceDict'
+        update_parameter(
+            f"{case_dir}/constant/heatSourceDict",
+            f"beam/{absorption_model}Coeffs/etaMin",
+            absorption,
         )
 
         # Update the isotherm in the ExaCA function dictionary if it exists
         exaca_dict = f"{case_dir}/system/ExaCA"
         if os.path.exists(exaca_dict):
             liquidus = mat.get_property("liquidus_temperature", None, None)
-            os.system(
-                f'foamDictionary -entry ExaCA/isoValue -set "{liquidus}" {exaca_dict}'
-            )
+            update_parameter(exaca_dict, "ExaCA/isoValue", liquidus)
 
     def get_region_resource_template_dir(self, part, region):
         """Provides the path to the template directory in the myna_resources folder
@@ -207,7 +139,7 @@ class AdditiveFOAM(MynaApp):
             part,
             region,
             "additivefoam",
-            self.simulation_type,
+            self.name,
             "template",
         )
 
@@ -262,9 +194,10 @@ class AdditiveFOAM(MynaApp):
             .replace("]", " )")
             .replace(",", "")
         )
-        os.system(
-            f'foamDictionary -entry beam/{heat_source_model}Coeffs/dimensions -set "{heat_source_dim_string}" '
-            + f"{case_dir}/constant/heatSourceDict"
+        update_parameter(
+            f"{case_dir}/constant/heatSourceDict",
+            f"beam/{heat_source_model}Coeffs/dimensions",
+            heat_source_dim_string,
         )
 
     def update_region_start_and_end_times(self, case_dir, bb_dict, scanpath_name):
@@ -277,23 +210,20 @@ class AdditiveFOAM(MynaApp):
             scanpath_name: name of the scanpath file in the case's `constant` directory
         """
         # Read scan path
-        df = pd.read_csv(f"{case_dir}/constant/{scanpath_name}", sep="\s+")
+        df = pd.read_csv(f"{case_dir}/constant/{scanpath_name}", sep=r"\s+")
 
         # Iterate through rows to determine intersection with
         # the region's bounding box
         elapsed_time = 0.0
-        start_time = None
-        end_time = None
+        time_bounds = [None, None]
         for index, row in df.iloc[1:].iterrows():
             # If scan path row is a scan vector (Pmod == 1)
             if row["Mode"] == 0:
                 v = row["tParam"]
-                x1 = row["X(m)"]
-                y1 = row["Y(m)"]
-                x0 = df.iloc[index - 1]["X(m)"]
-                y0 = df.iloc[index - 1]["Y(m)"]
-                xs = np.linspace(x0, x1, 1000)
-                ys = np.linspace(y0, y1, 1000)
+                p0 = [df.iloc[index - 1]["X(m)"], df.iloc[index - 1]["Y(m)"]]
+                p1 = [row["X(m)"], row["Y(m)"]]
+                xs = np.linspace(p0[0], p1[0], 1000)
+                ys = np.linspace(p0[1], p1[1], 1000)
                 in_region = any(
                     (xs > bb_dict["bb_min"][0])
                     & (xs < bb_dict["bb_max"][0])
@@ -301,12 +231,14 @@ class AdditiveFOAM(MynaApp):
                     & (ys < bb_dict["bb_max"][1])
                 )
                 if in_region:
-                    end_time = None
-                if in_region and (start_time is None):
-                    start_time = elapsed_time
-                if (not in_region) and (end_time is None):
-                    end_time = elapsed_time
-                elapsed_time += np.linalg.norm(np.array([x1 - x0, y1 - y0])) / v
+                    time_bounds[1] = None
+                if in_region and (time_bounds[0] is None):
+                    time_bounds[0] = elapsed_time
+                if (not in_region) and (time_bounds[1] is None):
+                    time_bounds[1] = elapsed_time
+                elapsed_time += (
+                    np.linalg.norm(np.array([p1[0] - p0[0], p1[1] - p0[1]])) / v
+                )
 
             # If scan path row is a spot (Pmod == 0)
             if row["Mode"] == 1:
@@ -314,14 +246,13 @@ class AdditiveFOAM(MynaApp):
 
         # If all vectors or no vectors are in the region,
         # then set the start and end time
-        if start_time is None:
-            start_time = 0.0
-        if end_time is None:
-            end_time = elapsed_time
+        if time_bounds[0] is None:
+            time_bounds[0] = 0.0
+        if time_bounds[1] is None:
+            time_bounds[1] = elapsed_time
 
-        start_time = np.round(start_time, 5)
-        end_time = np.round(end_time, 5)
-        self.update_start_and_end_times(case_dir, start_time, end_time)
+        time_bounds = np.round(time_bounds, 5)
+        self.update_start_and_end_times(case_dir, time_bounds[0], time_bounds[1])
 
     def update_start_and_end_times(self, case_dir, start_time, end_time):
         """Updates the case to adjust the start and end time by adjusting:"
@@ -335,17 +266,12 @@ class AdditiveFOAM(MynaApp):
             start_time: start time of the simulation
             end_time: end time of the simulation
         """
-        os.system(
-            f"foamDictionary -entry startTime -set {start_time} "
-            + f"{case_dir}/system/controlDict"
-        )
-        os.system(
-            f"foamDictionary -entry endTime -set {end_time} "
-            + f"{case_dir}/system/controlDict"
-        )
-        os.system(
-            f"foamDictionary -entry writeInterval -set {np.round(0.5 * (end_time - start_time), 5)} "
-            + f"{case_dir}/system/controlDict"
+        update_parameter(f"{case_dir}/system/controlDict", "startTime", start_time)
+        update_parameter(f"{case_dir}/system/controlDict", "endTime", end_time)
+        update_parameter(
+            f"{case_dir}/system/controlDict",
+            "writeInterval",
+            np.round(0.5 * (end_time - start_time), 5),
         )
         source = os.path.abspath(os.path.join(case_dir, "0"))
         target = os.path.abspath(os.path.join(case_dir, f"{start_time}"))
@@ -360,10 +286,8 @@ class AdditiveFOAM(MynaApp):
             case_dir: AdditiveFOAM case directory to update
             scanpath_name: name of scanpath file in the case's `constant` directory
         """
-        os.system(
-            "foamDictionary -entry beam/pathName -set"
-            + f""" '"{scanpath_name}"' """
-            + f"{case_dir}/constant/heatSourceDict"
+        update_parameter(
+            f"{case_dir}/constant/heatSourceDict", "beam/pathName", f'"{scanpath_name}"'
         )
 
     def update_exaca_mesh_size(self, case_dir):
@@ -372,7 +296,17 @@ class AdditiveFOAM(MynaApp):
         Args:
             case_dir: AdditiveFOAM case directory to update
         """
-        os.system(
-            "foamDictionary -entry ExaCA/dx -set"
-            + f" {self.args.exaca_mesh} {case_dir}/system/ExaCA"
+        update_parameter(f"{case_dir}/system/ExaCA", "ExaCA/dx", self.args.exaca_mesh)
+
+    def update_exaca_region_bounds(self, case_dir, bb):
+        """Updates the bounds for the ExaCA output for an AdditiveFOAM case
+
+        Args:
+            case_dir: (str) path to case directory
+            bb: (np.array, shape (2,3)) bounding box ((xmin, ymin, zmin),(xmax, ymax, zmax))
+        """
+        update_parameter(
+            f"{case_dir}/system/ExaCA",
+            "ExaCA/box",
+            f"( {bb[0][0]} {bb[0][1]} {bb[0][2]} ) ( {bb[1][0]} {bb[1][1]} {bb[1][2]} )",
         )

@@ -155,7 +155,7 @@ class CubitVtkToExodusApp(CubitApp):
                     nz,
                     *sculpt_flags,
                 ]
-                process = self.start_subprocess_with_MPI_args(
+                process = self.start_subprocess_with_mpi_args(
                     [str(x) for x in sculpt_cmd],
                     stdout=f,
                     stderr=subprocess.STDOUT,
