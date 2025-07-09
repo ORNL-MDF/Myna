@@ -48,7 +48,7 @@ class MynaApp:
         # e.g., `myna.application.AdditiveFOAM()`
         self.sim_class_obj = None
         try:
-            self.sim_class_obj = return_step_class(self.name)
+            self.sim_class_obj = return_step_class(self.name, verbose=False)
             self.sim_class_obj.apply_settings(
                 self.settings["steps"][self.step_number],
                 self.settings.get("data"),

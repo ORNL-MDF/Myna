@@ -19,7 +19,7 @@ from .component_melt_pool_geometry import *
 from .component_creep import *
 
 
-def return_step_class(step_name):
+def return_step_class(step_name, verbose=True):
     """Given a string name of a component subclass, return an instance of the subclass
 
     The input file for myna specifies the component class using an input string.
@@ -61,9 +61,12 @@ def return_step_class(step_name):
     try:
         step_class = step_class_lookup[step_name]
     except KeyError as e:
-        print(e)
-        print(f'ERROR: Component name "{step_name}" is not valid. Valid step names:')
-        for key, obj in step_class_lookup.items():
-            print(f'\t- "{key}" ({obj.__class__.__name__})')
+        if verbose:
+            print(e)
+            print(
+                f'ERROR: Component name "{step_name}" is not valid. Valid step names:'
+            )
+            for key, obj in step_class_lookup.items():
+                print(f'\t- "{key}" ({obj.__class__.__name__})')
         raise KeyError(e) from e
     return step_class
