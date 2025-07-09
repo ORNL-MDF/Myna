@@ -44,7 +44,6 @@ def run_case(
     try:
         # Submit job
         t0 = time.perf_counter()
-        print([sim.args.exec, sim.input_file])
         process = subprocess.Popen(
             [sim.args.exec, sim.input_file], stdout=subprocess.DEVNULL
         )
