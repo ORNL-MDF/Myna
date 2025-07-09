@@ -157,11 +157,30 @@ def config(input_file, output_file=None, show_avail=False, overwrite=False):
             )
             all_layers.extend(build_region_layers)
     elif datatype.build_segmentation_type == "time-based":
-        """
-        # input file --> data/build/part/time_segments: [100.0-122.5, 175.2-200.0]
-
-        """
-        pass
+        for part in nested_get(settings, ["data", "build", "parts"], []):
+            part_segments = nested_get(
+                settings, ["data", "build", "parts", part, "time_segments"], []
+            )
+            layers = list(range(len(part_segments)))
+            nested_set(settings, ["data", "build", "parts", part, "layers"], layers)
+            for segment_index in layers:
+                all_layers.append(segment_index)
+        for build_region in nested_get(
+            settings, ["data", "build", "build_regions"], []
+        ):
+            build_region_layers = nested_get(
+                settings,
+                ["data", "build", "build_regions", build_region, "time_segments"],
+                [],
+            )
+            layers = list(range(len(part_segments)))
+            nested_set(
+                settings,
+                ["data", "build", "build_regions", build_region, "layerlist"],
+                layers,
+            )
+            for segment_index in layers:
+                all_layers.append(segment_index)
     else:
         msg = (
             f"Database type {type(datatype)} has an invalid build_segmentation_type."

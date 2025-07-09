@@ -30,9 +30,6 @@ class Pelican(Database):
         self.scanpath_export_dir = None
         self.scan_export_dict = None
         self.build_segmentation_type = "time-based"
-        self.start_time = None
-        self.end_time = None
-        self.origin = None
 
     def set_path(self, path):
         """Set the path to the database
@@ -48,23 +45,6 @@ class Pelican(Database):
         self.scan_export_dict = os.path.join(
             self.scanpath_export_dir, "export_info.yaml"
         )
-
-    def set_time_range(self, start_time=None, end_time=None, origin=None):
-        """Sets the start and end time to consider in the database when extracting
-        metadata. This may be necessary/desired if the build is very large.
-
-        Args:
-            start_time: (float, None) first time to consider in build, in seconds
-            end_time: (float, None) last time to consider in build, in seconds
-            origin: ([x,y,z,onoff,t], None) starting x, y, z, onoff, and t values to
-                use, given that complete position information may not exist in the
-                time frame specified. If None, will crop simulated time frame to the
-                largest completely defined subset of times in the stated range, so
-                simulation results may not span the entire specified time.
-        """
-        self.start_time = start_time
-        self.end_time = end_time
-        self.origin = origin
 
     def exists(self):
         return os.path.exists(self.path)
@@ -104,19 +84,54 @@ class Pelican(Database):
         # File paths
         # ==============================================================================
         if metadata_type == metadata.Scanpath:
-            return self.get_scan_path(part)
+            return self.get_scan_path(part, layer)
 
         if metadata_type == metadata.STL:
             return nested_get(data, [part, "stl"])
 
         return None
 
-    def get_scan_path(self, part):
+    def get_segment_details(self, part, layer):
+        """Gets the start and end time and starting details for the given "layer"
+        in the part. This is a translation layer between the time-segment
+        nature of the Pelican database and the layer-based structure of
+        the myna.core.workflow.config functionality.
+
+        Args:
+            part: (str) part name to extract data for
+            layer: (str) "layer" corresponding to the time_segment for the part in
+                the Myna input file
+        """
+        input_file = os.environ["MYNA_INPUT"]
+        with open(input_file, "r", encoding="utf-8") as f:
+            input_dict = yaml.safe_load(f)
+        segment = nested_get(
+            input_dict, ["data", "build", "parts", part, "time_segments"]
+        )[int(layer)]
+        times = [float(time) for time in segment.split("-")]
+        starting_points = {
+            key: x[int(layer)]
+            for key, x in nested_get(
+                input_dict, ["data", "build", "parts", part, "starting_points"]
+            ).items()
+        }
+        if all([x is None for _, x in starting_points.items()]):
+            starting_points = None
+        return {
+            "start_time": times[0],
+            "end_time": times[1],
+            "starting_points": starting_points,
+            "layer": int(layer),
+        }
+
+    def get_scan_path(self, part, layer):
         """Extracts the scan path file for the database if needed,
         then returns the scanpath file path
 
         Args:
             part: (str) part name to extract data for
+            layer: (int) "layer" corresponding to the time_segment for the part in
+                the Myna input file
         """
 
         # Check if there is a file with info for previous exports, and if previous
@@ -125,13 +140,14 @@ class Pelican(Database):
         scan_exports = {}
         part_str = str(part)
         scan_export_name = None
+        segment_dict = self.get_segment_details(part, layer)
         if os.path.exists(self.scan_export_dict):
             with open(self.scan_export_dict, "r", encoding="utf-8") as f:
                 scan_exports = yaml.safe_load(f)
             for key, entry in scan_exports[part_str].items():
                 if (
-                    entry["start_time"] == self.start_time
-                    and entry["end_time"] == self.end_time
+                    entry["start_time"] == segment_dict["start_time"]
+                    and entry["end_time"] == segment_dict["end_time"]
                 ):
                     matching_file = key
 
@@ -148,7 +164,10 @@ class Pelican(Database):
                 )
             )
             scan_name = f"scanpath{index:03}.txt"
-            scan_dict = {"start_time": self.start_time, "end_time": self.end_time}
+            scan_dict = {
+                "start_time": segment_dict["start_time"],
+                "end_time": segment_dict["end_time"],
+            }
             nested_set(scan_exports, [part_str, scan_name], scan_dict)
 
             # Export scan path data
@@ -156,11 +175,11 @@ class Pelican(Database):
                 self.scanpath_export_dir, part_str, scan_name
             )
             os.makedirs(os.path.dirname(scan_export_name), exist_ok=True)
-            df = self.load_pelican_data(datatype="raw")
-            if self.start_time is not None:
-                df = df.filter((pl.col("time (s)") >= self.start_time))
-            if self.end_time is not None:
-                df = df.filter((pl.col("time (s)") <= self.end_time))
+            df = self.load_pelican_data(segment_dict=segment_dict, datatype="raw")
+            if segment_dict["start_time"] is not None:
+                df = df.filter((pl.col("time (s)") >= segment_dict["start_time"]))
+            if segment_dict["end_time"] is not None:
+                df = df.filter((pl.col("time (s)") <= segment_dict["end_time"]))
             df = self.clean_pelican_data(df)
             df_myna = self.convert_dataframe_to_myna_scanpath(df)
             df_myna.write_csv(scan_export_name, separator="\t")
@@ -169,18 +188,21 @@ class Pelican(Database):
             with open(self.scan_export_dict, "w", encoding="utf-8") as f:
                 yaml.dump(scan_exports, f, default_flow_style=None)
         else:
-            scan_export_name = os.path.join(self.scan_export_dict, matching_file)
+            scan_export_name = os.path.join(
+                self.scanpath_export_dir, part, matching_file
+            )
 
         return scan_export_name
 
     def initialize_dataframe(
-        self, origin=None, epoch=datetime(1970, 1, 1, tzinfo=None)
+        self, segment_dict=None, epoch=datetime(1970, 1, 1, tzinfo=None)
     ):
         """Loads the raw x, y, z, and time data from the Pelican simulation data directory.
 
         Args:
             path: (str) path to the Pelican directory
-            origin: (None, [x,y,z,time]) start position and time
+            segment_dict: (None, {x,y,z,onoff,time}) dictionary describing segment
+                start/end conditions
             datatype: (str) ["raw", "resampled"] type of data to load from Pelican
             epoch: (datetime.datetime instance) datetime object to use as the epoch
 
@@ -197,19 +219,22 @@ class Pelican(Database):
             "x (mm)": pl.Float64,
             "y (mm)": pl.Float64,
             "z (mm)": pl.Float64,
+            "onoff": pl.Float64,
             "time (s)": pl.Float64,
             "time": pl.Datetime,
         }
-        if origin is None:
+        if segment_dict["starting_points"] is None:
             df = pl.DataFrame({key: [] for key in schema}, schema=schema)
         else:
+            start_points = segment_dict["starting_points"]
             df = pl.DataFrame(
                 {
-                    "x (mm)": [origin[0]],
-                    "y (mm)": [origin[1]],
-                    "z (mm)": [origin[2]],
-                    "time (s)": [origin[3]],
-                    "time": [epoch + timedelta(seconds=origin[3])],
+                    "x (mm)": [start_points["x (mm)"]],
+                    "y (mm)": [start_points["y (mm)"]],
+                    "z (mm)": [start_points["z (mm)"]],
+                    "onoff": [float(start_points["onoff"])],
+                    "time (s)": [segment_dict["start_time"]],
+                    "time": [epoch + timedelta(seconds=segment_dict["start_time"])],
                 },
                 schema=schema,
             )
@@ -218,6 +243,7 @@ class Pelican(Database):
     def load_pelican_data(
         self,
         datatype="raw",
+        segment_dict=None,
         epoch=datetime(1970, 1, 1, tzinfo=None),
     ):
         """Loads the raw x, y, z, and time data from the Pelican simulation data directory.
@@ -230,17 +256,18 @@ class Pelican(Database):
             polars.DataFrame instance with the columns defined by `initialize_dataframe()`
         """
 
-        df = self.initialize_dataframe(self.origin, epoch)
+        df = self.initialize_dataframe(segment_dict, epoch)
         schema = df.schema
-        pelican_dims = ["x", "y", "z", "onoff"]
+        pelican_datastreams = ["x", "y", "z", "onoff"]
+        pelican_names = ["x (mm)", "y (mm)", "z (mm)", "onoff"]
 
         # Load raw Pelican data
-        for dim in pelican_dims:
+        for stream, name in zip(pelican_datastreams, pelican_names):
 
             # Get data
             data = zarr.open(
                 store=zarr.storage.ZipStore(
-                    f"{self.scan_data_dir}/{dim}.zip", mode="r"
+                    f"{self.scan_data_dir}/{stream}.zip", mode="r"
                 ),
                 mode="r",
             )
@@ -252,15 +279,15 @@ class Pelican(Database):
             )
 
             # Construct DataFrame
-            dim_key = dim + " (mm)"
-            other_keys = set(pelican_dims)
-            other_keys.discard(dim)
-            other_keys = [k + " (mm)" for k in list(other_keys)]
+            other_keys = set(pelican_names)
+            other_keys.discard(name)
+            other_keys = [k for k in list(other_keys)]
             df_data = pl.DataFrame(
                 {
-                    dim_key: locs,
+                    name: locs,
                     other_keys[0]: blanks,
                     other_keys[1]: blanks,
+                    other_keys[2]: blanks,
                     "time (s)": times,
                     "time": times_datetime,
                 },

@@ -1,18 +1,24 @@
 steps:
 - test:
-    application: thesis
     class: solidification_part
+    application: thesis
+    executable: 3DThesis
+    configure:
+      res: 100.0e-6
+      template: /home/cloud/myna/examples/pelican_test/template
+    execute:
+      np: 8
+      batch: True
 data:
   build:
     datatype: Pelican
     name: myna_output
     path: ../Pelican
     parts:
-      P1:
-        time_segments: [100.0-120.0]
+      P0:
+        time_segments: [115-190]
         starting_points:
-          from_settings: [false]
-          x: [415.93178]
-          y: [2.57593]
-          z: [100.284]
+          x (mm): [415.93178]
+          y (mm): [2.57593]
+          z (mm): [100.284]
           onoff: [true]
