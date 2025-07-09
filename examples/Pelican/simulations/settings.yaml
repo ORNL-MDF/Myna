@@ -1,12 +1,8 @@
 preheat: 298.15
-material: IN718
+material: Inconel 718
 layer thickness: 0.00039999999999999145
 print order:
 - P0
-starting x: 415.93178
-starting y: 2.57593
-starting z: 100.284
-starting onoff: true
 P0:
   spot_size: 0.8
   laser_power: 360.0
