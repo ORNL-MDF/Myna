@@ -18,16 +18,13 @@ import polars as pl
 from myna.application.thesis import Thesis
 
 
-def configure_case(case_dir, res, myna_input="myna_data.yaml"):
+def configure_case(case_dir, sim, myna_input="myna_data.yaml"):
     # Load input file
     input_path = os.path.join(case_dir, myna_input)
     settings = load_input(input_path)
 
-    # Copy template to case directory
-    template_dir = os.path.join(
-        os.environ["MYNA_APP_PATH"], "thesis", "solidification_build_region", "template"
-    )
-    shutil.copytree(template_dir, case_dir, dirs_exist_ok=True)
+    # Copy template case
+    sim.copy(case_dir)
     beam_file_template = os.path.join(case_dir, f"Beam.txt")
 
     # Get relevant data from all parts in the build_region
@@ -98,7 +95,7 @@ def configure_case(case_dir, res, myna_input="myna_data.yaml"):
 
     # Update domain resolution
     domain_file = os.path.join(case_dir, "Domain.txt")
-    adjust_parameter(domain_file, "Res", res)
+    adjust_parameter(domain_file, "Res", sim.args.res)
 
     # Clean up unused template files
     os.remove(beam_file_template)
@@ -116,7 +113,7 @@ def main():
 
     # Run each case
     for case_dir in [os.path.dirname(x) for x in myna_files]:
-        configure_case(case_dir, sim.args.res)
+        configure_case(case_dir, sim)
 
 
 if __name__ == "__main__":

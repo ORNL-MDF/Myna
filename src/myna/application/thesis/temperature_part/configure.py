@@ -16,7 +16,7 @@ import numpy as np
 from myna.application.thesis import get_scan_stats, adjust_parameter, Thesis
 
 
-def configure_case(case_dir, res, nout, myna_input="myna_data.yaml"):
+def configure_case(case_dir, sim, myna_input="myna_data.yaml"):
     # Load input file
     input_path = os.path.join(case_dir, myna_input)
     settings = load_input(input_path)
@@ -25,11 +25,8 @@ def configure_case(case_dir, res, nout, myna_input="myna_data.yaml"):
     part = list(settings["build"]["parts"].keys())[0]
     layer = list(settings["build"]["parts"][part]["layer_data"].keys())[0]
 
-    # Copy template to case directory
-    template_dir = os.path.join(
-        os.environ["MYNA_APP_PATH"], "thesis", "temperature_part", "template"
-    )
-    shutil.copytree(template_dir, case_dir, dirs_exist_ok=True)
+    # Copy template case
+    sim.copy(case_dir)
 
     # Set up scan path
     myna_scanfile = settings["build"]["parts"][part]["layer_data"][layer]["scanpath"][
@@ -70,12 +67,12 @@ def configure_case(case_dir, res, nout, myna_input="myna_data.yaml"):
 
     # Update domain resolution
     domain_file = os.path.join(case_dir, "Domain.txt")
-    adjust_parameter(domain_file, "Res", res)
+    adjust_parameter(domain_file, "Res", sim.args.res)
 
     # Update output times
     mode_file = os.path.join(case_dir, "Mode.txt")
     elapsed_time, _ = get_scan_stats(case_scanfile)
-    times = np.linspace(0, elapsed_time, nout)
+    times = np.linspace(0, elapsed_time, sim.args.nout)
     adjust_parameter(mode_file, "Times", ",".join([str(x) for x in times]))
 
     return
@@ -90,7 +87,7 @@ def main():
 
     # Configure each case
     for case_dir in [os.path.dirname(x) for x in myna_files]:
-        configure_case(case_dir, sim.args.res, sim.args.nout)
+        configure_case(case_dir, sim)
 
 
 if __name__ == "__main__":

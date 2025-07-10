@@ -18,7 +18,7 @@ import numpy as np
 from myna.application.thesis import Thesis
 
 
-def configure_case(case_dir, res, myna_input="myna_data.yaml"):
+def configure_case(case_dir, sim, myna_input="myna_data.yaml"):
     # Load input file
     input_path = os.path.join(case_dir, myna_input)
     settings = load_input(input_path)
@@ -27,11 +27,8 @@ def configure_case(case_dir, res, myna_input="myna_data.yaml"):
     part = list(settings["build"]["parts"].keys())[0]
     layer = list(settings["build"]["parts"][part]["layer_data"].keys())[0]
 
-    # Copy template to case directory
-    template_dir = os.path.join(
-        os.environ["MYNA_APP_PATH"], "thesis", "solidification_part", "template"
-    )
-    shutil.copytree(template_dir, case_dir, dirs_exist_ok=True)
+    # Copy template case
+    sim.copy(case_dir)
 
     # Set up scan path
     myna_scanfile = settings["build"]["parts"][part]["layer_data"][layer]["scanpath"][
@@ -72,7 +69,7 @@ def configure_case(case_dir, res, myna_input="myna_data.yaml"):
 
     # Update domain resolution
     domain_file = os.path.join(case_dir, "Domain.txt")
-    adjust_parameter(domain_file, "Res", res)
+    adjust_parameter(domain_file, "Res", sim.args.res)
 
     return
 
@@ -87,7 +84,7 @@ def main():
 
     # Run each case
     for case_dir in [os.path.dirname(x) for x in myna_files]:
-        configure_case(case_dir, sim.args.res)
+        configure_case(case_dir, sim)
 
 
 if __name__ == "__main__":
