@@ -20,6 +20,7 @@ class Thesis(MynaApp):
         material_filename="Material.txt",
         output_dir=None,
         output_suffix="",
+        validate_executable=True,
     ):
         super().__init__("3DThesis")
         self.simulation_type = sim_type
@@ -49,8 +50,12 @@ class Thesis(MynaApp):
                 self.set_case(input_dir, input_dir)
         self.output_suffix = output_suffix
 
-        super().set_procs()
-        super().validate_executable("3DThesis")
+        # Set template
+        self.set_template_path(["thesis", sim_type])
+
+        # Validate executable
+        if validate_executable:
+            super().validate_executable("3DThesis")
 
         # Initialize layer and part tracking arrays
         self.layers = []
