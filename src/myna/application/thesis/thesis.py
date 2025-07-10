@@ -7,8 +7,9 @@
 # License: 3-clause BSD, see https://opensource.org/licenses/BSD-3-Clause.
 #
 import os
-
+import subprocess
 from myna.core.app.base import MynaApp
+from myna.core.utils import working_directory
 
 
 class Thesis(MynaApp):
@@ -20,6 +21,7 @@ class Thesis(MynaApp):
         material_filename="Material.txt",
         output_dir=None,
         output_suffix="",
+        validate_executable=True,
     ):
         super().__init__("3DThesis")
         self.simulation_type = sim_type
@@ -49,8 +51,12 @@ class Thesis(MynaApp):
                 self.set_case(input_dir, input_dir)
         self.output_suffix = output_suffix
 
-        super().set_procs()
-        super().validate_executable("3DThesis")
+        # Set template
+        self.set_template_path(["thesis", sim_type])
+
+        # Validate executable
+        if validate_executable:
+            super().validate_executable("3DThesis")
 
         # Initialize layer and part tracking arrays
         self.layers = []
@@ -61,3 +67,34 @@ class Thesis(MynaApp):
         self.output_dir = output_dir
         self.input_file = os.path.join(self.input_dir, self.input_filename)
         self.material_dir = os.path.join(self.input_dir, self.material_filename)
+
+    def run_thesis_case(self, case_directory, active_processes):
+        """Run a 3DThesis case using the MynaApp class functionality
+
+        Args:
+            case_directory: (str) path to case directory to run
+            active_processes: (list) list of Popen process objects"""
+        with working_directory(case_directory):
+
+            logfile = os.path.join(self.output_dir, "myna_thesis_run.log")
+            with open(logfile, "w", encoding="utf-8") as f:
+                f.write("# Myna 3DThesis simulation log\n\n")
+                f.write(f"- Simulation input directory: {self.input_dir}\n")
+                f.write(f"- Working directory: {os.getcwd()}\n")
+
+                # Execute the case
+                cmd_args = [self.args.exec, self.input_file]
+                process = self.start_subprocess_with_mpi_args(
+                    cmd_args,
+                    stdout=f,
+                    stderr=subprocess.STDOUT,
+                )
+                print(f'- Executing command: {" ".join(cmd_args)}\n')
+                print(f"- PID: {process.pid}\n\n")
+
+            # Handle serial versus batch submission processes
+            if self.args.batch:
+                active_processes.append(process)
+                self.wait_for_open_batch_resources(active_processes)
+            else:
+                self.wait_for_process_success(process)

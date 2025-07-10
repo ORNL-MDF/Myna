@@ -7,15 +7,9 @@
 # License: 3-clause BSD, see https://opensource.org/licenses/BSD-3-Clause.
 #
 import os
-from myna.core.workflow.load_input import load_input
 from myna.application.thesis import adjust_parameter, read_parameter
 from myna.application.thesis import Thesis
-import argparse
-import sys
 import pandas as pd
-import time
-import subprocess
-import glob
 
 
 def run_case(
@@ -40,45 +34,8 @@ def run_case(
     case_directory = os.path.abspath(sim.input_dir)
     output_name = read_parameter(sim.input_file, "Name")[0]
     result_file = os.path.join(sim.input_dir, "Data", "snapshot_data.csv")
-    initial_working_dir = os.getcwd()
-    os.chdir(case_directory)
     procs = proc_list.copy()
-    print(f"{sim.input_dir}:")
-    print(f"\tWorking directory: {os.getcwd()}")
-    try:
-        # Submit job
-        t0 = time.perf_counter()
-        process = subprocess.Popen(
-            [sim.args.exec, sim.input_file], stdout=subprocess.DEVNULL
-        )
-        print(f"\tRunning: {sim.args.exec} {sim.input_file}")
-        print(f"\tPID: {process.pid}")
-
-        # Check if there are enough processors available for another job
-        procs_available = ((len(procs) + 2) * sim.args.np) <= sim.args.maxproc
-
-        # Wait for job to finish as needed
-        if sim.args.batch:
-            procs.append(process)
-            if not procs_available:
-                proc0 = procs.pop(0)
-                pid = proc0.pid
-                proc0.wait()
-                print(f"\t{pid=}: Simulation complete")
-        else:
-            pid = process.pid
-            process.wait()
-            t1 = time.perf_counter()
-            print(f"\t{pid=}: Simulation complete, run time = {t1 - t0:.1f} s")
-    except Exception as e:
-        print("Failed to run simulation:")
-        print(e)
-        print("Working directory on exit = ", os.getcwd())
-        print("Executable exists = ", os.path.exists(sim.args.exec))
-        print("Input file exists = ", os.path.exists(sim.input_file))
-        exit()
-    os.chdir(initial_working_dir)
-
+    procs = sim.run_thesis_case(case_directory, procs)
     return [result_file, procs]
 
 
