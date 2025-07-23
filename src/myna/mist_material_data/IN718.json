@@ -126,6 +126,14 @@
             "reference": "None",
             "uncertainty": "None",
             "print_symbol": "T_{v}"
+        },
+        "laser_absorption": {
+            "print_name": "Laser absorption",
+            "value": 0.36,
+            "unit": "None",
+            "reference": "H. Honda, M. Watanabe, Measurement of Laser Absorptivity of Inconel Powders with Additive Manufacturing Machine, Materials Transactions 66(1) (2025) 107-112.",
+            "uncertainty": "None",
+            "print_symbol": "\\alpha"
         }
     },
     "note": "All temperature-dependent expressions use units of K. The dynamic viscosity and Marangoni coefficent values are from IN625 references. The latent heat of vaporization and molecular mass are taken from pure nickel references. The emissivity is an estimate of total hemispherical emissivity on a smooth surface. Actual emissivity depends on the surface condition."
