@@ -53,38 +53,20 @@ details on running an example case.
 
 ## Attribution
 
-If you use Myna in your work, please
-[cite this repository](https://zenodo.org/doi/10.5281/zenodo.13345124).
-In addition, there is a preliminary work that introduces the concept of leverging the
-digital thread for simulations and uses the precursor to Myna:
+If you use Myna in your work, please cite the version of Myna used via the Zenodo DOI
+([link to most recent release](https://zenodo.org/doi/10.5281/zenodo.13345124)).
+In addition, please cite any of the relevant journal articles:
 
-```tex
-@article{Knapp2023DigitalThread,
-   author = {Knapp, Gerald L. and Stump, Benjamin and Scime, Luke and Márquez Rossy, Andrés and Joslin, Chase and Halsey, William and Plotkowski, Alex},
-   title = {Leveraging the digital thread for physics-based prediction of microstructure heterogeneity in additively manufactured parts},
-   journal = {Additive Manufacturing},
-   volume = {78},
-   pages = {103861},
-   ISSN = {2214-8604},
-   DOI = {https://doi.org/10.1016/j.addma.2023.103861},
-   year = {2023},
-   type = {Journal Article}
-}
-```
+- [Knapp et al. (2025)](https://doi.org/10.1016/j.commatsci.2025.114094) describes
+  the background for Myna and the 3DThesis, AdditiveFOAM, and ExaCA applications for
+  melt pool and microstructure simulations.
+- [Knapp et al. (2023)](https://doi.org/10.1016/j.addma.2023.103861) introduces the
+  concept of leverging the digital thread for simulations using the precursor to
+  Myna and provides details on the solidification data clustering approach.
 
 The `examples/Peregrine` directory used for examples are from the publicly
-available Peregrine v2023-10 dataset. If you use this data,
-please cite:
-
-```tex
-@misc{Peregrine202310,
-   author = {Scime, Luke and Snow, Zackary and Ziabari, Amir and Halsey, William and Joslin, Chase and Knapp, Gerry and Coleman, John and Peles, Amra and Graham, Sarah and Marquez Rossy, Andres and Duncan, Ryan and Paquit, Vincent},
-   title = {A Co-Registered In-Situ and Ex-Situ Dataset from a Laser Powder Bed Fusion Additive Manufacturing Process (Peregrine v2023-10)},
-   DOI = {https://doi.org/10.13139/ORNLNCCS/2008021},
-   year = {2023},
-   type = {Dataset}
-}
-```
+available Peregrine v2023-10 dataset. If you use this data, please cite
+[Scime et al. (2023)](https://doi.ccs.ornl.gov/dataset/be65285a-316d-534d-989e-eacb30cb6e46).
 
 ## Development
 
