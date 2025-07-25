@@ -23,6 +23,7 @@ examples/Peregrine/registered
 examples/Peregrine/simulation
 examples/PeregrineHDF5/simulation
 examples/PeregrineHDF5/registered
+examples/Pelican/myna_scanpaths
 *.parquet
 
 # other typical case file names

@@ -29,7 +29,8 @@ dependencies = [
     'h5py',
     'polars',
     'scipy',
-    'gitpython']
+    'gitpython',
+    'zarr']
 
 [project.optional-dependencies]
 dev = [
