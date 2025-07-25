@@ -139,10 +139,10 @@ def config(input_file, output_file=None, show_avail=False, overwrite=False):
 
     # Get list of all segments in build parts and build_region parts
     # Possible options for types segments are:
-    # - datatype.build_segmentation_type == "layer-based": uses layers
-    # - datatype.build_segmentation_type == "time-based": uses time chunks
+    # - datatype.build_segmentation_type == "layer": uses layers
+    # - datatype.build_segmentation_type == "time": uses time chunks
     all_layers = []
-    if datatype.build_segmentation_type == "layer-based":
+    if datatype.build_segmentation_type == "layer":
         for part in nested_get(settings, ["data", "build", "parts"], []):
             part_layers = nested_get(
                 settings, ["data", "build", "parts", part, "layers"], []
@@ -157,7 +157,7 @@ def config(input_file, output_file=None, show_avail=False, overwrite=False):
                 [],
             )
             all_layers.extend(build_region_layers)
-    elif datatype.build_segmentation_type == "time-based":
+    elif datatype.build_segmentation_type == "time":
         for part in nested_get(settings, ["data", "build", "parts"], []):
             part_segments = nested_get(
                 settings, ["data", "build", "parts", part, "time_segments"], []
@@ -185,7 +185,7 @@ def config(input_file, output_file=None, show_avail=False, overwrite=False):
     else:
         msg = (
             f"Database type {type(datatype)} has an invalid build_segmentation_type."
-            + '" Must be either "layer-based" or "time-based".'
+            + '" Must be either "layer" or "time".'
         )
         raise LookupError(msg)
     all_layers = list(set(all_layers))

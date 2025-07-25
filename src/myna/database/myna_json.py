@@ -21,7 +21,7 @@ class MynaJSON(Database):
     def __init__(self):
         Database.__init__(self)
         self.description = "Myna JSON database"
-        self.build_segmentation_type = "layer-based"
+        self.build_segmentation_type = "layer"
 
     def set_path(self, path):
         """Set the path to the database
