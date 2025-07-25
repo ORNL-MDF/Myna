@@ -29,7 +29,7 @@ class Pelican(Database):
         self.info_filepath = None
         self.scanpath_export_dir = None
         self.scan_export_dict = None
-        self.build_segmentation_type = "time-based"
+        self.build_segmentation_type = "time"
 
     def set_path(self, path):
         """Set the path to the database
@@ -94,7 +94,7 @@ class Pelican(Database):
     def get_segment_details(self, part, layer):
         """Gets the start and end time and starting details for the given "layer"
         in the part. This is a translation layer between the time-segment
-        nature of the Pelican database and the layer-based structure of
+        nature of the Pelican database and the layer structure of
         the myna.core.workflow.config functionality.
 
         Args:

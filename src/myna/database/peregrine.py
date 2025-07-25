@@ -29,7 +29,7 @@ class PeregrineDB(Database):
     def __init__(self):
         Database.__init__(self)
         self.description = "ORNL MDF Peregrine build file structure"
-        self.build_segmentation_type = "layer-based"
+        self.build_segmentation_type = "layer"
 
     def set_path(self, path):
         """Set the path to the database
