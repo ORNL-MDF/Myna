@@ -293,7 +293,6 @@ class Pelican(Database):
                 },
                 schema=schema,
             )
-            df_data = df_data.select(schema)
             df = pl.concat([df, df_data])
 
         # Ensure only one entry at each time
