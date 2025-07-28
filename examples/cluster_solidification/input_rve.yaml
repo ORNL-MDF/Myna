@@ -37,7 +37,8 @@ steps:
         refine-region: 1
     execute:
         batch: True
-        cores: 24
+        np: 24
+        mpiexec: mpirun
 data:
   build:
     datatype: Peregrine

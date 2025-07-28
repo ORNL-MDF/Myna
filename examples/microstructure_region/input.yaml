@@ -13,8 +13,11 @@ steps:
       refine-layer: 1
       refine-region: 2
       exaca-mesh: 10.0e-6
+      np: 2
+      mpiexec: mpirun
     execute:
-      cores: 2
+      np: 2
+      mpiexec: mpirun
 - exaca:
     class: microstructure_region
     application: exaca
