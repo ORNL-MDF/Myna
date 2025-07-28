@@ -517,32 +517,30 @@ class AdditiveFOAMRegionReduced(AdditiveFOAM):
                     )
                     self.wait_for_process_success(process)
 
-                    # Compile solidification data into single file
-                    with open(mynafile, "w", encoding="utf-8") as mf:
-                        # Check data exists
-                        datafiles = sorted(
-                            glob.glob(f'{case_dict["case_dir"]}/ExaCA/*')
+            # Compile solidification data into single file
+            with open("myna_postprocess.log", "w", encoding="utf-8") as f:
+                with open(mynafile, "w", encoding="utf-8") as mf:
+                    # Check data exists
+                    datafiles = sorted(glob.glob(f'{case_dict["case_dir"]}/ExaCA/*'))
+                    if len(datafiles) > 0:
+                        # Header
+                        process = self.start_subprocess(
+                            ["echo", "x,y,z,tm,ts,cr"],
+                            stdout=mf,
+                            stderr=f,
                         )
-                        if len(datafiles) > 0:
-                            # Header
-                            process = self.start_subprocess(
-                                ["echo", "x,y,z,tm,ts,cr"],
-                                stdout=mf,
-                                stderr=f,
-                            )
-                            self.wait_for_process_success(process)
-                            # Data
-                            process = self.start_subprocess(
-                                ["cat", *datafiles],
-                                stdout=mf,
-                                stderr=f,
-                            )
-                            self.wait_for_process_success(process)
+                        self.wait_for_process_success(process)
+                        # Data
+                        process = self.start_subprocess(
+                            ["cat", *datafiles],
+                            stdout=mf,
+                            stderr=f,
+                        )
+                        self.wait_for_process_success(process)
 
-                    # Clean up parallel case files
-                    if parallel:
-
-                        self.clean_parallel_case(case_dict)
+            # Clean up parallel case files
+            if parallel:
+                self.clean_parallel_case(case_dict)
 
     def clean_parallel_case(self, case_dict):
         """Removes parallel files"""

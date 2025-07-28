@@ -14,7 +14,8 @@ steps:
       refine-region: 1
     execute:
       batch: True
-      cores: 2
+      np: 2
+      mpiexec: mpirun
 - exaca:
     class: microstructure_region
     application: exaca
