@@ -27,9 +27,12 @@ def configure_case(case_dir, sim, myna_input="myna_data.yaml"):
     sim.copy(case_dir)
     beam_file_template = os.path.join(case_dir, f"Beam.txt")
 
+    # Get build_region and layer info from case name
+    build_region = os.path.basename(os.path.dirname(os.path.dirname(case_dir)))
+    layer = os.path.basename(os.path.dirname(case_dir))
+
     # Get relevant data from all parts in the build_region
     # Configuration ensures that only the relevant part & layer data is present
-    build_region = list(settings["build"].get("build_regions").keys())[0]
     build_region_dict = settings["build"]["build_regions"][build_region]
     parts = build_region_dict["partlist"]
     print_order = settings["build"]["build_data"]["print_order"]["value"]
@@ -39,7 +42,6 @@ def configure_case(case_dir, sim, myna_input="myna_data.yaml"):
         if part in parts:
 
             # Set up scan path
-            layer = list(build_region_dict["parts"][part]["layer_data"].keys())[0]
             myna_scanfile = build_region_dict["parts"][part]["layer_data"][layer][
                 "scanpath"
             ]["file_local"]
