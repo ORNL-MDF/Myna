@@ -8,7 +8,7 @@
 #
 import os
 import pandas as pd
-from myna.core.workflow import config
+from myna.core.workflow import config, write_input
 from myna.application.rve import RVE
 import numpy as np
 import yaml
@@ -59,8 +59,7 @@ def main():
             }
 
     # Update the input file
-    with open(app.input_file, "w") as f:
-        yaml.dump(app.settings, f, sort_keys=False, default_flow_style=None, indent=2)
+    write_input(app.settings, app.input_file)
 
     # Re-run myna_config to ensure all directories exist if there is a next step
     config.config(app.input_file)

@@ -10,7 +10,7 @@ from myna.application.rve import RVE
 import os
 import polars as pl
 import yaml
-from myna.core.workflow import config
+from myna.core.workflow import config, write_input
 
 
 def main():
@@ -48,8 +48,7 @@ def main():
             }
 
     # Update the input file
-    with open(app.input_file, "w") as f:
-        yaml.dump(app.settings, f, sort_keys=False, default_flow_style=None, indent=2)
+    write_input(app.settings, app.input_file)
 
     # Re-run myna_config to ensure all directories exist if there is a next step
     config.config(app.input_file)
