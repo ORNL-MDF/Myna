@@ -14,6 +14,7 @@ import datetime
 import yaml
 import shutil
 from myna.core.utils import working_directory
+from myna.core.workflow import write_input
 
 
 def launch_from_peregrine(parser):
@@ -120,8 +121,7 @@ def launch_from_peregrine(parser):
     input_dict["myna"]["workspace"] = workspace
 
     # Export updated input dictionary
-    with open(input_file_configured, "w") as f:
-        yaml.dump(input_dict, f, default_flow_style=False)
+    write_input(input_dict, input_file_configured)
 
     # Set working directory to run all myna scripts
     with working_directory(myna_working_dir):
