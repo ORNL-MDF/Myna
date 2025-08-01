@@ -28,14 +28,14 @@ def run_case(
         output_files = glob.glob(os.path.join(sim.input_dir, "Data", "*.csv"))
         if (len(output_files) > 0) and not sim.args.overwrite:
             print(f"{sim.input_dir} has already been simulated. Skipping.")
-            return proc_list
+            return proc_list or []
 
     # Run Simulation
     case_directory = os.path.abspath(sim.input_dir)
-    procs = proc_list.copy()
+    procs = proc_list or []
     procs = sim.run_thesis_case(case_directory, procs)
 
-    return procs
+    return procs or []
 
 
 def main(argv=None):

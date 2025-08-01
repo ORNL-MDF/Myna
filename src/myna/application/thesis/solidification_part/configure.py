@@ -23,9 +23,9 @@ def configure_case(case_dir, sim, myna_input="myna_data.yaml"):
     input_path = os.path.join(case_dir, myna_input)
     settings = load_input(input_path)
 
-    # Get part and layer info
-    part = list(settings["build"]["parts"].keys())[0]
-    layer = list(settings["build"]["parts"][part]["layer_data"].keys())[0]
+    # Get part and layer info from case name
+    part = os.path.basename(os.path.dirname(os.path.dirname(case_dir)))
+    layer = os.path.basename(os.path.dirname(case_dir))
 
     # Copy template case
     sim.copy(case_dir)
