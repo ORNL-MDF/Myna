@@ -9,7 +9,6 @@
 """Defines `myna config` functionality"""
 
 import os
-import yaml
 import copy
 from myna.core.workflow.load_input import load_input, write_input
 from myna.core.utils import nested_set, nested_get

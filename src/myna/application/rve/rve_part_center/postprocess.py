@@ -9,7 +9,6 @@
 from myna.application.rve import RVE
 import os
 import polars as pl
-import yaml
 from myna.core.workflow import config, write_input
 
 

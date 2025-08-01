@@ -11,7 +11,6 @@ import pandas as pd
 from myna.core.workflow import config, write_input
 from myna.application.rve import RVE
 import numpy as np
-import yaml
 
 
 def main():
