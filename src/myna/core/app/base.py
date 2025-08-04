@@ -264,10 +264,12 @@ class MynaApp:
         """Starts a subprocess, activating an environment if present"""
         if self.args.env is not None:
             popen_args = [f". {self.args.env}; " + " ".join(cmd_args)]
-            print(f"myna subprocess: {popen_args}")
-            return subprocess.Popen(popen_args, shell=True, **kwargs)
-        print(f"myna subprocess: {cmd_args}")
-        return subprocess.Popen(cmd_args, **kwargs)
+            process = subprocess.Popen(popen_args, shell=True, **kwargs)
+            print(f"myna subprocess (PID {process.pid}): {popen_args}")
+            return process
+        process = subprocess.Popen(cmd_args, **kwargs)
+        print(f"myna subprocess (PID {process.pid}): {cmd_args}")
+        return process
 
     def start_subprocess_with_mpi_args(self, cmd_args, **kwargs):
         """Starts a subprocess using `Popen` while taking into account the MynaApp

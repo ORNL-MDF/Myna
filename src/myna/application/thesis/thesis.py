@@ -52,7 +52,7 @@ class Thesis(MynaApp):
         self.output_suffix = output_suffix
 
         # Set template
-        self.set_template_path(["thesis", sim_type])
+        self.set_template_path("thesis", sim_type)
 
         # Validate executable
         if validate_executable:
@@ -89,12 +89,12 @@ class Thesis(MynaApp):
                     stdout=f,
                     stderr=subprocess.STDOUT,
                 )
-                print(f'- Executing command: {" ".join(cmd_args)}\n')
-                print(f"- PID: {process.pid}\n\n")
 
             # Handle serial versus batch submission processes
+            active_processes.append(process)
             if self.args.batch:
-                active_processes.append(process)
                 self.wait_for_open_batch_resources(active_processes)
             else:
                 self.wait_for_process_success(process)
+
+            return active_processes
