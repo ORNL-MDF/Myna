@@ -268,7 +268,7 @@ class MynaApp:
             print(f"myna subprocess (PID {process.pid}): {popen_args}")
             return process
         process = subprocess.Popen(cmd_args, **kwargs)
-        print(f"myna subprocess (PID {process.pid}): {popen_args}")
+        print(f"myna subprocess (PID {process.pid}): {cmd_args}")
         return process
 
     def start_subprocess_with_mpi_args(self, cmd_args, **kwargs):
