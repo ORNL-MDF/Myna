@@ -19,7 +19,8 @@ steps:
     execute:
       batch: True
       overwrite: True
-      cores: 16
+      np: 16
+      mpiexec: mpirun
 data:
   build:
     datatype: Peregrine

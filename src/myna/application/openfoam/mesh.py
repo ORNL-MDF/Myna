@@ -45,6 +45,7 @@ def run_command(args, app=None, parallel=None, **kwargs):
             with app.start_subprocess(args) as p:
                 p.wait()
     else:
+        print(f"myna subprocess: {args}")
         with subprocess.Popen(args, **kwargs) as p:
             p.wait()
 

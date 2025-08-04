@@ -15,8 +15,10 @@ steps:
       refine-region: 1
       exaca-mesh: 10.0e-6
       np: 2
+      mpiexec: mpirun
     execute:
-      cores: 2
+      np: 2
+      mpiexec: mpirun
 data:
   build:
     datatype: Peregrine
