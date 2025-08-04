@@ -29,6 +29,16 @@ def validate_required_input_keys(settings):
     return settings
 
 
+def is_yaml_type(file_type):
+    """Boolean of if file_type if Myna-accepted YAML format"""
+    return (file_type == ".yaml") or (file_type == ".myna-workspace")
+
+
+def is_json_type(file_type):
+    """Boolean of if file_type if Myna-accepted JSON format"""
+    return (file_type == ".json") or (file_type == "myna-workspace-json")
+
+
 def load_input(filename):
     """Load input file into dictionary
 
@@ -41,9 +51,9 @@ def load_input(filename):
 
     with open(filename, "r", encoding="utf-8") as f:
         file_type = os.path.splitext(filename)[1].lower()
-        if (file_type == ".yaml") or (file_type == ".myna-workspace"):
+        if is_yaml_type(file_type):
             settings = yaml.safe_load(f)
-        elif (file_type == ".json") or (file_type == "myna-workspace-json"):
+        elif is_json_type(file_type):
             settings = json.load(f)
         else:
             error_msg = (
@@ -69,11 +79,11 @@ def write_input(settings, filename):
     # Write the Myna input dictionary to a file
     with open(filename, "w", encoding="utf-8") as f:
         file_type = os.path.splitext(filename)[1].lower()
-        if (file_type == ".yaml") or (file_type == ".myna-workspace"):
+        if is_yaml_type(file_type):
             yaml.safe_dump(
                 settings, f, sort_keys=False, default_flow_style=None, indent=2
             )
-        elif (file_type == ".json") or (file_type == "myna-workspace-json"):
+        elif is_json_type(file_type):
             json.dump(settings, f, sort_keys=False, indent=2)
         else:
             error_msg = (
