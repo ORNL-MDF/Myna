@@ -281,7 +281,6 @@ class MynaApp:
                 modified_cmd_args.extend(split_flags)
         modified_cmd_args.extend(cmd_args)
         modified_cmd_args = [str(x) for x in modified_cmd_args]
-        print(f"myna subprocess: {modified_cmd_args}")
         return self.start_subprocess(modified_cmd_args, **kwargs)
 
     def wait_for_process_success(self, process, raise_error=True):
