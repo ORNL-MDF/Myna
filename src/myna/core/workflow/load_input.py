@@ -31,12 +31,12 @@ def validate_required_input_keys(settings):
 
 def is_yaml_type(file_type):
     """Boolean of if file_type if Myna-accepted YAML format"""
-    return (file_type == ".yaml") or (file_type == ".myna-workspace")
+    return file_type in (".yaml", ".myna-workspace")
 
 
 def is_json_type(file_type):
     """Boolean of if file_type if Myna-accepted JSON format"""
-    return (file_type == ".json") or (file_type == "myna-workspace-json")
+    return file_type in (".json", ".myna-workspace-json")
 
 
 def load_input(filename):
