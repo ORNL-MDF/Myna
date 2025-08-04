@@ -175,12 +175,12 @@ class Pelican(Database):
                 self.scanpath_export_dir, part_str, scan_name
             )
             os.makedirs(os.path.dirname(scan_export_name), exist_ok=True)
-            df = self.load_pelican_data(segment_dict=segment_dict, datatype="raw")
+            df = self.load_build_data(segment_dict=segment_dict, datatype="raw")
             if segment_dict["start_time"] is not None:
                 df = df.filter((pl.col("time (s)") >= segment_dict["start_time"]))
             if segment_dict["end_time"] is not None:
                 df = df.filter((pl.col("time (s)") <= segment_dict["end_time"]))
-            df = self.clean_pelican_data(df)
+            df = self.clean_build_data(df)
             df_myna = self.convert_dataframe_to_myna_scanpath(df)
             df_myna.write_csv(scan_export_name, separator="\t")
 
@@ -240,7 +240,7 @@ class Pelican(Database):
             )
         return df
 
-    def load_pelican_data(
+    def load_build_data(
         self,
         datatype="raw",
         segment_dict=None,
@@ -302,7 +302,7 @@ class Pelican(Database):
         df = df.select(list(schema)).sort("time")
         return df
 
-    def clean_pelican_data(self, df):
+    def clean_build_data(self, df):
         """Cleans pelican data to ensure that there are no null rows left in the DataFrame
 
         Args:
