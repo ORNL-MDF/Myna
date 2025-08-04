@@ -6,6 +6,7 @@
 #
 # License: 3-clause BSD, see https://opensource.org/licenses/BSD-3-Clause.
 #
+import os
 import json
 import yaml
 
@@ -39,7 +40,7 @@ def load_input(filename):
     """
 
     with open(filename, "r", encoding="utf-8") as f:
-        file_type = filename.split(".")[-1]
+        file_type = os.path.splitext(filename)[1]
         if (file_type.lower() == "yaml") or (file_type.lower() == "myna-workspace"):
             settings = yaml.safe_load(f)
         elif (file_type.lower() == "json") or (
@@ -69,7 +70,7 @@ def write_input(settings, filename):
 
     # Write the Myna input dictionary to a file
     with open(filename, "w", encoding="utf-8") as f:
-        file_type = filename.split(".")[-1]
+        file_type = os.path.splitext(filename)[1]
         if (file_type.lower() == "yaml") or (file_type.lower() == "myna-workspace"):
             yaml.safe_dump(
                 settings, f, sort_keys=False, default_flow_style=None, indent=2
