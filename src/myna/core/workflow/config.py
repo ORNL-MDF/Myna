@@ -9,9 +9,8 @@
 """Defines `myna config` functionality"""
 
 import os
-import yaml
 import copy
-from myna.core.workflow.load_input import load_input
+from myna.core.workflow.load_input import load_input, write_input
 from myna.core.utils import nested_set, nested_get
 from myna.core import components
 from myna.core import metadata
@@ -516,8 +515,8 @@ def config(input_file, output_file=None, show_avail=False, overwrite=False):
             )
 
             # Write data to case directory
-            with open(os.path.join(case_dir, "myna_data.yaml"), "w") as f:
-                yaml.dump(data_dict_case, f, sort_keys=False, default_flow_style=None)
+            myna_data_file = os.path.join(case_dir, "myna_data.yaml")
+            write_input(data_dict_case, myna_data_file)
 
         # Show the inputs associated with the step
         if step_obj.input_requirement is not None:
@@ -552,5 +551,4 @@ def config(input_file, output_file=None, show_avail=False, overwrite=False):
         datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
     )
 
-    with open(output_file, "w") as f:
-        yaml.dump(settings, f, sort_keys=False, default_flow_style=None)
+    write_input(settings, output_file)
