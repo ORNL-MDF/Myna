@@ -29,14 +29,35 @@ def validate_required_input_keys(settings):
     return settings
 
 
-def is_yaml_type(file_type):
+def get_validated_input_filetype(filename):
+    """Returns the validate input filetype ("yaml" or "json") and throws an error
+    if the input type is not valid.
+
+    Args:
+        filename: (str) the name or path of the input file"""
+    filetype = os.path.splitext(filename)[1].lower()
+    if is_yaml_type(filetype):
+        return "yaml"
+    elif is_json_type(filetype):
+        return "json"
+    else:
+        error_msg = (
+            f'Unsupported input file type "{filetype}".'
+            " Accepted input file formats are:"
+            '\n- ".yaml" or ".myna-workspace"'
+            '\n- ".json" or ".myna-workspace-json"'
+        )
+        raise ValueError(error_msg)
+
+
+def is_yaml_type(filetype):
     """Boolean of if file_type if Myna-accepted YAML format"""
-    return file_type in (".yaml", ".myna-workspace")
+    return filetype in (".yaml", ".myna-workspace")
 
 
-def is_json_type(file_type):
+def is_json_type(filetype):
     """Boolean of if file_type if Myna-accepted JSON format"""
-    return file_type in (".json", ".myna-workspace-json")
+    return filetype in (".json", ".myna-workspace-json")
 
 
 def load_input(filename):
@@ -50,19 +71,12 @@ def load_input(filename):
     """
 
     with open(filename, "r", encoding="utf-8") as f:
-        file_type = os.path.splitext(filename)[1].lower()
-        if is_yaml_type(file_type):
+        filetype = get_validated_input_filetype(filename)
+        if filetype == "yaml":
             settings = yaml.safe_load(f)
-        elif is_json_type(file_type):
-            settings = json.load(f)
         else:
-            error_msg = (
-                f'Unsupported input file type "{file_type}".'
-                ' Accepted input file formats are ".yaml" and ".json".'
-            )
-            raise ValueError(error_msg)
-
-    return validate_required_input_keys(settings)
+            settings = json.load(f)
+        return validate_required_input_keys(settings)
 
 
 def write_input(settings, filename):
@@ -78,16 +92,10 @@ def write_input(settings, filename):
 
     # Write the Myna input dictionary to a file
     with open(filename, "w", encoding="utf-8") as f:
-        file_type = os.path.splitext(filename)[1].lower()
-        if is_yaml_type(file_type):
+        filetype = get_validated_input_filetype(filename)
+        if filetype == "yaml":
             yaml.safe_dump(
                 settings, f, sort_keys=False, default_flow_style=None, indent=2
             )
-        elif is_json_type(file_type):
-            json.dump(settings, f, sort_keys=False, indent=2)
         else:
-            error_msg = (
-                f'Unsupported input file type "{file_type}".'
-                ' Accepted input file formats are ".yaml" and ".json".'
-            )
-            raise ValueError(error_msg)
+            json.dump(settings, f, sort_keys=False, indent=2)
