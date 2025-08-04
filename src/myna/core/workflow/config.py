@@ -404,7 +404,7 @@ def config(input_file, output_file=None, show_avail=False, overwrite=False):
                                         data_dict_case, nested_layerdata_keys, {}
                                     )
                                     for key in part_layer_data.keys():
-                                        if int(key) != int(layer):
+                                        if key != str(layer):
                                             data_dict_case["build"]["parts"][part][
                                                 "layer_data"
                                             ].pop(key, None)
@@ -441,12 +441,14 @@ def config(input_file, output_file=None, show_avail=False, overwrite=False):
                             ].keys()
                         )
                         for key in keys:
-                            if key != layer:
+                            if key != str(layer):
                                 data_dict_case["build"]["parts"][part]["regions"][
                                     region
                                 ]["layer_data"].pop(key, None)
-            else:
-                if "layer" in step_obj.types:
+                        data_dict_case["build"]["parts"][part]["regions"][region][
+                            "layers"
+                        ] = [int(layer)]
+                elif "layer" in step_obj.types:
                     layer = build_struct[3]
                     keys = list(
                         nested_get(
@@ -454,10 +456,11 @@ def config(input_file, output_file=None, show_avail=False, overwrite=False):
                         ).keys()
                     )
                     for key in keys:
-                        if key != layer:
+                        if key != str(layer):
                             data_dict_case["build"]["parts"][part]["layer_data"].pop(
                                 key, None
                             )
+                    data_dict_case["build"]["parts"][part]["layers"] = [int(layer)]
 
             # Copy basic information about the Myna workflow
             data_dict_case["myna"] = nested_get(settings, ["myna"])
