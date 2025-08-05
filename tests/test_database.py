@@ -51,3 +51,25 @@ def test_database_Peregrine():
 
     for metadata_type in test_metadata_types:
         assert db.load(metadata_type, part="P5", layer=50) is not None
+
+
+def test_database_pelican():
+    """Test if the Pelican database class is working for the expected metadata types"""
+
+    db = myna.database.Pelican()
+    path = os.path.dirname(os.path.abspath(__file__))
+    db.set_path(os.path.join(path, "..", "examples", "Pelican"))
+    test_metadata_types = [
+        myna.core.metadata.Material,
+        myna.core.metadata.LayerThickness,
+        myna.core.metadata.Preheat,
+        myna.core.metadata.LaserPower,
+        myna.core.metadata.SpotSize,
+        myna.core.metadata.Scanpath,
+    ]
+
+    for metadata_type in test_metadata_types:
+        os.environ["MYNA_INPUT"] = os.path.join(
+            path, "..", "examples", "solidification_part_pelican", "input.yaml"
+        )
+        assert db.load(metadata_type, part="P0", layer=0) is not None
