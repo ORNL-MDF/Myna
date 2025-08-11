@@ -36,6 +36,7 @@ class AMBench2022(Database):
     def __init__(self):
         Database.__init__(self)
         self.description = "NIST AM-Bench 2022 build file structure"
+        self.build_segmentation_type = "layer"
 
     def set_path(self, path):
         """Set the path to the database
