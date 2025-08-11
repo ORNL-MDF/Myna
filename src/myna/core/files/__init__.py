@@ -27,3 +27,4 @@ from .file_vtk import *
 from .file_temperature import *
 from .file_melt_pool_geometry import *
 from .file_exodus import *
+from .file_depth_map import *
