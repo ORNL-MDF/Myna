@@ -13,7 +13,12 @@ import argparse
 import sys
 import shutil
 import numpy as np
-from myna.application.thesis import get_scan_stats, adjust_parameter, Thesis
+from myna.application.thesis import (
+    get_scan_stats,
+    get_initial_wait_time,
+    adjust_parameter,
+    Thesis,
+)
 
 
 def configure_case(case_dir, sim, myna_input="myna_data.yaml"):
@@ -69,10 +74,13 @@ def configure_case(case_dir, sim, myna_input="myna_data.yaml"):
     domain_file = os.path.join(case_dir, "Domain.txt")
     adjust_parameter(domain_file, "Res", sim.args.res)
 
-    # Update output times
-    mode_file = os.path.join(case_dir, "Mode.txt")
+    # Get elapsed time, adjusting for any initial wait time
     elapsed_time, _ = get_scan_stats(case_scanfile)
-    times = np.linspace(0, elapsed_time, sim.args.nout)
+    initial_wait_time = get_initial_wait_time(case_scanfile)
+
+    # Update output times
+    times = np.linspace(initial_wait_time, elapsed_time, sim.args.nout)
+    mode_file = os.path.join(case_dir, "Mode.txt")
     adjust_parameter(mode_file, "Times", ",".join([str(x) for x in times]))
 
     return

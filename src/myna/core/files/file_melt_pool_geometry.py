@@ -8,9 +8,10 @@
 #
 """Define file format class related to the spatial distribution of melt pool geometries"""
 
-import pandas as pd
 import os
-from .file import *
+import pandas as pd
+import numpy as np
+from .file import File
 
 
 class FileMeltPoolGeometry(File):
@@ -105,3 +106,37 @@ class FileMeltPoolGeometry(File):
             df["depth (m)"].to_numpy(),
         ]
         return x, y, values, value_names, value_units
+
+    def get_names_for_timeseries_sync(self, prefix="myna"):
+        """Return the names and units of fields available for syncing
+        Args:
+            prefix: prefix for output file name in synced file(s)
+
+        Returns:
+            value_names: list of string names for each field in the values list
+            value_units: list of string units for each field in the values list"""
+        value_names = [
+            f"{prefix}_length",
+            f"{prefix}_width",
+            f"{prefix}_depth",
+        ]
+        value_units = ["m", "m", "m"]
+        return value_names, value_units
+
+    def get_timeseries_for_sync(
+        self, prefix
+    ) -> tuple[np.ndarray, list[np.ndarray], list[str], list[str]]:
+        """Get values in format expected for a time-series sync"""
+        # Load the file
+        df = pd.read_csv(self.file)
+        df = df.rename(str.lower, axis="columns")
+
+        # Set up time series and value arrays to return
+        value_names, value_units = self.get_names_for_timeseries_sync(prefix)
+        times = df["time (s)"].to_numpy()
+        values = [
+            df["length (m)"].to_numpy(),
+            df["width (m)"].to_numpy(),
+            df["depth (m)"].to_numpy(),
+        ]
+        return times, values, value_names, value_units

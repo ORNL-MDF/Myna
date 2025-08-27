@@ -48,5 +48,13 @@ class File:
         raise NotImplementedError
 
     def get_values_for_sync(self, prefix):
-        """Get values in format expected for sync"""
+        """Get values at XY location in format expected for a layer-wise image sync"""
+        raise NotImplementedError
+
+    def get_names_for_timeseries_sync(self, prefix):
+        """Return the names and units of fields available for syncing"""
+        raise NotImplementedError
+
+    def get_timeseries_for_sync(self, prefix):
+        """Get values in format expected for a time-series sync"""
         raise NotImplementedError
