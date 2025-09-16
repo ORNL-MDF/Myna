@@ -6,8 +6,9 @@ steps:
     configure:
       res: 100.0e-6
       template: ./template
+      nout: 50
     execute:
-      np: 2
+      np: 1
       batch: True
 data:
   build:
