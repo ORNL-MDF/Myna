@@ -477,7 +477,8 @@ class Pelican(Database):
                     # Get values for the time series
                     times, values, value_names, value_units = output_class(
                         f
-                    ).get_timeseries_for_sync(prefix=type_prefix)
+                    ).get_values_for_sync(mode="transient")
+                    value_names = [f"{type_prefix}_{name}" for name in value_names]
                     t_start = np.min(times)
                     t_end = np.max(times)
                 except NotImplementedError:

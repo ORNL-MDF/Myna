@@ -46,15 +46,15 @@ class FileID(File):
             expected_cols_types = [float, float, int]
             return self.columns_are_valid(cols, expected_cols, expected_cols_types)
 
-    def get_values_for_sync(self, prefix="myna"):
+    def get_values_for_sync(self, mode="spatial"):
         """Get values in format expected for sync
 
         Args:
-            prefix: default "myna", prefix for output file name in synced file(s)
+            mode: "spatial" or "transient", determines the format of the output
 
         Returns:
-            x: numpy array of x-coordinates
-            y: numpy array of y-coordinates
+            locator: (x,y) numpy arrays of coordinates if mode is "spatial", or
+                     times numpy array if mode is "transient"
             values: list of numpy arrays of values for each (x,y) point
             value_names: list of string names for each field in the values list
             value_units: list of string units for each field in the values list
@@ -71,8 +71,9 @@ class FileID(File):
         # Set up location and value arrays to return
         x = df["x (m)"].to_numpy()
         y = df["y (m)"].to_numpy()
-        value_names = [f"{prefix}_id"]
+        locator = (x, y)
+        value_names = ["id"]
         value_units = [""]
         values = [df["id"]]
 
-        return x, y, values, value_names, value_units
+        return locator, values, value_names, value_units

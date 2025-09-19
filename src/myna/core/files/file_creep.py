@@ -44,11 +44,3 @@ class FileCreepTimeSeries(File):
         expected_cols = ["time (s)", "strain"]
         expected_cols_types = [float, float]
         return self.columns_are_valid(cols, expected_cols, expected_cols_types)
-
-    def get_names_for_sync(self, prefix):
-        """Return the names and units of fields available for syncing"""
-        raise NotImplementedError
-
-    def get_values_for_sync(self, prefix):
-        """Get values in format expected for sync"""
-        raise NotImplementedError

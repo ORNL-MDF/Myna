@@ -55,88 +55,75 @@ class FileMeltPoolGeometry(File):
             expected_cols_types = [float, float, float, float, float, float]
             return self.columns_are_valid(cols, expected_cols, expected_cols_types)
 
-    def get_names_for_sync(self, prefix="myna"):
+    def get_names_for_sync(self, mode="transient"):
         """Return the names and units of fields available for syncing
         Args:
-            prefix: prefix for output file name in synced file(s)
+            mode: mode for syncing ("transient" or "spatial")
 
         Returns:
             value_names: list of string names for each field in the values list
             value_units: list of string units for each field in the values list"""
+        if mode == "spatial":
+            value_names = [
+                "time",
+                "length",
+                "width",
+                "depth",
+            ]
+            value_units = ["s", "m", "m", "m"]
+            return value_names, value_units
+
         value_names = [
-            f"{prefix}_time",
-            f"{prefix}_length",
-            f"{prefix}_width",
-            f"{prefix}_depth",
-        ]
-        value_units = ["s", "m", "m", "m"]
-        return value_names, value_units
-
-    def get_values_for_sync(self, prefix="myna"):
-        """Get values in format expected for sync
-
-        Args:
-            prefix: prefix for output file name in synced file(s)
-
-        Returns:
-            x: numpy array of x-coordinates
-            y: numpy array of y-coordinates
-            values: list of numpy arrays of values for each (x,y) point
-            value_names: list of string names for each field in the values list
-            value_units: list of string units for each field in the values list
-        """
-
-        # Load the file
-        df = pd.read_csv(self.file)
-        df = df.rename(str.lower, axis="columns")
-
-        # Check if data is three-dimensional
-        if "z (m)" in df.columns:
-            df = df[df["z (m)"] == df["z (m)"].max()]
-        df = df.dropna()
-
-        # Set up location and value arrays to return
-        x = df["x (m)"].to_numpy()
-        y = df["y (m)"].to_numpy()
-        value_names, value_units = self.get_names_for_sync(prefix)
-        values = [
-            df["time (s)"].to_numpy(),
-            df["length (m)"].to_numpy(),
-            df["width (m)"].to_numpy(),
-            df["depth (m)"].to_numpy(),
-        ]
-        return x, y, values, value_names, value_units
-
-    def get_names_for_timeseries_sync(self, prefix="myna"):
-        """Return the names and units of fields available for syncing
-        Args:
-            prefix: prefix for output file name in synced file(s)
-
-        Returns:
-            value_names: list of string names for each field in the values list
-            value_units: list of string units for each field in the values list"""
-        value_names = [
-            f"{prefix}_length",
-            f"{prefix}_width",
-            f"{prefix}_depth",
+            "length",
+            "width",
+            "depth",
         ]
         value_units = ["m", "m", "m"]
         return value_names, value_units
 
-    def get_timeseries_for_sync(
-        self, prefix
-    ) -> tuple[np.ndarray, list[np.ndarray], list[str], list[str]]:
-        """Get values in format expected for a time-series sync"""
+    def get_values_for_sync(self, mode="transient"):
+        """Get values in format expected for sync
+
+        Args:
+            mode: mode for syncing ("transient" or "spatial")
+
+        Returns:
+            locator: (x,y) numpy arrays of coordinates if mode is "spatial", or
+                     times numpy array if mode is "transient"
+            values: list of numpy arrays of values for each (x,y) point
+            value_names: list of string names for each field in the values list
+            value_units: list of string units for each field in the values list
+        """
         # Load the file
         df = pd.read_csv(self.file)
         df = df.rename(str.lower, axis="columns")
 
+        if mode == "spatial":
+
+            # Check if data is three-dimensional
+            if "z (m)" in df.columns:
+                df = df[df["z (m)"] == df["z (m)"].max()]
+            df = df.dropna()
+
+            # Set up location and value arrays to return
+            x = df["x (m)"].to_numpy()
+            y = df["y (m)"].to_numpy()
+            locator = (x, y)
+            value_names, value_units = self.get_names_for_sync(mode="spatial")
+            values = [
+                df["time (s)"].to_numpy(),
+                df["length (m)"].to_numpy(),
+                df["width (m)"].to_numpy(),
+                df["depth (m)"].to_numpy(),
+            ]
+            return locator, values, value_names, value_units
+
         # Set up time series and value arrays to return
-        value_names, value_units = self.get_names_for_timeseries_sync(prefix)
-        times = df["time (s)"].to_numpy()
+        value_names, value_units = self.get_names_for_sync(mode="transient")
+        locator = df["time (s)"].to_numpy()
         values = [
             df["length (m)"].to_numpy(),
             df["width (m)"].to_numpy(),
             df["depth (m)"].to_numpy(),
         ]
-        return times, values, value_names, value_units
+        return locator, values, value_names, value_units

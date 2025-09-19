@@ -48,31 +48,37 @@ class FileGV(File):
             expected_cols_types = [float, float, float, float]
             return self.columns_are_valid(cols, expected_cols, expected_cols_types)
 
-    def get_names_for_sync(self, prefix="myna"):
+    def get_names_for_sync(self, mode="spatial"):
         """Return the names and units of fields available for syncing
         Args:
-            prefix: prefix for output file name in synced file(s)
+            mode: mode for syncing (only "spatial" is implemented)
 
         Returns:
             value_names: list of string names for each field in the values list
             value_units: list of string units for each field in the values list"""
-        value_names = [f"{prefix}_G", f"{prefix}_R", f"{prefix}_cooling_rate"]
+        if mode == "transient":
+            msg = f"Transient sync not implemented for {self.__class__.__name__}"
+            raise NotImplementedError(msg)
+        value_names = ["G", "R", "cooling_rate"]
         value_units = ["K/m", "m/s", "K/s"]
         return value_names, value_units
 
-    def get_values_for_sync(self, prefix="myna"):
+    def get_values_for_sync(self, mode="spatial"):
         """Get values in format expected for sync
 
         Args:
-            prefix: prefix for output file name in synced file(s)
+            mode: mode for syncing (only "spatial" is implemented)
 
         Returns:
-            x: numpy array of x-coordinates
-            y: numpy array of y-coordinates
+            locator: (x,y) numpy arrays of coordinates if mode is "spatial", or
+                     times numpy array if mode is "transient"
             values: list of numpy arrays of values for each (x,y) point
             value_names: list of string names for each field in the values list
             value_units: list of string units for each field in the values list
         """
+        if mode == "transient":
+            msg = f"Transient sync not implemented for {self.__class__.__name__}"
+            raise NotImplementedError(msg)
 
         # Load the file
         df = pl.read_csv(self.file)
@@ -88,10 +94,11 @@ class FileGV(File):
         # Set up location and value arrays to return
         x = df["x (m)"].to_numpy()
         y = df["y (m)"].to_numpy()
-        value_names, value_units = self.get_names_for_sync(prefix=prefix)
+        locator = (x, y)
+        value_names, value_units = self.get_names_for_sync(mode="spatial")
         values = [
             df["g (k/m)"].to_numpy(),
             df["v (m/s)"].to_numpy(),
             df["cr (k/s)"].to_numpy(),
         ]
-        return x, y, values, value_names, value_units
+        return locator, values, value_names, value_units

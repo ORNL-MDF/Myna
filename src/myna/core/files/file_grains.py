@@ -35,44 +35,52 @@ class FileGrainSlice(File):
         else:
             return True
 
-    def get_names_for_sync(self, prefix="myna"):
+    def get_names_for_sync(self, mode="spatial"):
         """Return the names and units of fields available for syncing
         Args:
-            prefix: prefix for output file name in synced file(s)
+            mode: mode for syncing (only "spatial" is implemented)
 
         Returns:
             value_names: list of string names for each field in the values list
             value_units: list of string units for each field in the values list"""
+        if mode == "transient":
+            msg = f"Transient sync not implemented for {self.__class__.__name__}"
+            raise NotImplementedError(msg)
+
         value_names = [
-            f"{prefix}_meanGrainArea",
-            f"{prefix}_nucleationFrac",
-            f"{prefix}_wasserstein100Z",
+            "meanGrainArea",
+            "nucleationFrac",
+            "wasserstein100Z",
         ]
         value_units = ["m^2", "", ""]
         return value_names, value_units
 
-    def get_values_for_sync(self, prefix="myna"):
+    def get_values_for_sync(self, mode="spatial"):
         """Get values in format expected from sync
 
         Args:
-            prefix: prefix for output file name in synced file(s)
+            mode: mode for syncing (only "spatial" is implemented)
 
         Returns:
-            x: numpy array of x-coordinates
-            y: numpy array of y-coordinates
+            locator: (x,y) numpy arrays of coordinates if mode is "spatial", or
+                     times numpy array if mode is "transient"
             values: list of numpy arrays of values for each (x,y) point
             value_names: list of string names for each field in the values list
             value_units: list of string units for each field in the values list
         """
+        if mode == "transient":
+            msg = f"Transient sync not implemented for {self.__class__.__name__}"
+            raise NotImplementedError(msg)
 
         # Read and extract values from the CSV file
         df = pd.read_csv(self.file)
-        x = df["X (m)"]
-        y = df["Y (m)"]
-        value_names, value_units = self.get_names_for_sync(prefix=prefix)
+        x = df["X (m)"].to_numpy()
+        y = df["Y (m)"].to_numpy()
+        locator = (x, y)
+        value_names, value_units = self.get_names_for_sync(mode="spatial")
         values = [
             df["Mean Grain Area (m^2)"].to_numpy(),
             df["Nulceated Fraction"].to_numpy(),
             df["Wasserstein distance (100-Z)"].to_numpy(),
         ]
-        return x, y, values, value_names, value_units
+        return locator, values, value_names, value_units

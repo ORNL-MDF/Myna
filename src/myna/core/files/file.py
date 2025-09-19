@@ -7,6 +7,8 @@
 # License: 3-clause BSD, see https://opensource.org/licenses/BSD-3-Clause.
 #
 """Base class for Myna file"""
+from typing_extensions import Literal
+import numpy as np
 
 
 class File:
@@ -43,18 +45,17 @@ class File:
             return False
         return True
 
-    def get_names_for_sync(self, prefix):
+    def get_names_for_sync(
+        self, mode: Literal["spatial", "transient"]
+    ) -> tuple[list[str], list[str]]:
         """Return the names and units of fields available for syncing"""
         raise NotImplementedError
 
-    def get_values_for_sync(self, prefix):
+    def get_values_for_sync(self, mode: Literal["spatial", "transient"]) -> tuple[
+        tuple[np.ndarray, np.ndarray] | np.ndarray,
+        list[np.ndarray],
+        list[str],
+        list[str],
+    ]:
         """Get values at XY location in format expected for a layer-wise image sync"""
-        raise NotImplementedError
-
-    def get_names_for_timeseries_sync(self, prefix):
-        """Return the names and units of fields available for syncing"""
-        raise NotImplementedError
-
-    def get_timeseries_for_sync(self, prefix):
-        """Get values in format expected for a time-series sync"""
         raise NotImplementedError

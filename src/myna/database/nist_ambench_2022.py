@@ -339,7 +339,8 @@ class AMBench2022(Database):
             try:
                 var_names, var_units = output_class(
                     layer_files[key][0]
-                ).get_names_for_sync(prefix=prefix)
+                ).get_names_for_sync(mode="spatial")
+                var_names = [f"{prefix}_{v}" for v in var_names]
             except NotImplementedError:
                 print("    - Sync not implemented for any files")
                 continue
@@ -374,12 +375,12 @@ class AMBench2022(Database):
                 for f in layer_files[key]:
                     out = output_class(f)
                     (
-                        x,
-                        y,
+                        locator,
                         file_values,
                         value_names,
                         _,
-                    ) = out.get_values_for_sync(prefix=prefix)
+                    ) = out.get_values_for_sync(mode="spatial")
+                    x, y = locator
 
                     # Get values only from the relevant variable
                     var_index = value_names.index(var_name)
