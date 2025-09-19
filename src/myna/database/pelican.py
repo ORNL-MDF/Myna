@@ -14,10 +14,10 @@ import yaml
 import zarr
 import numpy as np
 import polars as pl
+from polars.datatypes import Float64
 from myna.core import metadata
 from myna.core.db import Database
 from myna.core.utils import nested_get, nested_set
-from myna.core.workflow import load_input
 
 
 class Pelican(Database):
@@ -463,7 +463,6 @@ class Pelican(Database):
         # For each file in each sync file
         for segment_prefix in segment_prefixes:
             type_prefix = f"myna_{component_type}"
-            sync_file_prefix = f"{type_prefix}_{segment_prefix}"
             for f in files:
                 part = os.path.basename(
                     os.path.dirname(os.path.dirname(os.path.dirname(f)))
@@ -497,11 +496,11 @@ class Pelican(Database):
 
                     # Write the data sync file
                     sync_data_file = os.path.join(export_dir, "data.csv")
-                    print(f"  - Syncing {sync_data_file} ")
                     column_name = format_variable_name(value_name, value_unit)
+                    print(f"  - Syncing {sync_data_file}")
                     schema = {
-                        "time (s)": float,
-                        column_name: float,
+                        "time (s)": Float64,
+                        column_name: Float64,
                     }
                     if os.path.exists(sync_data_file):
                         df_sync = pl.read_csv(
@@ -509,7 +508,8 @@ class Pelican(Database):
                             schema=schema,
                         )
                         df_sync = df_sync.filter(
-                            pl.col("time (s)") < t_start | pl.col("time (s)") > t_end
+                            (pl.col("time (s)") < t_start)
+                            | (pl.col("time (s)") > t_end)
                         )
                     else:
                         df_sync = pl.DataFrame({k: [] for k in schema}, schema=schema)
@@ -526,33 +526,7 @@ class Pelican(Database):
 
                     # Write the metadata sync file
                     sync_metadata_file = os.path.join(export_dir, "metadata.yaml")
-                    step_name = os.path.basename(os.path.dirname(f))
-                    step_list = load_input(os.environ["MYNA_INPUT"])["steps"]
-                    step_dict = step_list[
-                        [list(step.keys())[0] for step in step_list].index(step_name)
-                    ]
-                    if os.path.exists(sync_metadata_file):
-                        sync_dict = load_input(sync_metadata_file)
-                    else:
-                        sync_dict = {}
-                    metadata_key = format_time_segment_key(t_start, t_end)
-                    if "time_segments" not in sync_dict:
-                        sync_dict["time_segments"] = {}
-                    if metadata_key not in sync_dict["time_segments"]:
-                        sync_dict["time_segments"][metadata_key] = {}
-                    sync_dict["time_segments"][metadata_key] = step_dict[step_name]
-                    sync_dict["time_segments"][metadata_key][
-                        "simulation_data_last_modified"
-                    ] = datetime.fromtimestamp(os.path.getmtime(f)).strftime(
-                        "%Y-%m-%d %H:%M:%S"
-                    )
-                    sync_dict["time_segments"][metadata_key][
-                        "synced_on"
-                    ] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                    sync_dict["time_segments"][metadata_key][
-                        "synced_by"
-                    ] = os.getlogin()
-                    with open(sync_metadata_file, "w", encoding="utf-8") as mf:
-                        yaml.safe_dump(sync_dict, mf)
+                    segment_key = format_time_segment_key(t_start, t_end)
+                    self.write_segment_sync_metadata(sync_metadata_file, f, segment_key)
 
         return synced_files
