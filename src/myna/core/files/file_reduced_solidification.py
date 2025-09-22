@@ -57,15 +57,18 @@ class FileReducedSolidification(File):
         """Get values in format expected for sync
 
         Args:
-            mode: "spatial" or "transient", determines the format of the output
+            mode: mode for syncing (only "spatial" is implemented)
 
         Returns:
             locator: (x,y) numpy arrays of coordinates if mode is "spatial", or
-                     times numpy array if mode is "transient"
+                     times numpy array if mode is "temporal"
             values: list of numpy arrays of values for each (x,y) point
             value_names: list of string names for each field in the values list
             value_units: list of string units for each field in the values list
         """
+        if mode == "temporal":
+            msg = f"Transient sync not implemented for {self.__class__.__name__}"
+            raise NotImplementedError(msg)
 
         # Load the file
         df = pd.read_csv(self.file)

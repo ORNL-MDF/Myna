@@ -55,10 +55,10 @@ class FileMeltPoolGeometry(File):
             expected_cols_types = [float, float, float, float, float, float]
             return self.columns_are_valid(cols, expected_cols, expected_cols_types)
 
-    def get_names_for_sync(self, mode="transient"):
+    def get_names_for_sync(self, mode="temporal"):
         """Return the names and units of fields available for syncing
         Args:
-            mode: mode for syncing ("transient" or "spatial")
+            mode: mode for syncing ("temporal" or "spatial")
 
         Returns:
             value_names: list of string names for each field in the values list
@@ -81,15 +81,15 @@ class FileMeltPoolGeometry(File):
         value_units = ["m", "m", "m"]
         return value_names, value_units
 
-    def get_values_for_sync(self, mode="transient"):
+    def get_values_for_sync(self, mode="temporal"):
         """Get values in format expected for sync
 
         Args:
-            mode: mode for syncing ("transient" or "spatial")
+            mode: mode for syncing ("temporal" or "spatial")
 
         Returns:
             locator: (x,y) numpy arrays of coordinates if mode is "spatial", or
-                     times numpy array if mode is "transient"
+                     times numpy array if mode is "temporal"
             values: list of numpy arrays of values for each (x,y) point
             value_names: list of string names for each field in the values list
             value_units: list of string units for each field in the values list
@@ -119,7 +119,7 @@ class FileMeltPoolGeometry(File):
             return locator, values, value_names, value_units
 
         # Set up time series and value arrays to return
-        value_names, value_units = self.get_names_for_sync(mode="transient")
+        value_names, value_units = self.get_names_for_sync(mode="temporal")
         locator = df["time (s)"].to_numpy()
         values = [
             df["length (m)"].to_numpy(),

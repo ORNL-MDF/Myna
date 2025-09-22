@@ -111,6 +111,7 @@ class Path:
                         xs = self.data.at[index - 1, "xe"]
                         ys = self.data.at[index - 1, "ye"]
                     distance = np.sqrt(np.power(dx, 2) + np.power(dy, 2))
+                    # Distance in mm, tParam (velocity) in m/s, time in s
                     self.data.at[index, "time"] = ts + distance / (
                         self.data.at[index, "tParam"] * 1e3
                     )

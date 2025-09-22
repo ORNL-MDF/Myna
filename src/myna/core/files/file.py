@@ -46,12 +46,12 @@ class File:
         return True
 
     def get_names_for_sync(
-        self, mode: Literal["spatial", "transient"]
+        self, mode: Literal["spatial", "temporal"]
     ) -> tuple[list[str], list[str]]:
         """Return the names and units of fields available for syncing"""
         raise NotImplementedError
 
-    def get_values_for_sync(self, mode: Literal["spatial", "transient"]) -> tuple[
+    def get_values_for_sync(self, mode: Literal["spatial", "temporal"]) -> tuple[
         tuple[np.ndarray, np.ndarray] | np.ndarray,
         list[np.ndarray],
         list[str],
