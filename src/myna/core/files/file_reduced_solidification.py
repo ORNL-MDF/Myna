@@ -8,9 +8,7 @@
 #
 """Define the file format class for reduced solidification data."""
 
-import pandas as pd
-import os
-from .file import *
+from .file import File, Variable
 
 
 class FileReducedSolidification(File):
@@ -27,69 +25,44 @@ class FileReducedSolidification(File):
     def __init__(self, file):
         File.__init__(self, file)
         self.filetype = ".csv"
-
-    def file_is_valid(self):
-        """Determines if the associated file is valid
-
-        Requires the columns below, additional columns are ignored:
-        - "x": float
-        - "y": float
-        - "z": float
-        - "tm": float
-        - "ts": float
-        - "cr": float
-
-        Returns:
-           Boolean
-        """
-        if (self.filetype is not None) and (
-            os.path.splitext(self.file)[-1] != self.filetype
-        ):
-            return False
-        else:
-            df = pd.read_csv(self.file, nrows=0)
-            cols = [x.lower() for x in df.columns]
-            expected_cols = ["x", "y", "z", "tm", "ts", "cr"]
-            expected_cols_types = [float, float, float, float, float]
-            return self.columns_are_valid(cols, expected_cols, expected_cols_types)
-
-    def get_values_for_sync(self, mode="spatial"):
-        """Get values in format expected for sync
-
-        Args:
-            mode: mode for syncing (only "spatial" is implemented)
-
-        Returns:
-            locator: (x,y) numpy arrays of coordinates if mode is "spatial", or
-                     times numpy array if mode is "temporal"
-            values: list of numpy arrays of values for each (x,y) point
-            value_names: list of string names for each field in the values list
-            value_units: list of string units for each field in the values list
-        """
-        if mode == "temporal":
-            msg = f"Transient sync not implemented for {self.__class__.__name__}"
-            raise NotImplementedError(msg)
-
-        # Load the file
-        df = pd.read_csv(self.file)
-        df = df.rename(str.lower, axis="columns")
-
-        # Return top-surface values only
-        df = df[df["z"] == df["z"].max()]
-
-        # Set up location and value arrays to return
-        x = df["x"].to_numpy()
-        y = df["y"].to_numpy()
-        locator = (x, y)
-        value_names = [
-            "t_melt",
-            "t_solidify",
-            "cooling_rate",
+        self.variables = [
+            Variable(
+                name="x",
+                units="m",
+                dtype=float,
+                description="spatial location in x-axis",
+            ),
+            Variable(
+                name="y",
+                units="m",
+                dtype=float,
+                description="spatial location in y-axis",
+            ),
+            Variable(
+                name="z",
+                units="m",
+                dtype=float,
+                description="spatial location in z-axis",
+            ),
+            Variable(
+                name="tm",
+                units="s",
+                dtype=float,
+                description="time that the location goes above the"
+                " liquidus temperature",
+            ),
+            Variable(
+                name="ts",
+                units="s",
+                dtype=float,
+                description="time that the location goes below"
+                " the liquidus temperature",
+            ),
+            Variable(
+                name="cr",
+                units="k/s",
+                dtype=float,
+                description="instantaneous cooling rate at the time"
+                " that the location goes below the liquidus temperature",
+            ),
         ]
-        value_units = ["s", "s", "K/s"]
-        values = [
-            df["tm"].to_numpy(),
-            df["ts"].to_numpy(),
-            df["cr"].to_numpy(),
-        ]
-        return locator, values, value_names, value_units

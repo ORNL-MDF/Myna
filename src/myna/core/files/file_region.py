@@ -8,9 +8,7 @@
 #
 """Define a file format class for region of interest location data"""
 
-import pandas as pd
-import os
-from .file import *
+from .file import File, Variable
 
 
 class FileRegion(File):
@@ -19,39 +17,40 @@ class FileRegion(File):
     def __init__(self, file):
         File.__init__(self, file)
         self.filetype = ".csv"
-
-    def file_is_valid(self):
-        """Determines if the associated file is valid
-
-        Requires the columns below, additional columns are ignored:
-        - "id": int
-        - "x": float
-        - "y": float
-        - "layer_starts": int
-        - "layer_ends": int
-        - "part": str
-
-        Returns:
-           Boolean
-        """
-
-        if (self.filetype is not None) and (
-            os.path.splitext(self.file)[-1] != self.filetype
-        ):
-            return False
-        else:
-            df = pd.read_csv(self.file)
-            cols = [x.lower() for x in df.columns]
-            expected_cols = [
-                "id",
-                "x (m)",
-                "y (m)",
-                "layer_starts",
-                "layer_ends",
-                "part",
-            ]
-            expected_cols_types = [int, float, float, int, int, str]
-            return self.columns_are_valid(cols, expected_cols, expected_cols_types)
+        self.variables = [
+            Variable(
+                name="id",
+                dtype=int,
+                description="integer identifier for the region",
+            ),
+            Variable(
+                name="x",
+                units="m",
+                dtype=float,
+                description="spatial location in x-axis of the region centroid",
+            ),
+            Variable(
+                name="y",
+                units="m",
+                dtype=float,
+                description="spatial location in y-axis of the region centroid",
+            ),
+            Variable(
+                name="layer_starts",
+                dtype=int,
+                description="layer that region starts on",
+            ),
+            Variable(
+                name="layer_ends",
+                dtype=int,
+                description="layer that region ends on",
+            ),
+            Variable(
+                name="part",
+                dtype=str,
+                description="name of the part containing the region",
+            ),
+        ]
 
 
 class FileBuildRegion(File):
@@ -61,39 +60,49 @@ class FileBuildRegion(File):
     def __init__(self, file):
         File.__init__(self, file)
         self.filetype = ".csv"
-
-    def file_is_valid(self):
-        """Determines if the associated file is valid
-
-        Requires the columns below, additional columns are ignored:
-        - "id": int
-        - "x_min (m)": float
-        - "y_min (m)": float
-        - "x_max (m)": float
-        - "y_max (m)": float
-        - "layer_starts": int
-        - "layer_ends": int
-        - "parts": str ("all" or part name separated by underscores, e.g., "P1_P2")
-
-        Returns:
-           Boolean
-        """
-
-        if (self.filetype is not None) and (
-            os.path.splitext(self.file)[-1] != self.filetype
-        ):
-            return False
-        else:
-            df = pd.read_csv(self.file)
-            cols = [x.lower() for x in df.columns]
-            expected_cols = [
-                "id",
-                "x_min (m)",
-                "y_min (m)",
-                "x_max (m)",
-                "y_max (m)",
-                "layer_starts",
-                "layer_ends",
-            ]
-            expected_cols_types = [int, float, float, float, float, int, int, str]
-            return self.columns_are_valid(cols, expected_cols, expected_cols_types)
+        self.variables = [
+            Variable(
+                name="id",
+                dtype=int,
+                description="integer identifier for the region",
+            ),
+            Variable(
+                name="x_min",
+                units="m",
+                dtype=float,
+                description="spatial location in x-axis of the region minimum x-bound",
+            ),
+            Variable(
+                name="x_max",
+                units="m",
+                dtype=float,
+                description="spatial location in x-axis of the region maximum x-bound",
+            ),
+            Variable(
+                name="y_min",
+                units="m",
+                dtype=float,
+                description="spatial location in y-axis of the region minimum y-bound",
+            ),
+            Variable(
+                name="y_max",
+                units="m",
+                dtype=float,
+                description="spatial location in y-axis of the region maximum y-bound",
+            ),
+            Variable(
+                name="layer_starts",
+                dtype=int,
+                description="layer that region starts on",
+            ),
+            Variable(
+                name="layer_ends",
+                dtype=int,
+                description="layer that region ends on",
+            ),
+            Variable(
+                name="parts",
+                dtype=str,
+                description="'all' or part name separated by underscores, e.g., 'P1_P2'",
+            ),
+        ]
