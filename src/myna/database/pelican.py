@@ -481,7 +481,7 @@ class Pelican(Database):
                     value_names = [f"{type_prefix}_{name}" for name in value_names]
                     t_start = np.min(times)
                     t_end = np.max(times)
-                except NotImplementedError:
+                except (NotImplementedError, KeyError):
                     print("    - Time series sync not implemented for any files")
                     continue
 

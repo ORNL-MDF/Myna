@@ -14,12 +14,7 @@ import polars as pl
 
 
 class File:
-    """Base class for Myna file definitions.
-
-    Raises:
-       file_is_valid: NotImplementedError in base class
-       get_values_for_sync: NotImplementedError in base class
-    """
+    """Base class for Myna file definitions."""
 
     def __init__(self, file):
         """Initialize with file path
@@ -74,7 +69,13 @@ class File:
         list[str],
         list[str],
     ]:
-        """Get values at XY location in format expected for a layer-wise image sync"""
+        """Get values at XY location in format expected for a layer-wise image sync
+
+        Possible Exceptions:
+        - `ValueError` for incorrect mode
+        - `KeyError` for no columns found for requested mode
+        - `NotImplementedError` if not implemented for the filetype
+        """
 
         # Set locator variables for registration based on the mode
         locator_variables = set()
@@ -108,13 +109,13 @@ class File:
             )
             if len(locator) != len(locator_variables):
                 msg = f"Not all {mode} locator variables in {self.__class__.__name__}"
-                raise NotImplementedError(msg)
+                raise KeyError(msg)
 
             # Get the other values
             value_cols = list(set([x.fstr for x in self.variables]) - locator_variables)
             if len(value_cols) == 0:
                 msg = f"No {mode} variables specified for {self.__class__.__name__}"
-                raise NotImplementedError(msg)
+                raise KeyError(msg)
             values = [df[col].to_numpy() for col in value_cols]
 
             # Get value names and units

@@ -337,7 +337,7 @@ class PeregrineDB(Database):
                             value_names,
                             _,
                         ) = out.get_values_for_sync(mode="spatial_2d")
-                    except NotImplementedError:
+                    except (NotImplementedError, KeyError):
                         print(f"- No data to sync for {f}")
                         continue
                     x, y = locator
