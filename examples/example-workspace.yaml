@@ -11,6 +11,12 @@ thesis:
          res: 25e-6
       execute:
          batch: True
+   depth_map_part:
+      executable: 3DThesis
+      configure:
+         res: 25e-6
+      execute:
+         batch: True
 exaca:
    microstructure_region:
       executable: ExaCA
