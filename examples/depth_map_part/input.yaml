@@ -1,0 +1,18 @@
+steps:
+- 3dthesis:
+    class: depth_map_part
+    application: thesis
+    configure:
+      res: 250.0e-6
+    execute:
+      np: 1
+data:
+  build:
+    datatype: Peregrine
+    name: myna_output
+    path: ..
+    parts:
+      P5:
+        layers: [51]
+myna:
+  workspace: ../example-workspace.yaml
