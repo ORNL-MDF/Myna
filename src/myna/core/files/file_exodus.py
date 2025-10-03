@@ -8,7 +8,6 @@
 #
 """Define a file format class for Exodus mesh output data"""
 
-import os
 from .file import *
 
 
@@ -18,19 +17,3 @@ class FileExodus(File):
     def __init__(self, file):
         File.__init__(self, file)
         self.filetype = ".e"
-
-    def file_is_valid(self):
-        """Determines if the associated file is valid.
-
-        Checks if the file extension matches the ".e" filetype.
-
-        Returns:
-           Boolean
-        """
-
-        if (self.filetype is not None) and (
-            os.path.splitext(self.file)[-1] != self.filetype
-        ):
-            return False
-        else:
-            return True

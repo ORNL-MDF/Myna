@@ -80,6 +80,13 @@ def test_solidification_part_pelican():
 
 @pytest.mark.apps
 @pytest.mark.examples
+def test_melt_pool_geometry_part_pelican():
+    """This checks the melt_pool_geometry_part_pelican example. Estimated runtime ~15-30s."""
+    run_example_test("melt_pool_geometry_part_pelican")
+
+
+@pytest.mark.apps
+@pytest.mark.examples
 @pytest.mark.parallel
 def test_microstructure_region():
     """This checks the microstructure_region example, which checks:

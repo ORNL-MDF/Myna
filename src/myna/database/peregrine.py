@@ -291,14 +291,15 @@ class PeregrineDB(Database):
             print(f"  - layer: {key}")
 
             # Get the output fields
-            prefix = f"myna_{component_type}"
-            try:
-                var_names, var_units = output_class(
-                    layer_files[key][0]
-                ).get_names_for_sync(prefix=prefix)
-            except NotImplementedError:
-                print("    - Sync not implemented for any files")
-                continue
+            prefix = f"myna_{component_type}_"
+            var_names = [
+                f"{prefix}{x.name}"
+                for x in output_class("").variables
+                if x.name not in ["x", "y"]
+            ]
+            var_units = [
+                x.units for x in output_class("").variables if x.name not in ["x", "y"]
+            ]
 
             # Loop through the output fields
             for var_name, var_unit in zip(var_names, var_units):
@@ -328,17 +329,21 @@ class PeregrineDB(Database):
 
                 # Loop through all the files for the layer to add data
                 for f in layer_files[key]:
-                    out = output_class(f)
-                    (
-                        x,
-                        y,
-                        file_values,
-                        value_names,
-                        _,
-                    ) = out.get_values_for_sync(prefix=prefix)
+                    try:
+                        out = output_class(f)
+                        (
+                            locator,
+                            file_values,
+                            value_names,
+                            _,
+                        ) = out.get_values_for_sync(mode="spatial_2d")
+                    except (NotImplementedError, KeyError):
+                        print(f"- No data to sync for {f}")
+                        continue
+                    x, y = locator
 
                     # Get values only from the relevant variable
-                    var_index = value_names.index(var_name)
+                    var_index = value_names.index(var_name.replace(prefix, ""))
                     sim_values = file_values[var_index]
 
                     # Get metadata from file path

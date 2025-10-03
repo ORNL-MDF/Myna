@@ -31,3 +31,8 @@ def is_executable(executable):
         return True
     else:
         return False
+
+
+def strf_datetime(datetime_obj):
+    """Return the current date and time as a pretty string"""
+    return datetime_obj.strftime("%Y-%m-%d %H:%M:%S")

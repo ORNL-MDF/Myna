@@ -27,3 +27,13 @@ def get_scan_stats(scanFile):
     )
     linear_distance = ds.data["path distance"].sum()
     return [elapsed_time, linear_distance]
+
+
+def get_initial_wait_time(scanFile) -> float:
+    """Returns the initial wait time at the beginning of a scan path"""
+
+    ds = thesis.Path()
+    ds.loadData(scanFile, timeName="tParam")
+    if (ds.data.at[0, "Mode"] == 1) and (ds.data.at[0, "Pmod"] == 0):
+        return float(ds.data.at[0, "tParam"])
+    return 0.0

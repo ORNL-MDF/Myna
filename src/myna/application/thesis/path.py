@@ -84,29 +84,41 @@ class Path:
 
             # Calculate time and distance for each point in the scan path
             for index in range(self.size):
-                if index == 0:
-                    self.data.at[index, "time"] = 0.0
-                else:
-                    if self.data.at[index, "Mode"] == 1:
+                if self.data.at[index, "Mode"] == 1:
+                    if index == 0:
+                        self.data.at[index, "time"] = self.data.at[index, "tParam"]
+                    else:
                         self.data.at[index, "time"] = (
                             self.data.at[index - 1, "time"]
                             + self.data.at[index, "tParam"]
                         )
-                        self.data.at[index, "xs"] = self.data.at[index, xName]
-                        self.data.at[index, "xe"] = self.data.at[index, xName]
-                        self.data.at[index, "ys"] = self.data.at[index, yName]
-                        self.data.at[index, "ye"] = self.data.at[index, yName]
+                    self.data.at[index, "xs"] = self.data.at[index, xName]
+                    self.data.at[index, "xe"] = self.data.at[index, xName]
+                    self.data.at[index, "ys"] = self.data.at[index, yName]
+                    self.data.at[index, "ye"] = self.data.at[index, yName]
+                else:
+                    if index == 0:
+                        assumed_origin = [0.0, 0.0]
+                        dx = self.data.at[index, xName] - assumed_origin[0]
+                        dy = self.data.at[index, yName] - assumed_origin[1]
+                        ts = 0.0
+                        xs = assumed_origin[0]
+                        ys = assumed_origin[1]
                     else:
                         dx = self.data.at[index, xName] - self.data.at[index - 1, xName]
                         dy = self.data.at[index, yName] - self.data.at[index - 1, yName]
-                        distance = np.sqrt(np.power(dx, 2) + np.power(dy, 2))
-                        self.data.at[index, "time"] = self.data.at[
-                            index - 1, "time"
-                        ] + distance / (self.data.at[index, "tParam"] * 1e3)
-                        self.data.at[index, "xs"] = self.data.at[index - 1, "xe"]
-                        self.data.at[index, "xe"] = self.data.at[index, xName]
-                        self.data.at[index, "ys"] = self.data.at[index - 1, "ye"]
-                        self.data.at[index, "ye"] = self.data.at[index, yName]
+                        ts = self.data.at[index - 1, "time"]
+                        xs = self.data.at[index - 1, "xe"]
+                        ys = self.data.at[index - 1, "ye"]
+                    distance = np.sqrt(np.power(dx, 2) + np.power(dy, 2))
+                    # Distance in mm, tParam (velocity) in m/s, time in s
+                    self.data.at[index, "time"] = ts + distance / (
+                        self.data.at[index, "tParam"] * 1e3
+                    )
+                    self.data.at[index, "xs"] = xs
+                    self.data.at[index, "xe"] = self.data.at[index, xName]
+                    self.data.at[index, "ys"] = ys
+                    self.data.at[index, "ye"] = self.data.at[index, yName]
             self.setEnd()
             if loadIfExists is not None and saveFile:
                 self.data.to_csv(loadIfExists, index=False)

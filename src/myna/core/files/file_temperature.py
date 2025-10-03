@@ -8,9 +8,7 @@
 #
 """Define file format class related to the spatial distribution of temperature (T)"""
 
-import pandas as pd
-import os
-from .file import *
+from .file import File, Variable
 
 
 class FileTemperature(File):
@@ -19,26 +17,24 @@ class FileTemperature(File):
     def __init__(self, file):
         File.__init__(self, file)
         self.filetype = ".csv"
-
-    def file_is_valid(self):
-        """Determines if the associated file is valid
-
-        Requires the columns below, additional columns are ignored:
-        - "x (m)": float
-        - "y (m)": float
-        - "t (k)": float
-
-        Returns:
-           Boolean
-        """
-
-        if (self.filetype is not None) and (
-            os.path.splitext(self.file)[-1] != self.filetype
-        ):
-            return False
-        else:
-            df = pd.read_csv(self.file, nrows=0)
-            cols = [x.lower() for x in df.columns]
-            expected_cols = ["x (m)", "y (m)", "t (k)"]
-            expected_cols_types = [float, float, float]
-            return self.columns_are_valid(cols, expected_cols, expected_cols_types)
+        self.variables = [
+            Variable(
+                name="x",
+                units="m",
+                dtype=float,
+                description="spatial location in x-axis",
+            ),
+            Variable(
+                name="y",
+                units="m",
+                dtype=float,
+                description="spatial location in y-axis",
+            ),
+            Variable(
+                name="t",
+                units="k",
+                dtype=float,
+                description="temperature of the location--meaning of the"
+                " temperature value may vary depending on the simulation type",
+            ),
+        ]

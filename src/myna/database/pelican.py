@@ -14,6 +14,7 @@ import yaml
 import zarr
 import numpy as np
 import polars as pl
+from polars.datatypes import Float64
 from myna.core import metadata
 from myna.core.db import Database
 from myna.core.utils import nested_get, nested_set
@@ -29,6 +30,7 @@ class Pelican(Database):
         self.info_filepath = None
         self.scanpath_export_dir = None
         self.scan_export_dict = None
+        self.sync_timeseries_dir = None
         self.build_segmentation_type = "time"
 
     def set_path(self, path):
@@ -45,6 +47,7 @@ class Pelican(Database):
         self.scan_export_dict = os.path.join(
             self.scanpath_export_dir, "export_info.yaml"
         )
+        self.sync_timeseries_dir = os.path.join(self.path_dir, "registered_timeseries")
 
     def exists(self):
         return os.path.exists(self.path)
@@ -403,3 +406,128 @@ class Pelican(Database):
             raise ValueError("Only single value is accepted for power.")
 
         return df_myna
+
+    def sync(self, component_type, step_types, output_class, files):
+        """Sync result files to the database using Pelican-style directory
+        and file structure.
+
+        Args:
+          component_type: (str) name of workflow component app, i.e., Component.component_application
+          step_types: (list of str) list of workflow component types, i.e., Component.types
+          output_class: class object for the output file, e.g., Component.output_requirement
+          files: List of files to sync for the passed workflow component
+
+        Returns:
+          synced_files: list of files that were synced
+
+        For each time segment (i.e., "layer"):
+        1. Open the corresponding data file (CSV?, Arrow?, Parquet?, HDF5?)
+        2. Get all compatible time-series data from the completed Myna Components
+        3. Write all time-series data to the file with each row being a unique time and
+           each column corresponding to the variable name (consider overwrite behavior)
+        4. Close the file stream
+        """
+        # Initialize synced file list and write directory
+        synced_files = []
+        os.makedirs(self.sync_timeseries_dir, exist_ok=True)
+
+        # Check if simulation type is compatible for syncing, else return empty list
+        is_part_type = "part" in step_types
+        is_layer_type = "layer" in step_types
+        is_region_type = ("region" in step_types) or ("build_region" in step_types)
+        if not (is_part_type and is_layer_type) or is_region_type:
+            return synced_files
+
+        # Define formatters
+        def format_segment_prefix(part):
+            """Format sync file name"""
+            return f"{part}"
+
+        def format_variable_name(name, unit):
+            """Format variable name with units"""
+            return f"{name} ({unit})"
+
+        def format_time_segment_key(time_start, time_end):
+            """Format variable name with units"""
+            return f"{time_start}-{time_end} (s)"
+
+        # Get prefixes for each part
+        segment_prefixes = []
+        for f in files:
+            part = os.path.basename(
+                os.path.dirname(os.path.dirname(os.path.dirname(f)))
+            )
+            prefix = format_segment_prefix(part)
+            segment_prefixes.append(prefix)
+
+        # For each file in each sync file
+        for segment_prefix in segment_prefixes:
+            type_prefix = f"myna_{component_type}"
+            for f in files:
+                part = os.path.basename(
+                    os.path.dirname(os.path.dirname(os.path.dirname(f)))
+                )
+                prefix = format_segment_prefix(part)
+                if prefix != segment_prefix:
+                    continue
+
+                # Get the output fields
+                # Time should always be in "time (s)" field
+                try:
+                    # Get values for the time series
+                    times, values, value_names, value_units = output_class(
+                        f
+                    ).get_values_for_sync(mode="temporal")
+                    value_names = [f"{type_prefix}_{name}" for name in value_names]
+                    t_start = np.min(times)
+                    t_end = np.max(times)
+                except (NotImplementedError, KeyError):
+                    print("    - Time series sync not implemented for any files")
+                    continue
+
+                # Write values to data file:
+                # - each value gets its own directory
+                # - overwrite any existing values in time range
+                for value_data, value_name, value_unit in zip(
+                    values, value_names, value_units
+                ):
+                    # Ensure that the directory for the variable exists
+                    export_dir = os.path.join(self.sync_timeseries_dir, value_name)
+                    os.makedirs(export_dir, exist_ok=True)
+
+                    # Write the data sync file
+                    sync_data_file = os.path.join(export_dir, "data.csv")
+                    column_name = format_variable_name(value_name, value_unit)
+                    print(f"  - Syncing {sync_data_file}")
+                    schema = {
+                        "time (s)": Float64,
+                        column_name: Float64,
+                    }
+                    if os.path.exists(sync_data_file):
+                        df_sync = pl.read_csv(
+                            sync_data_file,
+                            schema=schema,
+                        )
+                        df_sync = df_sync.filter(
+                            (pl.col("time (s)") < t_start)
+                            | (pl.col("time (s)") > t_end)
+                        )
+                    else:
+                        df_sync = pl.DataFrame({k: [] for k in schema}, schema=schema)
+                    df_new_data = pl.DataFrame(
+                        {
+                            "time (s)": times,
+                            column_name: value_data,
+                        },
+                        schema=schema,
+                    )
+                    df_sync = pl.concat([df_sync, df_new_data]).sort(by="time (s)")
+                    df_sync.write_csv(sync_data_file)
+                    synced_files.append(sync_data_file)
+
+                    # Write the metadata sync file
+                    sync_metadata_file = os.path.join(export_dir, "metadata.yaml")
+                    segment_key = format_time_segment_key(t_start, t_end)
+                    self.write_segment_sync_metadata(sync_metadata_file, f, segment_key)
+
+        return synced_files
