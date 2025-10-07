@@ -111,8 +111,11 @@ class File:
                 msg = f"Not all {mode} locator variables in {self.__class__.__name__}"
                 raise KeyError(msg)
 
-            # Get the other values
+            # Get the other values, filtering out any rows with nan or null values in
+            # the selected columns
             value_cols = list(set([x.fstr for x in self.variables]) - locator_variables)
+            df = df.fill_nan(None)
+            df = df.select(value_cols).drop_nulls()
             if len(value_cols) == 0:
                 msg = f"No {mode} variables specified for {self.__class__.__name__}"
                 raise KeyError(msg)
