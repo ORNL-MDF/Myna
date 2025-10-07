@@ -501,7 +501,9 @@ class AdditiveFOAMRegionReduced(AdditiveFOAM):
 
             # Determine if parallel execution
             np = nested_get(
-                self.settings["steps"][0][self.step_name],
+                self.settings["steps"][int(os.environ["MYNA_STEP_INDEX"])][
+                    self.step_name
+                ],
                 ["execute", "np"],
                 default_value=1,
             )
