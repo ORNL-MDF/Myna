@@ -17,3 +17,11 @@ class FileVTK(File):
     def __init__(self, file):
         File.__init__(self, file)
         self.filetype = ".vtk"
+
+
+class FilePVD(File):
+    """File format class for VTK PVD output data"""
+
+    def __init__(self, file):
+        File.__init__(self, file)
+        self.filetype = ".pvd"

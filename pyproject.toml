@@ -19,7 +19,7 @@ classifiers = [
     "Operating System :: OS Independent"]
 dependencies = [
     'PyYAML',
-    # Necessary for pyebsd
+    # numpy < 2.0 necessary for pyebsd
     'numpy < 2.0',
     'numpy-stl',
     'pandas',
@@ -30,7 +30,8 @@ dependencies = [
     'polars',
     'scipy',
     'gitpython',
-    'zarr']
+    'zarr',
+    'docker']
 
 [project.optional-dependencies]
 dev = [

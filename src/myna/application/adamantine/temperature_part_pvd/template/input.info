@@ -1,0 +1,140 @@
+geometry
+{
+  import_mesh false
+  dim 3
+  length 0.015
+  height 0.002
+  width 0.015
+  length_origin 0.402615
+  height_origin 0
+  width_origin -0.00576
+  length_divisions 30
+  height_divisions 4
+  width_divisions 30
+  use_powder false
+  material_deposition true
+  material_deposition_method scan_paths
+  deposition_length 0.0005
+  deposition_height 0.0005
+  deposition_width 0.0005
+  deposition_lead_time 0.0005
+  material_height 0.001
+}
+
+boundary
+{
+  type convective,radiative
+}
+
+physics
+{
+  thermal true
+  mechanical false
+}
+
+refinement
+{
+  n_refinements 0 ; Number of time the cells on the paths of the beams are
+                  ; refined
+  time_steps_between_refinement 2000000000 ; number of time steps after which
+                                           ; the refinement process is performed
+}
+
+materials
+{
+  n_materials 1
+
+  property_format polynomial
+  material_0
+  {
+    solid
+    {
+      density 7904; [kg/m^3] For now all the states needs to have the same
+                    ; density.
+      specific_heat 714; [J/kg K]
+      thermal_conductivity_x 31.4 ; [W/m K]
+      thermal_conductivity_y 31.4 ; [W/m K]
+      thermal_conductivity_z 31.4 ; [W/m K]
+      convection_heat_transfer_coef 100 ; [W/(m^2*K)]
+      emissivity 0.15
+    }
+
+    powder
+    {
+      specific_heat 714; [J/kg K]
+      density 7904; [kg/m^3]
+      thermal_conductivity_x 0.314 ; [W/m K]
+      thermal_conductivity_y 0.314 ; [W/m K]
+      thermal_conductivity_z 0.314 ; [W/m K]
+      convection_heat_transfer_coef 100 ; [W/(m^2*K)]
+      emissivity 0.15
+    }
+
+    liquid
+    {
+      specific_heat 847; [J/kg K]
+      density 7904; [kg/m^3]
+      thermal_conductivity_x 37.3 ; [W/m k]
+      thermal_conductivity_y 37.3 ; [W/m k]
+      thermal_conductivity_z 37.3 ; [W/m k]
+      convection_heat_transfer_coef 100 ; [W/(m^2*K)]
+      emissivity 0.15
+      ; Not all three states need to define the same properties or to exist
+    }
+
+    solidus 1675; [K]
+    liquidus 1708; [K]
+    latent_heat 290000 ; [J/kg]
+    radiation_temperature_infty 300 ; [K]
+    convection_temperature_infty 300 ; [K]
+  }
+}
+
+sources
+{
+  n_beams 1
+
+  beam_0
+  {
+    type goldak ; goldak (laser) or electron_beam
+    depth 0.1e-3 ; [m] maximum depth reached by the laser
+    diameter 0.8e-3 ; [m]
+    scan_path_file scanpath_adamantine.txt
+    scan_path_file_format segment
+    absorption_efficiency 0.36 ; number between 0 and 1 equivalent to
+                              ; energy_conversion_efficiency * control_efficiency
+                              ; for an electron beam
+    max_power 360.0 ; [W], current * voltage for an electron beam
+  }
+}
+
+time_stepping
+{
+  method forward_euler ; Possibilities: forward_euler, rk_third_order,
+                        ; rk_fourth_order
+  duration 2.0 ; [s]
+  time_step 0.6e-4 ; [s]
+}
+
+post_processor
+{
+  filename_prefix output
+  time_steps_between_output 250
+}
+
+discretization
+{
+  thermal
+  {
+    fe_degree 3
+    quadrature gauss ; Optional parameter. Possibilities: gauss or lobatto
+  }
+}
+
+profiling
+{
+  timer false
+  caliper "spot(profile.mpi),loop-report,runtime-report"
+}
+
+memory_space host ; Always run on the host

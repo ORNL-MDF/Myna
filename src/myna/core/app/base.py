@@ -149,6 +149,7 @@ class MynaApp:
         self.args, _ = self.parser.parse_known_args()
         self.set_procs()
         self.mpiargs_to_current()
+        self.set_template_path()
         if self.args.skip:
             print(f"- Skipping part of step {self.name}")
             sys.exit()
