@@ -31,8 +31,6 @@ import mistlib as mist
 from myna.application.adamantine import (
     AdamantineApp,
     convert_myna_local_scanpath_to_adamantine,
-    write_dict_to_input_file,
-    input_file_to_dict,
 )
 
 
@@ -141,7 +139,7 @@ class AdamantineTemperatureApp(AdamantineApp):
             )
             mist_material = mist.core.MaterialInformation(mist_path)
             mist_material.write_adamantine_input(tmp_material_input.name)
-            material_dict = input_file_to_dict(tmp_material_input.name)
+            material_dict = self.input_file_to_dict(tmp_material_input.name)
             input_dict["materials"] = material_dict["materials"]
 
         # Laser efficiency
@@ -184,7 +182,7 @@ class AdamantineTemperatureApp(AdamantineApp):
         self.copy(case_dict["case_dir"])
 
         # Load in the input file
-        input_dict = input_file_to_dict(
+        input_dict = self.input_file_to_dict(
             Path(case_dict["case_dir"]) / Path(self.case_files["input"])
         )
 
@@ -307,7 +305,7 @@ class AdamantineTemperatureApp(AdamantineApp):
         ].name.replace(".pvd", "")
 
         # WRITE UPDATED INPUT FILE
-        write_dict_to_input_file(
+        self.write_dict_to_input_file(
             input_dict, case_dict["case_dir"] / Path(self.case_files["input"])
         )
 
