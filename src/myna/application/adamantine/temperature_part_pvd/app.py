@@ -28,10 +28,7 @@ from tempfile import NamedTemporaryFile
 import docker
 import numpy as np
 import mistlib as mist
-from myna.application.adamantine import (
-    AdamantineApp,
-    convert_myna_local_scanpath_to_adamantine,
-)
+from myna.application.adamantine import AdamantineApp
 
 
 class AdamantineTemperatureApp(AdamantineApp):
@@ -197,7 +194,7 @@ class AdamantineTemperatureApp(AdamantineApp):
 
         # UPDATE SCAN PATH
         # Convert scan path
-        scan_dict = convert_myna_local_scanpath_to_adamantine(
+        scan_dict = self.convert_myna_local_scanpath_to_adamantine(
             case_dict["part"],
             case_dict["layer"],
             case_dict["case_dir"] / self.case_files["scanpath"],
