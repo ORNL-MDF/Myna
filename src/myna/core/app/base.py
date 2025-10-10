@@ -34,14 +34,17 @@ class MynaApp:
 
     def __init__(self, name):
         self.name = name
-        self.input_file = os.environ["MYNA_INPUT"]
-        self.settings = load_input(self.input_file)
-        self.path = os.environ["MYNA_APP_PATH"]
-        self.step_name = os.environ["MYNA_STEP_NAME"]
-        self.step_number = [list(x.keys())[0] for x in self.settings["steps"]].index(
-            self.step_name
-        )
-        self.last_step_name = os.environ["MYNA_LAST_STEP_NAME"]
+        self.path = os.environ.get("MYNA_APP_PATH")
+        self.step_name = os.environ.get("MYNA_STEP_NAME")
+        self.last_step_name = os.environ.get("MYNA_LAST_STEP_NAME")
+        self.input_file = os.environ.get("MYNA_INPUT")
+        self.settings = {}
+        self.step_number = None
+        if self.input_file is not None:
+            self.settings = load_input(self.input_file)
+            self.step_number = [
+                list(x.keys())[0] for x in self.settings["steps"]
+            ].index(self.step_name)
 
         # Check if there is a corresponding component class. This will be None if
         # class is not in the Component lookup dictionary,
