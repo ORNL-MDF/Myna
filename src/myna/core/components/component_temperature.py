@@ -14,7 +14,7 @@ Available subclasses:
 """
 
 from .component import *
-from myna.core.files import FileTemperature
+from myna.core.files import FileTemperature, FilePVD
 
 ##################
 # Base Component #
@@ -52,3 +52,13 @@ class ComponentTemperaturePart(ComponentTemperature):
     def __init__(self):
         ComponentTemperature.__init__(self)
         self.types.extend(["part", "layer"])
+
+
+class ComponentTemperaturePartPVD(ComponentTemperaturePart):
+    """Layer-wise Component that outputs the domain temperature
+    for a part in the format of the class `FilePVD`
+    """
+
+    def __init__(self):
+        super().__init__()
+        self.output_requirement = FilePVD

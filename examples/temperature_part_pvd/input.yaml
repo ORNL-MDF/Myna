@@ -1,0 +1,26 @@
+steps:
+- adamantine:
+    class: temperature_part_pvd
+    application: adamantine
+    executable: docker
+    configure:
+      mesh-substrate-depth: 2.0e-3
+      mesh-substrate-xy-pad: 1.0e-3
+      mesh-size-factor: 1
+      write-freqeuncy-factor: 5
+    execute:
+      np: 8
+      docker-image-name: rombur/adamantine:1.0
+data:
+  build:
+    datatype: Pelican
+    name: myna_output
+    path: ../Pelican
+    parts:
+      P0:
+        time_segments: [115-190]
+        starting_points:
+          x (mm): [415.93178]
+          y (mm): [2.57593]
+          z (mm): [100.284]
+          onoff: [true]
