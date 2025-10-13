@@ -19,8 +19,13 @@ class AdamantineApp(MynaApp):
         # Parse app-specific arguments
         self.parse_known_args()
 
-    def input_file_to_dict(self, input_file: str | Path):
-        """Loads an adamantine-style input file to a Python dictionary"""
+    def boost_info_file_to_dict(self, input_file: str | Path):
+        """Loads a Boost info format adamantine input file to a Python dictionary
+
+        Boost info specification:
+            https://www.boost.org/doc/libs/1_73_0/doc/html/property_tree/parsers.html
+            #property_tree.parsers.info_parser
+        """
         with open(input_file, "r", encoding="utf-8") as f:
             lines = f.readlines()
 
@@ -60,8 +65,10 @@ class AdamantineApp(MynaApp):
 
         return input_dict
 
-    def write_dict_to_input_file(self, input_dict: dict, input_file: str | Path):
-        """Writes an adamantine input dictionary to the specified file"""
+    def write_dict_to_boost_info_file(self, input_dict: dict, input_file: str | Path):
+        """Writes an adamantine input dictionary to the specified file in Boost info
+        format"""
+
         # Assemble lines of the input file
         lines = []
         indent = ""

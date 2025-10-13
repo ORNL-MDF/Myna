@@ -23,6 +23,7 @@ the `max(mesh_size_xy, spot size)` in the deposit length and width and
 `max(mesh_size_z, layer thickness)` in the deposit height.
 """
 import os
+import json
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 import docker
@@ -41,7 +42,7 @@ class AdamantineTemperatureApp(AdamantineApp):
 
         # Define case file names
         self.case_files = {
-            "input": "input.info",
+            "input": "input.json",
             "scanpath": "scanpath.txt",
             "log": "adamantine.log",
         }
@@ -136,7 +137,7 @@ class AdamantineTemperatureApp(AdamantineApp):
             )
             mist_material = mist.core.MaterialInformation(mist_path)
             mist_material.write_adamantine_input(tmp_material_input.name)
-            material_dict = self.input_file_to_dict(tmp_material_input.name)
+            material_dict = self.boost_info_file_to_dict(tmp_material_input.name)
             input_dict["materials"] = material_dict["materials"]
 
         # Laser efficiency
@@ -179,9 +180,9 @@ class AdamantineTemperatureApp(AdamantineApp):
         self.copy(case_dict["case_dir"])
 
         # Load in the input file
-        input_dict = self.input_file_to_dict(
-            Path(case_dict["case_dir"]) / Path(self.case_files["input"])
-        )
+        input_path = Path(case_dict["case_dir"]) / Path(self.case_files["input"])
+        with open(input_path, "r", encoding="utf-8") as f:
+            input_dict = json.load(f)
 
         # UPDATE MATERIAL PROPERTIES
         input_dict = self.update_material_property_dict_from_mist(
@@ -302,9 +303,9 @@ class AdamantineTemperatureApp(AdamantineApp):
         ].name.replace(".pvd", "")
 
         # WRITE UPDATED INPUT FILE
-        self.write_dict_to_input_file(
-            input_dict, case_dict["case_dir"] / Path(self.case_files["input"])
-        )
+        export_file = case_dict["case_dir"] / Path(self.case_files["input"])
+        with open(export_file, "w", encoding="utf-8") as ef:
+            json.dump(input_dict, ef, indent=4)
 
     def configure(self):
         """Configure case directories for all cases associated with the Myna step"""
