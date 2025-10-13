@@ -111,6 +111,25 @@ class AdamantineTemperatureApp(AdamantineApp):
             "Output frequency is equal to the"
             "(factor * nominal spot size) / median scan speed",
         )
+        self.parser.add_argument(
+            "--convection-heat-transfer-coef",
+            default=100.0,
+            type=float,
+            help="Heat transfer coefficient for the solid & liquid "
+            "convective boundary condition (W m^-2)",
+        )
+        self.parser.add_argument(
+            "--convection-temperature-infty",
+            default=300.0,
+            type=float,
+            help="Temperature at x -> infinity for convective boundary condition (K)",
+        )
+        self.parser.add_argument(
+            "--courant",
+            default=0.1,
+            type=float,
+            help="Courant number for controlling the time step, must be less than 1",
+        )
         self.parse_known_args()
 
     def parse_execute_arguments(self):
@@ -149,16 +168,16 @@ class AdamantineTemperatureApp(AdamantineApp):
         """Update material boundary conditions that are not set by Mist"""
         input_dict["materials"]["material_0"]["solid"][
             "convection_heat_transfer_coef"
-        ] = 100.0  # W / (K * m^2)
+        ] = self.args.convection_heat_transfer_coef  # W / (K * m^2)
         input_dict["materials"]["material_0"]["liquid"][
             "convection_heat_transfer_coef"
-        ] = 100.0  # W / (K * m^2)
+        ] = self.args.convection_heat_transfer_coef  # W / (K * m^2)
         input_dict["materials"]["material_0"][
             "radiation_temperature_infty"
-        ] = 300.0  # K
+        ] = self.args.radiation_temperature_infty  # K
         input_dict["materials"]["material_0"][
             "convection_temperature_infty"
-        ] = 300.0  # K
+        ] = self.args.radiation_temperature_infty  # K
         return input_dict
 
     def update_laser_parameter_dict(self, input_dict: dict, case_dict: dict):
@@ -204,7 +223,7 @@ class AdamantineTemperatureApp(AdamantineApp):
         # UPDATE DOMAIN GEOMETRY
         # Use the scan path bounds along with the user-specified values
         # - X and Y ranges: scan path bounds + xy_pad on both sides
-        # - Z ranges: scan path bounds + substrate depth + 2 * (deposit height = spot_size)
+        # - Z ranges: scan path bounds + substrate depth + 2 * spot_size
         # - Origin is the lower-left corner of the domain
         bounds = np.array(scan_dict["bounds"])
         mesh_sizes = np.array(
@@ -280,7 +299,9 @@ class AdamantineTemperatureApp(AdamantineApp):
                 for d in ["x", "y", "z"]
             ]
         )
-        time_step_courant = np.min(0.1 * np.power(mesh_sizes, 2) / thermal_diffusivity)
+        time_step_courant = np.min(
+            self.args.courant * np.power(mesh_sizes, 2) / thermal_diffusivity
+        )
         time_step_heuristic = (0.1 * case_dict["spot_size"]) / scan_dict[
             "scan_speed_max"
         ]
