@@ -24,9 +24,9 @@ the `max(mesh_size_xy, spot size)` in the deposit length and width and
 """
 import os
 import json
+import subprocess
 from pathlib import Path
 from tempfile import NamedTemporaryFile
-import docker
 import numpy as np
 import mistlib as mist
 from myna.application.adamantine import AdamantineApp
@@ -125,6 +125,12 @@ class AdamantineTemperatureApp(AdamantineApp):
             help="Temperature at x -> infinity for convective boundary condition (K)",
         )
         self.parser.add_argument(
+            "--radiation-temperature-infty",
+            default=300.0,
+            type=float,
+            help="Temperature at x -> infinity for radiative boundary condition (K)",
+        )
+        self.parser.add_argument(
             "--courant",
             default=0.1,
             type=float,
@@ -177,7 +183,7 @@ class AdamantineTemperatureApp(AdamantineApp):
         ] = self.args.radiation_temperature_infty  # K
         input_dict["materials"]["material_0"][
             "convection_temperature_infty"
-        ] = self.args.radiation_temperature_infty  # K
+        ] = self.args.convection_temperature_infty  # K
         return input_dict
 
     def update_laser_parameter_dict(self, input_dict: dict, case_dict: dict):
@@ -340,39 +346,43 @@ class AdamantineTemperatureApp(AdamantineApp):
             self.configure_case(case_dict)
 
     def execute_case(self, case_dict: dict):
-        """Execute a case directory using the specified Docker image"""
-        # Create Docker client
-        client = docker.from_env()
+        """Execute a case directory using the specified Myna execution parameters"""
 
         # Run the container with case directory mounted as volume
         # Do not use the Myna mpiexec or mpiflag args, fix MPI options because of
         # running in docker image
-        command = f"/home/adamantine/bin/adamantine -i {self.case_files['input']}"
-        container_case_path = "/home/myna_case"
-        if self.args.np > 1:
-            command = f"mpirun -n {self.args.np} {command}"
-        container = client.containers.run(
-            self.args.docker_image_name,
-            f"bash -c 'cd {container_case_path}; {command}'",
-            detach=True,
-            remove=True,
-            volumes={
-                str(case_dict["case_dir"].expanduser().resolve()): {
-                    "bind": container_case_path
-                },
-            },
-        )
+        # Open log file for capturing process output
+        log_file = case_dict["case_dir"] / self.case_files["log"]
+        with open(log_file, "w", encoding="utf-8") as lf:
 
-        # Stream logs to log file in the case directory
-        with open(
-            case_dict["case_dir"] / self.case_files["log"], "w", encoding="utf-8"
-        ) as lf:
-            for line in container.logs(stream=True):
-                lf.write(line.decode(encoding="utf-8", errors="replaces"))
-                lf.flush()
+            # Assemble command and kwargs for launching process
+            container_case_path = "/home/myna"
+            cmd_args = [
+                self.args.exec,
+                "-i",
+                self.case_files["input"],
+                ">",
+                self.case_files["log"],
+                "2>&1",
+            ]
+            if self.args.docker_image is not None:
+                kwargs = {
+                    "remove": True,
+                    "volumes": {
+                        str(case_dict["case_dir"].expanduser().resolve()): {
+                            "bind": container_case_path
+                        },
+                    },
+                    "working_dir": container_case_path,
+                }
+            else:
+                kwargs = {
+                    "stdout": lf,
+                    "stderr": subprocess.STDOUT,
+                }
+            process = self.start_subprocess_with_mpi_args(cmd_args, **kwargs)
 
-        # Wait for the container to stop before continuing to next case
-        container.wait()
+        return process
 
     def execute(self):
         """Execute all cases for the Myna step"""
@@ -382,5 +392,18 @@ class AdamantineTemperatureApp(AdamantineApp):
         # Iterate through cases
         output_files = self.settings["data"]["output_paths"][self.step_name]
         case_dicts = [self.parse_mynafile_path_to_dict(x) for x in output_files]
+        processes = []
         for case_dict in case_dicts:
-            self.execute_case(case_dict)
+            # Execute the case
+            process = self.execute_case(case_dict)
+
+            # Handle serial versus batch submission processes
+            if self.args.batch:
+                processes.append(process)
+                self.wait_for_open_batch_resources(processes)
+            else:
+                self.wait_for_process_success(process)
+
+        # Wait for all jobs to exit successfully if not finished
+        if self.args.batch:
+            self.wait_for_all_process_success(processes)

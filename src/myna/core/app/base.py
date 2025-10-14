@@ -14,6 +14,8 @@ import time
 import shutil
 import subprocess
 import warnings
+import docker
+from docker.models.containers import Container
 from myna.core.workflow.load_input import load_input
 from myna.core.utils import is_executable, get_quoted_str
 from myna.core.components import return_step_class
@@ -136,6 +138,14 @@ class MynaApp:
             default=None,
             type=str,
             help="(str) file to source to set up environment for executable",
+        )
+        self.parser.add_argument(
+            "--docker-image",
+            default=None,
+            type=str,
+            help="(str) Docker image to use to run the app. The executable, "
+            "MPI options, and environment file will be applied within "
+            "the docker container",
         )
         self.parser.add_argument(
             "--mpiargs",
@@ -264,15 +274,42 @@ class MynaApp:
         else:
             print(f"Warning: NOT overwriting existing case in: {case_dir}")
 
-    def start_subprocess(self, cmd_args, **kwargs):
-        """Starts a subprocess, activating an environment if present"""
-        if self.args.env is not None:
-            popen_args = [f". {self.args.env}; " + " ".join(cmd_args)]
-            process = subprocess.Popen(popen_args, shell=True, **kwargs)
-            print(f"myna subprocess (PID {process.pid}): {popen_args}")
+    def start_subprocess(self, cmd_args, **kwargs) -> subprocess.Popen | Container:
+        """Starts a subprocess, activating an environment if present
+
+        kwargs are passed to the subprocess launcher, Popen or Docker:
+            - For Popen subprocess, this can be used to redirect stdout & stderr, etc.
+            - For Docker subprocesses, this can be used to pass a volume dictionary,
+              whether to remove container after execution, etc.
+        """
+        # Launch using subprocess.Popen
+        if self.args.docker_image is None:
+            if self.args.env is not None:
+                cmd_arg_str = [f". {self.args.env}; " + " ".join(cmd_args)]
+                if self.args.docker_image is None:
+                    process = subprocess.Popen(cmd_arg_str, shell=True, **kwargs)
+                    print(f"myna subprocess (PID {process.pid}): {cmd_arg_str}")
+                    return process
+            process = subprocess.Popen(cmd_args, **kwargs)
+            print(f"myna subprocess (PID {process.pid}): {cmd_args}")
             return process
-        process = subprocess.Popen(cmd_args, **kwargs)
-        print(f"myna subprocess (PID {process.pid}): {cmd_args}")
+
+        # Launch using Docker, overriding any default entrypoint by using bash
+        cmd_arg_str = " ".join(cmd_args)
+        if self.args.env is not None:
+            cmd_arg_str = f". {self.args.env}; " + cmd_arg_str
+        cmd_arg_str = f"-c '{cmd_arg_str}'"
+        client = docker.from_env()
+        process = client.containers.run(
+            self.args.docker_image,
+            cmd_arg_str,
+            entrypoint="bash",
+            detach=True,
+            **kwargs,
+        )
+        print(
+            f"myna docker container {self.args.docker_image} ({process.name}): {cmd_arg_str}"
+        )
         return process
 
     def start_subprocess_with_mpi_args(self, cmd_args, **kwargs):
@@ -289,7 +326,9 @@ class MynaApp:
         modified_cmd_args = [str(x) for x in modified_cmd_args]
         return self.start_subprocess(modified_cmd_args, **kwargs)
 
-    def wait_for_process_success(self, process, raise_error=True):
+    def wait_for_process_success(
+        self, process: subprocess.Popen | Container, raise_error=True
+    ):
         """Wait for a process to complete successfully, raising an error if the
         process fails.
 
@@ -301,7 +340,10 @@ class MynaApp:
             returncode: (int) process returncode from `Popen.wait()`
         """
 
+        # Both subprocess.Popen and the docker Container class have the .wait() method
         returncode = process.wait()
+        if isinstance(process, Container):
+            returncode = returncode["StatusCode"]
         if returncode != 0:
             error_msg = (
                 f"{self.name}: Subprocess exited with return code {returncode}."
@@ -337,7 +379,9 @@ class MynaApp:
             if raise_error:
                 raise subprocess.SubprocessError(error_msg)
 
-    def wait_for_open_batch_resources(self, processes, poll_interval=1):
+    def wait_for_open_batch_resources(
+        self, processes: list[subprocess.Popen | Container], poll_interval=1
+    ):
         """Given a list of subprocesses, checks if there are available resources
         to run another subprocess. If there are no open resources, then will wait
         to return until there are.
@@ -361,8 +405,15 @@ class MynaApp:
             procs_in_use = 0
             for process in processes:
                 # Add `self.args.np` to processors in use if process is still running
-                if process.poll() is None:
-                    procs_in_use += self.args.np
+                if isinstance(process, subprocess.Popen):
+                    # .poll() will return None is process is still running
+                    if process.poll() is None:
+                        procs_in_use += self.args.np
+                elif isinstance(process, Container):
+                    # status will return either "running" or "exited"
+                    process.reload()
+                    if str(process.status).lower() == "running":
+                        procs_in_use += self.args.np
             open_resources = procs_in_use <= (self.args.maxproc - self.args.np)
             if not open_resources:
                 time.sleep(poll_interval)
