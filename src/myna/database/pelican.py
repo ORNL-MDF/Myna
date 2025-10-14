@@ -475,9 +475,10 @@ class Pelican(Database):
                 # Time should always be in "time (s)" field
                 try:
                     # Get values for the time series
-                    times, values, value_names, value_units = output_class(
+                    locator, values, value_names, value_units = output_class(
                         f
                     ).get_values_for_sync(mode="temporal")
+                    times = locator[0]
                     value_names = [f"{type_prefix}_{name}" for name in value_names]
                     t_start = np.min(times)
                     t_end = np.max(times)
@@ -520,6 +521,7 @@ class Pelican(Database):
                             column_name: value_data,
                         },
                         schema=schema,
+                        strict=False,
                     )
                     df_sync = pl.concat([df_sync, df_new_data]).sort(by="time (s)")
                     df_sync.write_csv(sync_data_file)
