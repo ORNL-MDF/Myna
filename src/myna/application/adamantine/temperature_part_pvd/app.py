@@ -140,12 +140,6 @@ class AdamantineTemperatureApp(AdamantineApp):
 
     def parse_execute_arguments(self):
         """Check for arguments relevant to the execute step and update app settings"""
-        self.parser.add_argument(
-            "--docker-image-name",
-            default="rombur/adamantine:1.0",
-            type=str,
-            help="Name of the docker image to use, must exist locally to work",
-        )
         self.parse_known_args()
 
     def update_material_property_dict_from_mist(self, input_dict: dict, material):
