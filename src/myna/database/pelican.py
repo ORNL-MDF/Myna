@@ -321,9 +321,9 @@ class Pelican(Database):
                 (pl.col("y (mm)").interpolate_by("time").replace(np.nan, None)).alias(
                     "y (mm)"
                 ),
-                (pl.col("z (mm)").interpolate_by("time").replace(np.nan, None)).alias(
-                    "z (mm)"
-                ),
+                (
+                    pl.col("z (mm)").fill_null(strategy="forward").replace(np.nan, None)
+                ).alias("z (mm)"),
                 (pl.col("time (s)").alias("time (s)")),
                 (pl.col("time").alias("time")),
             ]
