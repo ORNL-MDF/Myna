@@ -6,13 +6,14 @@
 #
 # License: 3-clause BSD, see https://opensource.org/licenses/BSD-3-Clause.
 #
-import mistlib as mist
 import os
-from myna.core.workflow.load_input import load_input
-import argparse
-import sys
+import glob
 import shutil
+from pathlib import Path
 import numpy as np
+import polars as pl
+import mistlib as mist
+from myna.core.workflow.load_input import load_input
 from myna.application.thesis import (
     get_scan_stats,
     get_initial_wait_time,
@@ -39,6 +40,47 @@ def configure_case(case_dir, sim, myna_input="myna_data.yaml"):
     ]
     case_scanfile = os.path.join(case_dir, "Path.txt")
     shutil.copy(myna_scanfile, case_scanfile)
+
+    # Check if scanfile has multiple z-values
+    df = pl.read_csv(case_scanfile, separator="\t")
+    print(f"{df.columns=}")
+    zs = df["Z(mm)"].unique()
+    if len(zs) > 1:
+        print(
+            f"WARNING: Thesis scanpath file for {case_dir} contains {len(zs)} z-heights!"
+        )
+
+    # If scanfile has multiple z-values, then segment it into multiple paths with
+    # constant z-values
+    index_0 = 0
+    index_1 = -1
+    z_0 = None
+    index_pairs = []
+    for index, (row) in enumerate(df.iter_rows(named=True)):
+
+        # If at the start, set current z-value and start index
+        if z_0 is None:
+            index_0 = index
+            z_0 = row["Z(mm)"]
+
+        # If the same z-value as the last row, update end index
+        elif z_0 == row["Z(mm)"]:
+            index_1 = index
+
+        # If not the same z-value as the last row, record the start and end indices
+        # and update the z-value
+        else:
+            z_0 = row["Z(mm)"]
+            index_pairs.append((index_0, index_1))
+            index_0 = index
+
+    # Handle if there is only one segment
+    if len(index_pairs) == 0:
+        index_pairs.append((0, df.shape[0]))
+
+    # Handle last segment if there are multiple segments
+    elif (index_0, index_1) != index_pairs[-1]:
+        index_pairs.append((index_0, index_1))
 
     # Set beam data
     beam_file = os.path.join(case_dir, "Beam.txt")
@@ -74,14 +116,46 @@ def configure_case(case_dir, sim, myna_input="myna_data.yaml"):
     domain_file = os.path.join(case_dir, "Domain.txt")
     adjust_parameter(domain_file, "Res", sim.args.res)
 
-    # Get elapsed time, adjusting for any initial wait time
-    elapsed_time, _ = get_scan_stats(case_scanfile)
+    # Get output times for whole scan path, ignoring initial wait time
     initial_wait_time = get_initial_wait_time(case_scanfile)
-
-    # Update output times
+    elapsed_time, _ = get_scan_stats(case_scanfile)
     times = np.linspace(initial_wait_time, elapsed_time, sim.args.nout)
-    mode_file = os.path.join(case_dir, "Mode.txt")
-    adjust_parameter(mode_file, "Times", ",".join([str(x) for x in times]))
+
+    # For each index pair, create a separate case
+    pattern = str(Path(case_dir) / "*.txt")
+    configured_case_files = sorted(glob.glob(pattern))
+    elasped_segment_time = 0.0
+    for index, pair in enumerate(index_pairs):
+        segment_dir = Path(case_dir) / f"path_segment_{index:03}"
+        os.makedirs(segment_dir, exist_ok=True)
+        # Copy files from base configured directory
+        for case_file in configured_case_files:
+            shutil.copy(case_file, segment_dir / Path(case_file).name)
+        # Write segment path
+        # Start from beginning of path to capture accumulated heat
+        segment_scanfile = segment_dir / "Path.txt"
+        df_segment = df[0 : pair[1] + 1]
+        df_segment.write_csv(segment_scanfile, separator="\t")
+
+        # Get elapsed time in segment
+        elapsed_time, _ = get_scan_stats(segment_scanfile)
+        if index == len(index_pairs) - 1:
+            segment_times = [x for x in times if (x >= elasped_segment_time)]
+        else:
+            segment_times = [
+                x for x in times if (x >= elasped_segment_time) & (x < (elapsed_time))
+            ]
+        elasped_segment_time = elapsed_time
+
+        # Update output times
+        mode_file = segment_dir / "Mode.txt"
+        adjust_parameter(
+            str(mode_file), "Times", ",".join([str(x) for x in segment_times])
+        )
+
+    # Clean up base case files
+    for case_file in configured_case_files:
+        os.remove(case_file)
 
     return
 
