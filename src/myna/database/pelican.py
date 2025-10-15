@@ -115,10 +115,10 @@ class Pelican(Database):
         starting_points = {
             key: x[int(layer)]
             for key, x in nested_get(
-                input_dict, ["data", "build", "parts", part, "starting_points"]
+                input_dict, ["data", "build", "parts", part, "starting_points"], {}
             ).items()
         }
-        if all([x is None for _, x in starting_points.items()]):
+        if all(x is None for _, x in starting_points.items()):
             starting_points = None
         return {
             "start_time": times[0],
