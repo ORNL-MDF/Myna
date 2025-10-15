@@ -7,9 +7,11 @@
 # License: 3-clause BSD, see https://opensource.org/licenses/BSD-3-Clause.
 #
 import os
+import glob
+from pathlib import Path
+import polars as pl
 from myna.application.thesis import adjust_parameter, read_parameter
 from myna.application.thesis import Thesis
-import pandas as pd
 
 
 def run_case(
@@ -50,9 +52,19 @@ def main():
     output_files = []
     proc_list = []
     for case_dir in [os.path.dirname(x) for x in myna_files]:
-        sim.set_case(case_dir, case_dir)
-        result_file, proc_list = run_case(proc_list, sim)
-        output_files.append(result_file)
+        # Find all path segments in the case
+        pattern = str(Path(case_dir) / "path_segment_*")
+        segment_dirs = sorted(glob.glob(pattern))
+        print(f"{pattern=}")
+        print(f"{segment_dirs=}")
+
+        # Run all segments in the case
+        segment_results = []
+        for segment_dir in segment_dirs:
+            sim.set_case(segment_dir, segment_dir)
+            result_file, proc_list = run_case(proc_list, sim)
+            segment_results.append(result_file)
+        output_files.append(segment_results)
 
     # Wait for any remaining processes
     for proc in proc_list:
@@ -61,20 +73,46 @@ def main():
         proc.wait()
         print(f"\t{pid=}: Simulation complete")
 
+    # Set myna table schema
+    myna_schema = {
+        "x (m)": pl.Float64,
+        "y (m)": pl.Float64,
+        "time (s)": pl.Float64,
+        "length (m)": pl.Float64,
+        "width (m)": pl.Float64,
+        "depth (m)": pl.Float64,
+    }
+
     # Post-process results to convert to Myna format
     if output_files:
-        for mynafile, snapshot_data_file in zip(myna_files, output_files):
-            df = pd.read_csv(snapshot_data_file)
-            df["time (s)"] = df["Time (s)"]
-            df["length (m)"] = df["Length Rotated (m)"]
-            df["width (m)"] = df["Width Rotated (m)"]
-            df["depth (m)"] = df["Depth (m)"]
-            df["x (m)"] = df["Beam X"]
-            df["y (m)"] = df["Beam Y"]
-            df = df[
-                ["x (m)", "y (m)", "time (s)", "length (m)", "width (m)", "depth (m)"]
-            ]
-            df.to_csv(mynafile, index=False)
+        for mynafile, segment_files in zip(myna_files, output_files):
+
+            # Append all segment files
+            thesis_to_myna_mapping = {
+                "Time (s)": "time (s)",
+                "Length Rotated (m)": "length (m)",
+                "Width Rotated (m)": "width (m)",
+                "Depth (m)": "depth (m)",
+                "Beam X": "x (m)",
+                "Beam Y": "y (m)",
+            }
+            thesis_schema = {
+                k: myna_schema[v] for k, v in thesis_to_myna_mapping.items()
+            }
+            df_all_segments = pl.DataFrame(schema=myna_schema)
+            for snapshot_data_file in segment_files:
+                # Load and ensure matching of keys and dtypes
+                df = pl.read_csv(snapshot_data_file, columns=list(thesis_schema))
+                df = df.cast(thesis_schema)
+                df = df.rename(thesis_to_myna_mapping)
+                df = df.select(list(myna_schema))
+                # Append to previous segments
+                df_all_segments = pl.concat([df_all_segments, df])
+
+            # Write myna file with data from all segments
+            if df_all_segments.shape[0] > 0:
+                df_all_segments = df_all_segments.sort(by=["time (s)"])
+                df_all_segments.write_csv(mynafile)
 
 
 if __name__ == "__main__":
