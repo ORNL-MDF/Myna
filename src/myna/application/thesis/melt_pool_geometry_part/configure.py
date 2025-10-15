@@ -43,7 +43,6 @@ def configure_case(case_dir, sim, myna_input="myna_data.yaml"):
 
     # Check if scanfile has multiple z-values
     df = pl.read_csv(case_scanfile, separator="\t")
-    print(f"{df.columns=}")
     zs = df["Z(mm)"].unique()
     if len(zs) > 1:
         print(

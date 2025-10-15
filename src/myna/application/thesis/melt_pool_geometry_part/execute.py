@@ -55,8 +55,6 @@ def main():
         # Find all path segments in the case
         pattern = str(Path(case_dir) / "path_segment_*")
         segment_dirs = sorted(glob.glob(pattern))
-        print(f"{pattern=}")
-        print(f"{segment_dirs=}")
 
         # Run all segments in the case
         segment_results = []
