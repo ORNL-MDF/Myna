@@ -286,10 +286,9 @@ class MynaApp:
         if self.args.docker_image is None:
             if self.args.env is not None:
                 cmd_arg_str = [f". {self.args.env}; " + " ".join(cmd_args)]
-                if self.args.docker_image is None:
-                    process = subprocess.Popen(cmd_arg_str, shell=True, **kwargs)
-                    print(f"myna subprocess (PID {process.pid}): {cmd_arg_str}")
-                    return process
+                process = subprocess.Popen(cmd_arg_str, shell=True, **kwargs)
+                print(f"myna subprocess (PID {process.pid}): {cmd_arg_str}")
+                return process
             process = subprocess.Popen(cmd_args, **kwargs)
             print(f"myna subprocess (PID {process.pid}): {cmd_args}")
             return process
@@ -308,7 +307,8 @@ class MynaApp:
             **kwargs,
         )
         print(
-            f"myna docker container {self.args.docker_image} ({process.name}): {cmd_arg_str}"
+            f"myna docker container {self.args.docker_image} ({process.name}):"
+            f" {cmd_arg_str}"
         )
         return process
 
