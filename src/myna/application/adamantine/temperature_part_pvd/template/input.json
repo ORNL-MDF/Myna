@@ -1,0 +1,95 @@
+{
+    "geometry": {
+        "import_mesh": false,
+        "dim": 3,
+        "length": 1.0,
+        "height": 1.0,
+        "width": 1.0,
+        "length_origin": 0.0,
+        "height_origin": 0.0,
+        "width_origin": 0.0,
+        "length_divisions": 10,
+        "height_divisions": 10,
+        "width_divisions": 10,
+        "use_powder": false,
+        "material_deposition": true,
+        "material_deposition_method": "scan_paths",
+        "deposition_length": 0.001,
+        "deposition_height": 0.001,
+        "deposition_width": 0.001,
+        "deposition_lead_time": 0.1,
+        "material_height": 0.1
+    },
+    "boundary": {
+        "type": "convective,radiative"
+    },
+    "physics": {
+        "thermal": true,
+        "mechanical": false
+    },
+    "refinement": {
+        "n_refinements": 0,
+        "time_steps_between_refinement": 2000000000
+    },
+    "materials": {
+        "n_materials": 1,
+        "property_format": "polynomial",
+        "material_0": {
+            "solid": {
+                "density": 8170,
+                "specific_heat": 693.0434,
+                "thermal_conductivity_x": 32.4247,
+                "thermal_conductivity_y": 32.4247,
+                "thermal_conductivity_z": 32.4247,
+                "emissivity": 0.3,
+                "convection_heat_transfer_coef": 100.0
+            },
+            "liquid": {
+                "density": 8170,
+                "specific_heat": 775.0,
+                "thermal_conductivity_x": 30.0,
+                "thermal_conductivity_y": 30.0,
+                "thermal_conductivity_z": 30.0,
+                "emissivity": 0.3,
+                "convection_heat_transfer_coef": 100.0
+            },
+            "solidus": 1563,
+            "liquidus": 1623,
+            "latent_heat": 196000.0,
+            "radiation_temperature_infty": 300.0,
+            "convection_temperature_infty": 300.0
+        }
+    },
+    "sources": {
+        "n_beams": 1,
+        "beam_0": {
+            "type": "goldak",
+            "depth": 0.0002,
+            "diameter": 0.0008,
+            "scan_path_file": "scanpath.txt",
+            "scan_path_file_format": "segment",
+            "absorption_efficiency": 0.36,
+            "max_power": 360.0
+        }
+    },
+    "time_stepping": {
+        "method": "forward_euler",
+        "duration": 1.0,
+        "time_step": 0.001
+    },
+    "post_processor": {
+        "filename_prefix": "temperature_part_pvd-adamantine-FilePVD",
+        "time_steps_between_output": 200
+    },
+    "discretization": {
+        "thermal": {
+            "fe_degree": 3,
+            "quadrature": "gauss"
+        }
+    },
+    "profiling": {
+        "timer": false,
+        "caliper": "spot(profile.mpi),loop-report,runtime-report"
+    },
+    "memory_space": "host"
+}
