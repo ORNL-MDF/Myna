@@ -170,9 +170,10 @@ def write_codebase_status_to_file(parser):
         if app_name not in ignore_names:
             emphasis = ""
             indents = ""
-            if depth in [3, 4]:
+            if depth in [2, 3]:
                 root_link = root_simple.replace("\\", "/").replace("//", "/")
-                link = f"https://github.com/ORNL-MDF/Myna/tree/{branch}/{root_link}"
+                print(root_link)
+                link = f"https://github.com/ORNL-MDF/Myna/tree/{branch}/src/myna/{root_link}"
                 if depth == 3:
                     emphasis = "**"
                 elif depth > 3:
