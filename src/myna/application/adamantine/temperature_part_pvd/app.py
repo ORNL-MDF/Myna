@@ -66,12 +66,13 @@ class AdamantineTemperatureApp(AdamantineApp):
         case_dict["material"] = self.settings["data"]["build"]["build_data"][
             "material"
         ]["value"]
+        # myna spot size in millimeters -> adamantine spot size in meters
         case_dict["spot_size"] = (
             self.settings["data"]["build"]["parts"][case_dict["part"]]["spot_size"][
                 "value"
             ]
             * 1e-3
-        )  # myna spot size in millimeters -> adamantine spot size in meters
+        )
         case_dict["laser_power"] = self.settings["data"]["build"]["parts"][
             case_dict["part"]
         ]["laser_power"]["value"]
@@ -136,10 +137,6 @@ class AdamantineTemperatureApp(AdamantineApp):
             type=float,
             help="Courant number for controlling the time step, must be less than 1",
         )
-        self.parse_known_args()
-
-    def parse_execute_arguments(self):
-        """Check for arguments relevant to the execute step and update app settings"""
         self.parse_known_args()
 
     def update_material_property_dict_from_mist(self, input_dict: dict, material):
@@ -380,8 +377,6 @@ class AdamantineTemperatureApp(AdamantineApp):
 
     def execute(self):
         """Execute all cases for the Myna step"""
-        # Check for arguments relevant to the execute step
-        self.parse_execute_arguments()
 
         # Iterate through cases
         output_files = self.settings["data"]["output_paths"][self.step_name]

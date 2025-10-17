@@ -16,9 +16,6 @@ class AdamantineApp(MynaApp):
         super().__init__(name)
         self.path = str(Path(self.path) / "adamantine")
 
-        # Parse app-specific arguments
-        self.parse_known_args()
-
     def boost_info_file_to_dict(self, input_file: str | Path):
         """Loads a Boost info format adamantine input file to a Python dictionary
 
