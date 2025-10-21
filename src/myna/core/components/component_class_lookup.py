@@ -58,6 +58,7 @@ def return_step_class(step_name, verbose=True):
         "creep_timeseries": ComponentCreepTimeSeries(),
         "creep_timeseries_part": ComponentCreepTimeSeriesPart(),
         "creep_timeseries_region": ComponentCreepTimeSeriesRegion(),
+        "single_track_calibration": Component(),
     }
     try:
         step_class = step_class_lookup[step_name]
