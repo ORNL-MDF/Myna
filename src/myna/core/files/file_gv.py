@@ -35,6 +35,12 @@ class FileGV(File):
                 description="spatial location in y-axis",
             ),
             Variable(
+                name="z",
+                units="m",
+                dtype=float,
+                description="spatial location in z-axis",
+            ),
+            Variable(
                 name="g",
                 units="k/m",
                 dtype=float,

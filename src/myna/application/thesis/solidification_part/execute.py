@@ -76,9 +76,10 @@ def main(argv=None):
             df = pd.read_csv(filepath)
             df["x (m)"] = df["x"]
             df["y (m)"] = df["y"]
+            df["z (m)"] = df["z"]
             df["G (K/m)"] = df["G"]
             df["V (m/s)"] = df["V"]
-            df = df[["x (m)", "y (m)", "G (K/m)", "V (m/s)"]]
+            df = df[["x (m)", "y (m)", "z (m)", "G (K/m)", "V (m/s)"]]
             if i == 0:
                 df_all = df.copy()
             else:
