@@ -5,6 +5,7 @@ thesis:
          res: 25e-6
       execute:
          batch: True
+         clean-case-output: true
    solidification_build_region:
       executable: 3DThesis
       configure:

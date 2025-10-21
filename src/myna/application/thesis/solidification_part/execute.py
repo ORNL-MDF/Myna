@@ -86,6 +86,15 @@ def main(argv=None):
                 df_all = pd.concat([df_all, df])
         df_all.to_csv(mynafile, index=False)
 
+        # Clean up intermediate files if output file size is equal to the sum of
+        # intermediate files, within 1%
+        if sim.args.clean_case_output:
+            file_size = sum(os.path.getsize(f) for f in output_files)
+            final_size = os.path.getsize(mynafile)
+            if abs(file_size - final_size) / file_size < 0.1:
+                for f in output_files:
+                    os.remove(f)
+
 
 if __name__ == "__main__":
     main(sys.argv[1:])

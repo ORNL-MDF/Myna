@@ -141,6 +141,15 @@ class MynaApp:
             help="(str) [WARNING DEPRECATED!] full MPI command with flags, e.g.,"
             "'mpirun --exclusive', excluding the number of processors to use",
         )
+        self.parser.add_argument(
+            "--clean-case-output",
+            dest="clean_case_output",
+            default=False,
+            action="store_true",
+            help="(flag) if set, clean up non-Myna files from the case directory after"
+            " running. Each app will handle this differently depending on what files"
+            " are generated during execution.",
+        )
         self.parse_known_args()
 
     def parse_known_args(self):
