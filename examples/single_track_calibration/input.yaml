@@ -1,0 +1,13 @@
+steps:
+- calibrate_additivefoam:
+    class: single_track_calibration
+    application: additivefoam
+    execute:
+      experiment-file: /path/to/experiment.yaml
+      simulation-file: /path/to/simulation.yaml # optional
+      state-file: /path/to/state.yaml # optional
+data:
+  build:
+    datatype: Peregrine
+    name: myna_output
+    path: ..
