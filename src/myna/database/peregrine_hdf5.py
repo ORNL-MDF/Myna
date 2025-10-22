@@ -17,6 +17,7 @@ import pandas as pd
 from myna.core import metadata
 from myna.database.peregrine import PeregrineDB
 from myna.core.utils import get_synonymous_key
+from myna.core.workflow import load_input
 
 
 class PeregrineHDF5(PeregrineDB):
@@ -38,6 +39,7 @@ class PeregrineHDF5(PeregrineDB):
             "parts/process_parameters/laser_spot_size",
             "parts/process_parameters/spot_size",
             "parts/process_parameters/bulk_laser_spot_size",
+            "parts/process_parameters/bulk_spot_size",
         ],
         "laser_scan_speed": [
             "parts/process_parameters/laser_beam_speed",
@@ -101,8 +103,21 @@ class PeregrineHDF5(PeregrineDB):
 
         if metadata_type == metadata.Material:
             with h5py.File(self.path, "r") as data:
-                name = get_synonymous_key(data.attrs, self.synonyms["material_name"])
-                value = str(data.attrs[name])
+                try:
+                    name = get_synonymous_key(
+                        data.attrs, self.synonyms["material_name"]
+                    )
+                    value = str(data.attrs[name])
+                except ValueError:
+                    myna_input_file = os.path.abspath(os.environ.get("MYNA_INPUT", ""))
+                    if os.path.exists(myna_input_file):
+                        input_dict = load_input(myna_input_file)
+                        try:
+                            value = str(input_dict["data"]["build"]["user_material"])
+                        except KeyError as e:
+                            raise KeyError(
+                                f"No `Material` metadata found for build in either the Peregrine data or in {myna_input_file}."
+                            ) from e
             return value
 
         if metadata_type == metadata.Preheat:
