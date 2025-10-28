@@ -223,13 +223,8 @@ class AdamantineTemperatureApp(AdamantineApp):
         # - Z ranges: scan path bounds + substrate depth + 2 * spot_size
         # - Origin is the lower-left corner of the domain
         bounds = np.array(scan_dict["bounds"])
-        mesh_sizes = np.array(
-            [
-                self.args.mesh_size_factor * case_dict["spot_size"],
-                self.args.mesh_size_factor * case_dict["spot_size"],
-                self.args.mesh_size_factor * case_dict["spot_size"],
-            ]
-        )
+        spot = self.args.mesh_size_factor * case_dict["spot_size"]
+        mesh_sizes = np.array( [spot, spot, spot] )
         ranges = np.array(
             [
                 (bounds[1, 0] - bounds[0, 0]) + 2 * self.args.mesh_substrate_xy_pad,
