@@ -224,7 +224,7 @@ class AdamantineTemperatureApp(AdamantineApp):
         # - Origin is the lower-left corner of the domain
         bounds = np.array(scan_dict["bounds"])
         spot = self.args.mesh_size_factor * case_dict["spot_size"]
-        mesh_sizes = np.array( [spot, spot, spot] )
+        mesh_sizes = np.array([spot, spot, spot])
         ranges = np.array(
             [
                 (bounds[1, 0] - bounds[0, 0]) + 2 * self.args.mesh_substrate_xy_pad,
