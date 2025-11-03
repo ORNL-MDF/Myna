@@ -100,12 +100,22 @@ def main():
             df_all_segments = pl.DataFrame(schema=myna_schema)
             for snapshot_data_file in segment_files:
                 # Load and ensure matching of keys and dtypes
-                df = pl.read_csv(snapshot_data_file, columns=list(thesis_schema))
-                df = df.cast(thesis_schema)
-                df = df.rename(thesis_to_myna_mapping)
-                df = df.select(list(myna_schema))
-                # Append to previous segments
-                df_all_segments = pl.concat([df_all_segments, df])
+                mode_file = os.path.join(
+                    os.path.dirname(os.path.dirname(snapshot_data_file)), "Mode.txt"
+                )
+                times = [
+                    x
+                    for x in read_parameter(mode_file, "Times")[0].split(",")
+                    if x != ""
+                ]
+                n_times = len(times)
+                if n_times > 0:
+                    df = pl.read_csv(snapshot_data_file, columns=list(thesis_schema))
+                    df = df.cast(thesis_schema)
+                    df = df.rename(thesis_to_myna_mapping)
+                    df = df.select(list(myna_schema))
+                    # Append to previous segments
+                    df_all_segments = pl.concat([df_all_segments, df])
 
             # Write myna file with data from all segments
             if df_all_segments.shape[0] > 0:
