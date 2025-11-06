@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2024 Oak Ridge National Laboratory.
+# Copyright (c) Oak Ridge National Laboratory.
 #
 # This file is part of Myna. For details, see the top-level license
 # at https://github.com/ORNL-MDF/Myna/LICENSE.md.
