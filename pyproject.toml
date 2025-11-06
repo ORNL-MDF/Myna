@@ -39,7 +39,9 @@ dev = [
   'pytest-xdist',
   'black>24.10.0',
   'pylint',
-  'licenseheaders']
+  'licenseheaders',
+  'pre-commit',
+]
 exaca = [
   'pyebsd @ git+https://github.com/arthursn/pyebsd.git',
 ]
