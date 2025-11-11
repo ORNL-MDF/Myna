@@ -23,5 +23,13 @@ repos:
     rev: v0.8.8
     hooks:
       - id: licenseheaders
-        name: licenseheaders
+        name: licenseheaders (src)
         args: ["-t", "scripts/bsd-3.tmpl", "--dir", "src", "--ext", ".py"]
+
+
+  - repo: https://github.com/johann-petrak/licenseheaders
+    rev: v0.8.8
+    hooks:
+      - id: licenseheaders
+        name: licenseheaders (tests)
+        args: ["-t", "scripts/bsd-3.tmpl", "--dir", "tests", "--ext", ".py"]
