@@ -1,3 +1,11 @@
+#
+# Copyright (c) Oak Ridge National Laboratory.
+#
+# This file is part of Myna. For details, see the top-level license
+# at https://github.com/ORNL-MDF/Myna/LICENSE.md.
+#
+# License: 3-clause BSD, see https://opensource.org/licenses/BSD-3-Clause.
+#
 """Tests for configuring and running example cases. Each example test should be marked
 with `@pytest.mark.examples`. By default, it is assumed that each example uses a single
 processor. Additional markers should be specified to indicate test complexity:
