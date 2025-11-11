@@ -6,13 +6,14 @@
 #
 # License: 3-clause BSD, see https://opensource.org/licenses/BSD-3-Clause.
 #
-import mistlib as mist
 import os
-from myna.core.workflow.load_input import load_input
-import argparse
-import sys
+import glob
 import shutil
+from pathlib import Path
 import numpy as np
+import mistlib as mist
+from myna.core.workflow.load_input import load_input
+from myna.core.metadata import Scanpath
 from myna.application.thesis import (
     get_scan_stats,
     get_initial_wait_time,
@@ -34,11 +35,13 @@ def configure_case(case_dir, sim, myna_input="myna_data.yaml"):
     sim.copy(case_dir)
 
     # Set up scan path
-    myna_scanfile = settings["build"]["parts"][part]["layer_data"][layer]["scanpath"][
-        "file_local"
-    ]
+    scan_obj = Scanpath(None, part, layer)
+    myna_scanfile = scan_obj.file_local
     case_scanfile = os.path.join(case_dir, "Path.txt")
     shutil.copy(myna_scanfile, case_scanfile)
+
+    # Check if scanfile has multiple z-values
+    index_pairs, df = scan_obj.get_constant_z_slice_indices()
 
     # Set beam data
     beam_file = os.path.join(case_dir, "Beam.txt")
@@ -74,14 +77,42 @@ def configure_case(case_dir, sim, myna_input="myna_data.yaml"):
     domain_file = os.path.join(case_dir, "Domain.txt")
     adjust_parameter(domain_file, "Res", sim.args.res)
 
-    # Get elapsed time, adjusting for any initial wait time
-    elapsed_time, _ = get_scan_stats(case_scanfile)
+    # Get output times for whole scan path, ignoring initial wait time
     initial_wait_time = get_initial_wait_time(case_scanfile)
-
-    # Update output times
+    elapsed_time, _ = get_scan_stats(case_scanfile)
     times = np.linspace(initial_wait_time, elapsed_time, sim.args.nout)
-    mode_file = os.path.join(case_dir, "Mode.txt")
-    adjust_parameter(mode_file, "Times", ",".join([str(x) for x in times]))
+
+    # For each index pair, create a separate case
+    pattern = str(Path(case_dir) / "*.txt")
+    configured_case_files = sorted(glob.glob(pattern))
+    elasped_segment_time = 0.0
+    for index, pair in enumerate(index_pairs):
+        segment_dir = Path(case_dir) / f"path_segment_{index:03}"
+        os.makedirs(segment_dir, exist_ok=True)
+        # Copy files from base configured directory
+        for case_file in configured_case_files:
+            shutil.copy(case_file, segment_dir / Path(case_file).name)
+        # Write segment path
+        # Start from beginning of path to capture accumulated heat
+        segment_scanfile = segment_dir / "Path.txt"
+        df_segment = df[0 : pair[1] + 1]
+        df_segment.write_csv(segment_scanfile, separator="\t")
+
+        # Get elapsed time in segment
+        elapsed_time, _ = get_scan_stats(segment_scanfile)
+        if index == len(index_pairs) - 1:
+            segment_times = [x for x in times if (x >= elasped_segment_time)]
+        else:
+            segment_times = [
+                x for x in times if (x >= elasped_segment_time) & (x < (elapsed_time))
+            ]
+        elasped_segment_time = elapsed_time
+
+        # Update output times
+        mode_file = segment_dir / "Mode.txt"
+        adjust_parameter(
+            str(mode_file), "Times", ",".join([str(x) for x in segment_times])
+        )
 
     return
 

@@ -100,7 +100,7 @@ class File:
             df = df.rename(mapping={x: x.lower() for x in df.columns})
 
             # If data is 3D, reduce to 2D if needed
-            if "z (m)" not in locator_variables and "z (m)" in df.columns:
+            if (mode == "spatial_2d") and ("z (m)" in df.columns):
                 df = df.filter("z (m)" == df["z (m)"].max())
 
             # Get the locator tuple
@@ -112,11 +112,14 @@ class File:
                 raise KeyError(msg)
 
             # Get the other values
-            value_cols = list(set([x.fstr for x in self.variables]) - locator_variables)
-            if len(value_cols) == 0:
+            values = [
+                df[x.fstr].to_numpy()
+                for x in self.variables
+                if x.fstr not in locator_variables
+            ]
+            if len(values) == 0:
                 msg = f"No {mode} variables specified for {self.__class__.__name__}"
                 raise KeyError(msg)
-            values = [df[col].to_numpy() for col in value_cols]
 
             # Get value names and units
             value_names = [

@@ -115,10 +115,10 @@ class Pelican(Database):
         starting_points = {
             key: x[int(layer)]
             for key, x in nested_get(
-                input_dict, ["data", "build", "parts", part, "starting_points"]
+                input_dict, ["data", "build", "parts", part, "starting_points"], {}
             ).items()
         }
-        if all([x is None for _, x in starting_points.items()]):
+        if all(x is None for _, x in starting_points.items()):
             starting_points = None
         return {
             "start_time": times[0],
@@ -321,9 +321,9 @@ class Pelican(Database):
                 (pl.col("y (mm)").interpolate_by("time").replace(np.nan, None)).alias(
                     "y (mm)"
                 ),
-                (pl.col("z (mm)").interpolate_by("time").replace(np.nan, None)).alias(
-                    "z (mm)"
-                ),
+                (
+                    pl.col("z (mm)").fill_null(strategy="forward").replace(np.nan, None)
+                ).alias("z (mm)"),
                 (pl.col("time (s)").alias("time (s)")),
                 (pl.col("time").alias("time")),
             ]
@@ -475,9 +475,10 @@ class Pelican(Database):
                 # Time should always be in "time (s)" field
                 try:
                     # Get values for the time series
-                    times, values, value_names, value_units = output_class(
+                    locator, values, value_names, value_units = output_class(
                         f
                     ).get_values_for_sync(mode="temporal")
+                    times = locator[0]
                     value_names = [f"{type_prefix}_{name}" for name in value_names]
                     t_start = np.min(times)
                     t_end = np.max(times)
@@ -520,6 +521,7 @@ class Pelican(Database):
                             column_name: value_data,
                         },
                         schema=schema,
+                        strict=False,
                     )
                     df_sync = pl.concat([df_sync, df_new_data]).sort(by="time (s)")
                     df_sync.write_csv(sync_data_file)
