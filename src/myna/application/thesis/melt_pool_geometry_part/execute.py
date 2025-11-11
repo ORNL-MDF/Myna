@@ -99,7 +99,8 @@ def main():
             }
             df_all_segments = pl.DataFrame(schema=myna_schema)
             for snapshot_data_file in segment_files:
-                # Load and ensure matching of keys and dtypes
+                # It is possible that a given z-slice doesn't have any output times
+                # associated with it so the output data file doesn't exist.
                 mode_file = os.path.join(
                     os.path.dirname(os.path.dirname(snapshot_data_file)), "Mode.txt"
                 )
@@ -110,6 +111,8 @@ def main():
                 ]
                 n_times = len(times)
                 if n_times > 0:
+                    # If output should exist, the load and
+                    # ensure matching of keys and dtypes
                     df = pl.read_csv(snapshot_data_file, columns=list(thesis_schema))
                     df = df.cast(thesis_schema)
                     df = df.rename(thesis_to_myna_mapping)

@@ -41,7 +41,6 @@ def configure_case(case_dir, sim, myna_input="myna_data.yaml"):
     shutil.copy(myna_scanfile, case_scanfile)
 
     # Check if scanfile has multiple z-values
-    scan_obj.get_constant_z_slice_indices()
     index_pairs, df = scan_obj.get_constant_z_slice_indices()
 
     # Set beam data
