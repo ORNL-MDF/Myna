@@ -1,4 +1,4 @@
-""" Script to generate and format Myna API docs using lazydocs. Intended to be
+"""Script to generate and format Myna API docs using lazydocs. Intended to be
 run from the root Myna repo directory during GitHub CI.
 """
 
