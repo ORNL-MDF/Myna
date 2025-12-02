@@ -6,7 +6,7 @@ development may change directory structures, output files, etc. from previous ve
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
 Detailed documentation for Myna can be found at
-[https://ornl-mdf.github.io/myna-docs/](https://ornl-mdf.github.io/myna-docs/).
+[https://ornl-mdf.github.io/myna-docs/](https://ornl-mdf.github.io/Myna/).
 
 ## Description
 
