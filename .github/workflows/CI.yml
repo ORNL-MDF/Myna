@@ -43,6 +43,12 @@ jobs:
       - name: Analyzing code with pylint
         run: |
           pylint $(git ls-files '*.py') --fail-under=7.25
+      - name: Building API docs
+        run: |
+          python scripts/group_docs.py
+      - name: Building documentation
+        run: |
+          mkdocs build --strict
 
   run:
     runs-on: ubuntu-latest

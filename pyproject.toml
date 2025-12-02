@@ -41,6 +41,12 @@ dev = [
   'pylint',
   'licenseheaders',
   'pre-commit',
+  'lazydocs',
+  'mkdocs',
+  'mkdocs-awesome-nav',
+  'mkdocs-awesome-pages-plugin',
+  'mkdocs-github-admonitions-plugin',
+  'mkdocs-material',
 ]
 exaca = [
   'pyebsd @ git+https://github.com/arthursn/pyebsd.git',

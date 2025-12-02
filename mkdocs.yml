@@ -1,0 +1,16 @@
+site_name: Myna
+theme:
+   name: material
+   palette:
+      primary: custom
+extra_css:
+  - stylesheets/extra.css
+plugins:
+   - search
+   - awesome-pages
+   - awesome-nav
+   - gh-admonitions
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
