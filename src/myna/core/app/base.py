@@ -43,6 +43,7 @@ class MynaApp:
         self.input_file = os.environ.get("MYNA_INPUT")
         self.settings = {}
         self.step_number = None
+        self.template = None
         if self.input_file is not None:
             self.settings = load_input(self.input_file)
             self.step_number = [
@@ -246,13 +247,13 @@ class MynaApp:
                 "{self.path}/exaca/microstructure_region/template"
         """
         if self.args.template is None:
-            self.args.template = os.path.join(
+            self.template = os.path.join(
                 self.path,
                 *path_args,
                 "template",
             )
         else:
-            self.args.template = os.path.abspath(self.args.template)
+            self.template = os.path.abspath(self.args.template)
 
     def copy(self, case_dir):
         """Copies the set template directory to a case directory, with existing files
@@ -271,7 +272,7 @@ class MynaApp:
 
         # Copy if there are no existing files in the case directory or overwrite is specified
         if (len(case_dir_files) == 0) or (self.args.overwrite):
-            shutil.copytree(self.args.template, case_dir, dirs_exist_ok=True)
+            shutil.copytree(self.template, case_dir, dirs_exist_ok=True)
         else:
             print(f"Warning: NOT overwriting existing case in: {case_dir}")
 
