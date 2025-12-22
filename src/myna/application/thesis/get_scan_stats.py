@@ -29,11 +29,29 @@ def get_scan_stats(scanFile):
     return [elapsed_time, linear_distance]
 
 
-def get_initial_wait_time(scanFile) -> float:
-    """Returns the initial wait time at the beginning of a scan path"""
-
+def _get_spot_offtime(scan_file, row_index):
+    """Gets the offtime of a spot melt for the given scan path row index, returns
+    None if the given row index is not a spot command with zero power."""
     ds = thesis.Path()
-    ds.loadData(scanFile, timeName="tParam")
-    if (ds.data.at[0, "Mode"] == 1) and (ds.data.at[0, "Pmod"] == 0):
-        return float(ds.data.at[0, "tParam"])
+    ds.loadData(scan_file, timeName="tParam")
+    if row_index < 0:
+        row_index = len(ds.data) + row_index
+    if (ds.data.at[row_index, "Mode"] == 1) and (ds.data.at[row_index, "Pmod"] == 0):
+        return float(ds.data.at[row_index, "tParam"])
+    return None
+
+
+def get_initial_wait_time(scan_file) -> float:
+    """Returns the initial wait time at the beginning of a scan path"""
+    time = _get_spot_offtime(scan_file, 0)
+    if time is not None:
+        return float(time)
+    return 0.0
+
+
+def get_final_wait_time(scan_file) -> float:
+    """Returns the initial wait time at the end of a scan path"""
+    time = _get_spot_offtime(scan_file, -1)
+    if time is not None:
+        return float(time)
     return 0.0
