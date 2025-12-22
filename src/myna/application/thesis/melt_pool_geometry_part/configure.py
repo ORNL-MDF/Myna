@@ -9,6 +9,7 @@
 import os
 import glob
 import shutil
+import tempfile
 from pathlib import Path
 import numpy as np
 import mistlib as mist
@@ -17,6 +18,7 @@ from myna.core.metadata import Scanpath
 from myna.application.thesis import (
     get_scan_stats,
     get_initial_wait_time,
+    get_final_wait_time,
     adjust_parameter,
     Thesis,
 )
@@ -77,15 +79,10 @@ def configure_case(case_dir, sim, myna_input="myna_data.yaml"):
     domain_file = os.path.join(case_dir, "Domain.txt")
     adjust_parameter(domain_file, "Res", sim.args.res)
 
-    # Get output times for whole scan path, ignoring initial wait time
-    initial_wait_time = get_initial_wait_time(case_scanfile)
-    elapsed_time, _ = get_scan_stats(case_scanfile)
-    times = np.linspace(initial_wait_time, elapsed_time, sim.args.nout)
-
     # For each index pair, create a separate case
     pattern = str(Path(case_dir) / "*.txt")
     configured_case_files = sorted(glob.glob(pattern))
-    elasped_segment_time = 0.0
+    elapsed_time = 0.0
     for index, pair in enumerate(index_pairs):
         segment_dir = Path(case_dir) / f"path_segment_{index:03}"
         os.makedirs(segment_dir, exist_ok=True)
@@ -98,15 +95,24 @@ def configure_case(case_dir, sim, myna_input="myna_data.yaml"):
         df_segment = df[0 : pair[1] + 1]
         df_segment.write_csv(segment_scanfile, separator="\t")
 
-        # Get elapsed time in segment
-        elapsed_time, _ = get_scan_stats(segment_scanfile)
-        if index == len(index_pairs) - 1:
-            segment_times = [x for x in times if (x >= elasped_segment_time)]
-        else:
-            segment_times = [
-                x for x in times if (x >= elasped_segment_time) & (x < (elapsed_time))
-            ]
-        elasped_segment_time = elapsed_time
+        # Write temporary path file for getting elapsed time of the segment to calculate
+        # the write times for the melt pool geometry:
+        # - Ignore wait times at beginning and end of the scan segment
+        # - Distribute `nout` proportionally by segment row count
+        with tempfile.NamedTemporaryFile(delete=False) as fp:
+            df_segment_only = df[pair[0] : pair[1] + 1]
+            df_segment_only.write_csv(fp.name, separator="\t")
+            fp.close()
+            segment_time, _ = get_scan_stats(fp.name)
+            segment_time_wait_ini = get_initial_wait_time(fp.name)
+            segment_time_wait_fin = get_final_wait_time(fp.name)
+            fraction_segments = int(sim.args.nout * (len(df_segment_only) / len(df)))
+            segment_times = np.linspace(
+                elapsed_time + segment_time_wait_ini,
+                elapsed_time + segment_time - segment_time_wait_fin,
+                fraction_segments,
+            )
+        elapsed_time += segment_time
 
         # Update output times
         mode_file = segment_dir / "Mode.txt"
