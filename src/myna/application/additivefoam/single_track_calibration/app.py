@@ -1,98 +1,236 @@
-from myna.application.additivefoam import AdditiveFOAM
-
+#
+# Copyright (c) Oak Ridge National Laboratory.
+#
+# This file is part of Myna. For details, see the top-level license
+# at https://github.com/ORNL-MDF/Myna/LICENSE.md.
+#
+# License: 3-clause BSD, see https://opensource.org/licenses/BSD-3-Clause.
+#
 import os
+import json
 import yaml
 import hashlib
+import pathlib
+from typing import Optional, Annotated
 import pandas as pd
+import polars as pl
 import numpy as np
 import pymc as pm
 import arviz as az
 import pytensor.tensor as pt
 import matplotlib.pyplot as plt
 import seaborn as sns
+from pydantic import BaseModel, model_validator, model_serializer, BeforeValidator
+
+from myna.application.additivefoam import AdditiveFOAM
 
 
-# ==============================================================================
-# SECTION 1: DATA I/O AND PARSING
-# ==============================================================================
-def _create_data_fingerprint(data_list: list) -> str:
-    sorted_data_str = str(sorted(data_list))
-    return hashlib.sha256(sorted_data_str.encode()).hexdigest()
+# Define data models and validation:
+# - Experimental data model is the primary mode, with simulation data derived as a
+#   subclass. This is intended to maintain that simulations are representations of the
+#   experiments, so a subset of the simulation data model should directly correspond
+#   to the experimental data
+# - Before-validation gives some flexibility to the user, e.g., will not fail if user enters
+#   a single value instead of a single-valued list
+# - After-validation enforces expected data structure for the rest of the application
 
 
-def load_yaml_file(filepath: str) -> list | None:
+def _ensure_float_list(value):
+    """BeforeValidator function to ensure that the value is a list[float]"""
+    if isinstance(value, (int, float)):
+        return [float(value)]
+    return value
+
+
+def _ensure_str_list(value):
+    """BeforeValidator function to ensure that the value is a list[str]"""
+    if isinstance(value, (str)):
+        return [str(value)]
+    return value
+
+
+FlexibleFloatList = Annotated[list[float], BeforeValidator(_ensure_float_list)]
+FlexibleStringList = Annotated[list[float], BeforeValidator(_ensure_str_list)]
+
+
+class ProcessParameters(BaseModel):
+    """Defines the process parameters that must be present for each experiment"""
+
+    power: float  # heat source power, in W
+    scan_speed: float  # heat source scan speed, in m/s
+    spot_size: float  # diameter of the heat source, in mm
+
+
+class SimulationParameters(BaseModel):
+    """Defines the simulation parameters that define each simulation"""
+
+    n: FlexibleFloatList  # description of heat source distribution, unitless
+
+
+class SingleTrackData(BaseModel):
+    """Defines the data required for a single track experiment"""
+
+    process_parameters: ProcessParameters
+    depths: FlexibleFloatList  # in millimeters
+    comments: Optional[FlexibleStringList] = None
+
+    # Serialize floats to 6 digits (0.001 micron precision for millimeters values)
+    # to ensure for stable hashing
+    @model_serializer(mode="wrap")
+    def round_floats_serializer(self, handler):
+        """Recursively rounds floats to 6 decimal places for stable hashing/JSON."""
+        data = handler(self)
+        return self._recursive_round(data)
+
+    def _recursive_round(self, obj):
+        if isinstance(obj, float):
+            return round(obj, 6)
+        if isinstance(obj, dict):
+            return {k: self._recursive_round(v) for k, v in obj.items()}
+        if isinstance(obj, list):
+            return [self._recursive_round(x) for x in obj]
+        return obj
+
+
+class SimulatedSingleTrackData(SingleTrackData):
+    """Defines the data required for a single track simulation"""
+
+    simulation_parameters: SimulationParameters
+    fingerprint: Optional[str] = None
+
+    @model_validator(mode="after")
+    def validate_lengths_match(self):
+        if len(self.depths) != len(self.simulation_parameters.n):
+            raise ValueError(
+                "depths and simulation_parameters.n must have the same length"
+            )
+        return self
+
+
+class ExperimentData(BaseModel):
+    """Defines the format of the experimental data file"""
+
+    data: list[SingleTrackData]
+    comments: Optional[FlexibleStringList] = None
+
+    def to_polars_df(self) -> pl.DataFrame:
+        """Converts the data model to a polars DataFrame"""
+        dicts = [
+            {**d.process_parameters.model_dump(), "depths": d.depths} for d in self.data
+        ]
+        return pl.from_dicts(dicts)
+
+
+class SimulationData(ExperimentData):
+    """Defines the format of the simulation data file"""
+
+    data: list[SimulatedSingleTrackData]
+
+    def to_polars_df(self) -> pl.DataFrame:
+        """Converts the data model to a polars DataFrame"""
+        dicts = [
+            {
+                **d.process_parameters.model_dump(),
+                **d.simulation_parameters.model_dump(),
+                "depths": d.depths,
+                "fingerprint": d.fingerprint,
+            }
+            for d in self.data
+        ]
+        # TODO: Consider using the `explode(["depths", "n"])` feature to get a single
+        #       row per datum. This may simplify the logic for fingerprinting and
+        #       simulation queueing
+        return pl.from_dicts(dicts)
+
+
+def create_data_fingerprint(data: ExperimentData | SimulationData) -> str:
+    """Create a hash from the experiment or simulation data for quick comparison of
+    sameness to previous datasets.
+
+    While this approach ensures that the fields are in a consistent order, this will
+    return a different hash if the listed values, e.g., `depths`, change order."""
+    # Format payload, ensuring consistent ordering and removing whitespace
+    payload = data.model_dump(mode="json", exclude={"fingerprint"}, exclude_none=True)
+    canonical_json = json.dumps(payload, sort_keys=True, separators=(",", ":"))
+    return hashlib.sha256(canonical_json.encode()).hexdigest()
+
+
+def load_dict_file(filepath: str | pathlib.Path) -> dict:
+    """Loads a dictionary from a JSON or YAML file"""
+    # Check if the file exists
     if not os.path.exists(filepath):
         print(f"Info: File not found at '{filepath}'. Proceeding with empty data.")
-        return []
-    try:
-        with open(filepath, "r") as f:
-            return yaml.safe_load(f) or []
-    except Exception as e:
-        print(f"Error: Could not parse YAML file '{filepath}': {e}")
-        return None
+        return {}
+    with open(filepath, "r") as f:
+        suffix = pathlib.Path(filepath).suffix
+        if suffix in [".yml", ".yaml"]:
+            return yaml.safe_load(f)
+        elif suffix in [".json"]:
+            return json.load(f)
+        return {}
 
 
-def parse_experiments(raw_experiments: list) -> pd.DataFrame:
-    if not raw_experiments:
-        return pd.DataFrame(
-            columns=[
-                "parameters",
-                "depths_list",
-                "normalized_depths_list",
-                "fingerprint",
-            ]
-        )
-    records = []
-    for exp in raw_experiments:
-        params = exp["parameters"]
-        spot_size = params.get("Spot_Size_microns")
-        if spot_size is None or spot_size <= 0:
-            print(
-                f"Warning: Invalid or missing 'Spot_Size_microns' in parameters {params}. Skipping this experiment."
-            )
-            continue
+# def parse_experiments(raw_experiments: list) -> pd.DataFrame:
+#     if not raw_experiments:
+#         return pd.DataFrame(
+#             columns=[
+#                 "parameters",
+#                 "depths_list",
+#                 "normalized_depths_list",
+#                 "fingerprint",
+#             ]
+#         )
+#     records = []
+#     for exp in raw_experiments:
+#         params = exp["parameters"]
+#         spot_size = params.get("Spot_Size_microns")
+#         if spot_size is None or spot_size <= 0:
+#             print(
+#                 f"Warning: Invalid or missing 'Spot_Size_microns' in parameters {params}. Skipping this experiment."
+#             )
+#             continue
 
-        depths = exp["Measured_Depth_microns"]
-        normalized_depths = [d / spot_size for d in depths]
+#         depths = exp["Measured_Depth_microns"]
+#         normalized_depths = [d / spot_size for d in depths]
 
-        records.append(
-            {
-                "parameters": params,
-                "depths_list": depths,
-                "normalized_depths_list": normalized_depths,
-                "fingerprint": _create_data_fingerprint(depths),
-            }
-        )
-    return pd.DataFrame(records)
+#         records.append(
+#             {
+#                 "parameters": params,
+#                 "depths_list": depths,
+#                 "normalized_depths_list": normalized_depths,
+#                 "fingerprint": create_data_fingerprint(depths),
+#             }
+#         )
+#     return pd.DataFrame(records)
 
 
-def parse_simulations(raw_simulations: list) -> pd.DataFrame:
-    if not raw_simulations:
-        return pd.DataFrame()
-    records = []
-    for sim_run in raw_simulations:
-        params, n_values, depths = (
-            sim_run["parameters"],
-            sim_run["n"],
-            sim_run["Simulated_Depth_microns"],
-        )
-        spot_size = params.get("Spot_Size_microns")
-        if spot_size is None or spot_size <= 0:
-            print(
-                f"Warning: Invalid or missing 'Spot_Size_microns' in parameters {params}. Skipping this simulation set."
-            )
-            continue
+# def parse_simulations(raw_simulations: list) -> pd.DataFrame:
+#     if not raw_simulations:
+#         return pd.DataFrame()
+#     records = []
+#     for sim_run in raw_simulations:
+#         params, n_values, depths = (
+#             sim_run["parameters"],
+#             sim_run["n"],
+#             sim_run["Simulated_Depth_microns"],
+#         )
+#         spot_size = params.get("Spot_Size_microns")
+#         if spot_size is None or spot_size <= 0:
+#             print(
+#                 f"Warning: Invalid or missing 'Spot_Size_microns' in parameters {params}. Skipping this simulation set."
+#             )
+#             continue
 
-        for n, depth in zip(n_values, depths):
-            records.append(
-                {
-                    **params,
-                    "n": n,
-                    "Simulated_Depth_microns": depth,
-                    "Normalized_Simulated_Depth": depth / spot_size,
-                }
-            )
-    return pd.DataFrame(records)
+#         for n, depth in zip(n_values, depths):
+#             records.append(
+#                 {
+#                     **params,
+#                     "n": n,
+#                     "Simulated_Depth_microns": depth,
+#                     "Normalized_Simulated_Depth": depth / spot_size,
+#                 }
+#             )
+#     return pd.DataFrame(records)
 
 
 def save_state_file(state_data: list, filepath: str):
@@ -370,34 +508,37 @@ def fit_and_plot_heteroskedastic_model(calibrated_results_df):
     )
 
 
+########################################################################################
+#                                                                                      #
+################### Myna Class for AdditiveFOAM Calibration ############################
+#                                                                                      #
+########################################################################################
+
+
 class AdditiveFOAMCalibration(AdditiveFOAM):
     """Application to generated calibrated heat source parameters for AdditiveFOAM"""
 
     def execute(self):
         # Set paths
-        EXPERIMENTS_PATH, SIMULATIONS_PATH, STATE_PATH = (
-            "experiments.yml",
-            "simulations.yml",
-            "calibration_state.yml",
-        )
+        EXPERIMENTS_PATH = "experiments.yml"
+        SIMULATIONS_PATH = "simulations.yml"
+        STATE_PATH = "calibration_state.yml"
         SIMULATION_QUEUE_PATH = "pending_simulations.csv"
 
-        # Load data from YAML dictionaries
-        raw_experiments, raw_simulations, current_state_data = (
-            load_yaml_file(EXPERIMENTS_PATH),
-            load_yaml_file(SIMULATIONS_PATH),
-            load_yaml_file(STATE_PATH),
-        )
+        # Load and validate data models from dictionaries
+        experiments = ExperimentData(**load_dict_file(EXPERIMENTS_PATH))
+        simulations = SimulationData(**load_dict_file(SIMULATIONS_PATH))
 
-        # Check for empty files
-        # - if experiments aren't there -> exit
-        # - if state files or simulations aren't there ->
-        if (
-            raw_experiments is None
-            or raw_simulations is None
-            or current_state_data is None
-        ):
-            print("\nAborting due to file parsing errors."), exit()
+        # TODO: delete below old code (3 lines)
+        raw_experiments = load_dict_file(EXPERIMENTS_PATH)
+        raw_simulations = load_dict_file(SIMULATIONS_PATH)
+        current_state_data = load_dict_file(STATE_PATH)
+
+        # Load data to dataframe
+        df_exp = experiments.to_polars_df()
+        df_sim = simulations.to_polars_df()
+
+        # TODO: repalce `exp_df` and `sim_df` with newer `df_exp` and `df_sim` implementations
         exp_df, sim_df, state_df = (
             parse_experiments(raw_experiments),
             parse_simulations(raw_simulations),
@@ -405,6 +546,7 @@ class AdditiveFOAMCalibration(AdditiveFOAM):
         )
         if exp_df.empty:
             print("\nNo experimental data found. Exiting."), exit()
+
         to_process_list, fresh_states, state_lookup = [], [], {}
         if not state_df.empty:
             for i, row in state_df.iterrows():

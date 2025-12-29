@@ -1,0 +1,89 @@
+##
+## Copyright (c) Oak Ridge National Laboratory.
+##
+## This file is part of Myna. For details, see the top-level license
+## at https://github.com/ORNL-MDF/Myna/LICENSE.md.
+##
+## License: 3-clause BSD, see https://opensource.org/licenses/BSD-3-Clause.
+##
+data:
+  - process_parameters:
+      power: 187.5
+      scan_speed: 0.5
+      spot_size: 0.1
+    simulation_parameters:
+      n: [1,2,3,4,5,6,7,8,9]
+    depths:
+    - 103.0e-3
+    - 111.0e-3
+    - 124.0e-3
+    - 144.0e-3
+    - 165.0e-3
+    - 184.0e-3
+    - 184.0e-3
+    - 184.0e-3
+    - 184.0e-3
+  - process_parameters:
+      power: 300.0
+      scan_speed: 0.5
+      spot_size: 0.1
+    simulation_parameters:
+      n: [1,2,3,4,5,6,7,8,9]
+    depths:
+    - 141.0e-3
+    - 154.0e-3
+    - 179.0e-3
+    - 214.0e-3
+    - 254.0e-3
+    - 294.0e-3
+    - 315.0e-3
+    - 324.0e-3
+    - 324.0e-3
+  - process_parameters:
+      power: 412.5
+      scan_speed: 0.5
+      spot_size: 0.1
+    simulation_parameters:
+      n: [1,2,3,4,5,6,7,8,9]
+    depths:
+    - 170.0e-3
+    - 189.0e-3
+    - 223.0e-3
+    - 274.0e-3
+    - 334.0e-3
+    - 394.0e-3
+    - 444.0e-3
+    - 465.0e-3
+    - 465.0e-3
+  - process_parameters:
+      power: 525.0
+      scan_speed: 0.5
+      spot_size: 0.1
+    simulation_parameters:
+      n: [1,2,3,4,5,6,7,8,9]
+    depths:
+    - 194.0e-3
+    - 219.0e-3
+    - 262.0e-3
+    - 324.0e-3
+    - 404.0e-3
+    - 484.0e-3
+    - 563.0e-3
+    - 604.0e-3
+    - 614.0e-3
+  - process_parameters:
+      power: 637.5
+      scan_speed: 0.5
+      spot_size: 0.1
+    simulation_parameters:
+      n: [1,2,3,4,5,6,7,8,9]
+    depths:
+    - 218.0e-3
+    - 245.0e-3
+    - 295.0e-3
+    - 370.0e-3
+    - 464.0e-3
+    - 565.0e-3
+    - 666.0e-3
+    - 710.0e-3
+    - 755.0e-3
