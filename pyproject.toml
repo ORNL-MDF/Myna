@@ -31,7 +31,8 @@ dependencies = [
     'scipy',
     'gitpython',
     'zarr',
-    'docker']
+    'docker',
+    'pydantic']
 
 [project.optional-dependencies]
 dev = [
