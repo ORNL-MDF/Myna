@@ -9,48 +9,48 @@
 import os
 import json
 import yaml
+import shutil
 import hashlib
 import pathlib
-from typing import Optional, Annotated
-import pandas as pd
+import logging
+from typing import Optional, Annotated, Any
+from dataclasses import dataclass, asdict
 import polars as pl
 import numpy as np
 import pymc as pm
 import arviz as az
 import pytensor.tensor as pt
-import matplotlib.pyplot as plt
-import seaborn as sns
 from pydantic import BaseModel, model_validator, model_serializer, BeforeValidator
-
 from myna.application.additivefoam import AdditiveFOAM
 
 
-# Define data models and validation:
-# - Experimental data model is the primary mode, with simulation data derived as a
-#   subclass. This is intended to maintain that simulations are representations of the
-#   experiments, so a subset of the simulation data model should directly correspond
-#   to the experimental data
-# - Before-validation gives some flexibility to the user, e.g., will not fail if user enters
-#   a single value instead of a single-valued list
-# - After-validation enforces expected data structure for the rest of the application
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
+logger = logging.getLogger(__name__)
 
 
-def _ensure_float_list(value):
-    """BeforeValidator function to ensure that the value is a list[float]"""
-    if isinstance(value, (int, float)):
-        return [float(value)]
-    return value
+# ==============================================================================
+# SECTION 1: DATA MODELS AND VALIDATION
+# ==============================================================================
 
 
-def _ensure_str_list(value):
-    """BeforeValidator function to ensure that the value is a list[str]"""
-    if isinstance(value, (str)):
-        return [str(value)]
-    return value
+def _ensure_float_list(v: Any) -> list[Any]:
+    """Handle floats, lists of floats, and None and convert them all to a list.
+
+    Uses `Any` in the inner list to allow for `None` values
+    """
+    if v is None:
+        return []
+    if isinstance(v, (int, float)):
+        return [float(v)]
+    return list(v)
 
 
-FlexibleFloatList = Annotated[list[float], BeforeValidator(_ensure_float_list)]
-FlexibleStringList = Annotated[list[float], BeforeValidator(_ensure_str_list)]
+FlexibleFloatList = Annotated[
+    list[Optional[float]], BeforeValidator(_ensure_float_list)
+]
 
 
 class ProcessParameters(BaseModel):
@@ -72,10 +72,7 @@ class SingleTrackData(BaseModel):
 
     process_parameters: ProcessParameters
     depths: FlexibleFloatList  # in millimeters
-    comments: Optional[FlexibleStringList] = None
 
-    # Serialize floats to 6 digits (0.001 micron precision for millimeters values)
-    # to ensure for stable hashing
     @model_serializer(mode="wrap")
     def round_floats_serializer(self, handler):
         """Recursively rounds floats to 6 decimal places for stable hashing/JSON."""
@@ -96,14 +93,23 @@ class SimulatedSingleTrackData(SingleTrackData):
     """Defines the data required for a single track simulation"""
 
     simulation_parameters: SimulationParameters
+    depths: Optional[FlexibleFloatList] = None  # in millimeters
     fingerprint: Optional[str] = None
 
     @model_validator(mode="after")
     def validate_lengths_match(self):
-        if len(self.depths) != len(self.simulation_parameters.n):
-            raise ValueError(
-                "depths and simulation_parameters.n must have the same length"
-            )
+        """Ensure that the length of the `depths` list and the `simulation_parameters.n`
+        list are the same, padding `depths` with None values if needed.
+        """
+        if self.depths is not None:
+            max_depths = len(self.simulation_parameters.n)
+            if len(self.depths) > max_depths:
+                raise ValueError(
+                    f"Too many depth values. Found {len(self.depths)}, "
+                    f"but only {max_depths} simulation parameters (n) exist."
+                )
+            elif len(self.depths) < max_depths:
+                self.depths.extend([None] * (max_depths - len(self.depths)))
         return self
 
 
@@ -111,7 +117,6 @@ class ExperimentData(BaseModel):
     """Defines the format of the experimental data file"""
 
     data: list[SingleTrackData]
-    comments: Optional[FlexibleStringList] = None
 
     def to_polars_df(self) -> pl.DataFrame:
         """Converts the data model to a polars DataFrame"""
@@ -137,30 +142,78 @@ class SimulationData(ExperimentData):
             }
             for d in self.data
         ]
-        # TODO: Consider using the `explode(["depths", "n"])` feature to get a single
-        #       row per datum. This may simplify the logic for fingerprinting and
-        #       simulation queueing
-        return pl.from_dicts(dicts)
+        kwargs = {}
+        if len(dicts) == 0:
+            kwargs = {
+                "schema": {
+                    **{k: pl.Float64 for k in ProcessParameters.model_fields},
+                    **{k: pl.Float64 for k in SimulationParameters.model_fields},
+                    "depths": pl.Float64,
+                    "fingerprint": pl.String,
+                }
+            }
+        # Explode to get one row per (n, depth) combination
+        return pl.from_dicts(dicts, **kwargs).explode(["depths", "n"])
+
+    def update_from_df(self, df: pl.DataFrame):
+        """Update simulation data from a DataFrame
+
+        Expects df to have one row per n value, with depths as single values
+        """
+        param_keys = list(ProcessParameters.model_fields.keys())
+        sim_keys = list(SimulationParameters.model_fields.keys())
+
+        # Group by fingerprint to reconstruct records
+        grouped = df.group_by("fingerprint").agg(
+            [
+                *[pl.col(k).first() for k in param_keys],
+                pl.col("n").sort(),
+                pl.col("depths").sort_by("n"),
+            ]
+        )
+
+        self.data = [
+            SimulatedSingleTrackData(
+                process_parameters=ProcessParameters(**{k: r[k] for k in param_keys}),
+                simulation_parameters=SimulationParameters(n=r["n"]),
+                depths=r["depths"],
+                fingerprint=r["fingerprint"],
+            )
+            for r in grouped.iter_rows(named=True)
+        ]
+
+
+@dataclass
+class CalibrationConfig:
+    """Configuration for the calibration workflow"""
+
+    experiments_path: str = "test_exp.yaml"
+    simulations_path: str = "test_sim.yaml"
+    calibrations_path: str = "calibration.yaml"
+    simulation_output_dir: str = "sim_output"
+    n_values: list[float] = None
+
+    def __post_init__(self):
+        if self.n_values is None:
+            self.n_values = [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0]
 
 
 def create_data_fingerprint(data: ExperimentData | SimulationData) -> str:
-    """Create a hash from the experiment or simulation data for quick comparison of
-    sameness to previous datasets.
-
-    While this approach ensures that the fields are in a consistent order, this will
-    return a different hash if the listed values, e.g., `depths`, change order."""
-    # Format payload, ensuring consistent ordering and removing whitespace
+    """Create a hash from the experiment or simulation data for quick comparison"""
     payload = data.model_dump(mode="json", exclude={"fingerprint"}, exclude_none=True)
+    canonical_json = json.dumps(payload, sort_keys=True, separators=(",", ":"))
+    return hashlib.sha256(canonical_json.encode()).hexdigest()
+
+
+def create_row_fingerprint(row: dict | pl.Series) -> str:
+    """Creates a hash from the process parameters in a DataFrame row"""
+    payload = {k: np.round(row[k], 6) for k in ProcessParameters.model_fields.keys()}
     canonical_json = json.dumps(payload, sort_keys=True, separators=(",", ":"))
     return hashlib.sha256(canonical_json.encode()).hexdigest()
 
 
 def load_dict_file(filepath: str | pathlib.Path) -> dict:
     """Loads a dictionary from a JSON or YAML file"""
-    # Check if the file exists
-    if not os.path.exists(filepath):
-        print(f"Info: File not found at '{filepath}'. Proceeding with empty data.")
-        return {}
     with open(filepath, "r") as f:
         suffix = pathlib.Path(filepath).suffix
         if suffix in [".yml", ".yaml"]:
@@ -170,98 +223,13 @@ def load_dict_file(filepath: str | pathlib.Path) -> dict:
         return {}
 
 
-# def parse_experiments(raw_experiments: list) -> pd.DataFrame:
-#     if not raw_experiments:
-#         return pd.DataFrame(
-#             columns=[
-#                 "parameters",
-#                 "depths_list",
-#                 "normalized_depths_list",
-#                 "fingerprint",
-#             ]
-#         )
-#     records = []
-#     for exp in raw_experiments:
-#         params = exp["parameters"]
-#         spot_size = params.get("Spot_Size_microns")
-#         if spot_size is None or spot_size <= 0:
-#             print(
-#                 f"Warning: Invalid or missing 'Spot_Size_microns' in parameters {params}. Skipping this experiment."
-#             )
-#             continue
-
-#         depths = exp["Measured_Depth_microns"]
-#         normalized_depths = [d / spot_size for d in depths]
-
-#         records.append(
-#             {
-#                 "parameters": params,
-#                 "depths_list": depths,
-#                 "normalized_depths_list": normalized_depths,
-#                 "fingerprint": create_data_fingerprint(depths),
-#             }
-#         )
-#     return pd.DataFrame(records)
-
-
-# def parse_simulations(raw_simulations: list) -> pd.DataFrame:
-#     if not raw_simulations:
-#         return pd.DataFrame()
-#     records = []
-#     for sim_run in raw_simulations:
-#         params, n_values, depths = (
-#             sim_run["parameters"],
-#             sim_run["n"],
-#             sim_run["Simulated_Depth_microns"],
-#         )
-#         spot_size = params.get("Spot_Size_microns")
-#         if spot_size is None or spot_size <= 0:
-#             print(
-#                 f"Warning: Invalid or missing 'Spot_Size_microns' in parameters {params}. Skipping this simulation set."
-#             )
-#             continue
-
-#         for n, depth in zip(n_values, depths):
-#             records.append(
-#                 {
-#                     **params,
-#                     "n": n,
-#                     "Simulated_Depth_microns": depth,
-#                     "Normalized_Simulated_Depth": depth / spot_size,
-#                 }
-#             )
-#     return pd.DataFrame(records)
-
-
-def save_state_file(state_data: list, filepath: str):
-    print(f"\nSaving updated state to '{filepath}'...")
-    try:
-        with open(filepath, "w") as f:
-            yaml.dump(
-                state_data,
-                f,
-                default_flow_style=False,
-                sort_keys=False,
-                indent=2,
-            )
-        print("Save complete.")
-    except Exception as e:
-        print(f"Error saving state file '{filepath}': {e}")
-
-
-def save_simulation_queue(queue_df: pd.DataFrame, filepath: str):
-    print(f"Saving pending simulation queue to '{filepath}'...")
-    try:
-        queue_df.to_csv(filepath, index=False)
-        print("Queue saved successfully.")
-    except Exception as e:
-        print(f"Error saving simulation queue file '{filepath}': {e}")
-
-
 # ==============================================================================
-# SECTION 2: CORE CALIBRATION LOGIC
+# SECTION 2: BAYESIAN CALIBRATION LOGIC
 # ==============================================================================
+
+
 def linear_interp_pt(n_val, n_data_pt, column_data_pt):
+    """Linear interpolation using PyTensor tensors"""
     n_data_pt, column_data_pt, n_val = (
         pt.cast(n_data_pt, "float64"),
         pt.cast(column_data_pt, "float64"),
@@ -276,30 +244,41 @@ def linear_interp_pt(n_val, n_data_pt, column_data_pt):
 
 
 def perform_bayesian_calibration(
-    n_coords: np.ndarray, model_values: np.ndarray, observed_values: list[float]
+    n_coords: list[float | int],
+    model_values: list[float | int],
+    observed_values: list[list[float | int]],
 ) -> az.InferenceData:
-    sigma_est = (
-        np.std(observed_values)
-        if len(observed_values) > 1
-        else 0.15 * observed_values[0]
+    """Calculates the posterior distribution from Bayesian calibration of n to observations
+
+    Assumptions:
+    - Uniform prior
+    - 1 Gaussian standard deviation is used as noise if multiple observations are given,
+      otherwise 15% of the measured value is used as noise
+    """
+    # Convert to numpy arrays to handle both lists and Polars Series
+    observed_arrays = [np.asarray(x) for x in observed_values]
+    sigmas = np.array(
+        [
+            max(np.std(arr) if len(arr) > 1 else 0.15 * arr[0], 1e-4)
+            for arr in observed_arrays
+        ]
     )
-    sigma_est = max(
-        sigma_est, 1e-4
-    )  # Adjusted minimum sigma for smaller normalized values
-    with pm.Model() as model:
-        n = pm.Uniform("n", lower=n_coords.min(), upper=n_coords.max())
+
+    with pm.Model() as _:
+        n = pm.Uniform("n", lower=np.min(n_coords), upper=np.max(n_coords))
         n_data_pt, model_values_pt = pt.constant(n_coords), pt.constant(model_values)
-        predicted_value = pm.Deterministic(
+        predicted_values = pm.Deterministic(
             "predicted_value", linear_interp_pt(n, n_data_pt, model_values_pt)
         )
         pm.Normal(
             "likelihood",
-            mu=predicted_value,
-            sigma=sigma_est,
+            mu=predicted_values,
+            sigma=sigmas,
             observed=observed_values,
         )
-        print(
-            f"  Sampling posterior with {len(observed_values)} observations (σ_est={sigma_est:.3f})..."
+        logger.info(
+            f"Sampling posterior with {len(observed_values)} observations "
+            f"(σ_est={sigmas})"
         )
         trace = pm.sample(
             draws=2000,
@@ -313,349 +292,524 @@ def perform_bayesian_calibration(
 
 
 def extract_calibrated_n(trace: az.InferenceData, n_min: float, n_max: float) -> float:
+    """Extract calibrated n value from posterior samples"""
     n_samples = trace.posterior["n"].values.flatten()
     posterior_mean_n = np.mean(n_samples)
     lower_bound_region = n_min + (n_max - n_min) * 0.01
     clipping_percentage = np.sum(n_samples <= lower_bound_region) / len(n_samples) * 100
+
     if clipping_percentage > 5.0:
-        print(
-            f"  Warning: Posterior is clipped at lower bound ({clipping_percentage:.1f}%). Using n_min."
+        logger.warning(
+            f"Posterior is clipped at lower bound ({clipping_percentage:.1f}%). "
+            f"Using n_min={n_min:.3f}"
         )
         return n_min
+
     return posterior_mean_n
 
 
 # ==============================================================================
-# SECTION 3: PLOTTING AND ANALYSIS FUNCTIONS
+# SECTION 3: MAIN CALIBRATION APPLICATION
 # ==============================================================================
-def plot_calibration_overview(results_df, simulations_df):
-    if results_df.empty:
-        return
-    num_plots = len(results_df)
-    fig, axes = plt.subplots(
-        1, num_plots, figsize=(6 * num_plots, 5), sharey=True, squeeze=False
-    )
-    axes = axes.flatten()
-    for i, (_, row) in enumerate(results_df.iterrows()):
-        params_dict = row["parameters"]
-        ax = axes[i]
-        query_string = " & ".join([f"`{k}`=={v}" for k, v in params_dict.items()])
-        sim_curve = simulations_df.query(query_string).sort_values("n")
-
-        # Plot normalized simulation curve
-        ax.plot(
-            sim_curve["n"],
-            sim_curve["Normalized_Simulated_Depth"],
-            "k-",
-            label="Simulation Curve",
-            zorder=1,
-        )
-
-        # Plot calibrated point against mean normalized experimental depth
-        ax.errorbar(
-            x=row["calibrated_n"],
-            y=row["mean_normalized_depth"],
-            xerr=row["calibrated_n_std"],
-            fmt="o",
-            color="red",
-            capsize=5,
-            markersize=8,
-            label="Calibrated n (Mean & Std Dev)",
-            zorder=3,
-        )
-
-        # Plot individual normalized experimental data points
-        ax.scatter(
-            np.full(len(row["normalized_depths_list"]), row["calibrated_n"]),
-            row["normalized_depths_list"],
-            edgecolor="blue",
-            facecolor="none",
-            s=50,
-            label="Experimental Data",
-            zorder=2,
-        )
-
-        title = ", ".join([f"{k.split('_')[0]}={v}" for k, v in params_dict.items()])
-        ax.set_title(title), ax.set_xlabel("Shape Factor (n)"), ax.grid(
-            True, linestyle="--", alpha=0.6
-        )
-
-    axes[0].set_ylabel("Normalized Melt Pool Depth (Depth / Spot Size)"), axes[
-        0
-    ].legend()
-    fig.suptitle(
-        "Calibration Overview of Newly Processed Experiments",
-        fontsize=16,
-        y=1.02,
-    ), plt.tight_layout(), plt.show()
-
-
-def plot_posterior_distributions(traces_dict):
-    if not traces_dict:
-        return
-    plt.figure(figsize=(10, 6))
-    colors = plt.cm.viridis(np.linspace(0, 1, len(traces_dict)))
-    for i, (param_key, trace) in enumerate(traces_dict.items()):
-        params_dict = dict(eval(param_key))
-        label = ", ".join([f"{k.split('_')[0]}={v}" for k, v in params_dict.items()])
-        sns.histplot(
-            trace.posterior["n"].values.flatten(),
-            label=label,
-            color=colors[i],
-            kde=True,
-            alpha=0.5,
-            stat="probability",
-        )
-    plt.title("Posterior Distributions for Newly Calibrated 'n'"), plt.xlabel(
-        "Calibrated n Value"
-    ), plt.ylabel("Density")
-    plt.legend(
-        title="Process Parameters", bbox_to_anchor=(1.05, 1), loc="upper left"
-    ), plt.grid(True, linestyle="--", alpha=0.6), plt.tight_layout(), plt.show()
-
-
-def fit_and_plot_heteroskedastic_model(calibrated_results_df):
-    """
-    Performs a robust heteroskedastic Bayesian regression to model both the mean
-    and the standard deviation of n as a function of NORMALIZED depth.
-    """
-    if calibrated_results_df.empty or len(calibrated_results_df) < 2:
-        print("Info: Not enough newly calibrated points to fit a final relationship.")
-        return
-
-    normalized_depths_obs = calibrated_results_df["mean_normalized_depth"].values
-    n_obs = calibrated_results_df["calibrated_n"].values
-    n_stds_obs = calibrated_results_df["calibrated_n_std"].values
-
-    with pm.Model() as hetero_model:
-        # --- Model Priors ---
-        A = pm.Normal("A", mu=1.0, sigma=2.0)
-        B = pm.Normal("B", mu=0.0, sigma=5.0)
-        C = pm.Normal("C", mu=0.0, sigma=1.0)
-        D = pm.Normal("D", mu=0.0, sigma=2.0)
-        nu = pm.Exponential("nu", 1 / 29.0) + 1
-
-        # --- Model Definition (using normalized depth) ---
-        mu_model = pm.Deterministic("mu", A * pt.log2(normalized_depths_obs) + B)
-        log_sigma_model = pm.Deterministic(
-            "log_sigma", C * pt.log2(normalized_depths_obs) + D
-        )
-        sigma_model = pm.Deterministic("sigma", pt.exp(log_sigma_model))
-
-        pm.StudentT("n_fit", nu=nu, mu=mu_model, sigma=sigma_model, observed=n_obs)
-
-        print("\n--- Performing Robust Heteroskedastic Fit ---")
-        hetero_trace = pm.sample(
-            2000, tune=1500, cores=4, random_seed=42, target_accept=0.95
-        )
-
-    print("\n--- Heteroskedastic Fit Summary ---")
-    print(az.summary(hetero_trace, var_names=["A", "B", "C", "D", "nu"]))
-
-    # --- Plotting the Results ---
-    fig, ax = plt.subplots(figsize=(10, 6))
-
-    post = hetero_trace.posterior
-    A_m, B_m = post["A"].mean().item(), post["B"].mean().item()
-    C_m, D_m = post["C"].mean().item(), post["D"].mean().item()
-
-    # Plot the observed data points with their Stage 1 uncertainty
-    ax.errorbar(
-        normalized_depths_obs,
-        n_obs,
-        yerr=n_stds_obs,
-        fmt="o",
-        color="C0",
-        ecolor="C0",
-        capsize=3,
-        label="Calibrated n (from Stage 1)",
-    )
-
-    # Calculate and plot the model's prediction for the mean
-    x_range = np.linspace(
-        normalized_depths_obs.min() * 0.9,
-        normalized_depths_obs.max() * 1.1,
-        100,
-    )
-    mean_pred = A_m * np.log2(x_range) + B_m
-    ax.plot(x_range, mean_pred, color="C1", lw=2, label=f"Mean Model: n(d_norm)")
-
-    # Calculate and plot the model's prediction for the uncertainty (±2 sigma)
-    sigma_pred = np.exp(C_m * np.log2(x_range) + D_m)
-    ax.fill_between(
-        x_range,
-        mean_pred - 2.0 * 0.1 * mean_pred,  # sigma_pred,
-        mean_pred + 2.0 * 0.1 * mean_pred,  # sigma_pred,
-        color="C1",
-        alpha=0.3,
-        label=f"Uncertainty Model: ±2σ(d_norm)",
-    )
-
-    ax.set_title("Heteroskedastic Fit of 'n' vs. Mean Normalized Experimental Depth")
-    ax.set_xlabel(
-        "Mean Normalized Experimental Depth (Depth / Spot Size)"
-    ), ax.set_ylabel("Calibrated Shape Factor (n)")
-    ax.legend(), ax.grid(True, linestyle="--", alpha=0.6), plt.tight_layout()
-    ax.set_xscale("log", base=2)
-    plt.show()
-
-    print("\n--- Final Predictive Equations (Using Normalized Depth d_norm) ---")
-    print(
-        f"To predict the mean n:       n_mean(d_norm) = {A_m:.4f} * log2(d_norm) + {B_m:.4f}"
-    )
-    print(
-        f"To predict the uncertainty (σ): σ_n(d_norm)    = exp({C_m:.4f} * log2(d_norm) + {D_m:.4f})"
-    )
-
-
-########################################################################################
-#                                                                                      #
-################### Myna Class for AdditiveFOAM Calibration ############################
-#                                                                                      #
-########################################################################################
 
 
 class AdditiveFOAMCalibration(AdditiveFOAM):
-    """Application to generated calibrated heat source parameters for AdditiveFOAM"""
+    """Application to generate calibrated heat source parameters for AdditiveFOAM
+
+    This class orchestrates:
+    1. Loading experimental and simulation data
+    2. Identifying missing simulations
+    3. Running required simulations
+    4. Performing Bayesian calibration
+    5. Saving results
+    """
+
+    def __init__(
+        self,
+        name: str = "single_track_calibration",
+        config: Optional[CalibrationConfig] = None,
+    ):
+        super().__init__(name)
+        self.config = config or CalibrationConfig()
+        self.config_file = "config.yaml"
+        self.logger = logging.getLogger(f"{__name__}.{name}")
+
+    def configure(self):
+        """Configure all cases"""
+        cases = ["./test_dir"]
+        cases = [pathlib.Path(case) for case in cases]
+        for case in cases:
+            os.makedirs(case, exist_ok=True)
+            self.configure_case(case)
+
+    def configure_case(self, case_dir: str | pathlib.Path):
+        """Configures the case directory associated with the step"""
+        # Use pathlib inside function
+        if not isinstance(case_dir, pathlib.Path):
+            case_dir = pathlib.Path(case_dir)
+
+        # These will be argparse arguments, hardcoded for testing
+        experiments_path = "experiments.yaml"
+        simulations_path = f"{case_dir}/simulations.yaml"
+        calibrations_path = f"{case_dir}/calibrations.yaml"
+        simulation_output_dir = f"{case_dir}/sim_output"
+        n_values = [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0]
+
+        # Create configuration object to ensure it is valid
+        config = CalibrationConfig(
+            experiments_path=experiments_path,
+            simulations_path=simulations_path,
+            calibrations_path=calibrations_path,
+            simulation_output_dir=simulation_output_dir,
+            n_values=n_values,
+        )
+
+        # Write configuration class to file
+        config_path = case_dir / self.config_file
+        with open(config_path, mode="w", encoding="utf-8") as f:
+            yaml.dump(asdict(config), f, sort_keys=False, default_flow_style=False)
+
+        # Archive experimental data with the case directory
+        shutil.copy(experiments_path, case_dir / pathlib.Path(experiments_path).name)
 
     def execute(self):
-        # Set paths
-        EXPERIMENTS_PATH = "experiments.yml"
-        SIMULATIONS_PATH = "simulations.yml"
-        STATE_PATH = "calibration_state.yml"
-        SIMULATION_QUEUE_PATH = "pending_simulations.csv"
+        """Execute all cases"""
+        cases = ["./test_dir"]
+        for case in cases:
+            config_path = pathlib.Path(case) / self.config_file
+            config = CalibrationConfig(**load_dict_file(config_path))
+            self.execute_case(config)
 
-        # Load and validate data models from dictionaries
-        experiments = ExperimentData(**load_dict_file(EXPERIMENTS_PATH))
-        simulations = SimulationData(**load_dict_file(SIMULATIONS_PATH))
+    def execute_case(self, config: CalibrationConfig):
+        """Main execution flow - orchestrates the calibration workflow"""
+        self.config = config
+        self.logger.info("=" * 80)
+        self.logger.info("Starting AdditiveFOAM Calibration Workflow")
+        self.logger.info("=" * 80)
 
-        # TODO: delete below old code (3 lines)
-        raw_experiments = load_dict_file(EXPERIMENTS_PATH)
-        raw_simulations = load_dict_file(SIMULATIONS_PATH)
-        current_state_data = load_dict_file(STATE_PATH)
+        try:
+            # 1. Load data
+            self.logger.info("Step 1: Loading data files")
+            experiments, simulations, calibrations = self._load_all_data()
 
-        # Load data to dataframe
-        df_exp = experiments.to_polars_df()
-        df_sim = simulations.to_polars_df()
+            # 2. Build simulation matrix and identify missing/invalid simulations
+            self.logger.info("Step 2: Building simulation queue")
+            sim_queue = self._build_simulation_queue(experiments, simulations)
 
-        # TODO: repalce `exp_df` and `sim_df` with newer `df_exp` and `df_sim` implementations
-        exp_df, sim_df, state_df = (
-            parse_experiments(raw_experiments),
-            parse_simulations(raw_simulations),
-            pd.DataFrame(current_state_data),
-        )
-        if exp_df.empty:
-            print("\nNo experimental data found. Exiting."), exit()
-
-        to_process_list, fresh_states, state_lookup = [], [], {}
-        if not state_df.empty:
-            for i, row in state_df.iterrows():
-                state_lookup[str(sorted(row["parameters"].items()))] = row.to_dict()
-        for _, exp_row in exp_df.iterrows():
-            param_key = str(sorted(exp_row["parameters"].items()))
-            if (
-                param_key in state_lookup
-                and state_lookup[param_key].get("fingerprint") == exp_row["fingerprint"]
-            ):
-                fresh_states.append(state_lookup[param_key])
+            # 3. Run missing simulations
+            if len(sim_queue) > 0:
+                self.logger.info(f"Step 3: Running {len(sim_queue)} simulations")
+                simulations = self._run_simulations(sim_queue, simulations)
+                self._save_simulations(simulations)
             else:
-                to_process_list.append(exp_row)
-        to_process_df = pd.DataFrame(to_process_list)
-        print("\n--- Adaptive Run Summary ---"), print(
-            f"Found {len(exp_df)} total experimental parameter sets."
-        )
-        print(f"Found {len(fresh_states)} up-to-date calibrations."), print(
-            f"Found {len(to_process_df)} new or stale experiments to process."
-        )
-        newly_calibrated_states, needs_simulation_list, posterior_traces = (
-            [],
-            [],
-            {},
-        )
-        newly_calibrated_results_for_plotting = []
-        if not to_process_df.empty and sim_df.empty:
-            print(
-                "\nWarning: Experiments need processing, but simulation data is empty. Flagging all as 'needs simulation'."
+                self.logger.info("Step 3: No simulations needed - all up to date")
+
+            # 4. Perform Bayesian calibration
+            self.logger.info("Step 4: Performing Bayesian calibration")
+            calibrations = self._perform_calibration(experiments, simulations)
+            self._save_calibrations(calibrations)
+
+            self.logger.info("=" * 80)
+            self.logger.info("Calibration workflow completed successfully!")
+            self.logger.info(f"Results saved to: {self.config.calibrations_path}")
+            self.logger.info("=" * 80)
+
+        except Exception as e:
+            self.logger.error(f"Calibration workflow failed: {str(e)}", exc_info=True)
+            raise
+
+    def _load_all_data(self) -> tuple[ExperimentData, SimulationData, list]:
+        """Load and validate all input data files"""
+        # Load experiments
+        try:
+            exp_dict = load_dict_file(self.config.experiments_path)
+            experiments = ExperimentData(**exp_dict)
+            self.logger.info(
+                f"Loaded {len(experiments.data)} experimental records from "
+                f"{self.config.experiments_path}"
             )
-            needs_simulation_list = to_process_df["parameters"].tolist()
-        elif not to_process_df.empty:
-            for _, job_row in to_process_df.iterrows():
-                params = job_row["parameters"]
-                print(f"\n--- Processing parameters: {params} ---")
-                query_string = " & ".join([f"`{k}`=={v}" for k, v in params.items()])
-                model_subset = sim_df.query(query_string)
-                if model_subset.empty:
-                    print(
-                        "  FLAGGED: No matching simulation data found."
-                    ), needs_simulation_list.append(params)
-                    continue
-                print("  Found matching simulation data. Proceeding with calibration.")
+        except FileNotFoundError:
+            self.logger.error(
+                f"Experiment file not found: {self.config.experiments_path}"
+            )
+            raise
+        except Exception as e:
+            self.logger.error(f"Failed to load experiments: {str(e)}")
+            raise
 
-                model_subset_sorted = model_subset.sort_values(by="n")
-                n_coords = model_subset_sorted["n"].values
-                model_normalized_depths = model_subset_sorted[
-                    "Normalized_Simulated_Depth"
-                ].values
+        # Load simulations
+        try:
+            sim_dict = load_dict_file(self.config.simulations_path)
+            simulations = SimulationData(**sim_dict)
+            self.logger.info(
+                f"Loaded {len(simulations.data)} simulation records from "
+                f"{self.config.simulations_path}"
+            )
+        except FileNotFoundError:
+            self.logger.warning(
+                f"Simulation file not found: {self.config.simulations_path}. "
+                f"Starting with empty simulation set."
+            )
+            simulations = SimulationData(data=[])
+        except Exception as e:
+            self.logger.error(f"Failed to load simulations: {str(e)}")
+            raise
 
-                trace = perform_bayesian_calibration(
-                    n_coords,
-                    model_normalized_depths,
-                    job_row["normalized_depths_list"],
+        # Load calibrations
+        try:
+            calibrations = load_dict_file(self.config.calibrations_path)
+            self.logger.info(
+                f"Loaded existing calibrations from {self.config.calibrations_path}"
+            )
+        except FileNotFoundError:
+            self.logger.info("No existing calibrations found. Will create new file.")
+            calibrations = []
+
+        return experiments, simulations, calibrations
+
+    def _build_simulation_queue(
+        self, experiments: ExperimentData, simulations: SimulationData
+    ) -> pl.DataFrame:
+        """Determine which simulations need to be run
+
+        Returns a DataFrame with one row per simulation to run, containing:
+        - Process parameters (power, scan_speed, spot_size)
+        - Simulation parameter (n)
+        - fingerprint for tracking
+        """
+        self.logger.debug("Preparing experiment and simulation DataFrames")
+        df_exp = self._prepare_experiment_df(experiments)
+        df_sim = self._prepare_simulation_df(simulations)
+
+        self.logger.debug("Creating required simulation matrix")
+        required_sims = self._create_required_simulation_matrix(df_exp)
+        self.logger.info(f"Total required simulations: {len(required_sims)}")
+
+        self.logger.debug("Identifying valid existing simulations")
+        valid_sims = self._identify_valid_simulations(df_sim)
+        self.logger.info(f"Valid existing simulations: {len(valid_sims)}")
+
+        # Find missing simulations (anti-join)
+        sim_queue = required_sims.join(
+            valid_sims.select(["fingerprint", "n"]), on=["fingerprint", "n"], how="anti"
+        )
+
+        self.logger.info(f"Simulations to run: {len(sim_queue)}")
+
+        if len(sim_queue) > 0:
+            # Log details about what needs to be run
+            queue_summary = sim_queue.group_by("fingerprint").agg(
+                pl.col("n").count().alias("n_count")
+            )
+            for row in queue_summary.iter_rows(named=True):
+                self.logger.debug(
+                    f"  Fingerprint {row['fingerprint'][:8]}...: "
+                    f"{row['n_count']} simulations"
                 )
 
-                calibrated_n_mean = extract_calibrated_n(
-                    trace, n_min=n_coords.min(), n_max=n_coords.max()
-                )
-                calibrated_n_std = trace.posterior["n"].values.std()
-                new_state = {
-                    "parameters": params,
-                    "calibrated_n": float(calibrated_n_mean),
-                    "calibrated_n_std": float(calibrated_n_std),
-                    "fingerprint": job_row["fingerprint"],
+        return sim_queue
+
+    def _prepare_experiment_df(self, experiments: ExperimentData) -> pl.DataFrame:
+        """Convert experiments to DataFrame with fingerprints"""
+        df = experiments.to_polars_df()
+
+        # Add fingerprints based on process parameters
+        param_cols = list(ProcessParameters.model_fields.keys())
+        df = df.with_columns(
+            pl.struct([pl.col(k) for k in param_cols])
+            .map_elements(create_row_fingerprint, return_dtype=pl.String)
+            .alias("fingerprint")
+        )
+
+        self.logger.debug(f"Prepared experiment DataFrame: {len(df)} rows")
+        return df
+
+    def _prepare_simulation_df(self, simulations: SimulationData) -> pl.DataFrame:
+        """Convert simulations to DataFrame and validate fingerprints"""
+        if len(simulations.data) == 0:
+            self.logger.debug("No existing simulations - returning empty DataFrame")
+            return pl.DataFrame(
+                schema={
+                    **{k: pl.Float64 for k in ProcessParameters.model_fields},
+                    "n": pl.Float64,
+                    "depths": pl.Float64,
+                    "fingerprint": pl.String,
+                    "current_fingerprint": pl.String,
                 }
-                newly_calibrated_states.append(new_state)
-                posterior_traces[str(sorted(params.items()))] = trace
+            )
 
-                newly_calibrated_results_for_plotting.append(
+        df = simulations.to_polars_df()
+
+        # Calculate what the fingerprint SHOULD be based on current process params
+        param_cols = list(ProcessParameters.model_fields.keys())
+        df = df.with_columns(
+            pl.struct([pl.col(k) for k in param_cols])
+            .map_elements(create_row_fingerprint, return_dtype=pl.String)
+            .alias("current_fingerprint")
+        )
+
+        # Check for fingerprint mismatches
+        mismatches = df.filter(
+            pl.col("fingerprint").is_not_null()
+            & (pl.col("fingerprint") != pl.col("current_fingerprint"))
+        )
+
+        if len(mismatches) > 0:
+            self.logger.warning(
+                f"Found {len(mismatches)} simulations with outdated fingerprints "
+                f"(process parameters changed). These will be re-run."
+            )
+
+        self.logger.debug(f"Prepared simulation DataFrame: {len(df)} rows")
+        return df
+
+    def _create_required_simulation_matrix(self, df_exp: pl.DataFrame) -> pl.DataFrame:
+        """Create full matrix of all simulations that should exist"""
+        # Get unique experiment fingerprints
+        param_cols = list(ProcessParameters.model_fields.keys())
+        unique_experiments = df_exp.select([*param_cols, "fingerprint"]).unique()
+
+        self.logger.debug(f"Unique experiments: {len(unique_experiments)}")
+
+        # Cross join with all n values
+        n_df = pl.DataFrame({"n": self.config.n_values})
+        required_sims = unique_experiments.join(n_df, how="cross")
+
+        self.logger.debug(
+            f"Required simulation matrix: {len(unique_experiments)} experiments × "
+            f"{len(self.config.n_values)} n-values = {len(required_sims)} simulations"
+        )
+
+        return required_sims
+
+    def _identify_valid_simulations(self, df_sim: pl.DataFrame) -> pl.DataFrame:
+        """Filter simulations to only those that are valid
+
+        Valid simulations must:
+        1. Have matching stored and current fingerprints (process params unchanged)
+        2. Have non-null depth results
+        """
+        if len(df_sim) == 0:
+            return df_sim
+
+        valid = df_sim.filter(
+            (pl.col("fingerprint") == pl.col("current_fingerprint"))
+            & (pl.col("depths").is_not_null())
+        )
+
+        invalid_count = len(df_sim) - len(valid)
+        if invalid_count > 0:
+            self.logger.debug(f"Filtered out {invalid_count} invalid simulations")
+
+        return valid
+
+    def _run_simulations(
+        self, sim_queue: pl.DataFrame, existing_sims: SimulationData
+    ) -> SimulationData:
+        """Execute simulations for all entries in the queue"""
+        os.makedirs(self.config.simulation_output_dir, exist_ok=True)
+        self.logger.info(f"Output directory: {self.config.simulation_output_dir}")
+
+        def _run_single_simulation(row) -> float:
+            """Run a single simulation
+
+            TODO: Replace with actual AdditiveFOAM simulation call
+            """
+            # Extract parameters for logging
+            power = row["power"]
+            speed = row["scan_speed"]
+            spot = row["spot_size"]
+            n = row["n"]
+
+            self.logger.debug(
+                f"Running simulation: P={power}W, v={speed}m/s, " f"d={spot}mm, n={n}"
+            )
+
+            # Placeholder - replace with actual simulation
+            result = np.random.rand() * 0.5 + 0.1  # Random depth between 0.1-0.6 mm
+
+            self.logger.debug(f"  Result: depth={result:.4f}mm")
+            return result
+
+        # Run simulations with progress tracking
+        self.logger.info("Executing simulations...")
+        results = sim_queue.with_columns(
+            pl.struct(pl.all())
+            .map_elements(_run_single_simulation, return_dtype=pl.Float64)
+            .alias("depths")
+        )
+
+        # Mark these simulations as validated
+        results = results.with_columns(
+            pl.col("fingerprint").alias("current_fingerprint")
+        )
+
+        self.logger.info(f"Completed {len(results)} simulations")
+
+        # Merge with existing valid simulations
+        df_sim_existing = existing_sims.to_polars_df()
+        df_sim_valid = self._identify_valid_simulations(df_sim_existing)
+
+        # Combine valid existing + new results
+        combined = pl.concat([df_sim_valid, results], how="diagonal_relaxed")
+
+        self.logger.debug(
+            f"Combined simulations: {len(df_sim_valid)} existing + "
+            f"{len(results)} new = {len(combined)} total"
+        )
+
+        # Update the simulation data model
+        updated_sims = SimulationData(data=[])
+        updated_sims.update_from_df(combined)
+
+        self.logger.info(
+            f"Updated simulation data model with {len(updated_sims.data)} records"
+        )
+
+        return updated_sims
+
+    def _perform_calibration(
+        self, experiments: ExperimentData, simulations: SimulationData
+    ) -> list[dict]:
+        """Perform Bayesian calibration for each experiment"""
+        df_exp = self._prepare_experiment_df(experiments)
+        df_sim = self._prepare_simulation_df(simulations)
+        df_sim_valid = self._identify_valid_simulations(df_sim)
+
+        calibration_results = []
+        unique_fingerprints = df_exp.select("fingerprint").unique().to_series()
+
+        self.logger.info(f"Calibrating {len(unique_fingerprints)} experiments")
+
+        for i, fingerprint in enumerate(unique_fingerprints, 1):
+            self.logger.info(
+                f"Calibration {i}/{len(unique_fingerprints)}: {fingerprint[:16]}..."
+            )
+
+            try:
+                # Get experimental observations
+                exp_data = df_exp.filter(pl.col("fingerprint") == fingerprint)
+                observed_depths = exp_data.select("depths").to_series()[0]
+                if not isinstance(observed_depths, list):
+                    observed_depths = (
+                        observed_depths.to_list()
+                        if hasattr(observed_depths, "to_list")
+                        else [observed_depths]
+                    )
+
+                # Get simulation results for all n values
+                sim_data = df_sim_valid.filter(
+                    pl.col("current_fingerprint") == fingerprint
+                ).sort("n")
+
+                if len(sim_data) < 2:
+                    self.logger.warning(
+                        f"  Skipping: insufficient simulation data "
+                        f"({len(sim_data)} points, need ≥2)"
+                    )
+                    continue
+
+                n_coords = sim_data.select("n").to_series().to_list()
+                model_depths = sim_data.select("depths").to_series().to_list()
+
+                self.logger.debug(
+                    f"  n range: [{min(n_coords):.1f}, {max(n_coords):.1f}], "
+                    f"depth range: [{min(model_depths):.4f}, {max(model_depths):.4f}]mm"
+                )
+
+                # Perform calibration
+                trace = perform_bayesian_calibration(
+                    n_coords=n_coords,
+                    model_values=model_depths,
+                    observed_values=[[d] for d in observed_depths],
+                )
+
+                calibrated_n = extract_calibrated_n(
+                    trace, n_min=min(n_coords), n_max=max(n_coords)
+                )
+
+                # Calculate uncertainty metrics
+                n_samples = trace.posterior["n"].values.flatten()
+                n_std = np.std(n_samples)
+                n_ci_lower = np.percentile(n_samples, 2.5)
+                n_ci_upper = np.percentile(n_samples, 97.5)
+
+                self.logger.info(
+                    f"  ✓ Calibrated n = {calibrated_n:.3f} ± {n_std:.3f} "
+                    f"(95% CI: [{n_ci_lower:.3f}, {n_ci_upper:.3f}])"
+                )
+
+                # Store results
+                process_params = exp_data.select(
+                    list(ProcessParameters.model_fields.keys())
+                ).row(0, named=True)
+
+                calibration_results.append(
                     {
-                        **new_state,
-                        "mean_normalized_depth": np.mean(
-                            job_row["normalized_depths_list"]
-                        ),
-                        "normalized_depths_list": job_row["normalized_depths_list"],
+                        "fingerprint": fingerprint,
+                        "process_parameters": process_params,
+                        "calibrated_n": float(calibrated_n),
+                        "n_std": float(n_std),
+                        "n_ci_lower": float(n_ci_lower),
+                        "n_ci_upper": float(n_ci_upper),
+                        "n_samples": n_samples.tolist(),
+                        "observed_depths": observed_depths,
                     }
                 )
 
-                print(
-                    f"  -> Calibrated n: {calibrated_n_mean:.3f} ± {calibrated_n_std:.3f}"
+            except Exception as e:
+                self.logger.error(
+                    f"  ✗ Calibration failed for {fingerprint[:16]}: {str(e)}",
+                    exc_info=True,
                 )
-        final_state = fresh_states + newly_calibrated_states
-        save_state_file(final_state, STATE_PATH)
-        final_state_df = pd.DataFrame(final_state)
-        print("\n\n" + "=" * 30), print(" FINAL CALIBRATION STATE "), print("=" * 30)
-        if not final_state_df.empty:
-            print(
-                final_state_df[
-                    ["parameters", "calibrated_n", "calibrated_n_std"]
-                ].to_string(index=False, float_format="%.4f")
-            )
-        else:
-            print("No calibrated results exist in the state file.")
-        print("\n\n" + "=" * 35), print(
-            " ACTION REQUIRED: PENDING SIMULATIONS "
-        ), print("=" * 35)
-        needs_simulation_df = pd.DataFrame(needs_simulation_list)
-        if not needs_simulation_df.empty:
-            print(
-                f"The following parameter sets require a simulation run (saved to '{SIMULATION_QUEUE_PATH}'):"
-            ), print(needs_simulation_df.to_string(index=False))
-            save_simulation_queue(needs_simulation_df, SIMULATION_QUEUE_PATH)
-        else:
-            print("No new simulations are required at this time.")
-        if newly_calibrated_results_for_plotting:
-            print("\nGenerating plots for newly calibrated data...")
-            plot_df = pd.DataFrame(newly_calibrated_results_for_plotting)
-            plot_calibration_overview(plot_df, sim_df)
-            plot_posterior_distributions(posterior_traces)
-            fit_and_plot_heteroskedastic_model(plot_df)
-        print("\nDone.")
+                continue
+
+        self.logger.info(
+            f"Successfully calibrated {len(calibration_results)} experiments"
+        )
+        return calibration_results
+
+    def _save_simulations(self, simulations: SimulationData):
+        """Save simulation data to file"""
+        try:
+            with open(self.config.simulations_path, mode="w", encoding="utf-8") as f:
+                payload = simulations.model_dump(mode="json", exclude_none=True)
+                yaml.dump(payload, f, sort_keys=False, default_flow_style=False)
+
+            self.logger.info(f"Saved simulations to {self.config.simulations_path}")
+        except Exception as e:
+            self.logger.error(f"Failed to save simulations: {str(e)}")
+            raise
+
+    def _save_calibrations(self, calibrations: list[dict]):
+        """Save calibration results to file"""
+        try:
+            # Don't save the full sample arrays to keep file size reasonable
+            calibrations_to_save = []
+            for cal in calibrations:
+                cal_copy = cal.copy()
+                # Keep summary statistics but remove full sample array
+                if "n_samples" in cal_copy:
+                    del cal_copy["n_samples"]
+                calibrations_to_save.append(cal_copy)
+
+            with open(self.config.calibrations_path, mode="w", encoding="utf-8") as f:
+                yaml.dump(
+                    calibrations_to_save, f, sort_keys=False, default_flow_style=False
+                )
+
+            self.logger.info(f"Saved calibrations to {self.config.calibrations_path}")
+        except Exception as e:
+            self.logger.error(f"Failed to save calibrations: {str(e)}")
+            raise
+
+
+# ==============================================================================
+# EXAMPLE USAGE
+# ==============================================================================
+
+if __name__ == "__main__":
+    # Configure custom settings if needed
+    app = AdditiveFOAMCalibration()
+    app.configure()
+    app.execute()
