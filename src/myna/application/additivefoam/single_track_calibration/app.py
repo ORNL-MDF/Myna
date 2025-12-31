@@ -142,18 +142,19 @@ class SimulationData(ExperimentData):
             }
             for d in self.data
         ]
-        kwargs = {}
+        # Explode to get one row per (n, depth) combination
         if len(dicts) == 0:
-            kwargs = {
-                "schema": {
+            return pl.from_dicts(
+                dicts,
+                schema={
                     **{k: pl.Float64 for k in ProcessParameters.model_fields},
                     **{k: pl.Float64 for k in SimulationParameters.model_fields},
                     "depths": pl.Float64,
                     "fingerprint": pl.String,
-                }
-            }
-        # Explode to get one row per (n, depth) combination
-        return pl.from_dicts(dicts, **kwargs).explode(["depths", "n"])
+                },
+            ).explode(["depths", "n"])
+        else:
+            return pl.from_dicts(dicts).explode(["depths", "n"])
 
     def update_from_df(self, df: pl.DataFrame):
         """Update simulation data from a DataFrame
@@ -161,7 +162,6 @@ class SimulationData(ExperimentData):
         Expects df to have one row per n value, with depths as single values
         """
         param_keys = list(ProcessParameters.model_fields.keys())
-        sim_keys = list(SimulationParameters.model_fields.keys())
 
         # Group by fingerprint to reconstruct records
         grouped = df.group_by("fingerprint").agg(
@@ -191,7 +191,7 @@ class CalibrationConfig:
     simulations_path: str = "test_sim.yaml"
     calibrations_path: str = "calibration.yaml"
     simulation_output_dir: str = "sim_output"
-    n_values: list[float] = None
+    n_values: Optional[list[float]] = None
 
     def __post_init__(self):
         if self.n_values is None:
@@ -212,15 +212,22 @@ def create_row_fingerprint(row: dict | pl.Series) -> str:
     return hashlib.sha256(canonical_json.encode()).hexdigest()
 
 
-def load_dict_file(filepath: str | pathlib.Path) -> dict:
+def load_json_yaml_file(filepath: str | pathlib.Path, enforce_type=None) -> Any:
     """Loads a dictionary from a JSON or YAML file"""
     with open(filepath, "r") as f:
         suffix = pathlib.Path(filepath).suffix
+        contents = {}
         if suffix in [".yml", ".yaml"]:
-            return yaml.safe_load(f)
+            contents = yaml.safe_load(f)
         elif suffix in [".json"]:
-            return json.load(f)
-        return {}
+            contents = json.load(f)
+        if enforce_type is not None:
+            if not isinstance(contents, enforce_type):
+                raise ValueError(
+                    f"Top-level contents of {filepath} are"
+                    "{type(contents)} but are expected to be {enforce_type}"
+                )
+        return contents
 
 
 # ==============================================================================
@@ -293,7 +300,7 @@ def perform_bayesian_calibration(
 
 def extract_calibrated_n(trace: az.InferenceData, n_min: float, n_max: float) -> float:
     """Extract calibrated n value from posterior samples"""
-    n_samples = trace.posterior["n"].values.flatten()
+    n_samples = trace.posterior["n"].values.flatten()  # type: ignore[attr-defined] arviz uses dynamic attributes
     posterior_mean_n = np.mean(n_samples)
     lower_bound_region = n_min + (n_max - n_min) * 0.01
     clipping_percentage = np.sum(n_samples <= lower_bound_region) / len(n_samples) * 100
@@ -377,7 +384,9 @@ class AdditiveFOAMCalibration(AdditiveFOAM):
         cases = ["./test_dir"]
         for case in cases:
             config_path = pathlib.Path(case) / self.config_file
-            config = CalibrationConfig(**load_dict_file(config_path))
+            config = CalibrationConfig(
+                **load_json_yaml_file(config_path, enforce_type=dict)
+            )
             self.execute_case(config)
 
     def execute_case(self, config: CalibrationConfig):
@@ -422,7 +431,9 @@ class AdditiveFOAMCalibration(AdditiveFOAM):
         """Load and validate all input data files"""
         # Load experiments
         try:
-            exp_dict = load_dict_file(self.config.experiments_path)
+            exp_dict = load_json_yaml_file(
+                self.config.experiments_path, enforce_type=dict
+            )
             experiments = ExperimentData(**exp_dict)
             self.logger.info(
                 f"Loaded {len(experiments.data)} experimental records from "
@@ -439,7 +450,9 @@ class AdditiveFOAMCalibration(AdditiveFOAM):
 
         # Load simulations
         try:
-            sim_dict = load_dict_file(self.config.simulations_path)
+            sim_dict = load_json_yaml_file(
+                self.config.simulations_path, enforce_type=dict
+            )
             simulations = SimulationData(**sim_dict)
             self.logger.info(
                 f"Loaded {len(simulations.data)} simulation records from "
@@ -457,7 +470,9 @@ class AdditiveFOAMCalibration(AdditiveFOAM):
 
         # Load calibrations
         try:
-            calibrations = load_dict_file(self.config.calibrations_path)
+            calibrations = list(
+                load_json_yaml_file(self.config.calibrations_path, enforce_type=list)
+            )
             self.logger.info(
                 f"Loaded existing calibrations from {self.config.calibrations_path}"
             )
@@ -576,8 +591,9 @@ class AdditiveFOAMCalibration(AdditiveFOAM):
         required_sims = unique_experiments.join(n_df, how="cross")
 
         self.logger.debug(
-            f"Required simulation matrix: {len(unique_experiments)} experiments × "
-            f"{len(self.config.n_values)} n-values = {len(required_sims)} simulations"
+            f"Required simulation matrix: {len(unique_experiments)} experiments x "
+            f"{len(self.config.n_values) if isinstance(self.config.n_values, list) else None} "
+            "n-values = {len(required_sims)} simulations"
         )
 
         return required_sims
@@ -729,7 +745,7 @@ class AdditiveFOAMCalibration(AdditiveFOAM):
                 )
 
                 # Calculate uncertainty metrics
-                n_samples = trace.posterior["n"].values.flatten()
+                n_samples = trace.posterior["n"].values.flatten()  # type: ignore[attr-defined] arviz uses dynamic attributes
                 n_std = np.std(n_samples)
                 n_ci_lower = np.percentile(n_samples, 2.5)
                 n_ci_upper = np.percentile(n_samples, 97.5)
