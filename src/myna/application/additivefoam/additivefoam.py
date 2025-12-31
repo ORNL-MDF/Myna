@@ -29,9 +29,6 @@ class AdditiveFOAM(MynaApp):
 
         # Parse app-specific arguments
         self.parse_known_args()
-        super().validate_executable(
-            "additiveFoam",
-        )
         if self.args.exec is None:
             self.args.exec = "additiveFoam"
 
