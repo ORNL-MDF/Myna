@@ -21,27 +21,19 @@ import pymc as pm
 import arviz as az
 import pytensor.tensor as pt
 from myna.application.additivefoam import AdditiveFOAM
-from .models import ExperimentData, SimulationData, ProcessParameters, CalibrationConfig
+from myna.application.additivefoam.single_track_calibration.models import (
+    ExperimentData,
+    SimulationData,
+    ProcessParameters,
+    CalibrationConfig,
+    create_row_fingerprint,
+)
 
 # Configure logging
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
-
-
-def create_data_fingerprint(data: ExperimentData | SimulationData) -> str:
-    """Create a hash from the experiment or simulation data for quick comparison"""
-    payload = data.model_dump(mode="json", exclude={"fingerprint"}, exclude_none=True)
-    canonical_json = json.dumps(payload, sort_keys=True, separators=(",", ":"))
-    return hashlib.sha256(canonical_json.encode()).hexdigest()
-
-
-def create_row_fingerprint(row: dict | pl.Series) -> str:
-    """Creates a hash from the process parameters in a DataFrame row"""
-    payload = {k: np.round(row[k], 6) for k in ProcessParameters.model_fields.keys()}
-    canonical_json = json.dumps(payload, sort_keys=True, separators=(",", ":"))
-    return hashlib.sha256(canonical_json.encode()).hexdigest()
 
 
 def load_json_yaml_file(filepath: str | pathlib.Path, enforce_type=None) -> Any:
@@ -57,16 +49,12 @@ def load_json_yaml_file(filepath: str | pathlib.Path, enforce_type=None) -> Any:
             if not isinstance(contents, enforce_type):
                 raise ValueError(
                     f"Top-level contents of {filepath} are"
-                    "{type(contents)} but are expected to be {enforce_type}"
+                    f"{type(contents)} but are expected to be {enforce_type}"
                 )
         return contents
 
 
-# ==============================================================================
-# SECTION 2: BAYESIAN CALIBRATION LOGIC
-# ==============================================================================
-
-
+# Define calibration logic
 def linear_interp_pt(n_val, n_data_pt, column_data_pt):
     """Linear interpolation using PyTensor tensors"""
     n_data_pt, column_data_pt, n_val = (
@@ -173,10 +161,48 @@ class AdditiveFOAMCalibration(AdditiveFOAM):
         self.config_file = "config.yaml"
         self.logger = logging.getLogger(f"{__name__}.{name}")
 
+    def parse_configure_arguments(self):
+        """Check for arguments relevant to the configure step and update app settings"""
+        self.parser.add_argument(
+            "--experiments",
+            default="experiments.yaml",
+            type=str,
+            help="Path to the experiemnts file",
+        )
+        self.parser.add_argument(
+            "--simulations",
+            default=None,
+            type=str,
+            help=(
+                "(optional) Path to an existing simulations file."
+                "A new file will be created if not given."
+            ),
+        )
+        self.parser.add_argument(
+            "--calibrations",
+            default=None,
+            type=str,
+            help=(
+                "(optional) Path to an existing calibrations file."
+                "A new file will be created if not given."
+            ),
+        )
+        self.parser.add_argument(
+            "--nvalues",
+            default=[1.0, 5.0, 9.0],
+            type=float,
+            nargs="+",
+            help="",
+        )
+        self.parse_known_args()
+
     def configure(self):
         """Configure all cases"""
+        # TODO: update to inherit/determine case list from app type
         cases = ["./test_dir"]
         cases = [pathlib.Path(case) for case in cases]
+        self.parse_configure_arguments()
+        print(f"{self.args=}")
         for case in cases:
             os.makedirs(case, exist_ok=True)
             self.configure_case(case)
@@ -187,12 +213,22 @@ class AdditiveFOAMCalibration(AdditiveFOAM):
         if not isinstance(case_dir, pathlib.Path):
             case_dir = pathlib.Path(case_dir)
 
-        # These will be argparse arguments, hardcoded for testing
-        experiments_path = "experiments.yaml"
+        # Get experiments file
+        experiments_path = self.args.experiments
+
+        # Get/create simulations file
         simulations_path = f"{case_dir}/simulations.yaml"
+        if self.args.simulations is not None:
+            shutil.copy(self.args.simulations, simulations_path)
+
+        # Get/create calibrations file
         calibrations_path = f"{case_dir}/calibrations.yaml"
+        if self.args.calibrations is not None:
+            shutil.copy(self.args.calibrations, calibrations_path)
+
+        # Set simulation output path
         simulation_output_dir = f"{case_dir}/sim_output"
-        n_values = [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0]
+        n_values = self.args.nvalues
 
         # Create configuration object to ensure it is valid
         config = CalibrationConfig(
@@ -213,6 +249,7 @@ class AdditiveFOAMCalibration(AdditiveFOAM):
 
     def execute(self):
         """Execute all cases"""
+        # TODO: update to inherit/determine case list from app type
         cases = ["./test_dir"]
         for case in cases:
             config_path = pathlib.Path(case) / self.config_file
@@ -386,14 +423,6 @@ class AdditiveFOAMCalibration(AdditiveFOAM):
             )
 
         df = simulations.to_polars_df()
-
-        # Calculate what the fingerprint SHOULD be based on current process params
-        param_cols = list(ProcessParameters.model_fields.keys())
-        df = df.with_columns(
-            pl.struct([pl.col(k) for k in param_cols])
-            .map_elements(create_row_fingerprint, return_dtype=pl.String)
-            .alias("current_fingerprint")
-        )
 
         # Check for fingerprint mismatches
         mismatches = df.filter(
@@ -658,6 +687,7 @@ class AdditiveFOAMCalibration(AdditiveFOAM):
 
 if __name__ == "__main__":
     # Configure custom settings if needed
+    print(f'{"/".join(pathlib.Path(__name__).parts[-2:])=}')
     app = AdditiveFOAMCalibration()
     app.configure()
     app.execute()

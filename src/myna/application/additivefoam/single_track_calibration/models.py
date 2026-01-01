@@ -7,9 +7,12 @@
 # License: 3-clause BSD, see https://opensource.org/licenses/BSD-3-Clause.
 #
 import logging
+import json
+import hashlib
 from typing import Optional, Annotated, Any
 from dataclasses import dataclass
 import polars as pl
+import numpy as np
 from pydantic import BaseModel, model_validator, model_serializer, BeforeValidator
 
 
@@ -18,6 +21,14 @@ logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
+
+
+# Utility function for fingerprinting of the model parameters
+def create_row_fingerprint(row: dict | pl.Series) -> str:
+    """Creates a hash from the process parameters in a DataFrame row"""
+    payload = {k: np.round(row[k], 6) for k in ProcessParameters.model_fields.keys()}
+    canonical_json = json.dumps(payload, sort_keys=True, separators=(",", ":"))
+    return hashlib.sha256(canonical_json.encode()).hexdigest()
 
 
 # ==============================================================================
@@ -122,6 +133,7 @@ class SimulationData(ExperimentData):
 
     def to_polars_df(self) -> pl.DataFrame:
         """Converts the data model to a polars DataFrame"""
+        # Create dictionary of data
         dicts = [
             {
                 **d.process_parameters.model_dump(),
@@ -131,9 +143,10 @@ class SimulationData(ExperimentData):
             }
             for d in self.data
         ]
+
         # Explode to get one row per (n, depth) combination
         if len(dicts) == 0:
-            return pl.from_dicts(
+            df = pl.from_dicts(
                 dicts,
                 schema={
                     **{k: pl.Float64 for k in ProcessParameters.model_fields},
@@ -143,7 +156,16 @@ class SimulationData(ExperimentData):
                 },
             ).explode(["depths", "n"])
         else:
-            return pl.from_dicts(dicts).explode(["depths", "n"])
+            df = pl.from_dicts(dicts).explode(["depths", "n"])
+
+        # Add current fingerprint to each row
+        param_cols = list(ProcessParameters.model_fields.keys())
+        df = df.with_columns(
+            pl.struct([pl.col(k) for k in param_cols])
+            .map_elements(create_row_fingerprint, return_dtype=pl.String)
+            .alias("current_fingerprint")
+        )
+        return df
 
     def update_from_df(self, df: pl.DataFrame):
         """Update simulation data from a DataFrame
