@@ -31,11 +31,6 @@ def create_row_fingerprint(row: dict | pl.Series) -> str:
     return hashlib.sha256(canonical_json.encode()).hexdigest()
 
 
-# ==============================================================================
-# SECTION 1: DATA MODELS AND VALIDATION
-# ==============================================================================
-
-
 def _ensure_float_list(v: Any) -> list[Any]:
     """Handle floats, lists of floats, and None and convert them all to a list.
 
