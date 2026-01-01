@@ -299,6 +299,7 @@ class MynaApp:
 
         # Copy if there are no existing files in the case directory or overwrite is specified
         if (len(case_dir_files) == 0) or (self.args.overwrite):
+            os.makedirs(case_dir, exist_ok=True)
             shutil.copytree(self.template, case_dir, dirs_exist_ok=True)
         else:
             print(f"Warning: NOT overwriting existing case in: {case_dir}")
