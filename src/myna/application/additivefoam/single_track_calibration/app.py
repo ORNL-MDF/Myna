@@ -11,6 +11,7 @@ import yaml
 import shutil
 import pathlib
 import logging
+import subprocess
 from typing import Optional
 from dataclasses import asdict
 import polars as pl
@@ -19,6 +20,7 @@ import pymc as pm
 import arviz as az
 import pytensor.tensor as pt
 from myna.application.additivefoam import AdditiveFOAM
+from myna.application.additivefoam.path import write_single_line_path
 from myna.application.additivefoam.single_track_calibration.models import (
     ExperimentData,
     SimulationData,
@@ -27,6 +29,7 @@ from myna.application.additivefoam.single_track_calibration.models import (
     create_row_fingerprint,
 )
 from myna.core.utils.filesystem import load_json_yaml_file
+from myna.application.openfoam.mesh import update_parameter
 
 # Configure logging
 logging.basicConfig(
@@ -116,11 +119,7 @@ def extract_calibrated_n(trace: az.InferenceData, n_min: float, n_max: float) ->
     return posterior_mean_n
 
 
-# ==============================================================================
-# SECTION 3: MAIN CALIBRATION APPLICATION
-# ==============================================================================
-
-
+# Define main class
 class AdditiveFOAMCalibration(AdditiveFOAM):
     """Application to generate calibrated heat source parameters for AdditiveFOAM
 
@@ -140,6 +139,7 @@ class AdditiveFOAMCalibration(AdditiveFOAM):
         super().__init__(name)
         self.config = config or CalibrationConfig()
         self.config_file = "config.yaml"
+        self.single_track_length = 3e-3
         self.logger = logging.getLogger(f"{__name__}.{name}")
 
     def parse_configure_arguments(self):
@@ -469,15 +469,15 @@ class AdditiveFOAMCalibration(AdditiveFOAM):
         self.logger.info(f"Output directory: {self.config.simulation_output_dir}")
 
         def _run_single_simulation(row) -> float:
-            """Run a single simulation
-
-            TODO: Replace with actual AdditiveFOAM simulation call
+            """Run a single simulation, saving results to a directory with the
+            process parameter fingerprint + n
             """
             # Extract parameters for logging
             power = row["power"]
             speed = row["scan_speed"]
             spot = row["spot_size"]
             n = row["n"]
+            fingerprint = row["current_fingerprint"]
 
             self.logger.debug(
                 f"Running simulation: P={power}W, v={speed}m/s, " f"d={spot}mm, n={n}"
@@ -485,6 +485,35 @@ class AdditiveFOAMCalibration(AdditiveFOAM):
 
             # Placeholder - replace with actual simulation
             result = np.random.rand() * 0.5 + 0.1  # Random depth between 0.1-0.6 mm
+
+            # Copy the template and configure the case,
+            # including generating the scanpath from the laser power and scan speed
+            case_dir = pathlib.Path(self.config.simulation_output_dir) / fingerprint / n
+            self.copy(case_dir)
+            self.update_beam_spot_size(None, case_dir, spot)
+            scan_file = case_dir / "constant" / "scanPath"
+            write_single_line_path(
+                scan_file, power, speed, (0, 0, 0), (self.single_track_length, 0, 0)
+            )
+            self.update_region_start_and_end_times(case_dir, None, scan_file.name)
+            # TODO: What heat source do I use in the template and what does "n" correspond to?
+            heatsource_model = (
+                subprocess.check_output(
+                    "foamDictionary -entry beam/heatSourceModel -value "
+                    + f"{case_dir}/constant/heatSourceDict",
+                    shell=True,
+                )
+                .decode("utf-8")
+                .strip()
+            )
+            # update_parameter(
+            #     f"{case_dir}/constant/heatSourceDict",
+            #     f"beam/{heatsource_model}Coeffs/eta0",
+            #     absorption,
+            # )
+            # TODO: update the template to actually output the melt pool dimension
+            # somewhere readable using the function object
+            process = self.run_case(case_dir)
 
             self.logger.debug(f"  Result: depth={result:.4f}mm")
             return result
