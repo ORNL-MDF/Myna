@@ -7,8 +7,9 @@
 # License: 3-clause BSD, see https://opensource.org/licenses/BSD-3-Clause.
 #
 """Module for functions related to AdditiveFOAM scan paths"""
-
+from pathlib import Path
 import pandas as pd
+import polars as pl
 
 
 def convert_peregrine_scanpath(filename, export_path, power=1):
@@ -49,3 +50,39 @@ def convert_peregrine_scanpath(filename, export_path, power=1):
         sep="\t",
         index=False,
     )
+
+
+def write_single_line_path(
+    path: str | Path,
+    power: float,
+    speed: float,
+    start_coord: tuple = (0, 0, 0),
+    end_coord: tuple = (1e-3, 1e-3, 1e-3),
+):
+    """Writes a single line scan path at the specified file path
+
+    Args:
+    - path: path to export the scan path
+    - power: laser power, in Watts
+    - speed: travel speed, in meters/second
+    - start_coords: XYZ location of the starting location of the scan, in meters
+    - end_coords: XYZ location of the ending location of the scan, in meters
+    """
+    dict = {
+        "Mode": [1, 0],
+        "X(m)": [start_coord[0], end_coord[0]],
+        "Y(m)": [start_coord[1], end_coord[1]],
+        "Z(m)": [start_coord[2], end_coord[2]],
+        "Power(W)": [0.0, power],
+        "tParam": [1e-6, speed],
+    }
+    schema = {
+        "Mode": pl.Int8,
+        "X(m)": pl.Float64,
+        "Y(m)": pl.Float64,
+        "Z(m)": pl.Float64,
+        "Power(W)": pl.Float64,
+        "tParam": pl.Float64,
+    }
+    df = pl.from_dict(dict, schema=schema)
+    df.write_csv(path, separator="\t")
