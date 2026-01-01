@@ -9,7 +9,10 @@
 """Tools for file system operations"""
 
 import os
+import json
+import yaml
 import shutil
+from typing import Any
 from pathlib import Path
 import contextlib
 
@@ -37,3 +40,22 @@ def is_executable(executable):
 def strf_datetime(datetime_obj):
     """Return the current date and time as a pretty string"""
     return datetime_obj.strftime("%Y-%m-%d %H:%M:%S")
+
+
+def load_json_yaml_file(filepath: str | Path, enforce_type=None) -> Any:
+    """Loads a dictionary from a JSON or YAML file, optionally enforcing a top-level
+    datatype (e.g., dict or list)"""
+    with open(filepath, "r") as f:
+        suffix = Path(filepath).suffix
+        contents = {}
+        if suffix in [".yml", ".yaml"]:
+            contents = yaml.safe_load(f)
+        elif suffix in [".json"]:
+            contents = json.load(f)
+        if enforce_type is not None:
+            if not isinstance(contents, enforce_type):
+                raise ValueError(
+                    f"Top-level contents of {filepath} are"
+                    f"{type(contents)} but are expected to be {enforce_type}"
+                )
+        return contents

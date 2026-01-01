@@ -7,13 +7,11 @@
 # License: 3-clause BSD, see https://opensource.org/licenses/BSD-3-Clause.
 #
 import os
-import json
 import yaml
 import shutil
-import hashlib
 import pathlib
 import logging
-from typing import Optional, Any
+from typing import Optional
 from dataclasses import asdict
 import polars as pl
 import numpy as np
@@ -28,30 +26,13 @@ from myna.application.additivefoam.single_track_calibration.models import (
     CalibrationConfig,
     create_row_fingerprint,
 )
+from myna.core.utils.filesystem import load_json_yaml_file
 
 # Configure logging
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
-
-
-def load_json_yaml_file(filepath: str | pathlib.Path, enforce_type=None) -> Any:
-    """Loads a dictionary from a JSON or YAML file"""
-    with open(filepath, "r") as f:
-        suffix = pathlib.Path(filepath).suffix
-        contents = {}
-        if suffix in [".yml", ".yaml"]:
-            contents = yaml.safe_load(f)
-        elif suffix in [".json"]:
-            contents = json.load(f)
-        if enforce_type is not None:
-            if not isinstance(contents, enforce_type):
-                raise ValueError(
-                    f"Top-level contents of {filepath} are"
-                    f"{type(contents)} but are expected to be {enforce_type}"
-                )
-        return contents
 
 
 # Define calibration logic
