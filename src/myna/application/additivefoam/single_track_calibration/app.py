@@ -41,39 +41,6 @@ logging.getLogger().setLevel(logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 
-# Define calibration logic
-def linear_interp_pt(n_val, n_data_pt, column_data_pt):
-    """Linear interpolation using PyTensor tensors"""
-    n_data_pt, column_data_pt, n_val = (
-        pt.cast(n_data_pt, "float64"),
-        pt.cast(column_data_pt, "float64"),
-        pt.cast(n_val, "float64"),
-    )
-    idx, data_len = pt.searchsorted(n_data_pt, n_val), pt.shape(n_data_pt)[0]
-    idx = pt.clip(idx, 1, data_len - 1)
-    idx_lower, idx_upper = idx - 1, idx
-    n_lower, n_upper = n_data_pt[idx_lower], n_data_pt[idx_upper]
-    val_lower, val_upper = column_data_pt[idx_lower], column_data_pt[idx_upper]
-    return val_lower + (val_upper - val_lower) * (n_val - n_lower) / (n_upper - n_lower)
-
-
-def extract_calibrated_n(trace: az.InferenceData, n_min: float, n_max: float) -> float:
-    """Extract calibrated n value from posterior samples"""
-    n_samples = trace.posterior["n"].values.flatten()  # type: ignore[attr-defined] arviz uses dynamic attributes
-    posterior_mean_n = np.mean(n_samples)
-    lower_bound_region = n_min + (n_max - n_min) * 0.01
-    clipping_percentage = np.sum(n_samples <= lower_bound_region) / len(n_samples) * 100
-
-    if clipping_percentage > 5.0:
-        logger.warning(
-            f"Posterior is clipped at lower bound ({clipping_percentage:.1f}%). "
-            f"Using n_min={n_min:.3f}"
-        )
-        return n_min
-
-    return posterior_mean_n
-
-
 # Define main class
 class AdditiveFOAMCalibration(AdditiveFOAM):
     """Application to generate calibrated heat source parameters for AdditiveFOAM
@@ -94,7 +61,7 @@ class AdditiveFOAMCalibration(AdditiveFOAM):
         super().__init__(name)
         self.config: CalibrationConfig = config or CalibrationConfig()
         self.config_file = "config.yaml"
-        self.single_track_length = 2e-3
+        self.single_track_length = 3e-3
         self.case_dir = "additivefoam_single_track_calibration"
         self.logger = logging.getLogger(f"{__name__}.{name}")
 
@@ -606,6 +573,27 @@ class AdditiveFOAMCalibration(AdditiveFOAM):
         self, experiments: ExperimentData, simulations: SimulationData
     ) -> list[dict]:
         """Perform Bayesian calibration for each experiment"""
+
+        def _extract_calibrated_n(
+            trace: az.InferenceData, n_min: float, n_max: float
+        ) -> float:
+            """Extract calibrated n value from posterior samples"""
+            n_samples = trace.posterior["n"].values.flatten()  # type: ignore[attr-defined] arviz uses dynamic attributes
+            posterior_mean_n = np.mean(n_samples)
+            lower_bound_region = n_min + (n_max - n_min) * 0.01
+            clipping_percentage = (
+                np.sum(n_samples <= lower_bound_region) / len(n_samples) * 100
+            )
+
+            if clipping_percentage > 5.0:
+                logger.warning(
+                    f"Posterior is clipped at lower bound ({clipping_percentage:.1f}%). "
+                    f"Using n_min={n_min:.3f}"
+                )
+                return n_min
+
+            return posterior_mean_n
+
         df_exp = self._prepare_experiment_df(experiments)
         df_sim = self._prepare_simulation_df(simulations)
         df_sim_valid = self._identify_valid_simulations(df_sim)
@@ -658,7 +646,7 @@ class AdditiveFOAMCalibration(AdditiveFOAM):
                     observed_values=[[d] for d in observed_depths],
                 )
 
-                calibrated_n = extract_calibrated_n(
+                calibrated_n = _extract_calibrated_n(
                     trace, n_min=min(n_coords), n_max=max(n_coords)
                 )
 
@@ -754,7 +742,7 @@ class AdditiveFOAMCalibration(AdditiveFOAM):
         - 1 Gaussian standard deviation is used as noise if multiple observations are given,
         otherwise 15% of the measured value is used as noise
         """
-        # Convert to numpy arrays to handle both lists and Polars Series
+        # Convert to numpy arrays
         observed_arrays = [np.asarray(x) for x in observed_values]
         sigmas = np.array(
             [
@@ -763,13 +751,29 @@ class AdditiveFOAMCalibration(AdditiveFOAM):
             ]
         )
 
+        def _linear_interp_pt(n_val, n_data_pt, column_data_pt):
+            """Linear interpolation using PyTensor tensors"""
+            n_data_pt, column_data_pt, n_val = (
+                pt.cast(n_data_pt, "float64"),
+                pt.cast(column_data_pt, "float64"),
+                pt.cast(n_val, "float64"),
+            )
+            idx, data_len = pt.searchsorted(n_data_pt, n_val), pt.shape(n_data_pt)[0]
+            idx = pt.clip(idx, 1, data_len - 1)
+            idx_lower, idx_upper = idx - 1, idx
+            n_lower, n_upper = n_data_pt[idx_lower], n_data_pt[idx_upper]
+            val_lower, val_upper = column_data_pt[idx_lower], column_data_pt[idx_upper]
+            return val_lower + (val_upper - val_lower) * (n_val - n_lower) / (
+                n_upper - n_lower
+            )
+
         with pm.Model() as _:
             n = pm.Uniform("n", lower=np.min(n_coords), upper=np.max(n_coords))
             n_data_pt, model_values_pt = pt.constant(n_coords), pt.constant(
                 model_values
             )
             predicted_values = pm.Deterministic(
-                "predicted_value", linear_interp_pt(n, n_data_pt, model_values_pt)
+                "predicted_value", _linear_interp_pt(n, n_data_pt, model_values_pt)
             )
             pm.Normal(
                 "likelihood",
