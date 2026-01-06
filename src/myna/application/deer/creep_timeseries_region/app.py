@@ -37,9 +37,10 @@ class CreepTimeseriesRegionDeerApp(DeerApp):
 
     def __init__(
         self,
-        sim_type="creep_timeseries_region",
+        app_type="deer",
+        class_name="creep_timeseries_region",
     ):
-        super().__init__(sim_type)
+        super().__init__(app_type, class_name)
 
         # Set names for template files
         self.orientation_file_name = "orientation.txt"

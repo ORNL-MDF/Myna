@@ -20,9 +20,8 @@ from myna.application.thesis import get_scan_stats, get_initial_wait_time
 class AdamantineApp(MynaApp):
     """Defines a Myna app that uses the adamantine simulation"""
 
-    def __init__(self, name):
-        super().__init__(name)
-        self.path = str(Path(self.path) / "adamantine")
+    def __init__(self, app_type="adamantine", class_name=None):
+        super().__init__(app_type, class_name)
 
     def boost_info_file_to_dict(self, input_file: str | Path):
         """Loads a Boost info format adamantine input file to a Python dictionary

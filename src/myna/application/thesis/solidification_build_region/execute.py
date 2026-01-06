@@ -46,7 +46,7 @@ def main(argv=None):
 
     # Set up simulation object
     sim = Thesis(
-        "solidification_build_region",
+        class_name="solidification_build_region",
         output_suffix=".Solidification",
     )
 

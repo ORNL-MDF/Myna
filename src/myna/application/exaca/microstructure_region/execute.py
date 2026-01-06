@@ -51,7 +51,7 @@ def main():
     """Main exaca/microstructure_region execution function"""
 
     # Create ExaCA instance
-    app = ExaCA("microstructure_region")
+    app = ExaCA(class_name="microstructure_region")
 
     # Get expected Myna output files
     step_name = app.step_name
