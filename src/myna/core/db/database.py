@@ -82,3 +82,17 @@ class Database:
         sync_dict[segment_type_key][segment_key]["synced_by"] = os.getlogin()
         with open(sync_metadata_file, "w", encoding="utf-8") as mf:
             yaml.safe_dump(sync_dict, mf)
+
+
+class NoDatabase(Database):
+    """Non-existent database used for tasks that don't actually require build data"""
+
+    def __init__(self):
+        super().__init__()
+        self.build_segmentation_type = "layer"
+
+    def set_path(self, path):
+        pass
+
+    def exists(self) -> bool:
+        return True
