@@ -135,6 +135,14 @@ class MynaApp:
             + " (for use with --mpiexec)",
         )
         self.parser.add_argument(
+            "--limit-mpi-resources",
+            dest="limit_mpi_resources",
+            default=False,
+            action="store_true",
+            help="(bool) If True, will limit batch jobs to local resources, if False"
+            + " will not limit batch job submission rate (for use with --mpiexec)",
+        )
+        self.parser.add_argument(
             "--env",
             default=None,
             type=str,
@@ -163,7 +171,7 @@ class MynaApp:
         self.args, _ = self.parser.parse_known_args()
         self.set_procs()
         self.mpiargs_to_current()
-        self.set_template_path()
+        self.set_template_path(self.name)
         if self.args.skip:
             print(f"- Skipping part of step {self.name}")
             sys.exit()
@@ -314,7 +322,9 @@ class MynaApp:
         )
         return process
 
-    def start_subprocess_with_mpi_args(self, cmd_args, **kwargs):
+    def start_subprocess_with_mpi_args(
+        self, cmd_args, **kwargs
+    ) -> subprocess.Popen | Container:
         """Starts a subprocess using `Popen` while taking into account the MynaApp
         MPI-related options. **kwargs are passed to `subprocess.Popen`
         """
@@ -400,7 +410,7 @@ class MynaApp:
         # `self.args.maxproc` are not accurate and that MPI is responsible for throwing
         # errors about oversubscription of resources
         open_resources = False
-        if self.args.mpiexec is not None:
+        if (self.args.mpiexec is not None) and (not self.args.limit_mpi_resources):
             open_resources = True
 
         while not open_resources:

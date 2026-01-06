@@ -40,7 +40,6 @@ class AdditiveFOAMRegionReducedSTL(AdditiveFOAMRegionReduced):
 
         # Update derived parameters
         self.set_procs()
-        self.update_template_path()
 
         # Get list of expected output files and iterate through the cases
         mynafiles = self.settings["data"]["output_paths"][self.step_name]
