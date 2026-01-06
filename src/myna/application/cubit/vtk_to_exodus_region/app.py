@@ -31,9 +31,10 @@ class CubitVtkToExodusApp(CubitApp):
 
     def __init__(
         self,
-        sim_type="vtk_to_exodus",
+        app_type="cubit",
+        class_name="vtk_to_exodus",
     ):
-        super().__init__(sim_type)
+        super().__init__(app_type, class_name)
         self.parser.add_argument(
             "--field",
             default="GrainID",

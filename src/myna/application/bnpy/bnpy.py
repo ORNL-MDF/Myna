@@ -13,12 +13,9 @@ import os
 
 
 class Bnpy(MynaApp):
-    def __init__(
-        self,
-        sim_type,
-    ):
-        super().__init__("bnpy")
-        self.simulation_type = sim_type
+    def __init__(self, app_type="bnpy", class_name=None):
+        super().__init__(app_type, class_name)
+        self.simulation_type = app_type if class_name is None else class_name
         self.sF = 0.5
         self.gamma = 8
         self.settings = load_input(os.environ["MYNA_INPUT"])

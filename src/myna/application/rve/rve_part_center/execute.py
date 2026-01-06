@@ -53,7 +53,8 @@ def find_part_central_rve(app, part, layerset, rve_dict, rve_id):
 
 
 def main():
-    app = RVE("rve_part_center")
+
+    app = RVE(class_name="rve_part_center")
 
     # Note: There will only ever be one output file, since this is a build-level step
     myna_files = app.settings["data"]["output_paths"][app.step_name]

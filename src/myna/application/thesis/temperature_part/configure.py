@@ -77,7 +77,8 @@ def configure_case(case_dir, sim, myna_input="myna_data.yaml"):
 
 
 def main():
-    sim = Thesis("temperature_part")
+
+    sim = Thesis(class_name="temperature_part")
 
     # Get expected Myna output files
     myna_files = sim.settings["data"]["output_paths"][sim.step_name]

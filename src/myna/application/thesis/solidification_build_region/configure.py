@@ -103,7 +103,8 @@ def configure_case(case_dir, sim, myna_input="myna_data.yaml"):
 
 
 def main():
-    sim = Thesis("solidification_build_region")
+
+    sim = Thesis(class_name="solidification_build_region")
 
     # Get expected Myna output files
     myna_files = sim.settings["data"]["output_paths"][sim.step_name]

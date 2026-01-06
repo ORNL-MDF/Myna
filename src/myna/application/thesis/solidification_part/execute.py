@@ -41,7 +41,7 @@ def run_case(
 def main(argv=None):
     # Set up simulation object
     sim = Thesis(
-        "solidification_part",
+        class_name="solidification_part",
         output_suffix=".Solidification",
     )
 

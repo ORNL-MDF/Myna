@@ -15,6 +15,7 @@ import time
 import shutil
 import subprocess
 import warnings
+from pathlib import Path
 import docker
 from docker.models.containers import Container
 from myna.core.workflow.load_input import load_input
@@ -35,11 +36,22 @@ class MynaApp:
     step_name = "MYNA_STEP_NAME"
     last_step_name = "MYNA_LAST_STEP_NAME"
 
-    def __init__(self, name):
-        self.name = name
-        self.path = os.environ.get("MYNA_APP_PATH")
+    def __init__(self, app_type: str | None = None, class_name: str | None = None):
+        # Set the print name as well as the Myna app and class names
+        self.name = f"{app_type}/{class_name}"
+        self.path = Path(os.environ.get("MYNA_APP_PATH", ""))
+        if app_type is not None:
+            self.path = self.path / Path(app_type)
+        if class_name is not None:
+            self.path = self.path / Path(class_name)
+        self.class_name = class_name
+        self.app_type = app_type
+
+        # Get the names for the current and previous workflow step
         self.step_name = os.environ.get("MYNA_STEP_NAME")
         self.last_step_name = os.environ.get("MYNA_LAST_STEP_NAME")
+
+        # Get the input file contents and parse additional step information
         self.input_file = os.environ.get("MYNA_INPUT")
         self.settings = {}
         self.step_number = None
@@ -51,18 +63,18 @@ class MynaApp:
             ].index(self.step_name)
 
         # Check if there is a corresponding component class. This will be None if
-        # class is not in the Component lookup dictionary,
-        # e.g., `myna.application.AdditiveFOAM()`
-        self.sim_class_obj = None
-        try:
-            self.sim_class_obj = return_step_class(self.name, verbose=False)
-            self.sim_class_obj.apply_settings(
-                self.settings["steps"][self.step_number],
-                self.settings.get("data"),
-                self.settings.get("myna"),
-            )
-        except KeyError:
-            pass
+        # class name is not in the Component lookup dictionary
+        if class_name is not None:
+            self.sim_class_obj = None
+            try:
+                self.sim_class_obj = return_step_class(class_name, verbose=False)
+                self.sim_class_obj.apply_settings(
+                    self.settings["steps"][self.step_number],
+                    self.settings.get("data"),
+                    self.settings.get("myna"),
+                )
+            except KeyError:
+                pass
 
         # Set up argparse
         self.parser = argparse.ArgumentParser(
@@ -164,7 +176,7 @@ class MynaApp:
         self.args, _ = self.parser.parse_known_args()
         self.set_procs()
         self.mpiargs_to_current()
-        self.set_template_path()
+        self._set_template_path()
         if self.args.skip:
             print(f"- Skipping part of step {self.name}")
             sys.exit()
@@ -237,19 +249,11 @@ class MynaApp:
             self.args.maxproc = os.cpu_count()
         self.args.np = min(os.cpu_count(), self.args.np, self.args.maxproc)
 
-    def set_template_path(self, *path_args):
-        """Set the path to the template directory
-
-        Args:
-            path_args: list of path parts to append to `self.path` if no template is
-                specified. For example, `path_args=["exaca", "microstructure_region"]`
-                gives a template with path
-                "{self.path}/exaca/microstructure_region/template"
-        """
+    def _set_template_path(self):
+        """Set the path to the template directory based on the path to the app directory"""
         if self.args.template is None:
             self.template = os.path.join(
                 self.path,
-                *path_args,
                 "template",
             )
         else:

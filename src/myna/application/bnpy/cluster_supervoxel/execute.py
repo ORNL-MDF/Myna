@@ -340,7 +340,8 @@ def run(
 
 
 def main():
-    app = Bnpy("cluster_supervoxel")
+
+    app = Bnpy(class_name="cluster_supervoxel")
 
     # Set up argparse
     parser = app.parser

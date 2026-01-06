@@ -20,12 +20,9 @@ class CubitApp(MynaApp):
     Laboratories: https://cubit.sandia.gov/
     """
 
-    def __init__(
-        self,
-        sim_type,
-    ):
-        super().__init__("Cubit")
-        self.simulation_type = sim_type
+    def __init__(self, app_type="cubit", class_name=None):
+        super().__init__(app_type, class_name)
+        self.simulation_type = app_type if class_name is None else class_name
         self.parser.add_argument(
             "--cubitpath",
             default=None,

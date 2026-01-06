@@ -22,8 +22,10 @@ from myna.application.additivefoam.solidification_region_reduced import (
 class AdditiveFOAMRegionReducedSTL(AdditiveFOAMRegionReduced):
     """Simulation type for generating solidification data for specified regions"""
 
-    def __init__(self, name="solidification_region_reduced_stl"):
-        super().__init__(name)
+    def __init__(
+        self, app_type="additivefoam", class_name="solidification_region_reduced_stl"
+    ):
+        super().__init__(app_type, class_name)
         self.stl_mesh_dict_name = "stl_mesh_dict.yaml"
 
     def configure(self):

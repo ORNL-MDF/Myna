@@ -42,7 +42,7 @@ def run_case(
 
 def main():
     # Set up simulation object
-    sim = Thesis("melt_pool_geometry_part")
+    sim = Thesis(class_name="melt_pool_geometry_part")
 
     # Get expected Myna output files
     myna_files = sim.settings["data"]["output_paths"][sim.step_name]

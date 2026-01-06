@@ -12,12 +12,9 @@ from myna.core.app.base import MynaApp
 
 
 class RVE(MynaApp):
-    def __init__(
-        self,
-        sim_type,
-    ):
-        super().__init__("RVE")
-        self.simulation_type = sim_type
+    def __init__(self, app_type="rve", class_name=None):
+        super().__init__(app_type, class_name)
+        self.simulation_type = app_type if class_name is None else class_name
 
         self.parser.add_argument(
             "--num-region",
