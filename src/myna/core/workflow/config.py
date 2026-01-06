@@ -83,8 +83,10 @@ def config(input_file, output_file=None, show_avail=False, overwrite=False):
     settings = load_input(input_file)
 
     # Check build directory contains the expected metadata folder
-    build_path = settings["data"]["build"]["path"]
-    datatype = database.return_datatype_class(settings["data"]["build"]["datatype"])
+    build_path = nested_get(settings, ["data", "build", "path"])
+    datatype = database.return_datatype_class(
+        nested_get(settings, ["data", "build", "datatype"], "None")
+    )
     datatype.set_path(build_path)
     if not datatype.exists():
         print(f"ERROR: Could not find valid {datatype} in" + f" {build_path}")
@@ -130,11 +132,6 @@ def config(input_file, output_file=None, show_avail=False, overwrite=False):
         build_region_parts = build_regions[build_region].get("partlist", [])
         all_parts.extend(build_region_parts)
     all_parts = list(set(all_parts))
-
-    # Check that some amount of parts were specified
-    if len(all_parts) < 1:
-        print(f"ERROR: No parts specified in {input_file}")
-        raise ValueError
 
     # Get list of all segments in build parts and build_region parts
     # Possible options for types segments are:
