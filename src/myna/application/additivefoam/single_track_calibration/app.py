@@ -207,7 +207,7 @@ class AdditiveFOAMCalibration(AdditiveFOAM):
             )
             self.logger.info("=" * 80)
 
-            # 5. TODO: Perform Bayesian calibration of n as a function of d/sigma over
+            # 5. Perform Bayesian calibration of n as a function of d/sigma over
             #    all process parameters, write to calibrated_heat_source.yaml
             calibrated_n_values = [c["calibrated_n"] for c in calibrations]
             depths = [c["observed_depths"] for c in calibrations]
@@ -215,26 +215,49 @@ class AdditiveFOAMCalibration(AdditiveFOAM):
             trace = self._fit_heteroskedastic_model(
                 depths, spot_sizes, calibrated_n_values
             )
-            post = trace.posterior  # type: ignore[attr-defined] arviz uses dynamic attributes
-            heatsource_parameters = {
-                "model_form": "n = A * log2(z/spot_size) + B; with n_std = C * log2(z/spot_size) + D",
-                "A_mean": post["A"].mean().item(),
-                "A_median": post["A"].median().item(),
-                "A_std": post["A"].std().item(),
-                "A_var": post["A"].var().item(),
-                "B_mean": post["B"].mean().item(),
-                "B_median": post["B"].median().item(),
-                "B_std": post["B"].std().item(),
-                "B_var": post["B"].var().item(),
-                "C_mean": post["C"].mean().item(),
-                "C_median": post["C"].median().item(),
-                "C_std": post["C"].std().item(),
-                "C_var": post["C"].var().item(),
-                "D_mean": post["D"].mean().item(),
-                "D_median": post["D"].median().item(),
-                "D_std": post["D"].std().item(),
-                "D_var": post["D"].var().item(),
-            }
+            if trace is None:
+                heatsource_parameters = {
+                    "notes": "Only one experiment detected, so cannot calibrate full function! Must assume that n = B.",
+                    "model_form": "n = A * log2(z/spot_size) + B; with n_std = C * log2(z/spot_size) + D",
+                    "A_mean": 0,
+                    "A_median": 0,
+                    "A_std": 0,
+                    "A_var": 0,
+                    "B_mean": calibrated_n_values[0],
+                    "B_median": 0,
+                    "B_std": 0,
+                    "B_var": 0,
+                    "C_mean": 0,
+                    "C_median": 0,
+                    "C_std": 0,
+                    "C_var": 0,
+                    "D_mean": 0,
+                    "D_median": 0,
+                    "D_std": 0,
+                    "D_var": 0,
+                }
+            else:
+                post = trace.posterior  # type: ignore[attr-defined] arviz uses dynamic attributes
+                heatsource_parameters = {
+                    "notes": f"Calibrated using {len([x for xs in depths for x in xs])} depths from {len(depths)} process parameters",
+                    "model_form": "n = A * log2(z/spot_size) + B; with n_std = C * log2(z/spot_size) + D",
+                    "A_mean": post["A"].mean().item(),
+                    "A_median": post["A"].median().item(),
+                    "A_std": post["A"].std().item(),
+                    "A_var": post["A"].var().item(),
+                    "B_mean": post["B"].mean().item(),
+                    "B_median": post["B"].median().item(),
+                    "B_std": post["B"].std().item(),
+                    "B_var": post["B"].var().item(),
+                    "C_mean": post["C"].mean().item(),
+                    "C_median": post["C"].median().item(),
+                    "C_std": post["C"].std().item(),
+                    "C_var": post["C"].var().item(),
+                    "D_mean": post["D"].mean().item(),
+                    "D_median": post["D"].median().item(),
+                    "D_std": post["D"].std().item(),
+                    "D_var": post["D"].var().item(),
+                }
             with open(
                 self.config.calibrated_heatsource_path, "w", encoding="utf-8"
             ) as f:
@@ -811,15 +834,13 @@ class AdditiveFOAMCalibration(AdditiveFOAM):
 
     def _fit_heteroskedastic_model(
         self, depth_observations, spot_sizes, calibrated_n_values
-    ) -> az.InferenceData:
+    ) -> az.InferenceData | None:
         """
         Performs a robust heteroskedastic Bayesian regression to model both the mean
         and the standard deviation of n as a function of NORMALIZED depth.
         """
-        if len(calibrated_n_values) < 2:
-            raise ValueError(
-                "Not enough calibrated points to fit a final relationship."
-            )
+        if len(calibrated_n_values) == 1:
+            return None
 
         normalized_depths_obs = [
             np.mean(ds) / s for ds, s in zip(depth_observations, spot_sizes)
