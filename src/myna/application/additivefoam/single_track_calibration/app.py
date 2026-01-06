@@ -129,9 +129,16 @@ class AdditiveFOAMCalibration(AdditiveFOAM):
         if self.args.simulations is not None:
             shutil.copy(self.args.simulations, simulations_path)
 
-        # Get/create calibrations file
+        # Get/create n-value calibrations file
         calibrated_n_values_path = f"{case_dir}/calibrationed_n_values.yaml"
-        calibrated_heatsource_path = f"{case_dir}/calibrated_heatsource.yaml"
+
+        # If running as a Myna step, get the output file name from Myna input, otherwise
+        # set manually to enable calling app from API
+        calibrated_heatsource_path = nested_get(
+            self.settings,
+            ["data", "output_paths", self.step_name],
+            [f"{case_dir}/calibrated_heatsource.yaml"],
+        )[0]
 
         # Set simulation output path
         simulation_output_dir = f"{case_dir}/sim_output"

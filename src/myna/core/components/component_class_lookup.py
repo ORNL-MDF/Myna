@@ -50,7 +50,7 @@ def return_step_class(step_name, verbose=True):
         "creep_timeseries": comp.ComponentCreepTimeSeries(),
         "creep_timeseries_part": comp.ComponentCreepTimeSeriesPart(),
         "creep_timeseries_region": comp.ComponentCreepTimeSeriesRegion(),
-        "single_track_calibration": comp.Component(),
+        "single_track_calibration": comp.SingleTrackCalibrationComponent(),
     }
     try:
         step_class = step_class_lookup[step_name]
