@@ -34,13 +34,6 @@ from myna.core.utils.filesystem import load_json_yaml_file
 from myna.core.utils import nested_get
 from myna.application.openfoam.mesh import update_parameter
 
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-)
-logging.getLogger().setLevel(logging.DEBUG)
-logger = logging.getLogger(__name__)
-
 
 # Define main class
 class AdditiveFOAMCalibration(AdditiveFOAM):
@@ -64,6 +57,10 @@ class AdditiveFOAMCalibration(AdditiveFOAM):
         self.config_file = "config.yaml"
         self.single_track_length = 3e-3
         self.case_dir = "additivefoam_single_track_calibration"
+        logging.basicConfig(
+            level=logging.INFO,
+            format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+        )
         self.logger = logging.getLogger(f"{__name__}.{name}")
 
     def parse_configure_arguments(self):
@@ -603,7 +600,7 @@ class AdditiveFOAMCalibration(AdditiveFOAM):
             )
 
             if clipping_percentage > 5.0:
-                logger.warning(
+                self.logger.warning(
                     f"Posterior is clipped at lower bound ({clipping_percentage:.1f}%). "
                     f"Using n_min={n_min:.3f}"
                 )
@@ -798,7 +795,7 @@ class AdditiveFOAMCalibration(AdditiveFOAM):
                 sigma=sigmas,
                 observed=observed_values,
             )
-            logger.info(
+            self.logger.info(
                 f"Sampling posterior with {len(observed_values)} observations "
                 f"(σ_est={sigmas})"
             )
@@ -854,7 +851,7 @@ class AdditiveFOAMCalibration(AdditiveFOAM):
 
 
 # ==============================================================================
-# EXAMPLE USAGE
+# EXAMPLE API USAGE
 # ==============================================================================
 
 if __name__ == "__main__":

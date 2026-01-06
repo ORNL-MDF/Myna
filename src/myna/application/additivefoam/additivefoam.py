@@ -315,7 +315,6 @@ class AdditiveFOAM(MynaApp):
 
             # Decompose case
             if parallel:
-                self.logger.debug("Decomposing case")
                 update_parameter(
                     "system/decomposeParDict",
                     "numberOfSubdomains",
@@ -334,7 +333,6 @@ class AdditiveFOAM(MynaApp):
                 cmd_args = [self.args.exec]
                 if parallel:
                     cmd_args.append("-parallel")
-                self.logger.debug(f"Launching case with command {cmd_args}")
                 process = self.start_subprocess_with_mpi_args(
                     cmd_args,
                     stdout=f,
