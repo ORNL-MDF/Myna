@@ -6,3 +6,19 @@
 #
 # License: 3-clause BSD, see https://opensource.org/licenses/BSD-3-Clause.
 #
+"""Script to be executed by the execute stage of `myna.core.workflow.run` to run
+a valid calibration case based on the specified user inputs
+"""
+from myna.application.additivefoam.single_track_calibration.app import (
+    AdditiveFOAMCalibration,
+)
+
+
+def execute():
+    """Configure all case directories"""
+    app = AdditiveFOAMCalibration()
+    app.execute()
+
+
+if __name__ == "__main__":
+    execute()
