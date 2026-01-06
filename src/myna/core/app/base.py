@@ -42,6 +42,7 @@ class MynaApp:
         self.input_file = os.environ.get("MYNA_INPUT")
         self.settings = {}
         self.step_number = None
+        self.template = None
         if self.input_file is not None:
             self.settings = load_input(self.input_file)
             self.step_number = [
@@ -134,6 +135,14 @@ class MynaApp:
             + " (for use with --mpiexec)",
         )
         self.parser.add_argument(
+            "--limit-mpi-resources",
+            dest="limit_mpi_resources",
+            default=False,
+            action="store_true",
+            help="(bool) If True, will limit batch jobs to local resources, if False"
+            + " will not limit batch job submission rate (for use with --mpiexec)",
+        )
+        self.parser.add_argument(
             "--env",
             default=None,
             type=str,
@@ -162,7 +171,7 @@ class MynaApp:
         self.args, _ = self.parser.parse_known_args()
         self.set_procs()
         self.mpiargs_to_current()
-        self.set_template_path()
+        self.set_template_path(self.name)
         if self.args.skip:
             print(f"- Skipping part of step {self.name}")
             sys.exit()
@@ -245,13 +254,13 @@ class MynaApp:
                 "{self.path}/exaca/microstructure_region/template"
         """
         if self.args.template is None:
-            self.args.template = os.path.join(
+            self.template = os.path.join(
                 self.path,
                 *path_args,
                 "template",
             )
         else:
-            self.args.template = os.path.abspath(self.args.template)
+            self.template = os.path.abspath(self.args.template)
 
     def copy(self, case_dir):
         """Copies the set template directory to a case directory, with existing files
@@ -270,7 +279,8 @@ class MynaApp:
 
         # Copy if there are no existing files in the case directory or overwrite is specified
         if (len(case_dir_files) == 0) or (self.args.overwrite):
-            shutil.copytree(self.args.template, case_dir, dirs_exist_ok=True)
+            os.makedirs(case_dir, exist_ok=True)
+            shutil.copytree(self.template, case_dir, dirs_exist_ok=True)
         else:
             print(f"Warning: NOT overwriting existing case in: {case_dir}")
 
@@ -312,7 +322,9 @@ class MynaApp:
         )
         return process
 
-    def start_subprocess_with_mpi_args(self, cmd_args, **kwargs):
+    def start_subprocess_with_mpi_args(
+        self, cmd_args, **kwargs
+    ) -> subprocess.Popen | Container:
         """Starts a subprocess using `Popen` while taking into account the MynaApp
         MPI-related options. **kwargs are passed to `subprocess.Popen`
         """
@@ -398,7 +410,7 @@ class MynaApp:
         # `self.args.maxproc` are not accurate and that MPI is responsible for throwing
         # errors about oversubscription of resources
         open_resources = False
-        if self.args.mpiexec is not None:
+        if (self.args.mpiexec is not None) and (not self.args.limit_mpi_resources):
             open_resources = True
 
         while not open_resources:
