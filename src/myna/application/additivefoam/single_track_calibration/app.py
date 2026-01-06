@@ -31,6 +31,7 @@ from myna.application.additivefoam.single_track_calibration.models import (
     create_row_fingerprint,
 )
 from myna.core.utils.filesystem import load_json_yaml_file
+from myna.core.utils import nested_get
 from myna.application.openfoam.mesh import update_parameter
 
 # Configure logging
@@ -92,17 +93,27 @@ class AdditiveFOAMCalibration(AdditiveFOAM):
         )
         self.parse_known_args()
 
+    def _get_case_dir(self) -> pathlib.Path:
+        """Gets the Path object for the case directory, making it if it doesn't exist
+
+        This will load the path from the Myna input file if used, otherwise will use the
+        app default case_dir property."""
+        myna_output_dir = nested_get(self.settings, ["data", "build", "name"])
+        if myna_output_dir is not None:
+            case = pathlib.Path(myna_output_dir) / f"{self.step_name}"
+        else:
+            case = pathlib.Path(self.case_dir)
+        os.makedirs(case, exist_ok=True)
+        return case
+
     def configure(self):
         """Configure all cases
 
         Note that this workflow step can only apply to a single case, because the
         calibration isn't associated with a build/part/region."""
-        cases = [pathlib.Path(str(self.input_file)).parent / self.case_dir]
         self.parse_configure_arguments()
-        print(f"{self.args=}")
-        for case in cases:
-            os.makedirs(case, exist_ok=True)
-            self.configure_case(case)
+        case = self._get_case_dir()
+        self.configure_case(case)
 
     def configure_case(self, case_dir: str | pathlib.Path):
         """Configures the case directory associated with the step"""
@@ -149,13 +160,12 @@ class AdditiveFOAMCalibration(AdditiveFOAM):
 
         Note that this workflow step can only apply to a single case, because the
         calibration isn't associated with a build/part/region."""
-        cases = [pathlib.Path(str(self.input_file)).parent / self.case_dir]
-        for case in cases:
-            config_path = pathlib.Path(case) / self.config_file
-            config = CalibrationConfig(
-                **load_json_yaml_file(config_path, enforce_type=dict)
-            )
-            self.execute_case(config)
+        case = self._get_case_dir()
+        config_path = case / self.config_file
+        config = CalibrationConfig(
+            **load_json_yaml_file(config_path, enforce_type=dict)
+        )
+        self.execute_case(config)
 
     def execute_case(self, config: CalibrationConfig):
         """Main execution flow - orchestrates the calibration workflow"""
