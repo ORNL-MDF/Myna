@@ -20,13 +20,17 @@ from pydantic import BaseModel, model_validator, model_serializer, BeforeValidat
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
+logging.getLogger().setLevel(logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 
 # Utility function for fingerprinting of the model parameters
 def create_row_fingerprint(row: dict | pl.Series) -> str:
     """Creates a hash from the process parameters in a DataFrame row"""
-    payload = {k: np.round(row[k], 6) for k in ProcessParameters.model_fields.keys()}
+    payload = {
+        k: (np.round(row[k], 6) if isinstance(row[k], float) else row[k])
+        for k in ProcessParameters.model_fields.keys()
+    }
     canonical_json = json.dumps(payload, sort_keys=True, separators=(",", ":"))
     return hashlib.sha256(canonical_json.encode()).hexdigest()
 
@@ -54,6 +58,7 @@ class ProcessParameters(BaseModel):
     power: float  # heat source power, in W
     scan_speed: float  # heat source scan speed, in m/s
     spot_size: float  # diameter of the heat source, in mm
+    material: str  # name of the material, corresponding to Myna/Mist material name
 
 
 class SimulationParameters(BaseModel):
@@ -195,7 +200,8 @@ class CalibrationConfig:
 
     experiments_path: str = "test_exp.yaml"
     simulations_path: str = "test_sim.yaml"
-    calibrations_path: str = "calibration.yaml"
+    calibrated_n_values_path: str = "calibrated_n_values.yaml"
+    calibrated_heatsource_path: str = "calibrated_heatsource.yaml"
     simulation_output_dir: str = "sim_output"
     n_values: Optional[list[float]] = None
 

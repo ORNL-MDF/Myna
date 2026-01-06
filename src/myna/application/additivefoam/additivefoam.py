@@ -32,6 +32,7 @@ class AdditiveFOAM(MynaApp):
 
         # Parse app-specific arguments
         self.parse_known_args()
+        print(f"{self.args.exec=}")
         if self.args.exec is None:
             self.args.exec = "additiveFoam"
 
@@ -58,7 +59,9 @@ class AdditiveFOAM(MynaApp):
             matches.append(entry_match)
         return bool(all(matches))
 
-    def update_material_properties(self, case_dir, material: str | None = None):
+    def update_material_properties(
+        self, case_dir, material: str | None = None
+    ) -> mist.core.MaterialInformation:
         """Update the material properties for the AdditiveFOAM case based on Mist data
 
         Args:
@@ -106,6 +109,7 @@ class AdditiveFOAM(MynaApp):
         if os.path.exists(exaca_dict):
             liquidus = mat.get_property("liquidus_temperature", None, None)
             update_parameter(exaca_dict, "ExaCA/isoValue", liquidus)
+        return mat
 
     def get_region_resource_template_dir(self, part, region):
         """Provides the path to the template directory in the myna_resources folder
@@ -130,6 +134,7 @@ class AdditiveFOAM(MynaApp):
         Args:
             part: name of part to get spot size from
             case_dir: directory that contains AdditiveFOAM case files to update
+            spot_size: if specified, 2 sigma spot size (i.e., beam radius) in meters
         """
         # Extract the spot size (diameter -> radius & mm -> m)
         if spot_size is None:
@@ -182,7 +187,9 @@ class AdditiveFOAM(MynaApp):
             heat_source_dim_string,
         )
 
-    def update_region_start_and_end_times(self, case_dir, bb_dict, scanpath_name):
+    def update_region_start_and_end_times(
+        self, case_dir, bb_dict, scanpath_name
+    ) -> tuple[float, float]:
         """Updates the start and end times of the specified case based on the scan path's
         intersection with the domain
 
@@ -190,6 +197,9 @@ class AdditiveFOAM(MynaApp):
             case_dir: case directory to update
             bb_dict: dictionary defining the bounding box of the region
             scanpath_name: name of the scanpath file in the case's `constant` directory
+
+        Returns:
+            start_time, end_time
         """
         # Read scan path
         df = pd.read_csv(f"{case_dir}/constant/{scanpath_name}", sep=r"\s+")
@@ -237,6 +247,7 @@ class AdditiveFOAM(MynaApp):
 
         time_bounds = np.round(time_bounds, 5)
         self.update_start_and_end_times(case_dir, time_bounds[0], time_bounds[1])
+        return (time_bounds[0], time_bounds[1])
 
     def update_start_and_end_times(self, case_dir, start_time, end_time):
         """Updates the case to adjust the start and end time by adjusting:"
@@ -304,6 +315,12 @@ class AdditiveFOAM(MynaApp):
 
             # Decompose case
             if parallel:
+                self.logger.debug("Decomposing case")
+                update_parameter(
+                    "system/decomposeParDict",
+                    "numberOfSubdomains",
+                    self.args.np,
+                )
                 with open("decomposePar.log", "w", encoding="utf-8") as f:
                     process = self.start_subprocess(
                         ["decomposePar", "-force"],
@@ -317,6 +334,7 @@ class AdditiveFOAM(MynaApp):
                 cmd_args = [self.args.exec]
                 if parallel:
                     cmd_args.append("-parallel")
+                self.logger.debug(f"Launching case with command {cmd_args}")
                 process = self.start_subprocess_with_mpi_args(
                     cmd_args,
                     stdout=f,
