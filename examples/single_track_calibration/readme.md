@@ -25,9 +25,9 @@ data:
       power: 187.5      # Laser power, in Watts
       scan_speed: 0.5   # Scan speed of the laser, in meters/second
       spot_size: 0.1    # Spot size (diameter), in millimeters
-      material: SS316L  # name of material, corresponding to Myna material library
-    depths: [91.0e-3]   # list of depth values corresponding to the process parameters, in millimeters
-  - ... # repeat for additional process parameters
+      material: SS316L  # Name of material, corresponding to Myna material library
+    depths: [91.0e-3]   # List of depth values corresponding to the process parameters, in millimeters
+  - ... # Repeat for additional process parameters
 ```
 
 Because no build data is requires, the input file does not need to have a "data" entry.
