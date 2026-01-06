@@ -14,11 +14,13 @@ import logging
 import subprocess
 from typing import Optional
 from dataclasses import asdict
+from docker.models.containers import Container
 import polars as pl
 import numpy as np
 import pymc as pm
 import arviz as az
 import pytensor.tensor as pt
+import mistlib as mist
 from myna.application.additivefoam import AdditiveFOAM
 from myna.application.additivefoam.path import write_single_line_path
 from myna.application.additivefoam.single_track_calibration.models import (
@@ -35,6 +37,7 @@ from myna.application.openfoam.mesh import update_parameter
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
+logging.getLogger().setLevel(logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 
@@ -52,54 +55,6 @@ def linear_interp_pt(n_val, n_data_pt, column_data_pt):
     n_lower, n_upper = n_data_pt[idx_lower], n_data_pt[idx_upper]
     val_lower, val_upper = column_data_pt[idx_lower], column_data_pt[idx_upper]
     return val_lower + (val_upper - val_lower) * (n_val - n_lower) / (n_upper - n_lower)
-
-
-def perform_bayesian_calibration(
-    n_coords: list[float | int],
-    model_values: list[float | int],
-    observed_values: list[list[float | int]],
-) -> az.InferenceData:
-    """Calculates the posterior distribution from Bayesian calibration of n to observations
-
-    Assumptions:
-    - Uniform prior
-    - 1 Gaussian standard deviation is used as noise if multiple observations are given,
-      otherwise 15% of the measured value is used as noise
-    """
-    # Convert to numpy arrays to handle both lists and Polars Series
-    observed_arrays = [np.asarray(x) for x in observed_values]
-    sigmas = np.array(
-        [
-            max(np.std(arr) if len(arr) > 1 else 0.15 * arr[0], 1e-4)
-            for arr in observed_arrays
-        ]
-    )
-
-    with pm.Model() as _:
-        n = pm.Uniform("n", lower=np.min(n_coords), upper=np.max(n_coords))
-        n_data_pt, model_values_pt = pt.constant(n_coords), pt.constant(model_values)
-        predicted_values = pm.Deterministic(
-            "predicted_value", linear_interp_pt(n, n_data_pt, model_values_pt)
-        )
-        pm.Normal(
-            "likelihood",
-            mu=predicted_values,
-            sigma=sigmas,
-            observed=observed_values,
-        )
-        logger.info(
-            f"Sampling posterior with {len(observed_values)} observations "
-            f"(σ_est={sigmas})"
-        )
-        trace = pm.sample(
-            draws=2000,
-            tune=1000,
-            cores=8,
-            progressbar=True,
-            target_accept=0.9,
-            random_seed=42,
-        )
-    return trace
 
 
 def extract_calibrated_n(trace: az.InferenceData, n_min: float, n_max: float) -> float:
@@ -137,9 +92,10 @@ class AdditiveFOAMCalibration(AdditiveFOAM):
         config: Optional[CalibrationConfig] = None,
     ):
         super().__init__(name)
-        self.config = config or CalibrationConfig()
+        self.config: CalibrationConfig = config or CalibrationConfig()
         self.config_file = "config.yaml"
-        self.single_track_length = 3e-3
+        self.single_track_length = 2e-3
+        self.case_dir = "additivefoam_single_track_calibration"
         self.logger = logging.getLogger(f"{__name__}.{name}")
 
     def parse_configure_arguments(self):
@@ -160,28 +116,21 @@ class AdditiveFOAMCalibration(AdditiveFOAM):
             ),
         )
         self.parser.add_argument(
-            "--calibrations",
-            default=None,
-            type=str,
-            help=(
-                "(optional) Path to an existing calibrations file."
-                "A new file will be created if not given."
-            ),
-        )
-        self.parser.add_argument(
             "--nvalues",
-            default=[1.0, 5.0, 9.0],
+            default=[0.0, 2.0, 5.0, 7.0, 9.0],
             type=float,
             nargs="+",
-            help="",
+            help="n-value in the AdditiveFOAM projectedGaussian heat source"
+            " where 0 <= n <= 9 (the calibration assumes A = 0, such that n = B)",
         )
         self.parse_known_args()
 
     def configure(self):
-        """Configure all cases"""
-        # TODO: update to inherit/determine case list from app type
-        cases = ["./test_dir"]
-        cases = [pathlib.Path(case) for case in cases]
+        """Configure all cases
+
+        Note that this workflow step can only apply to a single case, because the
+        calibration isn't associated with a build/part/region."""
+        cases = [pathlib.Path(str(self.input_file)).parent / self.case_dir]
         self.parse_configure_arguments()
         print(f"{self.args=}")
         for case in cases:
@@ -203,9 +152,8 @@ class AdditiveFOAMCalibration(AdditiveFOAM):
             shutil.copy(self.args.simulations, simulations_path)
 
         # Get/create calibrations file
-        calibrations_path = f"{case_dir}/calibrations.yaml"
-        if self.args.calibrations is not None:
-            shutil.copy(self.args.calibrations, calibrations_path)
+        calibrated_n_values_path = f"{case_dir}/calibrationed_n_values.yaml"
+        calibrated_heatsource_path = f"{case_dir}/calibrated_heatsource.yaml"
 
         # Set simulation output path
         simulation_output_dir = f"{case_dir}/sim_output"
@@ -215,7 +163,8 @@ class AdditiveFOAMCalibration(AdditiveFOAM):
         config = CalibrationConfig(
             experiments_path=experiments_path,
             simulations_path=simulations_path,
-            calibrations_path=calibrations_path,
+            calibrated_n_values_path=calibrated_n_values_path,
+            calibrated_heatsource_path=calibrated_heatsource_path,
             simulation_output_dir=simulation_output_dir,
             n_values=n_values,
         )
@@ -229,9 +178,11 @@ class AdditiveFOAMCalibration(AdditiveFOAM):
         shutil.copy(experiments_path, case_dir / pathlib.Path(experiments_path).name)
 
     def execute(self):
-        """Execute all cases"""
-        # TODO: update to inherit/determine case list from app type
-        cases = ["./test_dir"]
+        """Execute all cases
+
+        Note that this workflow step can only apply to a single case, because the
+        calibration isn't associated with a build/part/region."""
+        cases = [pathlib.Path(str(self.input_file)).parent / self.case_dir]
         for case in cases:
             config_path = pathlib.Path(case) / self.config_file
             config = CalibrationConfig(
@@ -263,15 +214,52 @@ class AdditiveFOAMCalibration(AdditiveFOAM):
             else:
                 self.logger.info("Step 3: No simulations needed - all up to date")
 
-            # 4. Perform Bayesian calibration
+            # 4. Perform Bayesian calibration of n for each process parameter
             self.logger.info("Step 4: Performing Bayesian calibration")
             calibrations = self._perform_calibration(experiments, simulations)
             self._save_calibrations(calibrations)
 
             self.logger.info("=" * 80)
             self.logger.info("Calibration workflow completed successfully!")
-            self.logger.info(f"Results saved to: {self.config.calibrations_path}")
+            self.logger.info(
+                f"Results saved to: {self.config.calibrated_n_values_path}"
+            )
             self.logger.info("=" * 80)
+
+            # 5. TODO: Perform Bayesian calibration of n as a function of d/sigma over
+            #    all process parameters, write to calibrated_heat_source.yaml
+            calibrated_n_values = [c["calibrated_n"] for c in calibrations]
+            depths = [c["observed_depths"] for c in calibrations]
+            spot_sizes = [c["process_parameters"]["spot_size"] for c in calibrations]
+            trace = self._fit_heteroskedastic_model(
+                depths, spot_sizes, calibrated_n_values
+            )
+            post = trace.posterior  # type: ignore[attr-defined] arviz uses dynamic attributes
+            heatsource_parameters = {
+                "model_form": "n = A * log2(z/spot_size) + B; with n_std = C * log2(z/spot_size) + D",
+                "A_mean": post["A"].mean().item(),
+                "A_median": post["A"].median().item(),
+                "A_std": post["A"].std().item(),
+                "A_var": post["A"].var().item(),
+                "B_mean": post["B"].mean().item(),
+                "B_median": post["B"].median().item(),
+                "B_std": post["B"].std().item(),
+                "B_var": post["B"].var().item(),
+                "C_mean": post["C"].mean().item(),
+                "C_median": post["C"].median().item(),
+                "C_std": post["C"].std().item(),
+                "C_var": post["C"].var().item(),
+                "D_mean": post["D"].mean().item(),
+                "D_median": post["D"].median().item(),
+                "D_std": post["D"].std().item(),
+                "D_var": post["D"].var().item(),
+            }
+            with open(
+                self.config.calibrated_heatsource_path, "w", encoding="utf-8"
+            ) as f:
+                yaml.dump(
+                    heatsource_parameters, f, sort_keys=False, default_flow_style=False
+                )
 
         except Exception as e:
             self.logger.error(f"Calibration workflow failed: {str(e)}", exc_info=True)
@@ -319,16 +307,7 @@ class AdditiveFOAMCalibration(AdditiveFOAM):
             raise
 
         # Load calibrations
-        try:
-            calibrations = list(
-                load_json_yaml_file(self.config.calibrations_path, enforce_type=list)
-            )
-            self.logger.info(
-                f"Loaded existing calibrations from {self.config.calibrations_path}"
-            )
-        except FileNotFoundError:
-            self.logger.info("No existing calibrations found. Will create new file.")
-            calibrations = []
+        calibrations = []
 
         return experiments, simulations, calibrations
 
@@ -380,6 +359,7 @@ class AdditiveFOAMCalibration(AdditiveFOAM):
 
         # Add fingerprints based on process parameters
         param_cols = list(ProcessParameters.model_fields.keys())
+        self.logger.debug(f"Loading columns: {param_cols}")
         df = df.with_columns(
             pl.struct([pl.col(k) for k in param_cols])
             .map_elements(create_row_fingerprint, return_dtype=pl.String)
@@ -468,7 +448,16 @@ class AdditiveFOAMCalibration(AdditiveFOAM):
         os.makedirs(self.config.simulation_output_dir, exist_ok=True)
         self.logger.info(f"Output directory: {self.config.simulation_output_dir}")
 
-        def _run_single_simulation(row) -> float:
+        def _extract_output(output_file: pathlib.Path):
+            """Extracts the output from the simulation"""
+            if output_file.exists():
+                df = pl.read_csv(output_file)
+                return df["depth(m)"].to_numpy()[-1] * 1e3
+            return None
+
+        def _run_single_simulation(
+            row,
+        ) -> tuple[float | subprocess.Popen | Container, str | pathlib.Path]:
             """Run a single simulation, saving results to a directory with the
             process parameter fingerprint + n
             """
@@ -477,54 +466,112 @@ class AdditiveFOAMCalibration(AdditiveFOAM):
             speed = row["scan_speed"]
             spot = row["spot_size"]
             n = row["n"]
-            fingerprint = row["current_fingerprint"]
+            material = row["material"]
+            fingerprint = row["fingerprint"]
 
             self.logger.debug(
-                f"Running simulation: P={power}W, v={speed}m/s, " f"d={spot}mm, n={n}"
+                f"Running simulation:\n\tmaterial={material}\n\tP={power}W\n\tv={speed}m/s"
+                f"\n\td={spot}mm\n\tn={n}\n\tfingerprint={fingerprint}"
             )
 
-            # Placeholder - replace with actual simulation
-            result = np.random.rand() * 0.5 + 0.1  # Random depth between 0.1-0.6 mm
+            # Get basic material datamaterial_data = os.path.join(
+            material_data = os.path.join(
+                os.environ["MYNA_INSTALL_PATH"],
+                "mist_material_data",
+                f"{material}.json",
+            )
+            mat_obj = mist.core.MaterialInformation(material_data)
+            TS = int(mat_obj.get_property("solidus_eutectic_temperature", None, None))
+            TL = int(mat_obj.get_property("liquidus_temperature", None, None))
+
+            # Set case dir and output file
+            case_dir = (
+                pathlib.Path(self.config.simulation_output_dir)
+                / f"{fingerprint}"
+                / f"n_{n}"
+            )
+            output_file = (
+                case_dir / "postProcessing" / "meltPoolDimensions" / f"{TS}.csv"
+            )
+
+            # Attempt to extract results, if unsuccessful re-run the case
+            result = _extract_output(output_file)
+            if result is not None:
+                return (result, output_file)
+            if case_dir.exists():
+                shutil.rmtree(case_dir)
 
             # Copy the template and configure the case,
-            # including generating the scanpath from the laser power and scan speed
-            case_dir = pathlib.Path(self.config.simulation_output_dir) / fingerprint / n
+            # - Update the beam parameters
+            # - Generate the scanpath from the laser power and scan speed
+            # - Write out only the final time-step of the scan path
+            # - Update the material properties
+            os.makedirs(case_dir)
+            self.logger.debug(
+                f"Copying template ({self.template})\n\t-> case dir ({case_dir})"
+            )
             self.copy(case_dir)
-            self.update_beam_spot_size(None, case_dir, spot)
+            self.update_beam_spot_size(None, case_dir, 0.5 * spot * 1e-3)
+            heatsource_model = "projectedGaussian"
+            update_parameter(
+                f"{case_dir}/constant/heatSourceDict",
+                f"beam/{heatsource_model}Coeffs/B",
+                n,
+            )
+            update_parameter(
+                f"{case_dir}/constant/heatSourceDict",
+                f"beam/{heatsource_model}Coeffs/isoValue",
+                TL,
+            )
             scan_file = case_dir / "constant" / "scanPath"
             write_single_line_path(
                 scan_file, power, speed, (0, 0, 0), (self.single_track_length, 0, 0)
             )
-            self.update_region_start_and_end_times(case_dir, None, scan_file.name)
-            # TODO: What heat source do I use in the template and what does "n" correspond to?
-            heatsource_model = (
-                subprocess.check_output(
-                    "foamDictionary -entry beam/heatSourceModel -value "
-                    + f"{case_dir}/constant/heatSourceDict",
-                    shell=True,
-                )
-                .decode("utf-8")
-                .strip()
+            _, end_time = self.update_region_start_and_end_times(
+                case_dir, None, scan_file.name
             )
-            # update_parameter(
-            #     f"{case_dir}/constant/heatSourceDict",
-            #     f"beam/{heatsource_model}Coeffs/eta0",
-            #     absorption,
-            # )
-            # TODO: update the template to actually output the melt pool dimension
-            # somewhere readable using the function object
+            update_parameter(
+                f"{case_dir}/system/controlDict",
+                "writeInterval",
+                end_time,
+            )
+            self.update_material_properties(case_dir, material)
+            update_parameter(
+                f"{case_dir}/system/controlDict",
+                "functions/meltPoolDimensions/isoValues",
+                f"( {TS} {TL} )",
+            )
+
+            # Generate mesh
+            with subprocess.Popen(
+                ["blockMesh", "-case", f"{case_dir}"], stdout=subprocess.DEVNULL
+            ) as p:
+                p.wait()
+
+            # Run the case and return the process object
             process = self.run_case(case_dir)
+            self.logger.debug("Case submitted")
+            return (process, output_file)
 
-            self.logger.debug(f"  Result: depth={result:.4f}mm")
-            return result
-
-        # Run simulations with progress tracking
+        # Run simulations using MynaApp job management functions
         self.logger.info("Executing simulations...")
-        results = sim_queue.with_columns(
-            pl.struct(pl.all())
-            .map_elements(_run_single_simulation, return_dtype=pl.Float64)
-            .alias("depths")
-        )
+        results = []
+        processes = []
+        for row in sim_queue.iter_rows(named=True):
+            result, output_file = _run_single_simulation(row)
+            if isinstance(result, (subprocess.Popen, Container)):
+                processes.append(result)
+                results.append(output_file)
+                self.wait_for_open_batch_resources(processes)
+            else:
+                results.append(result)
+        self.wait_for_all_process_success(processes)
+
+        # Extract results
+        results = [
+            r if isinstance(r, (float, int)) else _extract_output(r) for r in results
+        ]
+        results = sim_queue.with_columns(pl.Series("depths", results, dtype=pl.Float64))
 
         # Mark these simulations as validated
         results = results.with_columns(
@@ -605,7 +652,7 @@ class AdditiveFOAMCalibration(AdditiveFOAM):
                 )
 
                 # Perform calibration
-                trace = perform_bayesian_calibration(
+                trace = self._perform_bayesian_calibration(
                     n_coords=n_coords,
                     model_values=model_depths,
                     observed_values=[[d] for d in observed_depths],
@@ -680,15 +727,109 @@ class AdditiveFOAMCalibration(AdditiveFOAM):
                     del cal_copy["n_samples"]
                 calibrations_to_save.append(cal_copy)
 
-            with open(self.config.calibrations_path, mode="w", encoding="utf-8") as f:
+            with open(
+                self.config.calibrated_n_values_path, mode="w", encoding="utf-8"
+            ) as f:
                 yaml.dump(
                     calibrations_to_save, f, sort_keys=False, default_flow_style=False
                 )
 
-            self.logger.info(f"Saved calibrations to {self.config.calibrations_path}")
+            self.logger.info(
+                f"Saved calibrations to {self.config.calibrated_n_values_path}"
+            )
         except Exception as e:
             self.logger.error(f"Failed to save calibrations: {str(e)}")
             raise
+
+    def _perform_bayesian_calibration(
+        self,
+        n_coords: list[float | int],
+        model_values: list[float | int],
+        observed_values: list[list[float | int]],
+    ) -> az.InferenceData:
+        """Calculates the posterior distribution from Bayesian calibration of n to observations
+
+        Assumptions:
+        - Uniform prior
+        - 1 Gaussian standard deviation is used as noise if multiple observations are given,
+        otherwise 15% of the measured value is used as noise
+        """
+        # Convert to numpy arrays to handle both lists and Polars Series
+        observed_arrays = [np.asarray(x) for x in observed_values]
+        sigmas = np.array(
+            [
+                max(np.std(arr) if len(arr) > 1 else 0.15 * arr[0], 1e-4)
+                for arr in observed_arrays
+            ]
+        )
+
+        with pm.Model() as _:
+            n = pm.Uniform("n", lower=np.min(n_coords), upper=np.max(n_coords))
+            n_data_pt, model_values_pt = pt.constant(n_coords), pt.constant(
+                model_values
+            )
+            predicted_values = pm.Deterministic(
+                "predicted_value", linear_interp_pt(n, n_data_pt, model_values_pt)
+            )
+            pm.Normal(
+                "likelihood",
+                mu=predicted_values,
+                sigma=sigmas,
+                observed=observed_values,
+            )
+            logger.info(
+                f"Sampling posterior with {len(observed_values)} observations "
+                f"(σ_est={sigmas})"
+            )
+            trace = pm.sample(
+                draws=2000,
+                tune=1000,
+                cores=self.args.np,
+                progressbar=True,
+                target_accept=0.9,
+                random_seed=42,
+            )
+        return trace
+
+    def _fit_heteroskedastic_model(
+        self, depth_observations, spot_sizes, calibrated_n_values
+    ) -> az.InferenceData:
+        """
+        Performs a robust heteroskedastic Bayesian regression to model both the mean
+        and the standard deviation of n as a function of NORMALIZED depth.
+        """
+        if len(calibrated_n_values) < 2:
+            raise ValueError(
+                "Not enough calibrated points to fit a final relationship."
+            )
+
+        normalized_depths_obs = [
+            np.mean(ds) / s for ds, s in zip(depth_observations, spot_sizes)
+        ]
+        self.logger.debug(f"{normalized_depths_obs=}")
+        n_obs = calibrated_n_values
+
+        with pm.Model():
+            # --- Model Priors ---
+            A = pm.Normal("A", mu=1.0, sigma=2.0)
+            B = pm.Normal("B", mu=0.0, sigma=5.0)
+            C = pm.Normal("C", mu=0.0, sigma=1.0)
+            D = pm.Normal("D", mu=0.0, sigma=2.0)
+            nu = pm.Exponential("nu", 1 / 29.0 + 1)
+
+            # --- Model Definition (using normalized depth) ---
+            mu_model = pm.Deterministic("mu", A * pt.log2(normalized_depths_obs) + B)
+            log_sigma_model = pm.Deterministic(
+                "log_sigma", C * pt.log2(normalized_depths_obs) + D
+            )
+            sigma_model = pm.Deterministic("sigma", pt.exp(log_sigma_model))
+
+            pm.StudentT("n_fit", nu=nu, mu=mu_model, sigma=sigma_model, observed=n_obs)
+
+            trace = pm.sample(
+                2000, tune=1500, cores=4, random_seed=42, target_accept=0.95
+            )
+            return trace
 
 
 # ==============================================================================
@@ -697,7 +838,10 @@ class AdditiveFOAMCalibration(AdditiveFOAM):
 
 if __name__ == "__main__":
     # Configure custom settings if needed
-    print(f'{"/".join(pathlib.Path(__name__).parts[-2:])=}')
     app = AdditiveFOAMCalibration()
     app.configure()
+
+    app = AdditiveFOAMCalibration()
+    app.args.np = 1
+    app.args.batch = True
     app.execute()
