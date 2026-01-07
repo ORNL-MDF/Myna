@@ -193,7 +193,7 @@ class AdamantineTemperatureApp(AdamantineApp):
         """Configures the case directory based on available Myna data"""
 
         # Copy the template to the case directory
-        self.copy(case_dict["case_dir"])
+        self.copy_template_to_case(case_dict["case_dir"])
 
         # Load in the input file
         input_path = Path(case_dict["case_dir"]) / Path(self.case_files["input"])

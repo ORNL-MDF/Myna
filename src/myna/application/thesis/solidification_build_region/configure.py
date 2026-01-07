@@ -24,7 +24,7 @@ def configure_case(case_dir, sim, myna_input="myna_data.yaml"):
     settings = load_input(input_path)
 
     # Copy template case
-    sim.copy(case_dir)
+    sim.copy_template_to_case(case_dir)
     beam_file_template = os.path.join(case_dir, "Beam.txt")
 
     # Get relevant data from all parts in the build_region

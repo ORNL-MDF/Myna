@@ -32,7 +32,7 @@ def configure_case(case_dir, sim, myna_input="myna_data.yaml"):
     layer = list(settings["build"]["parts"][part]["layer_data"].keys())[0]
 
     # Copy template case
-    sim.copy(case_dir)
+    sim.copy_template_to_case(case_dir)
 
     # Set up scan path
     scan_obj = Scanpath(None, part, layer)

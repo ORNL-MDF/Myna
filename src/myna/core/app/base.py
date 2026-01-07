@@ -55,7 +55,7 @@ class MynaApp:
         self.input_file = os.environ.get("MYNA_INPUT")
         self.settings = {}
         self.step_number = None
-        self.template = None
+        self.template: Path | None = None
         if self.input_file is not None:
             self.settings = load_input(self.input_file)
             self.step_number = [
@@ -252,20 +252,29 @@ class MynaApp:
     def _set_template_path(self):
         """Set the path to the template directory based on the path to the app directory"""
         if self.args.template is None:
-            self.template = os.path.join(
-                self.path,
-                "template",
-            )
+            self.template = Path(self.path) / "template"
         else:
-            self.template = os.path.abspath(self.args.template)
+            self.template = Path(self.args.template)
 
-    def copy(self, case_dir):
+    def copy_template_to_case(self, case_dir):
         """Copies the set template directory to a case directory, with existing files
         being overwritten depending on the app overwrite user setting.
 
         Args:
         - case_dir: (str) path to the case directory
         """
+
+        # Do not copy anything if no template is set
+        if self.template is None:
+            raise ValueError(
+                f"MynaApp {self.name} self.template property is set to None, "
+                "so there is no template to copy"
+            )
+        if not self.template.exists():
+            raise FileNotFoundError(
+                f"MynaApp {self.name} self.template '{self.template}' was not found "
+                "so there is no template to copy"
+            )
 
         # Get list of files in case directory, except for the myna data file
         try:

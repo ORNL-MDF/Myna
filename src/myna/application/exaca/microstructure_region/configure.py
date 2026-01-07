@@ -24,7 +24,7 @@ def setup_case(
     layer_thickness,
 ):
     # Copy template to case directory
-    sim.copy(case_dir)
+    sim.copy_template_to_case(case_dir)
 
     # Get case settings and template input JSON
     myna_settings = load_input(os.path.join(case_dir, "myna_data.yaml"))
