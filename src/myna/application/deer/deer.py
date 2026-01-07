@@ -32,18 +32,6 @@ class DeerApp(MynaApp):
             help="Path to the root Moose install directory",
         )
         self.parse_known_args()
-        self.update_template_path()
-
-    def update_template_path(self):
-        """Updates the template path parameter"""
-        if self.args.template is None:
-            template_path = os.path.join(
-                os.environ["MYNA_APP_PATH"],
-                "deer",
-                self.simulation_type,
-                "template",
-            )
-            self.args.template = template_path
 
     def copy_template_to_dir(self, target_dir):
         """Copies the specified template directory to the specified target directory"""

@@ -38,12 +38,7 @@ class AdditiveFOAMRegionReducedSTL(AdditiveFOAMRegionReduced):
             type=float,
             help="Multiple by which to scale the STL file dimensions (default = 0.001, mm -> m)",
         )
-        self.args, _ = self.parser.parse_known_args()
-        self.mpiargs_to_current()
-
-        # Update derived parameters
-        self.set_procs()
-        self.update_template_path()
+        self.parse_known_args()
 
         # Get list of expected output files and iterate through the cases
         mynafiles = self.settings["data"]["output_paths"][self.step_name]

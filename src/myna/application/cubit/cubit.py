@@ -30,7 +30,6 @@ class CubitApp(MynaApp):
             help="Path to the root Cubit install directory",
         )
         self.parse_known_args()
-        self.update_template_path()
 
         # Check that all needed executables are accessible. This overrides the
         # assumed behavior that each app only has one executable passed through the
@@ -52,17 +51,6 @@ class CubitApp(MynaApp):
             )
         else:
             self.args.exec = original_executable_arg
-
-    def update_template_path(self):
-        """Updates the template path parameter"""
-        if self.args.template is None:
-            template_path = os.path.join(
-                os.environ["MYNA_APP_PATH"],
-                "cubit",
-                self.simulation_type,
-                "template",
-            )
-            self.args.template = template_path
 
     def copy_template_to_dir(self, target_dir):
         """Copies the specified template directory to the specified target directory"""

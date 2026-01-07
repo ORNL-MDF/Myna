@@ -100,12 +100,7 @@ class AdditiveFOAMRegionReduced(AdditiveFOAM):
             help="(int) additional refinement of region mesh"
             + " level after layer refinement (each level halves coarse mesh)",
         )
-        self.args, _ = self.parser.parse_known_args()
-        self.mpiargs_to_current()
-
-        # Update derived parameters
-        self.set_procs()
-        self.update_template_path()
+        self.parse_known_args()
 
     def configure(self):
         """Configure all cases for the application"""
