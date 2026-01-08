@@ -174,14 +174,14 @@ class MynaApp:
         """Parse known command line arguments to update self.args and apply
         any corrections"""
         self.args, _ = self.parser.parse_known_args()
-        self.set_procs()
-        self.mpiargs_to_current()
+        self._set_procs()
+        self._mpiargs_to_current()
         self._set_template_path()
         if self.args.skip:
             print(f"- Skipping part of step {self.name}")
             sys.exit()
 
-    def mpiargs_to_current(self):
+    def _mpiargs_to_current(self):
         """Function to convert the deprecated `--mpiargs` option to the current
         `--mpiexec`, `--np`, and `--mpiflags` options
 
@@ -241,7 +241,7 @@ class MynaApp:
                 + "does not have execute permissions."
             )
 
-    def set_procs(self):
+    def _set_procs(self):
         """Set processor information based on the `maxproc` and `np` inputs. Regardless
         of user inputs, the CPU count will be capped at `os.cpu_count()`
         """
