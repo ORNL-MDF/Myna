@@ -242,12 +242,18 @@ class MynaApp:
             )
 
     def _set_procs(self):
-        """Set processor information based on the `maxproc` and `np` inputs. Regardless
-        of user inputs, the CPU count will be capped at `os.cpu_count()`
+        """Set processor information based on the `maxproc` and `np` inputs. If the
+        available CPU count can be determined by `os.cpu_count()` then it will be used
+        as a limiter to avoid oversubscription. If available CPU count cannot be
+        determined, then user input will be used as-is.
         """
-        if self.args.maxproc is None:
-            self.args.maxproc = os.cpu_count()
-        self.args.np = min(os.cpu_count(), self.args.np, self.args.maxproc)
+        os_cpus = os.cpu_count()
+        if (self.args.maxproc is None) and (os_cpus is not None):
+            self.args.maxproc = os_cpus
+            self.args.np = min(self.args.np, self.args.maxproc)
+        elif os_cpus is not None:
+            self.args.maxproc = min(os_cpus, self.args.maxproc)
+            self.args.np = min(self.args.np, self.args.maxproc)
 
     def _set_template_path(self):
         """Set the path to the template directory based on the path to the app directory"""
