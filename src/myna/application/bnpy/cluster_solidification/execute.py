@@ -328,7 +328,9 @@ def run_clustering(
 
 
 def main():
-    app = Bnpy(class_name="cluster_solidification")
+    app = Bnpy()
+    app.class_name = "cluster_solidification"
+    app.__init__()
 
     # Set up argparse
     parser = app.parser

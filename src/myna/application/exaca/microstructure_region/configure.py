@@ -123,7 +123,9 @@ def setup_case(
 
 def main():
     # Create ExaCA instance
-    app = ExaCA(class_name="microstructure_region")
+    app = ExaCA()
+    app.class_name = "microstructure_region"
+    app.__init__()
 
     # Get expected Myna output files
     settings = app.settings
