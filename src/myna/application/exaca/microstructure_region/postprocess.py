@@ -19,7 +19,9 @@ def main():
     """Main postprocessing functionality for exaca/microstructure_region"""
 
     # Create ExaCA instance
-    app = ExaCA(class_name="microstructure_region")
+    app = ExaCA()
+    app.class_name = "microstructure_region"
+    app.__init__()
 
     # Get expected Myna output files
     myna_files = app.settings["data"]["output_paths"][app.step_name]
