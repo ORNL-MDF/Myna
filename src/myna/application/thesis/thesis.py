@@ -15,8 +15,6 @@ from myna.core.utils import working_directory
 class Thesis(MynaApp):
     def __init__(
         self,
-        app_type="thesis",
-        class_name=None,
         input_dir=None,
         input_filename="ParamInput.txt",
         material_filename="Material.txt",
@@ -24,8 +22,8 @@ class Thesis(MynaApp):
         output_suffix="",
         validate_executable=True,
     ):
-        super().__init__(app_type, class_name)
-        self.simulation_type = app_type if class_name is None else class_name
+        super().__init__()
+        self.app_type = "thesis"
 
         self.parser.add_argument(
             "--res",
