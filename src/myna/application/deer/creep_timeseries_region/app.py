@@ -35,12 +35,9 @@ class CreepTimeseriesRegionDeerApp(DeerApp):
     > - "material_model.xml"
     """
 
-    def __init__(
-        self,
-        app_type="deer",
-        class_name="creep_timeseries_region",
-    ):
-        super().__init__(app_type, class_name)
+    def __init__(self):
+        super().__init__()
+        self.class_name = "creep_timeseries_region"
 
         # Set names for template files
         self.orientation_file_name = "orientation.txt"

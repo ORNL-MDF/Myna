@@ -24,10 +24,9 @@ from myna.core.utils import working_directory, nested_get
 class AdditiveFOAMRegionReduced(AdditiveFOAM):
     """Simulation type for generating solidification data for specified regions"""
 
-    def __init__(
-        self, app_type="additivefoam", class_name="solidification_region_reduced"
-    ):
-        super().__init__(app_type, class_name)
+    def __init__(self):
+        super().__init__()
+        self.class_name = "solidification_region_reduced"
 
         # Define app-specific template file names
         self.mesh_dict_name = "mesh_dict.yaml"

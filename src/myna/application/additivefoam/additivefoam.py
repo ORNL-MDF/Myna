@@ -23,8 +23,9 @@ class AdditiveFOAM(MynaApp):
     """Myna application defining the shared functionality accessible to all
     AdditiveFOAM-based simulation types."""
 
-    def __init__(self, app_type="additivefoam", class_name=None):
-        super().__init__(app_type, class_name)
+    def __init__(self):
+        super().__init__()
+        self.app_type = "additivefoam"
 
         # Parse app-specific arguments
         self.parse_known_args()

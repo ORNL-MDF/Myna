@@ -31,28 +31,23 @@ class MynaApp:
     using the MynaApp functionality where possible for consistent behavior across apps.
     """
 
-    settings = "MYNA_INPUT"
-    path = "MYNA_APP_PATH"
-    step_name = "MYNA_STEP_NAME"
-    last_step_name = "MYNA_LAST_STEP_NAME"
+    # Define ENV class variables that have relevant workflow information
+    ENV_SETTINGS_FILE = "MYNA_INPUT"
+    ENV_APP_PATH = "MYNA_APP_PATH"
+    ENV_STEP_NAME = "MYNA_STEP_NAME"
+    ENV_LAST_STEP_NAME = "MYNA_LAST_STEP_NAME"
 
-    def __init__(self, app_type: str | None = None, class_name: str | None = None):
+    def __init__(self):
         # Set the print name as well as the Myna app and class names
-        self.name = f"{app_type}/{class_name}"
-        self.path = Path(os.environ.get("MYNA_APP_PATH", ""))
-        if app_type is not None:
-            self.path = self.path / Path(app_type)
-        if class_name is not None:
-            self.path = self.path / Path(class_name)
-        self.class_name = class_name
-        self.app_type = app_type
+        self.class_name: str | None = None
+        self.app_type: str | None = None
 
         # Get the names for the current and previous workflow step
-        self.step_name = os.environ.get("MYNA_STEP_NAME")
-        self.last_step_name = os.environ.get("MYNA_LAST_STEP_NAME")
+        self.step_name = os.environ.get(self.ENV_STEP_NAME)
+        self.last_step_name = os.environ.get(self.ENV_LAST_STEP_NAME)
 
         # Get the input file contents and parse additional step information
-        self.input_file = os.environ.get("MYNA_INPUT")
+        self.input_file = os.environ.get(self.ENV_SETTINGS_FILE)
         self.settings = {}
         self.step_number = None
         self.template: Path | None = None
@@ -64,10 +59,10 @@ class MynaApp:
 
         # Check if there is a corresponding component class. This will be None if
         # class name is not in the Component lookup dictionary
-        if class_name is not None:
+        if self.class_name is not None:
             self.sim_class_obj = None
             try:
-                self.sim_class_obj = return_step_class(class_name, verbose=False)
+                self.sim_class_obj = return_step_class(self.class_name, verbose=False)
                 self.sim_class_obj.apply_settings(
                     self.settings["steps"][self.step_number],
                     self.settings.get("data"),
@@ -78,8 +73,7 @@ class MynaApp:
 
         # Set up argparse
         self.parser = argparse.ArgumentParser(
-            description=f"Configure {self.name} input files for "
-            + "specified Myna cases"
+            description="Configure input files for specified Myna cases"
         )
         self.parser.add_argument(
             "--template",
@@ -100,7 +94,7 @@ class MynaApp:
             "--exec",
             default=None,
             type=str,
-            help=f"(str) Path to {self.name} executable",
+            help="(str) Path to executable",
         )
         self.parser.add_argument(
             "--np",
@@ -170,15 +164,34 @@ class MynaApp:
         )
         self.parse_known_args()
 
+    @property
+    def name(self):
+        return f"{self.app_type}/{self.class_name}"
+
+    @property
+    def path(self):
+        app_path = Path(os.environ.get(self.ENV_APP_PATH, ""))
+        if self.app_type is not None:
+            app_path = app_path / Path(self.app_type)
+        if self.class_name is not None:
+            app_path = app_path / Path(self.class_name)
+        return app_path
+
+    @property
+    def template(self):
+        """Set the path to the template directory based on the path to the app directory"""
+        if self.args.template is None:
+            return Path(self.path) / "template"
+        return Path(self.args.template)
+
     def parse_known_args(self):
         """Parse known command line arguments to update self.args and apply
         any corrections"""
         self.args, _ = self.parser.parse_known_args()
         self._set_procs()
         self._mpiargs_to_current()
-        self._set_template_path()
         if self.args.skip:
-            print(f"- Skipping part of step {self.name}")
+            print(f"- Skipping part of step {self.step_name}")
             sys.exit()
 
     def _mpiargs_to_current(self):
@@ -254,13 +267,6 @@ class MynaApp:
         elif os_cpus is not None:
             self.args.maxproc = min(os_cpus, self.args.maxproc)
             self.args.np = min(self.args.np, self.args.maxproc)
-
-    def _set_template_path(self):
-        """Set the path to the template directory based on the path to the app directory"""
-        if self.args.template is None:
-            self.template = Path(self.path) / "template"
-        else:
-            self.template = Path(self.args.template)
 
     def copy_template_to_case(self, case_dir):
         """Copies the set template directory to a case directory, with existing files

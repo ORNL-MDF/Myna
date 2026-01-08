@@ -20,9 +20,9 @@ class CubitApp(MynaApp):
     Laboratories: https://cubit.sandia.gov/
     """
 
-    def __init__(self, app_type="cubit", class_name=None):
-        super().__init__(app_type, class_name)
-        self.simulation_type = app_type if class_name is None else class_name
+    def __init__(self):
+        super().__init__()
+        self.app_type = "cubit"
         self.parser.add_argument(
             "--cubitpath",
             default=None,
@@ -46,8 +46,7 @@ class CubitApp(MynaApp):
         # Set original value back to exec commented out since it is ignored
         if original_executable_arg is not None:
             self.args.exec = (
-                f"# (ignored by {self.name}/{self.simulation_type} app) "
-                + original_executable_arg
+                f"# (ignored by {self.name} app) " + original_executable_arg
             )
         else:
             self.args.exec = original_executable_arg

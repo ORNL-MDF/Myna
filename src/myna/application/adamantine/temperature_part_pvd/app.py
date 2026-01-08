@@ -37,8 +37,9 @@ class AdamantineTemperatureApp(AdamantineApp):
     """Simulate the temperature evolution of a part, outputting the results to a VTK
     PVD-format file"""
 
-    def __init__(self, app_type="adamantine", class_name="temperature_part_pvd"):
-        super().__init__(app_type, class_name)
+    def __init__(self):
+        super().__init__()
+        self.class_name = "temperature_part_pvd"
 
         # Define case file names
         self.case_files = {

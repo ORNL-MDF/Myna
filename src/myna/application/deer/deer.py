@@ -18,13 +18,9 @@ class DeerApp(MynaApp):
     """Myna application defining the shared functionality accessible to all Deer-based
     simulation types."""
 
-    def __init__(
-        self,
-        app_type="deer",
-        class_name=None,
-    ):
-        super().__init__(app_type, class_name)
-        self.simulation_type = app_type if class_name is None else class_name
+    def __init__(self):
+        super().__init__()
+        self.app_type = "deer"
         self.parser.add_argument(
             "--moosepath",
             default=None,
