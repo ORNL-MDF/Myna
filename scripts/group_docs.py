@@ -14,10 +14,10 @@ def remove_global_variables(filepath):
         lines = f.readlines()
     i0 = None
     i1 = None
-    for i, l in enumerate(lines):
-        if l == "**Global Variables**\n":
+    for i, line in enumerate(lines):
+        if line == "**Global Variables**\n":
             i0 = i
-        if (l == "---\n") and isinstance(i0, int):
+        if (line == "---\n") and isinstance(i0, int):
             i1 = i
     if (i0 is not None) and (i1 is not None):
         newlines = lines[:i0] + lines[i1:]
@@ -31,9 +31,9 @@ def rename_module_heading_to_subpackage(filepath):
     """Returns True/False if the file is a subpackage header"""
     with open(filepath, "r", encoding="utf-8") as f:
         lines = f.readlines()
-    for i, l in enumerate(lines):
-        if "# <kbd>module</kbd>" in l:
-            lines[i] = l.replace("<kbd>module</kbd>", "<kbd>subpackage</kbd>")
+    for i, line in enumerate(lines):
+        if "# <kbd>module</kbd>" in line:
+            lines[i] = line.replace("<kbd>module</kbd>", "<kbd>subpackage</kbd>")
             with open(filepath, "w", encoding="utf-8") as f:
                 f.writelines(lines)
 

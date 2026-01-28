@@ -333,8 +333,8 @@ def config(input_file, output_file=None, show_avail=False, overwrite=False):
                             part_layers = nested_get(
                                 settings, nested_keys + [build_region, "layerlist"], []
                             )
-                            for l in part_layers:
-                                layer = f"{l}"
+                            for part_layer in part_layers:
+                                layer = f"{part_layer}"
                                 nested_layerkeys = nested_keys + [
                                     build_region,
                                     "parts",
@@ -351,8 +351,8 @@ def config(input_file, output_file=None, show_avail=False, overwrite=False):
                     for part in parts.keys():
                         # Check for layers in part dictionary
                         part_layers = nested_get(parts, [part, "layers"], [])
-                        for l in part_layers:
-                            layer = f"{l}"
+                        for part_layer in part_layers:
+                            layer = f"{part_layer}"
                             nested_keys = [
                                 "data",
                                 "build",
@@ -372,8 +372,8 @@ def config(input_file, output_file=None, show_avail=False, overwrite=False):
                             region_layers = nested_get(
                                 parts, [part, "regions", region, "layers"], []
                             )
-                            for l in region_layers:
-                                layer = f"{l}"
+                            for region_layer in region_layers:
+                                layer = f"{region_layer}"
                                 nested_keys = [
                                     "data",
                                     "build",

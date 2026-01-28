@@ -17,7 +17,7 @@ def test_version():
         lines = f.readlines()
 
     toml_version = (
-        lines[["version = " in l for l in lines].index(True)]
+        lines[["version = " in line for line in lines].index(True)]
         .split(" = ")[-1]
         .split('"')[1]
     )
