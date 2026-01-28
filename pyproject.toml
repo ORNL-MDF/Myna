@@ -47,6 +47,7 @@ dev = [
   'mkdocs-awesome-pages-plugin',
   'mkdocs-github-admonitions-plugin',
   'mkdocs-material',
+  'ruff',
 ]
 exaca = [
   'pyebsd @ git+https://github.com/arthursn/pyebsd.git',
