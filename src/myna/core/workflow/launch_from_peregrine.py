@@ -82,7 +82,7 @@ def launch_from_peregrine(parser):
 
     # Write Peregrine input to log file lines
     lines = []
-    lines.append(f"Peregrine inputs:\n")
+    lines.append("Peregrine inputs:\n")
     lines.append(f"- {build_path=}\n")
     lines.append(f"- {layers=}\n")
     lines.append(f"- {exported_parts=}\n")

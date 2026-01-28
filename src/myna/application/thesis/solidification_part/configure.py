@@ -10,8 +10,6 @@ import mistlib as mist
 import os
 from myna.core.workflow.load_input import load_input
 from myna.application.thesis.parse import adjust_parameter
-import argparse
-import sys
 import shutil
 import numpy as np
 
