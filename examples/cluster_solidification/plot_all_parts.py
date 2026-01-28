@@ -35,7 +35,7 @@ plt.rcParams["axes.titlepad"] = -12  # pad is in points...
 
 # Load images into the plot
 print("Loading image files")
-for index, (f, p, l) in enumerate(zip(files, part_nums, layer_nums)):
+for index, (f, p, layer_num) in enumerate(zip(files, part_nums, layer_nums)):
     img = mpimg.imread(f)
     if (ncols == 1) or (nrows == 1):
         ax = axs[index]
@@ -46,7 +46,7 @@ for index, (f, p, l) in enumerate(zip(files, part_nums, layer_nums)):
     ax.imshow(img)
     ax.set_aspect(1)
     ax.axis("off")
-    ax.set_title(f"P{p} Layer {l}", fontsize=8)
+    ax.set_title(f"P{p} Layer {layer_num}", fontsize=8)
 
 # Exporting merged images
 print("Writing combined image")

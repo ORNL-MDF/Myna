@@ -189,9 +189,9 @@ def run_rve_selection(
         # Shift layer grids to be coincident
         minx = region_df["x (m)"].min()
         miny = region_df["y (m)"].min()
-        for l in region_df["layer"].unique():
+        for layer in region_df["layer"].unique():
             # Mask current layer
-            mask = region_df["layer"] == l
+            mask = region_df["layer"] == layer
 
             # Get grid spacing for the layer
             nx = len(region_df.loc[mask, "x (m)"].unique())
@@ -218,10 +218,10 @@ def run_rve_selection(
 
             # Update values in region_df
             for old_x, new_x in zip(old_xs, new_xs):
-                mask_x = (region_df["layer"] == l) & (region_df["x (m)"] == old_x)
+                mask_x = (region_df["layer"] == layer) & (region_df["x (m)"] == old_x)
                 region_df.loc[mask_x, "x (m)"] = new_x
             for old_y, new_y in zip(old_ys, new_ys):
-                mask_y = (region_df["layer"] == l) & (region_df["y (m)"] == old_y)
+                mask_y = (region_df["layer"] == layer) & (region_df["y (m)"] == old_y)
                 region_df.loc[mask_y, "y (m)"] = new_y
             minx_layer = region_df.loc[mask, "x (m)"].min()
             miny_layer = region_df.loc[mask, "y (m)"].min()
