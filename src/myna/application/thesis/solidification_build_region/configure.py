@@ -25,7 +25,7 @@ def configure_case(case_dir, sim, myna_input="myna_data.yaml"):
 
     # Copy template case
     sim.copy(case_dir)
-    beam_file_template = os.path.join(case_dir, f"Beam.txt")
+    beam_file_template = os.path.join(case_dir, "Beam.txt")
 
     # Get relevant data from all parts in the build_region
     # Configuration ensures that only the relevant part & layer data is present

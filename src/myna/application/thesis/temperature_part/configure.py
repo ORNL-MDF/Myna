@@ -9,8 +9,6 @@
 import mistlib as mist
 import os
 from myna.core.workflow.load_input import load_input
-import argparse
-import sys
 import shutil
 import numpy as np
 from myna.application.thesis import get_scan_stats, adjust_parameter, Thesis

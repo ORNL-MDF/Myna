@@ -264,7 +264,7 @@ def merge_melt_times_with_rgb(
 
     # Convert RGB vtk data to dataframe
     if verbose:
-        print(f"- converting ExaCA VTK data to dataframe")
+        print("- converting ExaCA VTK data to dataframe")
     gids = vtk_to_numpy(vtk_rgb_data.GetPointData().GetArray("Grain ID"))
     rgbZ = vtk_to_numpy(vtk_rgb_data.GetPointData().GetVectors("rgbZ"))
     rz = rgbZ[:, 0]
@@ -292,7 +292,7 @@ def merge_melt_times_with_rgb(
 
     # Convert melt vtk data to dataframe
     if verbose:
-        print(f"- converting melt VTK data to dataframe")
+        print("- converting melt VTK data to dataframe")
     x, y, z = vtk_unstructured_grid_locs(vtk_melt_data)
     dts = np.linalg.norm(
         vtk_to_numpy(vtk_melt_data.GetPointData().GetVectors("dts")), axis=1
@@ -311,7 +311,7 @@ def merge_melt_times_with_rgb(
 
     # Filter vtk_melt to ExaCA (sub)domain
     if verbose:
-        print(f"- cropping melt data")
+        print("- cropping melt data")
     data_melt = data_melt.filter(pl.col("X (m)") >= bounds[0])
     data_melt = data_melt.filter(pl.col("X (m)") <= bounds[1])
     data_melt = data_melt.filter(pl.col("Y (m)") >= bounds[2])
@@ -321,7 +321,7 @@ def merge_melt_times_with_rgb(
 
     # Merge VTK-ID dataframe and Melt dataframe
     if verbose:
-        print(f"- merging dataframes")
+        print("- merging dataframes")
         print(f"  - data_rgb size: {data_rgb.shape}")
         print(f"  - data_melt size: {data_melt.shape}")
     df_merged = data_rgb.join(data_melt, on=["X (m)", "Y (m)", "Z (m)"], how="full")
@@ -334,9 +334,9 @@ def merge_melt_times_with_rgb(
 
     # Create VTK dataset
     if verbose:
-        print(f"\nAdding data to VTK file:\n")
+        print("\nAdding data to VTK file:\n")
     if verbose:
-        print(f"- creating vtkStructuredPoints")
+        print("- creating vtkStructuredPoints")
     vtk_dataset = vtk.vtkStructuredPoints()
     vtk_dataset.SetDimensions(dims)
     vtk_dataset.SetSpacing(spacing)
@@ -344,7 +344,7 @@ def merge_melt_times_with_rgb(
 
     # Add points
     if verbose:
-        print(f"- adding points")
+        print("- adding points")
     points_array = df_merged[["Z (m)", "Y (m)", "X (m)"]].to_numpy().astype(np.float64)
     points = vtk.vtkPoints()
     vtk_points = numpy_to_vtk(points_array)
@@ -372,12 +372,12 @@ def merge_melt_times_with_rgb(
     # Add data as vector to VTK dataset
     # <"RZ", "GZ", "BZ">
     if verbose:
-        print(f"- adding rgbZ vector data")
-    cols = [f"RZ", f"GZ", f"BZ"]
+        print("- adding rgbZ vector data")
+    cols = ["RZ", "GZ", "BZ"]
     vtk_data = numpy_to_vtk(
         num_array=df_merged[cols].to_numpy(), deep=True, array_type=vtk.VTK_FLOAT
     )
-    vtk_data.SetName(f"rgbZ")
+    vtk_data.SetName("rgbZ")
     vtk_dataset.GetPointData().AddArray(vtk_data)
 
     # Write file using VTK file writer

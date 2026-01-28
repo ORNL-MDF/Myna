@@ -82,7 +82,7 @@ class AMBench2022(Database):
             return 298  # K
 
         elif metadata_type == metadata.STL:
-            file_database = os.path.join(self.simulation_dir, part, f"part.stl")
+            file_database = os.path.join(self.simulation_dir, part, "part.stl")
             if not os.path.exists(file_database):
                 part_bounds = self.get_part_bounds(part)
                 if part[0] == "P":

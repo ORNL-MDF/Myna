@@ -8,7 +8,6 @@
 #
 """Defines `myna run` functionality"""
 
-import argparse
 import os
 
 import myna.core.components

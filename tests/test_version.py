@@ -6,11 +6,8 @@
 #
 # License: 3-clause BSD, see https://opensource.org/licenses/BSD-3-Clause.
 #
-import pytest
 from importlib.metadata import version
 import os
-
-import myna
 
 
 # This test is primarily intended to ensure the test suite itself is working.

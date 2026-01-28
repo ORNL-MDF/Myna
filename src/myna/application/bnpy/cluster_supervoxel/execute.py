@@ -57,10 +57,10 @@ def reduce_voxel_file_to_supervoxel_df(
     for id in ids:
         df = df.with_columns((pl.col("id") == id).alias(f"is_{id}"))
         drop_cols.append(f"is_{id}")
-        df = df.with_columns((pl.col(f"id").count().over("i", "j")).alias("count"))
+        df = df.with_columns((pl.col("id").count().over("i", "j")).alias("count"))
         drop_cols.append("count")
         df = df.with_columns(
-            ((pl.col(f"is_{id}").sum().over("i", "j")) / (pl.col(f"count")))
+            ((pl.col(f"is_{id}").sum().over("i", "j")) / (pl.col("count")))
             .log10()
             .replace([float("inf"), float("-inf")], 0)
             .alias(f"c_{id}")

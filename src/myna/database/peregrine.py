@@ -147,7 +147,7 @@ class PeregrineDB(Database):
             return value
 
         elif metadata_type == metadata.STL:
-            file_database = os.path.join(self.simulation_dir, part, f"part.stl")
+            file_database = os.path.join(self.simulation_dir, part, "part.stl")
             return file_database
 
         elif metadata_type == metadata.Scanpath:

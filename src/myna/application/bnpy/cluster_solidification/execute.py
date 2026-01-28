@@ -11,7 +11,6 @@ import pandas as pd
 import numpy as np
 from myna.core.workflow.load_input import load_input
 import myna.application.bnpy as myna_bnpy
-import sys
 import glob
 import matplotlib.pyplot as plt
 from myna.application.bnpy import Bnpy, get_representative_distribution
@@ -273,7 +272,7 @@ def run_clustering(
     cur_model, lap_val = bnpy.load_model_at_lap(task_output_path, None)
 
     # Assign cluster IDs, or overwrite them if specified
-    result_file = os.path.join(cluster_dir, f"cluster_ids.csv")
+    result_file = os.path.join(cluster_dir, "cluster_ids.csv")
     if not os.path.exists(result_file) or overwrite:
         compIDs = np.arange(0, cur_model.obsModel.K)
         if cur_model.allocModel.K == cur_model.obsModel.K:
