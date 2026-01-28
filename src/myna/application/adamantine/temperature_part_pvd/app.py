@@ -22,6 +22,7 @@ have knowledge of the deposit geometry, so the deposited material size is set to
 the `max(mesh_size_xy, spot size)` in the deposit length and width and
 `max(mesh_size_z, layer thickness)` in the deposit height.
 """
+
 import os
 import json
 import subprocess
@@ -169,12 +170,12 @@ class AdamantineTemperatureApp(AdamantineApp):
         input_dict["materials"]["material_0"]["liquid"][
             "convection_heat_transfer_coef"
         ] = self.args.convection_heat_transfer_coef  # W / (K * m^2)
-        input_dict["materials"]["material_0"][
-            "radiation_temperature_infty"
-        ] = self.args.radiation_temperature_infty  # K
-        input_dict["materials"]["material_0"][
-            "convection_temperature_infty"
-        ] = self.args.convection_temperature_infty  # K
+        input_dict["materials"]["material_0"]["radiation_temperature_infty"] = (
+            self.args.radiation_temperature_infty
+        )  # K
+        input_dict["materials"]["material_0"]["convection_temperature_infty"] = (
+            self.args.convection_temperature_infty
+        )  # K
         return input_dict
 
     def update_laser_parameter_dict(self, input_dict: dict, case_dict: dict):
@@ -340,7 +341,6 @@ class AdamantineTemperatureApp(AdamantineApp):
         # Open log file for capturing process output
         log_file = case_dict["case_dir"] / self.case_files["log"]
         with open(log_file, "w", encoding="utf-8") as lf:
-
             # Assemble command and kwargs for launching process
             container_case_path = "/home/myna"
             cmd_args = [

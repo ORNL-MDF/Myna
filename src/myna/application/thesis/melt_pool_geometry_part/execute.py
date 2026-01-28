@@ -84,7 +84,6 @@ def main():
     # Post-process results to convert to Myna format
     if output_files:
         for mynafile, segment_files in zip(myna_files, output_files):
-
             # Append all segment files
             thesis_to_myna_mapping = {
                 "Time (s)": "time (s)",

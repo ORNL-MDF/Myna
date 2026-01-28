@@ -27,7 +27,6 @@ def reduce_voxel_file_to_supervoxel_df(
     write_csv=False,
     output_file="supervoxel_composition.csv",
 ):
-
     # Load voxel cluster data
     df = pl.read_csv(voxel_file)
 
@@ -117,7 +116,6 @@ def train_supervoxel_model(
     composition_files = []
     supervoxel_step = app.args.res
     for myna_file, myna_voxel_file in zip(myna_files, myna_voxel_files):
-
         # Get case myna_data
         case_dir = os.path.dirname(myna_file)
         os.chdir(case_dir)
@@ -353,7 +351,6 @@ def run(
 
 
 def main():
-
     app = Bnpy("cluster_supervoxel")
 
     # Set up argparse
@@ -395,14 +392,10 @@ def main():
     voxel_model_path = voxel_model_path.replace("/", os.sep)
     voxel_model_path = sorted(
         glob.glob(os.path.join(voxel_model_path, "*")), reverse=True
-    )[
-        0
-    ]  # Model iteration
+    )[0]  # Model iteration
     voxel_model_path = sorted(
         glob.glob(os.path.join(voxel_model_path, "*")), reverse=True
-    )[
-        0
-    ]  # Training iteration
+    )[0]  # Training iteration
     voxel_model, lap_val = bnpy.load_model_at_lap(voxel_model_path, None)
     app.n_voxel_clusters = max(voxel_model.allocModel.K, 2)
 

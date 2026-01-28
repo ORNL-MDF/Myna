@@ -192,7 +192,6 @@ def config(input_file, output_file=None, show_avail=False, overwrite=False):
     # Determine which data needs to be added based on component class requirements
     step_obj_prev = None
     for i, step in enumerate(settings["steps"]):
-
         # Get the step component class name and class object
         step_name = [x for x in step.keys()][0]
         component_class_name = step[step_name]["class"]
@@ -222,7 +221,6 @@ def config(input_file, output_file=None, show_avail=False, overwrite=False):
 
         # Get the data requirements associated with that class
         for data_req in step_obj.data_requirements:
-
             # For each data requirements, lookup the corresponding data object
             data_class_name = metadata.return_data_class_name(data_req)
             constructor = vars(metadata)[data_class_name]

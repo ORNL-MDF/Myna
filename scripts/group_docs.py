@@ -10,7 +10,6 @@ from lazydocs import generate_docs
 
 
 def remove_global_variables(filepath):
-
     with open(filepath, "r", encoding="utf-8") as f:
         lines = f.readlines()
     i0 = None
@@ -92,7 +91,6 @@ def group_api_docs(api_docs_dir: str | Path, base_package_name: str):
     # Iterate through all files
     files = sorted(os.listdir(api_docs_dir))
     for filename in files:
-
         src_path = Path(api_docs_dir, filename)
         module_parts = Path(filename).stem.split(".")
         is_subpackage = remove_global_variables(src_path)
@@ -100,7 +98,6 @@ def group_api_docs(api_docs_dir: str | Path, base_package_name: str):
         # Parse module name parts
         # myna.<pkg0>.<pkg1>.<...>.module.py
         if module_parts[0] == base_package_name:
-
             # Handle package index files
             if is_subpackage:
                 target_dir = Path(api_docs_dir, *module_parts[1:])
@@ -128,7 +125,6 @@ def group_api_docs(api_docs_dir: str | Path, base_package_name: str):
 
 
 if __name__ == "__main__":
-
     # Remove existing API docs and regenerate
     API_DIR = str(Path("docs", "api-docs").absolute())
     shutil.rmtree(API_DIR, ignore_errors=True)

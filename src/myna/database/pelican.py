@@ -7,6 +7,7 @@
 # License: 3-clause BSD, see https://opensource.org/licenses/BSD-3-Clause.
 #
 """Database class for extracting data from MDF Pelican build data"""
+
 import os
 import glob
 from datetime import datetime, timedelta
@@ -52,9 +53,7 @@ class Pelican(Database):
     def exists(self):
         return os.path.exists(self.path)
 
-    def load(
-        self, metadata_type, part=None, layer=None
-    ):  # pylint: disable=unused-argument
+    def load(self, metadata_type, part=None, layer=None):  # pylint: disable=unused-argument
         """Load and return a metadata value from the database
 
         Note that layer is never used, because Pelican does not have the layer concept
@@ -155,7 +154,6 @@ class Pelican(Database):
                     matching_file = key
 
         if matching_file is None:
-
             # Get name of new scanpath file
             index = len(
                 glob.glob(
@@ -266,7 +264,6 @@ class Pelican(Database):
 
         # Load raw Pelican data
         for stream, name in zip(pelican_datastreams, pelican_names):
-
             # Get data
             data = zarr.open(
                 store=zarr.storage.ZipStore(

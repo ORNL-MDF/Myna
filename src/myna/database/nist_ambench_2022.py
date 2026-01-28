@@ -138,7 +138,6 @@ class AMBench2022(Database):
 
             # Only create scan files if files don't already exist
             if not os.path.exists(file_database):
-
                 # For Myna default format, Pmod should be a multiple of the
                 # nominal power for the part
                 power = 1
@@ -213,17 +212,14 @@ class AMBench2022(Database):
                 # Iterate through rows sequentially to generate scan path
                 time_last_row = None
                 for index, row in enumerate(df.iter_rows(named=True)):
-
                     # If first row in XYPT file, go to point
                     if time_last_row == None:
-
                         df_row = make_polars_scan_df(
                             [1], [row["X"]], [row["Y"]], [0], [0], [0]
                         )
 
                     # If the next time is farther away than the scan_timestep, go to start point
                     elif np.abs(row["dt_next"] - scan_timestep) > abs_tol:
-
                         df_row = make_polars_scan_df(
                             [1], [row["X"]], [row["Y"]], [0], [0], [row["dt_last"]]
                         )

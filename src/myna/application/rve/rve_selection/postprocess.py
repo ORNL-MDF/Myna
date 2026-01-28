@@ -14,7 +14,6 @@ import numpy as np
 
 
 def main():
-
     app = RVE("rve_selection")
 
     # Get expected Myna output files
@@ -45,7 +44,7 @@ def main():
         # Note: using iterrows creates a pd.Series, which only has one dtype for all values
         for row in df.itertuples(index=False):
             part = str(row["part"])
-            region = f'rve_{row["id"]}'
+            region = f"rve_{row['id']}"
             app.settings["data"]["build"]["parts"][part]["regions"][region] = {
                 "x": row["x (m)"],
                 "y": row["y (m)"],

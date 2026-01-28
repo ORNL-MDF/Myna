@@ -37,7 +37,6 @@ def configure_case(case_dir, sim, myna_input="myna_data.yaml"):
     beam_index = 1
     for part in print_order:
         if part in parts:
-
             # Set up scan path
             layer = list(build_region_dict["parts"][part]["layer_data"].keys())[0]
             myna_scanfile = build_region_dict["parts"][part]["layer_data"][layer][
@@ -104,7 +103,6 @@ def configure_case(case_dir, sim, myna_input="myna_data.yaml"):
 
 
 def main():
-
     sim = Thesis("solidification_build_region")
 
     # Get expected Myna output files

@@ -7,6 +7,7 @@
 # License: 3-clause BSD, see https://opensource.org/licenses/BSD-3-Clause.
 #
 """Define grain statistics data"""
+
 from .file import File, Variable
 
 

@@ -9,6 +9,7 @@
 """Script to be executed by the execute stage of `myna.core.workflow.run` to run
 a valid adamantine case based on the specified user inputs and template
 """
+
 from myna.application.adamantine.temperature_part_pvd.app import (
     AdamantineTemperatureApp,
 )

@@ -14,7 +14,6 @@ import os
 
 
 def setup_case(case_dir, template_dir):
-
     # Set template path
     if template_dir is None:
         template_path = os.path.join(

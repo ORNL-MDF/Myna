@@ -53,7 +53,6 @@ class PeregrineHDF5(PeregrineDB):
     }
 
     def __init__(self, version="v2023_10"):
-
         super().__init__()
         self.description = "ORNL MDF Peregrine HDF5 archive structure"
         self.version = version
@@ -133,7 +132,7 @@ class PeregrineHDF5(PeregrineDB):
                 value = value * 1e-3
                 warn_msg = (
                     f"Large spot size detected ({value} mm),"
-                    + f" assuming conversion um to mm (--> {value*1e-3} mm)"
+                    + f" assuming conversion um to mm (--> {value * 1e-3} mm)"
                 )
                 warnings.warn(warn_msg)
 
@@ -184,7 +183,6 @@ class PeregrineHDF5(PeregrineDB):
                 str(part).split("P", maxsplit=1)[-1]
             )  # remove "P" prefix from part name
             with h5py.File(self.path, "r") as data:
-
                 # Get Part ID and scan path information
                 # Older versions of Peregrine HDF5 files just have "scans/{layer}",
                 # but newer versions of the files have two formats of the scan data:

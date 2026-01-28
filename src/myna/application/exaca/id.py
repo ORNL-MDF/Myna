@@ -115,7 +115,6 @@ def grain_id_to_reference_id(grain_ids, num_ref_ids):
 def convert_id_to_rotation(
     vtk_reader, ref_id_file, misorientation=0.0, update_ids=False
 ):
-
     # Get dataframe of reference ids
     df_ids = load_grain_ids(ref_id_file)
 

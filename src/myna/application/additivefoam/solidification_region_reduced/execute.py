@@ -9,6 +9,7 @@
 """Script to be executed by the execute stage of `myna.core.workflow.run` to generate
 the solidification data.
 """
+
 from myna.application.additivefoam.solidification_region_reduced.app import (
     AdditiveFOAMRegionReduced,
 )

@@ -7,6 +7,7 @@
 # License: 3-clause BSD, see https://opensource.org/licenses/BSD-3-Clause.
 #
 """Script called during the configure stage of `~myna.core.workflow.run`"""
+
 from myna.application.deer.creep_timeseries_region import CreepTimeseriesRegionDeerApp
 
 

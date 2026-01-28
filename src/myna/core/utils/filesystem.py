@@ -7,6 +7,7 @@
 # License: 3-clause BSD, see https://opensource.org/licenses/BSD-3-Clause.
 #
 """Tools for file system operations"""
+
 import os
 import shutil
 from pathlib import Path

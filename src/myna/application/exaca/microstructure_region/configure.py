@@ -23,7 +23,6 @@ def setup_case(
     solid_files,
     layer_thickness,
 ):
-
     # Copy template to case directory
     sim.copy(case_dir)
 
@@ -123,7 +122,6 @@ def setup_case(
 
 
 def main():
-
     # Create ExaCA instance
     app = ExaCA("microstructure_region")
 
