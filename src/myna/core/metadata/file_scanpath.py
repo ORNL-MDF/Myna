@@ -59,7 +59,6 @@ class Scanpath(LayerFile):
         index_pairs = []
         df = self.load_to_dataframe()
         for index, (row) in enumerate(df.iter_rows(named=True)):
-
             # If at the start, set current z-value and start index
             if z_0 is None:
                 index_0 = index

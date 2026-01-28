@@ -19,7 +19,6 @@ def run_case(
     sim,
     check_for_existing_results=True,
 ):
-
     # Update simulation threads
     settings_file = os.path.join(sim.input_dir, "Settings.txt")
     adjust_parameter(settings_file, "MaxThreads", sim.args.np)
@@ -38,7 +37,7 @@ def run_case(
     result_file = os.path.join(
         case_directory,
         "Data",
-        f"{output_name}{sim.output_suffix}.Snapshot.{sim.args.nout-1}.csv",
+        f"{output_name}{sim.output_suffix}.Snapshot.{sim.args.nout - 1}.csv",
     )
     procs = proc_list.copy()
     procs = sim.run_thesis_case(case_directory, procs)
@@ -47,7 +46,6 @@ def run_case(
 
 
 def main(argv=None):
-
     # Set up simulation object
     sim = Thesis("temperature_part")
 

@@ -20,7 +20,6 @@ import warnings
 
 
 class PeregrineDB(Database):
-
     synonyms = {
         "laser_power": ["Laser Beam Power (W)", "Power (W)"],
         "laser_spot_size": ["Laser Spot Size (µm)", "Spot Size (µm)", "Spot Size (mm)"],

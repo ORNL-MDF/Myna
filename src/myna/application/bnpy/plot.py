@@ -478,7 +478,6 @@ def combined_supervoxel_composition_scatter(
     dpi=150,
     export_name="supervoxel_composition_map.png",
 ):
-
     # Get possible cluster ids
     clusters = np.arange(n_voxel_clusters)
 

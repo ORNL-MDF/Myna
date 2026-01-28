@@ -30,7 +30,6 @@ def nested_set(dict, keys, value):
 
 
 def run_case(app, case_dir):
-
     # Update number of cores to use
     run_script = os.path.join(case_dir, "runCase.sh")
     with open(run_script, "r", encoding="utf-8") as f:
@@ -42,11 +41,11 @@ def run_case(app, case_dir):
 
     # Run case using "runCase.sh" script
     process = None
-    os.system(f'chmod 755 {os.path.join(case_dir, "runCase.sh")}')
+    os.system(f"chmod 755 {os.path.join(case_dir, 'runCase.sh')}")
     if not app.args.batch:
-        os.system(f'{os.path.join(case_dir, "runCase.sh")}')
+        os.system(f"{os.path.join(case_dir, 'runCase.sh')}")
     else:
-        command = f'{os.path.join(case_dir, "runCase.sh")}'
+        command = f"{os.path.join(case_dir, 'runCase.sh')}"
         print(f"{command=}")
         process = subprocess.Popen(command, shell=True)
 
@@ -94,7 +93,6 @@ def main():
         output_files, myna_files, files_are_valid
     ):
         if not file_is_valid and os.path.exists(filepath):
-
             # Get reference file
             input_file = os.path.join(os.path.dirname(myna_file), "inputs.json")
             with open(input_file, "r", encoding="utf-8") as f:

@@ -39,12 +39,10 @@ def get_adjacent_layer_regions(myna_data, region_size=20):
     # and if not, then write region info to lists
     part_layer_sets = {}
     for part in part_layer_dict.keys():
-
         part_layers = part_layer_dict[part]
         part_layer_sets[part] = []
 
         for i, layer in enumerate(part_layers):
-
             # Determine if layer is adjacent to the last layer
             if i == 0:
                 layer_start = layer

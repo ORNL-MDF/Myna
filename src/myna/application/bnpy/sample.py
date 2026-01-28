@@ -19,7 +19,6 @@ def get_representative_distribution(
     bins=10,
     verbose=False,
 ):
-
     # Load app-specific dependencies
     try:
         import ot
@@ -49,7 +48,6 @@ def get_representative_distribution(
 
     all_data_sampled = False
     while (consecutive_counter <= conv_count) and (not all_data_sampled):
-
         # Randomly sample from dataset
         n_samples = n0 + dn * iteration
         if n_samples > data.shape[0]:
@@ -91,7 +89,7 @@ def get_representative_distribution(
     if verbose:
         print(
             f"- Sample size reduction: {n_sample} / {n_data}"
-            + f"\t({n_sample/n_data*100:.1f}%),"
+            + f"\t({n_sample / n_data * 100:.1f}%),"
             + f"\twasserstein = {wasserstein:.3g},"
             + f"\trel = {residue_rel:.2g},"
             + f"\tabs = {residue_abs:.2g}"

@@ -44,7 +44,6 @@ class AdamantineApp(MynaApp):
         input_dict = {}
         current_keys = []
         for line in lines:
-
             # Logically, do not need to know if entering a new dictionary
             if line == "{":
                 continue

@@ -52,7 +52,6 @@ def run_command(args, app=None, parallel=None, **kwargs):
 
 
 def run_command_with_decompose_reconstruct(args, case_dir, app=None):
-
     # Determine if parallel run
     parallel = False
     if app is not None:

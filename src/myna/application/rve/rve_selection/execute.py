@@ -228,8 +228,8 @@ def run_rve_selection(
 
         # Print number of unique x and y values in region_df
         region_df.round(6)
-        print(f'nx (region) = {len(region_df["x (m)"].unique())}')
-        print(f'ny (region) = {len(region_df["y (m)"].unique())}')
+        print(f"nx (region) = {len(region_df['x (m)'].unique())}")
+        print(f"ny (region) = {len(region_df['y (m)'].unique())}")
 
         # Get colormap for plotting
         n_digits = len(region_df["id"].unique())

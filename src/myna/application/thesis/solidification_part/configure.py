@@ -75,7 +75,6 @@ def configure_case(case_dir, sim, myna_input="myna_data.yaml"):
 
 
 def main():
-
     sim = Thesis("solidification_part")
 
     # Get expected Myna output files

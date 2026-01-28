@@ -26,7 +26,6 @@ def get_quoted_str(str_value):
     fixed_str = str(str_value)
 
     for q in ["'", '"']:
-
         # Check for bracing quotes
         is_quoted = (str_value[0] == q) and (str_value[-1] == q)
 

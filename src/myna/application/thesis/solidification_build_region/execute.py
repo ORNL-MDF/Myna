@@ -43,7 +43,6 @@ def run_case(
 
 
 def main(argv=None):
-
     # Set up simulation object
     sim = Thesis(
         "solidification_build_region",

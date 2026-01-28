@@ -13,7 +13,6 @@ from myna.core.workflow import config, write_input
 
 
 def main():
-
     app = RVE("rve_part_center")
 
     # Get expected Myna output files
@@ -34,7 +33,7 @@ def main():
         # Note: using iterrows creates a pd.Series, which only has one dtype for all values
         for row in df.iter_rows(named=True):
             part = str(row["part"])
-            region = f'rve_{row["id"]}'
+            region = f"rve_{row['id']}"
             app.settings["data"]["build"]["parts"][part]["regions"][region] = {
                 "x": row["x (m)"],
                 "y": row["y (m)"],

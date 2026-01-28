@@ -95,7 +95,6 @@ class File:
 
         # For CSV files extract all values
         if self.filetype.lower() in [".csv", "csv"]:
-
             # Load the file with lowercase column names
             df = pl.read_csv(self.file)
             df = df.rename(mapping={x: x.lower() for x in df.columns})

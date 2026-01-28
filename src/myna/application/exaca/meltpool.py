@@ -53,8 +53,8 @@ def aggregate_melt_times(
     files_per_chunk = max(int(np.round(chunk_size / filesize, 0)), 1)
     if verbose:
         print("\nFile loading information:\n")
-        print(f"- first filesize = {filesize/1e9:.3f} GB")
-        print(f"- chunk size = {chunk_size/1e9:.3f} GB")
+        print(f"- first filesize = {filesize / 1e9:.3f} GB")
+        print(f"- chunk size = {chunk_size / 1e9:.3f} GB")
         print(f"- files per chunk = {files_per_chunk}")
     df_all = None
     ts_max = 0
@@ -62,9 +62,8 @@ def aggregate_melt_times(
         print("\nReading files:\n")
 
     for i, f in enumerate(files):
-
         if verbose:
-            print(f"- {i+1}/{len(files)}: {f}")
+            print(f"- {i + 1}/{len(files)}: {f}")
 
         df = pl.read_csv(
             f,

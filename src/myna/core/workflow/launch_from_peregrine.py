@@ -125,7 +125,6 @@ def launch_from_peregrine(parser):
 
     # Set working directory to run all myna scripts
     with working_directory(myna_working_dir):
-
         # Construct myna config command
         lines.append("\nStarting configuration of simulation cases:\n")
         cmd = f'myna config --input "{input_file_configured}"'

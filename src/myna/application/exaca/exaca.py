@@ -10,7 +10,6 @@ from myna.core.app.base import MynaApp
 
 
 class ExaCA(MynaApp):
-
     def __init__(self, sim_type):
         super().__init__("ExaCA")
         self.simulation_type = sim_type

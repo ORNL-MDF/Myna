@@ -59,7 +59,6 @@ def train_voxel_model(myna_files, thermal_files, sF, gamma, input_dir):
 
     # Add training data from each thermal file
     for myna_file, thermal_file in zip(myna_files, thermal_files):
-
         # Go to case directory
         case_dir = os.path.dirname(myna_file)
         os.chdir(case_dir)

@@ -17,7 +17,6 @@ import glob
 
 
 def create_mesh(case_dir, scale_factor, coarse_res, refinement_level, app=None):
-
     # Get STL path from myna_data
     case_data = load_input(os.path.join(case_dir, "myna_data.yaml"))
     parts = case_data["build"]["parts"]

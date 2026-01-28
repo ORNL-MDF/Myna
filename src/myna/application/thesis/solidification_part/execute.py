@@ -39,7 +39,6 @@ def run_case(
 
 
 def main(argv=None):
-
     # Set up simulation object
     sim = Thesis(
         "solidification_part",
@@ -64,7 +63,6 @@ def main(argv=None):
 
     # Post-process results to convert to Myna format
     for mynafile in myna_files:
-
         # Get list of result file(s), accounting for MPI ranks
         case_directory = os.path.dirname(mynafile)
         output_name = read_parameter(sim.input_file, "Name")[0]
