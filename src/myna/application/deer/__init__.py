@@ -14,4 +14,6 @@ model implemented in the [Moose framework](https://mooseframework.inl.gov/).
 """
 
 from .deer import DeerApp
-from .mesh import *
+from .mesh import NetCDF4Dataset
+
+__all__ = ["DeerApp", "NetCDF4Dataset"]

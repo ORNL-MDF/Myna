@@ -15,3 +15,5 @@ Development was done with `Cubit-17.02` and behavior with other versions is unte
 """
 
 from .cubit import CubitApp
+
+__all__ = ["CubitApp"]
