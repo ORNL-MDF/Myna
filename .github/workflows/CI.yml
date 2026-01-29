@@ -14,8 +14,8 @@ jobs:
   format:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout myna
-        uses: actions/checkout@v4
+      - name: Checkout Myna
+        uses: actions/checkout@v6
       - name: Format Check
         uses: psf/black@stable
 
@@ -26,34 +26,43 @@ jobs:
     strategy:
       matrix:
         python: ["3.10"]
+    env:
+      UV_PYTHON: ${{ matrix.python-version }}
 
     steps:
+      - name: Checkout Myna
+        uses: actions/checkout@v6
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          version: "0.9.27"
+          enable-cache: true
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python }}
-      - name: Checkout myna
-        uses: actions/checkout@v3
-      - name: Install dependencies
+      - name: Install the uv project
         run: |
-          pip install .[dev]
+          uv lock
+          uv sync --locked --all-extras --dev
       - name: Run pytest
-        run: |
-          python -m pytest
+        run: uv run --frozen --no-sync pytest
       - name: Analyzing code with pylint
-        run: |
-          pylint $(git ls-files '*.py') --fail-under=7.25
+        run: uv run --frozen --no-sync pylint $(git ls-files '*.py') --fail-under=7.25
       - name: Building API docs
-        run: |
-          python scripts/group_docs.py
+        run: uv run --frozen --no-sync scripts/group_docs.py
       - name: Building documentation
-        run: |
-          mkdocs build --strict
+        run: uv run --frozen --no-sync mkdocs build --strict
 
   run:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     needs: build
+    strategy:
+      matrix:
+        python: ["3.10"]
+    env:
+      UV_PYTHON: ${{ matrix.python-version }}
     container:
       image: ghcr.io/ornl-mdf/containers/ubuntu:dev
       options: --user root
@@ -61,29 +70,39 @@ jobs:
       - name: Add permissions to GitHub workspace
         run: |
           chmod -R 777 $GITHUB_WORKSPACE
-      - name: Checkout myna
-        uses: actions/checkout@v4
+      - name: Checkout Myna
+        uses: actions/checkout@v6
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          version: "0.9.27"
+          enable-cache: true
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Install the uv project
+        run: |
+          . /root/.bashrc
+          uv lock
+          uv sync --locked --all-extras --dev
       - name: Configure Git Safe Directory
         # Needed due to Myna's self-check if it is a git repo
         run: git config --global --add safe.directory $GITHUB_WORKSPACE
-      - name: Install dependencies
-        run: |
-          . /root/.bashrc
-          pip install -e .[dev,exaca]
       - name: Check executables are working
         # Don't want to run examples if there are no valid executables
         run: |
           . /root/.bashrc
-          python -m pytest -n 4 -vv -m "apps and not examples"
+          uv run --frozen --no-sync pytest -n 4 -vv -m "apps and not examples"
       - name: Check serial examples are working
         # Each example will only use 1 processor, GitHub runners have 4
         # https://docs.github.com/en/actions/using-github-hosted-runners/using-github-hosted-runners/about-github-hosted-runners
         run: |
           . /root/.bashrc
-          python -m pytest -n 4 -vv -m "examples and not parallel"
+          uv run --frozen --no-sync pytest -n 4 -vv -m "examples and not parallel"
       - name: Check parallel examples are working
         # Each example will use 2 processors, GitHub runners have 4
         # https://docs.github.com/en/actions/using-github-hosted-runners/using-github-hosted-runners/about-github-hosted-runners
         run: |
           . /root/.bashrc
-          python -m pytest -n 2 -vv -m "examples and parallel"
+          uv run --frozen --no-sync pytest -n 2 -vv -m "examples and parallel"
