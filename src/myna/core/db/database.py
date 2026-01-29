@@ -7,6 +7,7 @@
 # License: 3-clause BSD, see https://opensource.org/licenses/BSD-3-Clause.
 #
 """Define the requirements and behavior of the base Myna Database class."""
+
 import os
 from datetime import datetime
 import yaml

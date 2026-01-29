@@ -7,6 +7,7 @@
 # License: 3-clause BSD, see https://opensource.org/licenses/BSD-3-Clause.
 #
 """Module to define the base behavior of a Myna simulation application"""
+
 import argparse
 import os
 import sys

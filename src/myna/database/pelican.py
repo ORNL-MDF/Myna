@@ -7,6 +7,7 @@
 # License: 3-clause BSD, see https://opensource.org/licenses/BSD-3-Clause.
 #
 """Database class for extracting data from MDF Pelican build data"""
+
 import os
 import glob
 from datetime import datetime, timedelta

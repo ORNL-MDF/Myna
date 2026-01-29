@@ -10,6 +10,7 @@
 simulation type. Derives most functionality from the app for
 additivefoam/solidification_region_reduced
 """
+
 import os
 import yaml
 from myna.application import openfoam

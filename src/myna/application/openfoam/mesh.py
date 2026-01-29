@@ -7,6 +7,7 @@
 # License: 3-clause BSD, see https://opensource.org/licenses/BSD-3-Clause.
 #
 """Functions to create and manipulate OpenFOAM meshes"""
+
 import os
 import re
 import subprocess
