@@ -10,3 +10,5 @@
 thermomechanical evolution (https://github.com/adamantine-sim/adamantine)"""
 
 from .adamantine import AdamantineApp
+
+__all__ = ["AdamantineApp"]

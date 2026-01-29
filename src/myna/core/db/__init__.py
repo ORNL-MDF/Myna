@@ -8,4 +8,6 @@
 #
 """Define the requirements and behavior of Myna databases."""
 
-from .database import *
+from .database import Database
+
+__all__ = ["Database"]

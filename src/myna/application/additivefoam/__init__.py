@@ -14,3 +14,5 @@ Submodules:
 
 from . import path
 from .additivefoam import AdditiveFOAM
+
+__all__ = ["path", "AdditiveFOAM"]

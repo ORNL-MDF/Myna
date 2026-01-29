@@ -8,4 +8,6 @@
 #
 """Package for setting up and running RVE selection"""
 
-from .rve import *
+from .rve import RVE
+
+__all__ = ["RVE"]

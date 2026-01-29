@@ -25,3 +25,5 @@ to access the `netCDF4.Dataset().variables` dictionary:
 """
 
 from .app import CreepTimeseriesRegionDeerApp
+
+__all__ = ["CreepTimeseriesRegionDeerApp"]

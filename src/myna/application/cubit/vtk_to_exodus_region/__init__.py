@@ -23,3 +23,5 @@ access the `netCDF4.Dataset().variables` dictionary:
 """
 
 from .app import CubitVtkToExodusApp
+
+__all__ = ["CubitVtkToExodusApp"]
