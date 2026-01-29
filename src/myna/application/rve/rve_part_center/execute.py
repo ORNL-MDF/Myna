@@ -60,7 +60,6 @@ def main():
     for myna_file in myna_files:
         # Get all part names
         parts = app.settings["data"]["build"]["parts"]
-        all_parts = list(parts.keys())
 
         # Get list of all layers in build
         all_layers = []

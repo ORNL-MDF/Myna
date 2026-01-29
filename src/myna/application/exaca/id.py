@@ -8,8 +8,7 @@
 #
 import numpy as np
 import pandas as pd
-from vtk.util.numpy_support import vtk_to_numpy
-import time
+from vtk.util.numpy_support import vtk_to_numpy  # ty: ignore[unresolved-import]
 from .subgrain import rotate_grains
 from .vtk import vtk_structure_points_locs
 
@@ -144,9 +143,6 @@ def convert_id_to_rotation(
     dfMerged["axis_dist"] = 0
     dfMerged["theta"] = 0
 
-    # Get list of unique grains
-    grains = dfMerged["Grain ID"].unique()
-
     # Save reference orientations
     ref_cols = ["phi1", "Phi", "phi2"]
     ref_cols_ids = [dfMerged.columns.get_loc(x) for x in ref_cols]
@@ -154,12 +150,9 @@ def convert_id_to_rotation(
     ref_id = df_ids["Reference ID"].to_numpy()
 
     # Sort list of grains by size
-    t0 = time.perf_counter()
     group = dfMerged.groupby("Grain ID")
     sorted_group = sorted(zip(group.size(), group.grouper.levels[0]), reverse=True)
-    sizes = [x[0] for x in sorted_group]
     gids = [x[1] for x in sorted_group]
-    t1 = time.perf_counter()
 
     # Calculate rotated grain orientation vectors
     if misorientation != 0.0:

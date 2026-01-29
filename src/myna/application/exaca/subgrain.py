@@ -45,8 +45,6 @@ def rotate_grains(
         if len(grain_indices) < 100:
             continue
         print(f"\tProcessing {len(grain_indices)} grains")
-        col_ids = [dfMerged.columns.get_loc(x) for x in ["X (m)", "Y (m)", "Z (m)"]]
-        t1 = time.perf_counter()
 
         # Calculate distance along rotation axis (Z)
         col_id = dfMerged.columns.get_loc("Z (m)")
@@ -58,14 +56,10 @@ def rotate_grains(
         # Rotate grain orientation vectors (v) around major axis unit vector (k)
         # by angle (theta, radians) using Rodrigues' rotation formula
         thetas = np.radians(lengths * misorientation)
-        t2 = time.perf_counter()
-        bd = np.array([0, 0, 1])
-        k = bd / np.linalg.norm(bd)
         col_id = dfMerged.columns.get_loc("phi2")
         dfMerged.iloc[grain_indices, col_id] = (
             dfMerged.iloc[grain_indices, col_id].to_numpy() + thetas
         )
-        t3 = time.perf_counter()
 
         # Update Reference IDs in merged DataFrame to match the
         # rotated grain orientation vectors (if specified)
@@ -107,8 +101,6 @@ def rotate_grains(
                 else:
                     dfMerged.iloc[grain_indices[i0:i1], col_id] = ref_id[min_indices]
                 step += 1
-
-            t4 = time.perf_counter()
 
             # Save rotated vectors to merged DataFrame
             col_id = dfMerged.columns.get_loc("axis_dist")

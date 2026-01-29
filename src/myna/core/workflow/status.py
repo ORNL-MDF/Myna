@@ -109,7 +109,6 @@ def write_codebase_status_to_file(parser):
     lines.append("\n## Workflow Component Classes\n\n")
     for key in vars(obj).keys():
         if key[0] != "_":
-            key_type = type(vars(obj)[key])
             obj_inst = vars(obj)[key]
             try:
                 lines.append(
@@ -128,7 +127,6 @@ def write_codebase_status_to_file(parser):
     lines.append("\n## Output File Classes\n\n")
     for key in vars(obj).keys():
         if key[0] != "_":
-            key_type = type(vars(obj)[key])
             obj_inst = vars(obj)[key]
             try:
                 lines.append(
@@ -144,7 +142,6 @@ def write_codebase_status_to_file(parser):
     lines.append("\n## Input Metadata and File Classes\n\n")
     for key in vars(obj).keys():
         if key[0] != "_":
-            key_type = type(vars(obj)[key])
             obj_inst = vars(obj)[key]
             try:
                 lines.append(

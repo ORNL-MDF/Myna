@@ -135,7 +135,6 @@ def main():
     for part in settings["data"]["build"]["parts"]:
         p = settings["data"]["build"]["parts"][part]
         for region in p["regions"]:
-            r = p["regions"][region]
             id_str = os.path.join(part, region)
             file_set = sorted([x for x in myna_solid_files if id_str in x])
             solid_file_sets.append(file_set)

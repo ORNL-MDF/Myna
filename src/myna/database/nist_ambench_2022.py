@@ -388,7 +388,6 @@ class AMBench2022(Database):
 
                     # Get metadata from file path
                     split_path = f.split(os.path.sep)
-                    app = split_path[-2]
                     if is_region_type:
                         region = split_path[-3]
                         part = split_path[-4]
