@@ -8,7 +8,7 @@
 #
 """Define loading of part print order from databases"""
 
-from .data import *
+from .data import BuildMetadata
 
 
 class PrintOrder(BuildMetadata):

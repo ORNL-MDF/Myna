@@ -8,7 +8,7 @@
 #
 """Define loading of laser power (in Watts) from databases"""
 
-from .data import *
+from .data import PartMetadata
 
 
 class LaserPower(PartMetadata):

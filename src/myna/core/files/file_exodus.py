@@ -8,7 +8,7 @@
 #
 """Define a file format class for Exodus mesh output data"""
 
-from .file import *
+from .file import File
 
 
 class FileExodus(File):

@@ -14,7 +14,7 @@ particular definition, though the D4sigma spot size is preferred when
 applicable.
 """
 
-from .data import *
+from .data import PartMetadata
 
 
 class SpotSize(PartMetadata):
