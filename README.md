@@ -24,16 +24,54 @@ requirements of the defined Myna workflow steps
 
 ## Installation
 
-Myna is a Python package which requires Python 3. You must install it locally as an
-editable package using `pip install -e .`, which is a temporary requirement that will
-be changed in future releases. The `myna` package is not on PyPI. To install `myna`
+Myna is a Python package which requires Python 3.10 or later. You must install it locally
+using `pip install .` because the `myna` package is not on PyPI. To install `myna`
 follow the instructions below. For additional details, see
 [Getting Started](https://ornl-mdf.github.io/myna-docs/getting_started).
 
 ```bash
+# Download Myna to your user home directory (assumed in example) or your desired directory
+cd $HOME
 git clone https://github.com/ORNL-MDF/Myna
-cd Myna
-pip install -e .
+
+# ------------------------ #
+# Using uv (modern method) #
+# ------------------------ #
+# Depends on installing uv: https://docs.astral.sh/uv/getting-started/installation
+# First, use uv sync to create project .venv and install dependencies
+cd $HOME/Myna
+uv sync
+
+# Working inside of the repository source, you will be able to use the following,
+# which will automatically update dependencies and changes to the package
+cd $HOME/Myna/examples/solidification_part
+uv run myna config --output ic.yaml
+uv run myna run --input ic.yaml
+
+# You can also activate the Myna project uv virtual environment like classic Python venv
+# and it will keep up with any changes to the source code (like `pip install -e`)
+. $HOME/Myna/.venv/bin/activate
+myna config --output ic.yaml
+myna run --input ic.yaml
+
+# To install Myna into an new uv project
+cd $HOME
+mkdir new-project
+cd new-project
+uv init
+uv add $HOME/Myna # use `--editable` flag if desired, default for uv add is not-editable
+
+# To install Myna as a dependency into an existing uv project
+cd $HOME
+cd existing-project
+uv add $HOME/Myna # use `--editable` flag if desired, default for uv add is not-editable
+
+# -------------------------- #
+# Using pip (classic method) #
+# -------------------------- #
+cd $HOME/Myna
+pip install .    # non-editable install
+pip install -e . # editable install
 ```
 
 External, non-Python dependencies are required depending on which applications you
