@@ -10,6 +10,8 @@ repos:
     # Ruff version.
     rev: v0.14.14
     hooks:
+      # Run the linter.
+      - id: ruff-check
       # Run the formatter.
       - id: ruff-format
 
