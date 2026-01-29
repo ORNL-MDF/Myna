@@ -20,12 +20,9 @@ class CubitApp(MynaApp):
     Laboratories: https://cubit.sandia.gov/
     """
 
-    def __init__(
-        self,
-        sim_type,
-    ):
-        super().__init__("Cubit")
-        self.simulation_type = sim_type
+    def __init__(self):
+        super().__init__()
+        self.app_type = "cubit"
         self.parser.add_argument(
             "--cubitpath",
             default=None,
@@ -33,7 +30,6 @@ class CubitApp(MynaApp):
             help="Path to the root Cubit install directory",
         )
         self.parse_known_args()
-        self.update_template_path()
 
         # Check that all needed executables are accessible. This overrides the
         # assumed behavior that each app only has one executable passed through the
@@ -50,22 +46,10 @@ class CubitApp(MynaApp):
         # Set original value back to exec commented out since it is ignored
         if original_executable_arg is not None:
             self.args.exec = (
-                f"# (ignored by {self.name}/{self.simulation_type} app) "
-                + original_executable_arg
+                f"# (ignored by {self.name} app) " + original_executable_arg
             )
         else:
             self.args.exec = original_executable_arg
-
-    def update_template_path(self):
-        """Updates the template path parameter"""
-        if self.args.template is None:
-            template_path = os.path.join(
-                os.environ["MYNA_APP_PATH"],
-                "cubit",
-                self.simulation_type,
-                "template",
-            )
-            self.args.template = template_path
 
     def copy_template_to_dir(self, target_dir):
         """Copies the specified template directory to the specified target directory"""

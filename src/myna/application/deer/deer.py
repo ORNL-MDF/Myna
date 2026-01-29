@@ -18,12 +18,9 @@ class DeerApp(MynaApp):
     """Myna application defining the shared functionality accessible to all Deer-based
     simulation types."""
 
-    def __init__(
-        self,
-        sim_type,
-    ):
-        super().__init__("Deer")
-        self.simulation_type = sim_type
+    def __init__(self):
+        super().__init__()
+        self.app_type = "deer"
         self.parser.add_argument(
             "--moosepath",
             default=None,
@@ -31,18 +28,6 @@ class DeerApp(MynaApp):
             help="Path to the root Moose install directory",
         )
         self.parse_known_args()
-        self.update_template_path()
-
-    def update_template_path(self):
-        """Updates the template path parameter"""
-        if self.args.template is None:
-            template_path = os.path.join(
-                os.environ["MYNA_APP_PATH"],
-                "deer",
-                self.simulation_type,
-                "template",
-            )
-            self.args.template = template_path
 
     def copy_template_to_dir(self, target_dir):
         """Copies the specified template directory to the specified target directory"""

@@ -15,6 +15,7 @@ import time
 import shutil
 import subprocess
 import warnings
+from pathlib import Path
 import docker
 from docker.models.containers import Container
 from myna.core.workflow.load_input import load_input
@@ -30,17 +31,23 @@ class MynaApp:
     using the MynaApp functionality where possible for consistent behavior across apps.
     """
 
-    settings = "MYNA_INPUT"
-    path = "MYNA_APP_PATH"
-    step_name = "MYNA_STEP_NAME"
-    last_step_name = "MYNA_LAST_STEP_NAME"
+    # Define ENV class variables that have relevant workflow information
+    ENV_SETTINGS_FILE = "MYNA_INPUT"
+    ENV_APP_PATH = "MYNA_APP_PATH"
+    ENV_STEP_NAME = "MYNA_STEP_NAME"
+    ENV_LAST_STEP_NAME = "MYNA_LAST_STEP_NAME"
 
-    def __init__(self, name):
-        self.name = name
-        self.path = os.environ.get("MYNA_APP_PATH")
-        self.step_name = os.environ.get("MYNA_STEP_NAME")
-        self.last_step_name = os.environ.get("MYNA_LAST_STEP_NAME")
-        self.input_file = os.environ.get("MYNA_INPUT")
+    def __init__(self):
+        # Set the print name as well as the Myna app and class names
+        self.class_name: str | None = None
+        self.app_type: str | None = None
+
+        # Get the names for the current and previous workflow step
+        self.step_name = os.environ.get(self.ENV_STEP_NAME)
+        self.last_step_name = os.environ.get(self.ENV_LAST_STEP_NAME)
+
+        # Get the input file contents and parse additional step information
+        self.input_file = os.environ.get(self.ENV_SETTINGS_FILE)
         self.settings = {}
         self.step_number = None
         if self.input_file is not None:
@@ -50,23 +57,22 @@ class MynaApp:
             ].index(self.step_name)
 
         # Check if there is a corresponding component class. This will be None if
-        # class is not in the Component lookup dictionary,
-        # e.g., `myna.application.AdditiveFOAM()`
-        self.sim_class_obj = None
-        try:
-            self.sim_class_obj = return_step_class(self.name, verbose=False)
-            self.sim_class_obj.apply_settings(
-                self.settings["steps"][self.step_number],
-                self.settings.get("data"),
-                self.settings.get("myna"),
-            )
-        except KeyError:
-            pass
+        # class name is not in the Component lookup dictionary
+        if self.class_name is not None:
+            self.sim_class_obj = None
+            try:
+                self.sim_class_obj = return_step_class(self.class_name, verbose=False)
+                self.sim_class_obj.apply_settings(
+                    self.settings["steps"][self.step_number],
+                    self.settings.get("data"),
+                    self.settings.get("myna"),
+                )
+            except KeyError:
+                pass
 
         # Set up argparse
         self.parser = argparse.ArgumentParser(
-            description=f"Configure {self.name} input files for "
-            + "specified Myna cases"
+            description="Configure input files for specified Myna cases"
         )
         self.parser.add_argument(
             "--template",
@@ -87,7 +93,7 @@ class MynaApp:
             "--exec",
             default=None,
             type=str,
-            help=f"(str) Path to {self.name} executable",
+            help="(str) Path to executable",
         )
         self.parser.add_argument(
             "--np",
@@ -157,18 +163,37 @@ class MynaApp:
         )
         self.parse_known_args()
 
+    @property
+    def name(self):
+        return f"{self.app_type}/{self.class_name}"
+
+    @property
+    def path(self):
+        app_path = Path(os.environ.get(self.ENV_APP_PATH, ""))
+        if self.app_type is not None:
+            app_path = app_path / Path(self.app_type)
+        if self.class_name is not None:
+            app_path = app_path / Path(self.class_name)
+        return app_path
+
+    @property
+    def template(self):
+        """Set the path to the template directory based on the path to the app directory"""
+        if self.args.template is None:
+            return Path(self.path) / "template"
+        return Path(self.args.template)
+
     def parse_known_args(self):
         """Parse known command line arguments to update self.args and apply
         any corrections"""
         self.args, _ = self.parser.parse_known_args()
-        self.set_procs()
-        self.mpiargs_to_current()
-        self.set_template_path()
+        self._set_procs()
+        self._mpiargs_to_current()
         if self.args.skip:
-            print(f"- Skipping part of step {self.name}")
+            print(f"- Skipping part of step {self.step_name}")
             sys.exit()
 
-    def mpiargs_to_current(self):
+    def _mpiargs_to_current(self):
         """Function to convert the deprecated `--mpiargs` option to the current
         `--mpiexec`, `--np`, and `--mpiflags` options
 
@@ -228,39 +253,39 @@ class MynaApp:
                 + "does not have execute permissions."
             )
 
-    def set_procs(self):
-        """Set processor information based on the `maxproc` and `np` inputs. Regardless
-        of user inputs, the CPU count will be capped at `os.cpu_count()`
+    def _set_procs(self):
+        """Set processor information based on the `maxproc` and `np` inputs. If the
+        available CPU count can be determined by `os.cpu_count()` then it will be used
+        as a limiter to avoid oversubscription. If available CPU count cannot be
+        determined, then user input will be used as-is.
         """
-        if self.args.maxproc is None:
-            self.args.maxproc = os.cpu_count()
-        self.args.np = min(os.cpu_count(), self.args.np, self.args.maxproc)
+        os_cpus = os.cpu_count()
+        if (self.args.maxproc is None) and (os_cpus is not None):
+            self.args.maxproc = os_cpus
+            self.args.np = min(self.args.np, self.args.maxproc)
+        elif os_cpus is not None:
+            self.args.maxproc = min(os_cpus, self.args.maxproc)
+            self.args.np = min(self.args.np, self.args.maxproc)
 
-    def set_template_path(self, *path_args):
-        """Set the path to the template directory
-
-        Args:
-            path_args: list of path parts to append to `self.path` if no template is
-                specified. For example, `path_args=["exaca", "microstructure_region"]`
-                gives a template with path
-                "{self.path}/exaca/microstructure_region/template"
-        """
-        if self.args.template is None:
-            self.args.template = os.path.join(
-                self.path,
-                *path_args,
-                "template",
-            )
-        else:
-            self.args.template = os.path.abspath(self.args.template)
-
-    def copy(self, case_dir):
+    def copy_template_to_case(self, case_dir):
         """Copies the set template directory to a case directory, with existing files
         being overwritten depending on the app overwrite user setting.
 
         Args:
         - case_dir: (str) path to the case directory
         """
+
+        # Do not copy anything if no template is set
+        if self.template is None:
+            raise ValueError(
+                f"MynaApp {self.name} self.template property is set to None, "
+                "so there is no template to copy"
+            )
+        if not self.template.exists():
+            raise FileNotFoundError(
+                f"MynaApp {self.name} self.template '{self.template}' was not found "
+                "so there is no template to copy"
+            )
 
         # Get list of files in case directory, except for the myna data file
         try:
@@ -271,7 +296,7 @@ class MynaApp:
 
         # Copy if there are no existing files in the case directory or overwrite is specified
         if (len(case_dir_files) == 0) or (self.args.overwrite):
-            shutil.copytree(self.args.template, case_dir, dirs_exist_ok=True)
+            shutil.copytree(self.template, case_dir, dirs_exist_ok=True)
         else:
             print(f"Warning: NOT overwriting existing case in: {case_dir}")
 

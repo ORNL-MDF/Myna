@@ -25,7 +25,7 @@ def setup_case(
 ):
 
     # Copy template to case directory
-    sim.copy(case_dir)
+    sim.copy_template_to_case(case_dir)
 
     # Get case settings and template input JSON
     myna_settings = load_input(os.path.join(case_dir, "myna_data.yaml"))
@@ -125,7 +125,9 @@ def setup_case(
 def main():
 
     # Create ExaCA instance
-    app = ExaCA("microstructure_region")
+    app = ExaCA()
+    app.class_name = "microstructure_region"
+    app.__init__()
 
     # Get expected Myna output files
     settings = app.settings

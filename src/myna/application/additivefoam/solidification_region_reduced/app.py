@@ -24,8 +24,9 @@ from myna.core.utils import working_directory, nested_get
 class AdditiveFOAMRegionReduced(AdditiveFOAM):
     """Simulation type for generating solidification data for specified regions"""
 
-    def __init__(self, name="solidification_region_reduced"):
-        super().__init__(name)
+    def __init__(self):
+        super().__init__()
+        self.class_name = "solidification_region_reduced"
 
         # Define app-specific template file names
         self.mesh_dict_name = "mesh_dict.yaml"
@@ -98,12 +99,7 @@ class AdditiveFOAMRegionReduced(AdditiveFOAM):
             help="(int) additional refinement of region mesh"
             + " level after layer refinement (each level halves coarse mesh)",
         )
-        self.args, _ = self.parser.parse_known_args()
-        self.mpiargs_to_current()
-
-        # Update derived parameters
-        self.set_procs()
-        self.update_template_path()
+        self.parse_known_args()
 
     def configure(self):
         """Configure all cases for the application"""

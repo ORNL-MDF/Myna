@@ -25,7 +25,7 @@ def setup_case(
     from `myna_data.yaml` file in the Myna case directory"""
 
     # Copy template to case directory
-    app.copy(case_dir)
+    app.copy_template_to_case(case_dir)
 
     # Get case settings and template input JSON
     myna_settings = load_input(os.path.join(case_dir, "myna_data.yaml"))
@@ -92,7 +92,9 @@ def main():
     """Main configuration functionality for exaca/microstructure_region_slice"""
 
     # Create ExaCA instance
-    app = ExaCA("microstructure_region_slice")
+    app = ExaCA()
+    app.class_name = "microstructure_region_slice"
+    app.__init__()
 
     # Get expected Myna output files
     myna_files = app.settings["data"]["output_paths"][app.step_name]

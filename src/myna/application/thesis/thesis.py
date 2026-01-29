@@ -15,7 +15,6 @@ from myna.core.utils import working_directory
 class Thesis(MynaApp):
     def __init__(
         self,
-        sim_type,
         input_dir=None,
         input_filename="ParamInput.txt",
         material_filename="Material.txt",
@@ -23,8 +22,8 @@ class Thesis(MynaApp):
         output_suffix="",
         validate_executable=True,
     ):
-        super().__init__("3DThesis")
-        self.simulation_type = sim_type
+        super().__init__()
+        self.app_type = "thesis"
 
         self.parser.add_argument(
             "--res",
@@ -50,9 +49,6 @@ class Thesis(MynaApp):
             else:
                 self.set_case(input_dir, input_dir)
         self.output_suffix = output_suffix
-
-        # Set template
-        self.set_template_path("thesis", sim_type)
 
         # Validate executable
         if validate_executable:

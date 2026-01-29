@@ -35,11 +35,9 @@ class CreepTimeseriesRegionDeerApp(DeerApp):
     > - "material_model.xml"
     """
 
-    def __init__(
-        self,
-        sim_type="creep_timeseries_region",
-    ):
-        super().__init__(sim_type)
+    def __init__(self):
+        super().__init__()
+        self.class_name = "creep_timeseries_region"
 
         # Set names for template files
         self.orientation_file_name = "orientation.txt"
@@ -63,7 +61,6 @@ class CreepTimeseriesRegionDeerApp(DeerApp):
             help="(float) load in Newtons",
         )
         self.parse_known_args()
-        self.update_template_path()
 
     def configure_case(self, case_dir, exodus_file):
         """Configure a single case

@@ -58,7 +58,9 @@ def main():
     """Main functionality for the exaca/microstructure_region_slice app"""
 
     # Create ExaCA app instance
-    app = ExaCA("microstructure_region_slice")
+    app = ExaCA()
+    app.class_name = "microstructure_region_slice"
+    app.__init__()
 
     # Get expected Myna output files
     myna_files = app.settings["data"]["output_paths"][app.step_name]
