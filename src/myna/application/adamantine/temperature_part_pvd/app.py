@@ -22,6 +22,7 @@ have knowledge of the deposit geometry, so the deposited material size is set to
 the `max(mesh_size_xy, spot size)` in the deposit length and width and
 `max(mesh_size_z, layer thickness)` in the deposit height.
 """
+
 import os
 import json
 import subprocess

@@ -8,7 +8,7 @@ ExaCA
 {
     type ExaCA;
     libs ("libExaCAFunctionObject.so");
-    
+
     box         ( 0.0495 -0.0495 -0.0003 ) ( 0.0505 -0.0485 0 );
     dx          2.5e-6;
     isoValue    1730;

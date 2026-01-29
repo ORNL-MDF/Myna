@@ -9,6 +9,7 @@
 """Defines application behavior for the additivefoam/solidification_region_reduced
 simulation type
 """
+
 import os
 import glob
 import shutil

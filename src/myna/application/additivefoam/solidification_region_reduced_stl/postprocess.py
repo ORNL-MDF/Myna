@@ -10,6 +10,7 @@
 the AdditiveFOAM solidification data into Myna files in the format of
 `FileReducedSolidification`.
 """
+
 from myna.application.additivefoam.solidification_region_reduced_stl.app import (
     AdditiveFOAMRegionReducedSTL,
 )

@@ -13,4 +13,5 @@ Laboratories: https://cubit.sandia.gov/
 
 Development was done with `Cubit-17.02` and behavior with other versions is untested.
 """
+
 from .cubit import CubitApp
