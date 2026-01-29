@@ -8,7 +8,7 @@
 #
 """Define loading of the feedstock material name from databases"""
 
-from .data import *
+from .data import BuildMetadata
 
 
 class Material(BuildMetadata):

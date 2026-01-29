@@ -8,7 +8,7 @@
 #
 """Define loading of layer thickness (in meters) from databases"""
 
-from .data import *
+from .data import BuildMetadata
 
 
 class LayerThickness(BuildMetadata):

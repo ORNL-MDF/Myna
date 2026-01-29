@@ -8,7 +8,7 @@
 #
 """Define loading behavior for build-layer part ID maps"""
 
-from .file import *
+from .file import BuildLayerPartsetFile
 import os
 
 
