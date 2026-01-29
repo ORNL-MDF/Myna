@@ -72,7 +72,7 @@ class PeregrineDB(Database):
                 cui_dict["flag_sensitive"] = data["flag_sensitive"]
                 cui_dict["bannerLine"] = data["bannerLine"]
                 cui_dict["signatureBlock"] = data["signatureBlock"]
-        except:
+        except LookupError:
             pass
         return cui_dict
 

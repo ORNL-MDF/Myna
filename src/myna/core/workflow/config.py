@@ -95,7 +95,7 @@ def config(input_file, output_file=None, show_avail=False, overwrite=False):
     user_name = ""
     try:
         user_name = getpass.getuser()  # may fail when run by service manager, e.g., CI
-    except:
+    except OSError:
         pass
     configure_dict = {
         "datetime-start": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),

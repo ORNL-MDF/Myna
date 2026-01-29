@@ -213,7 +213,7 @@ class AMBench2022(Database):
                 time_last_row = None
                 for index, row in enumerate(df.iter_rows(named=True)):
                     # If first row in XYPT file, go to point
-                    if time_last_row == None:
+                    if time_last_row is None:
                         df_row = make_polars_scan_df(
                             [1], [row["X"]], [row["Y"]], [0], [0], [0]
                         )

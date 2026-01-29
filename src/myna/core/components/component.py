@@ -249,7 +249,7 @@ class Component:
                                 regions = list(
                                     self.data["build"]["parts"][part]["regions"].keys()
                                 )
-                            except:
+                            except LookupError:
                                 print("    - No regions specified in input file")
                                 return []
                         if regions is not None:
