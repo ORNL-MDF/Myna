@@ -13,7 +13,7 @@ Available subclasses:
   ComponentTemperaturePart
 """
 
-from .component import *
+from .component import Component
 from myna.core.files import FileTemperature, FilePVD
 
 ##################

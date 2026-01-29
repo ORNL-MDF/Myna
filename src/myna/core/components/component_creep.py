@@ -8,9 +8,8 @@
 #
 """Define Component subclasses for simulating creep behavior"""
 
-from .component import *
-from myna.core.files.file_exodus import *
-from myna.core.files.file_creep import *
+from .component import Component
+from myna.core.files import FileExodus, FileCreepTimeSeries
 
 
 class ComponentCreepTimeSeries(Component):

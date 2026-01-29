@@ -8,9 +8,8 @@
 #
 """Define subclasses for selection of region(s) of interest"""
 
-from .component import *
-from myna.core.files.file_id import *
-from myna.core.files.file_region import *
+from .component import Component
+from myna.core.files import FileID, FileRegion
 
 
 class ComponentRVE(Component):

@@ -14,10 +14,8 @@ Available subclasses:
   ComponentMicrostructureRegion
 """
 
-from .component import *
-from myna.core.files.file_reduced_solidification import *
-from myna.core.files.file_vtk import *
-from myna.core.files.file_grains import *
+from .component import Component
+from myna.core.files import FileReducedSolidification, FileVTK, FileGrainSlice
 
 
 class ComponentMicrostructure(Component):

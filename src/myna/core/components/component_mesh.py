@@ -12,7 +12,7 @@ Available subclasses:
   ComponentMesh
 """
 
-from .component import *
+from .component import Component
 from myna.core.files import FileVTK, FileExodus
 
 

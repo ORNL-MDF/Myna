@@ -18,10 +18,13 @@ Available subclasses:
   ComponentSolidificationRegionReduced
 """
 
-from .component import *
-from myna.core.files.file_gv import *
-from myna.core.files.file_region import *
-from myna.core.files.file_reduced_solidification import *
+from .component import Component
+from myna.core.files import (
+    FileGV,
+    FileRegion,
+    FileBuildRegion,
+    FileReducedSolidification,
+)
 
 ##################
 # Base Component #

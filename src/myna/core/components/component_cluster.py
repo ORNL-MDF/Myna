@@ -14,9 +14,8 @@ Available subclasses:
    ComponentClusterSupervoxel
 """
 
-from .component import *
-from myna.core.files.file_gv import *
-from myna.core.files.file_id import *
+from .component import Component
+from myna.core.files import FileGV, FileID
 
 
 class ComponentCluster(Component):
