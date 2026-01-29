@@ -11,8 +11,8 @@ import numpy as np
 import json
 import vtk
 import os
-from vtk.util.numpy_support import numpy_to_vtkIdTypeArray, numpy_to_vtk, vtk_to_numpy
-from .vtk import *
+from vtk.util.numpy_support import numpy_to_vtkIdTypeArray, numpy_to_vtk, vtk_to_numpy  # ty: ignore[unresolved-import]
+from .vtk import grain_id_reader, vtk_structure_points_locs, vtk_unstructured_grid_locs
 from .id import grain_id_to_reference_id
 from myna.core.utils import nested_get
 

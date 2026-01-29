@@ -106,7 +106,6 @@ def main():
     sim = Thesis("solidification_build_region")
 
     # Get expected Myna output files
-    step_name = os.environ["MYNA_STEP_NAME"]
     myna_files = sim.settings["data"]["output_paths"][sim.step_name]
 
     # Run each case

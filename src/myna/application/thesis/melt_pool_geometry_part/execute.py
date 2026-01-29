@@ -34,7 +34,6 @@ def run_case(
 
     # Run Simulation
     case_directory = os.path.abspath(sim.input_dir)
-    output_name = read_parameter(sim.input_file, "Name")[0]
     result_file = os.path.join(sim.input_dir, "Data", "snapshot_data.csv")
     procs = proc_list.copy()
     procs = sim.run_thesis_case(case_directory, procs)

@@ -87,7 +87,9 @@ def run_rve_selection(
     l0s = []
     l1s = []
     pns = []
+    fileset = []
     filesets = []
+    l0 = None
     last_part = None
     last_layer = None
 
@@ -96,7 +98,6 @@ def run_rve_selection(
         print(f"Checking {myna_id_file}...")
         # Parse info from file path
         split_path = myna_id_file.split(os.path.sep)
-        app = split_path[-2]
         layer = int(split_path[-3])
         part = split_path[-4]
         is_last_layer = myna_id_file == myna_id_files[-1]
@@ -151,7 +152,6 @@ def run_rve_selection(
     layer_starts = []
     layer_ends = []
     ps = []
-    region_dfs = []
 
     # Iterate through the groups
     # TODO: Update to handle multiple layers

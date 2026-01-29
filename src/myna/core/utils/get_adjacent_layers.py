@@ -38,6 +38,7 @@ def get_adjacent_layer_regions(myna_data, region_size=20):
     # Determine if part & layer are adjacent to last layer
     # and if not, then write region info to lists
     part_layer_sets = {}
+    previous_layer = -1
     for part in part_layer_dict.keys():
         part_layers = part_layer_dict[part]
         part_layer_sets[part] = []
