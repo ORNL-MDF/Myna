@@ -25,7 +25,7 @@ requirements of the defined Myna workflow steps
 ## Installation
 
 Myna is a Python package which requires Python 3.10 or later. You must install it locally
-using `pip install .` because the `myna` package is not on PyPI. To install `myna`
+because it is not yet on PyPI. To install Myna with either `uv` or `pip` installation
 follow the instructions below. For additional details, see
 [Getting Started](https://ornl-mdf.github.io/myna-docs/getting_started).
 
