@@ -12,48 +12,59 @@ on:
 jobs:
 
   format:
+    name: Format
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout myna
-        uses: actions/checkout@v4
+      - name: Checkout Myna
+        uses: actions/checkout@v6
       - name: Format Check
         uses: psf/black@stable
 
-  build:
+  build-test:
+    name: Build package, run core tests, and test build docs
     runs-on: ubuntu-latest
     timeout-minutes: 15
     needs: format
     strategy:
       matrix:
         python: ["3.10"]
-
+    env:
+      UV_PYTHON: ${{ matrix.python-version }}
     steps:
+      - name: Checkout Myna
+        uses: actions/checkout@v6
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          version: "0.9.27"
+          enable-cache: true
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python }}
-      - name: Checkout myna
-        uses: actions/checkout@v3
-      - name: Install dependencies
+      - name: Install the uv project
         run: |
-          pip install .[dev]
-      - name: Run pytest
-        run: |
-          python -m pytest
+          uv lock
+          uv sync --locked --all-extras --dev
+      - name: Run pytest (without examples)
+        run: uv run --frozen --no-sync pytest
       - name: Analyzing code with pylint
-        run: |
-          pylint $(git ls-files '*.py') --fail-under=7.25
+        run: uv run --frozen --no-sync pylint $(git ls-files '*.py') --fail-under=7.25
       - name: Building API docs
-        run: |
-          python scripts/group_docs.py
+        run: uv run --frozen --no-sync scripts/group_docs.py
       - name: Building documentation
-        run: |
-          mkdocs build --strict
+        run: uv run --frozen --no-sync mkdocs build --strict
 
-  run:
+  test-examples:
+    name: Test 3DThesis, AdditiveFOAM, and ExaCA examples
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    needs: build
+    needs: build-test
+    strategy:
+      matrix:
+        python: ["3.10"]
+    env:
+      UV_PYTHON: ${{ matrix.python-version }}
     container:
       image: ghcr.io/ornl-mdf/containers/ubuntu:dev
       options: --user root
@@ -61,29 +72,40 @@ jobs:
       - name: Add permissions to GitHub workspace
         run: |
           chmod -R 777 $GITHUB_WORKSPACE
-      - name: Checkout myna
-        uses: actions/checkout@v4
+      - name: Checkout Myna
+        uses: actions/checkout@v6
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        id: setup-uv
+        with:
+          version: "0.9.27"
+          enable-cache: true
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Install the uv project
+        run: |
+          uv lock
+          uv sync --locked --all-extras --dev
       - name: Configure Git Safe Directory
         # Needed due to Myna's self-check if it is a git repo
         run: git config --global --add safe.directory $GITHUB_WORKSPACE
-      - name: Install dependencies
-        run: |
-          . /root/.bashrc
-          pip install -e .[dev,exaca]
       - name: Check executables are working
         # Don't want to run examples if there are no valid executables
+        # Need to point directly to uv path due to container updating PATH from .bashrc
         run: |
           . /root/.bashrc
-          python -m pytest -n 4 -vv -m "apps and not examples"
+          ${{ steps.setup-uv.outputs.uv-path }} run pytest -n 4 -vv -m "apps and not examples"
       - name: Check serial examples are working
         # Each example will only use 1 processor, GitHub runners have 4
         # https://docs.github.com/en/actions/using-github-hosted-runners/using-github-hosted-runners/about-github-hosted-runners
         run: |
           . /root/.bashrc
-          python -m pytest -n 4 -vv -m "examples and not parallel"
+          ${{ steps.setup-uv.outputs.uv-path }} run pytest -n 4 -vv -m "examples and not parallel"
       - name: Check parallel examples are working
         # Each example will use 2 processors, GitHub runners have 4
         # https://docs.github.com/en/actions/using-github-hosted-runners/using-github-hosted-runners/about-github-hosted-runners
         run: |
           . /root/.bashrc
-          python -m pytest -n 2 -vv -m "examples and parallel"
+          ${{ steps.setup-uv.outputs.uv-path }} run pytest -n 2 -vv -m "examples and parallel"
