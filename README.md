@@ -3,7 +3,7 @@
 **NOTE**: This repository contains working examples of the workflow, but on-going
 development may change directory structures, output files, etc. from previous versions.
 
-[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+[![Code style: Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 
 Detailed documentation for Myna can be found at
 [https://ornl-mdf.github.io/myna-docs/](https://ornl-mdf.github.io/Myna/).

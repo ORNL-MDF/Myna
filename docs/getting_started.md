@@ -30,8 +30,8 @@ for additional details.
 #### Installation for Developers
 
 For developers, `pip install -e .[dev]` will install the optional `pytest` dependency,
-as well as `black` for autoformatting. The repository currently uses the default `black`
-formatting. Test scripts are included with the repository in the "tests" directory.
+as well as `ruff` for autoformatting and linting. The repository currently uses the default `ruff`
+autoformatting. Test scripts are included with the repository in the "tests" directory.
 Examples of using pytest are given below.
 
 ```bash

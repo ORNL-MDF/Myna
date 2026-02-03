@@ -37,7 +37,6 @@ dependencies = [
 dev = [
   'pytest',
   'pytest-xdist',
-  'black>26.0.0',
   'pylint',
   'licenseheaders',
   'pre-commit',
