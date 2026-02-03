@@ -59,7 +59,7 @@ jobs:
     name: Test 3DThesis, AdditiveFOAM, and ExaCA examples
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    needs: build
+    needs: build-test
     strategy:
       matrix:
         python: ["3.10"]
