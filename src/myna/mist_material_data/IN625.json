@@ -136,5 +136,5 @@
             "print_symbol": "\\alpha"
         }
     },
-    "note": "None."
+    "note": "- The Marangoni coefficient in Gan et al. (2019) is based on fitting of a thermofluidic model to experimental data, not direct measurement"
 }

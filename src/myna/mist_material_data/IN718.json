@@ -136,5 +136,5 @@
             "print_symbol": "\\alpha"
         }
     },
-    "note": "All temperature-dependent expressions use units of K. The dynamic viscosity and Marangoni coefficent values are from IN625 references. The latent heat of vaporization and molecular mass are taken from pure nickel references. The emissivity is an estimate of total hemispherical emissivity on a smooth surface. Actual emissivity depends on the surface condition."
+    "note": "- The Marangoni coefficient in Gan et al. (2019) is based on fitting of a thermofluidic model to experimental data, not direct measurement\n- All temperature-dependent expressions use units of K\n- The dynamic viscosity and Marangoni coefficent values are from IN625 references\n- The latent heat of vaporization and molecular mass are taken from pure nickel references\n- The emissivity is an estimate of total hemispherical emissivity on a smooth surface--actual emissivity depends on the surface condition"
 }
