@@ -14,7 +14,7 @@ import datetime
 import yaml
 import shutil
 from myna.core.utils import working_directory
-from myna.core.workflow import write_input
+from .load_input import write_input
 
 
 def launch_from_peregrine(parser):
