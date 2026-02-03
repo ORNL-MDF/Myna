@@ -29,14 +29,17 @@ because it is not yet on PyPI. To install Myna with either `uv` or `pip` install
 follow the instructions below. For additional details, see
 [Getting Started](https://ornl-mdf.github.io/myna-docs/getting_started).
 
+Checkout Myna:
+
 ```bash
 # Download Myna to your user home directory (assumed in example) or your desired directory
 cd $HOME
 git clone https://github.com/ORNL-MDF/Myna
+```
 
-# ------------------------ #
-# Using uv (modern method) #
-# ------------------------ #
+Installation and usage using `uv`:
+
+```bash
 # Depends on installing uv: https://docs.astral.sh/uv/getting-started/installation
 # First, use uv sync to create project .venv and install dependencies
 cd $HOME/Myna
@@ -65,13 +68,19 @@ uv add $HOME/Myna # use `--editable` flag if desired, default for uv add is not-
 cd $HOME
 cd existing-project
 uv add $HOME/Myna # use `--editable` flag if desired, default for uv add is not-editable
+```
 
-# -------------------------- #
-# Using pip (classic method) #
-# -------------------------- #
+Installation and usage using `pip`:
+
+```bash
 cd $HOME/Myna
 pip install .    # non-editable install
 pip install -e . # editable install
+
+# Run an example
+cd $HOME/Myna/examples/solidification_part
+myna config --output ic.yaml
+myna run --input ic.yaml
 ```
 
 External, non-Python dependencies are required depending on which applications you
