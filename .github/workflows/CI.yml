@@ -12,6 +12,7 @@ on:
 jobs:
 
   format:
+    name: Format
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Myna
@@ -19,7 +20,8 @@ jobs:
       - name: Format Check
         uses: psf/black@stable
 
-  build:
+  build-test:
+    name: Build package, run core tests, and test build docs
     runs-on: ubuntu-latest
     timeout-minutes: 15
     needs: format
@@ -28,7 +30,6 @@ jobs:
         python: ["3.10"]
     env:
       UV_PYTHON: ${{ matrix.python-version }}
-
     steps:
       - name: Checkout Myna
         uses: actions/checkout@v6
@@ -45,7 +46,7 @@ jobs:
         run: |
           uv lock
           uv sync --locked --all-extras --dev
-      - name: Run pytest
+      - name: Run pytest (without examples)
         run: uv run --frozen --no-sync pytest
       - name: Analyzing code with pylint
         run: uv run --frozen --no-sync pylint $(git ls-files '*.py') --fail-under=7.25
@@ -54,7 +55,8 @@ jobs:
       - name: Building documentation
         run: uv run --frozen --no-sync mkdocs build --strict
 
-  run:
+  test-examples:
+    name: Test 3DThesis, AdditiveFOAM, and ExaCA examples
     runs-on: ubuntu-latest
     timeout-minutes: 15
     needs: build
@@ -91,6 +93,7 @@ jobs:
         run: git config --global --add safe.directory $GITHUB_WORKSPACE
       - name: Check executables are working
         # Don't want to run examples if there are no valid executables
+        # Need to point directly to uv path due to container updating PATH from .bashrc
         run: |
           . /root/.bashrc
           ${{ steps.setup-uv.outputs.uv-path }} run pytest -n 4 -vv -m "apps and not examples"
