@@ -309,7 +309,6 @@ class AdditiveFOAM(MynaApp):
     def run_case(self, case_dir: str | Path) -> subprocess.Popen | Container:
         """Launch the AdditiveFOAM case directory using the MynaApp settings specified"""
         with working_directory(case_dir):
-
             # Determine if parallel execution
             parallel = self.args.np > 1
 

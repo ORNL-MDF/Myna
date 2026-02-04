@@ -806,8 +806,9 @@ class AdditiveFOAMCalibration(AdditiveFOAM):
 
         with pm.Model() as _:
             n = pm.Uniform("n", lower=np.min(n_coords), upper=np.max(n_coords))
-            n_data_pt, model_values_pt = pt.constant(n_coords), pt.constant(
-                model_values
+            n_data_pt, model_values_pt = (
+                pt.constant(n_coords),
+                pt.constant(model_values),
             )
             predicted_values = pm.Deterministic(
                 "predicted_value", _linear_interp_pt(n, n_data_pt, model_values_pt)
