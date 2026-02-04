@@ -12,7 +12,7 @@ import shutil
 import numpy as np
 from myna.core.workflow.load_input import load_input
 from myna.core.utils import nested_set
-from myna.application.exaca import ExaCA
+from .app import ExaCAMicrostructureRegionSlice
 
 
 def setup_case(
@@ -91,12 +91,7 @@ def setup_case(
 def main():
     """Main configuration functionality for exaca/microstructure_region_slice"""
 
-    # Create ExaCA instance
-    class ExaCAMicrostructureRegionSlice(ExaCA):
-        def __init__(self):
-            super().__init__()
-            self.class_name = "microstructure_region_slice"
-
+    # Create ExaCA app instance
     app = ExaCAMicrostructureRegionSlice()
 
     # Get expected Myna output files

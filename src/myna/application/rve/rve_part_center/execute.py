@@ -6,9 +6,9 @@
 #
 # License: 3-clause BSD, see https://opensource.org/licenses/BSD-3-Clause.
 #
-from myna.application.rve import RVE
-from myna.core.utils import get_adjacent_layer_regions
 import polars as pl
+from myna.core.utils import get_adjacent_layer_regions
+from .app import RVEPartCenter
 
 
 def find_part_central_rve(app, part, layerset, rve_dict, rve_id):
@@ -53,11 +53,6 @@ def find_part_central_rve(app, part, layerset, rve_dict, rve_id):
 
 
 def main():
-    class RVEPartCenter(RVE):
-        def __init__(self):
-            super().__init__()
-            self.class_name = "rve_part_center"
-
     app = RVEPartCenter()
 
     # Note: There will only ever be one output file, since this is a build-level step

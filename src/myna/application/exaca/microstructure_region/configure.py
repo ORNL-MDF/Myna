@@ -13,8 +13,7 @@ import shutil
 import json
 import numpy as np
 import polars as pl
-
-from myna.application.exaca import ExaCA
+from .app import ExaCAMicrostructureRegion
 
 
 def setup_case(
@@ -122,12 +121,7 @@ def setup_case(
 
 
 def main():
-    # Create ExaCA instance
-    class ExaCAMicrostructureRegion(ExaCA):
-        def __init__(self):
-            super().__init__()
-            self.class_name = "microstructure_region"
-
+    # Create ExaCA app instance
     app = ExaCAMicrostructureRegion()
 
     # Get expected Myna output files

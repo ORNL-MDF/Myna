@@ -7,19 +7,19 @@
 # License: 3-clause BSD, see https://opensource.org/licenses/BSD-3-Clause.
 #
 import os
+import json
+import subprocess
+import numpy as np
 import pandas as pd
 from myna.core.components import return_step_class
 from myna.application.exaca import (
-    ExaCA,
     grain_id_reader,
     convert_id_to_rotation,
     get_mean_grain_area,
     get_fract_nucleated_grains,
     get_wasserstein_distance_misorientation_z,
 )
-import numpy as np
-import subprocess
-import json
+from .app import ExaCAMicrostructureRegionSlice
 
 
 def nested_set(dict, keys, value):
@@ -57,11 +57,6 @@ def main():
     """Main functionality for the exaca/microstructure_region_slice app"""
 
     # Create ExaCA app instance
-    class ExaCAMicrostructureRegionSlice(ExaCA):
-        def __init__(self):
-            super().__init__()
-            self.class_name = "microstructure_region_slice"
-
     app = ExaCAMicrostructureRegionSlice()
 
     # Get expected Myna output files

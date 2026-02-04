@@ -9,21 +9,14 @@
 import os
 import json
 from myna.core.components import return_step_class
-from myna.application.exaca import (
-    ExaCA,
-    add_rgb_to_vtk,
-)
+from myna.application.exaca import add_rgb_to_vtk
+from .app import ExaCAMicrostructureRegion
 
 
 def main():
     """Main postprocessing functionality for exaca/microstructure_region"""
 
-    # Create ExaCA instance
-    class ExaCAMicrostructureRegion(ExaCA):
-        def __init__(self):
-            super().__init__()
-            self.class_name = "microstructure_region"
-
+    # Create ExaCA app instance
     app = ExaCAMicrostructureRegion()
 
     # Get expected Myna output files

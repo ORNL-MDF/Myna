@@ -10,7 +10,7 @@ import os
 import shutil
 import subprocess
 from myna.core.components import return_step_class
-from myna.application.exaca import ExaCA
+from .app import ExaCAMicrostructureRegion
 
 
 def run_case(app, case_dir):
@@ -50,12 +50,7 @@ def run_case(app, case_dir):
 def main():
     """Main exaca/microstructure_region execution function"""
 
-    # Create ExaCA instance
-    class ExaCAMicrostructureRegion(ExaCA):
-        def __init__(self):
-            super().__init__()
-            self.class_name = "microstructure_region"
-
+    # Create ExaCA app instance
     app = ExaCAMicrostructureRegion()
 
     # Get expected Myna output files

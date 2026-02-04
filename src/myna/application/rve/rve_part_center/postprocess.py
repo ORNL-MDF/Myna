@@ -6,18 +6,13 @@
 #
 # License: 3-clause BSD, see https://opensource.org/licenses/BSD-3-Clause.
 #
-from myna.application.rve import RVE
 import os
 import polars as pl
 from myna.core.workflow import config, write_input
+from .app import RVEPartCenter
 
 
 def main():
-    class RVEPartCenter(RVE):
-        def __init__(self):
-            super().__init__()
-            self.class_name = "rve_part_center"
-
     app = RVEPartCenter()
 
     # Get expected Myna output files
