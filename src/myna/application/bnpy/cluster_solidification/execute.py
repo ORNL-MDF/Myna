@@ -13,7 +13,8 @@ from myna.core.workflow.load_input import load_input
 import myna.application.bnpy as myna_bnpy
 import glob
 import matplotlib.pyplot as plt
-from myna.application.bnpy import Bnpy, get_representative_distribution
+from myna.application.bnpy import get_representative_distribution
+from .app import BnpyClusterSolidification
 
 
 def reduce_thermal_file_to_df(thermal_file):
@@ -328,7 +329,7 @@ def run_clustering(
 
 
 def main():
-    app = Bnpy("cluster_solidification")
+    app = BnpyClusterSolidification()
 
     # Set up argparse
     parser = app.parser

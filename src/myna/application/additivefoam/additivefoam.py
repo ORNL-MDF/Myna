@@ -23,11 +23,9 @@ class AdditiveFOAM(MynaApp):
     """Myna application defining the shared functionality accessible to all
     AdditiveFOAM-based simulation types."""
 
-    def __init__(
-        self,
-        name,
-    ):
-        super().__init__(name)
+    def __init__(self):
+        super().__init__()
+        self.app_type = "additivefoam"
 
         # Parse app-specific arguments
         self.parse_known_args()
@@ -36,18 +34,6 @@ class AdditiveFOAM(MynaApp):
         )
         if self.args.exec is None:
             self.args.exec = "additiveFoam"
-        self.update_template_path()
-
-    def update_template_path(self):
-        """Updates the template path parameter"""
-        if self.args.template is None:
-            template_path = os.path.join(
-                os.environ["MYNA_APP_PATH"],
-                "additivefoam",
-                self.name,
-                "template",
-            )
-            self.args.template = template_path
 
     def copy_template_to_dir(self, target_dir):
         """Copies the specified template directory to the specified target directory"""

@@ -40,10 +40,8 @@ def run_case(
 
 def main(argv=None):
     # Set up simulation object
-    sim = Thesis(
-        "solidification_part",
-        output_suffix=".Solidification",
-    )
+    sim = Thesis(output_suffix=".Solidification")
+    sim.class_name = "solidification_part"
 
     # Get expected Myna output files
     myna_files = sim.settings["data"]["output_paths"][sim.step_name]

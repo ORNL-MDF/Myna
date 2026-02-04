@@ -24,7 +24,7 @@ def configure_case(case_dir, sim, myna_input="myna_data.yaml"):
     layer = list(settings["build"]["parts"][part]["layer_data"].keys())[0]
 
     # Copy template case
-    sim.copy(case_dir)
+    sim.copy_template_to_case(case_dir)
 
     # Set up scan path
     myna_scanfile = settings["build"]["parts"][part]["layer_data"][layer]["scanpath"][
@@ -77,7 +77,8 @@ def configure_case(case_dir, sim, myna_input="myna_data.yaml"):
 
 
 def main():
-    sim = Thesis("temperature_part")
+    sim = Thesis()
+    sim.class_name = "temperature_part"
 
     # Get expected Myna output files
     myna_files = sim.settings["data"]["output_paths"][sim.step_name]

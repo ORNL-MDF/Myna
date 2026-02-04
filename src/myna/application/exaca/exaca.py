@@ -10,9 +10,9 @@ from myna.core.app.base import MynaApp
 
 
 class ExaCA(MynaApp):
-    def __init__(self, sim_type):
-        super().__init__("ExaCA")
-        self.simulation_type = sim_type
+    def __init__(self):
+        super().__init__()
+        self.app_type = "exaca"
 
         # Setup ExaCA specific inputs
         self.parser.add_argument(
@@ -45,9 +45,3 @@ class ExaCA(MynaApp):
         )
 
         self.parse_known_args()
-
-        super().validate_executable(
-            "ExaCA",
-        )
-
-        super().set_template_path("exaca", self.simulation_type)

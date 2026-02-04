@@ -13,7 +13,7 @@ import polars as pl
 import numpy as np
 import matplotlib.pyplot as plt
 import myna.application.bnpy as myna_bnpy
-from myna.application.bnpy import Bnpy
+from .app import BnpyClusterSupervoxel
 from myna.application.bnpy import (
     add_cluster_colormap_colorbar,
     get_scatter_marker_size,
@@ -340,7 +340,7 @@ def run(
 
 
 def main():
-    app = Bnpy("cluster_supervoxel")
+    app = BnpyClusterSupervoxel()
 
     # Set up argparse
     parser = app.parser

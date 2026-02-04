@@ -13,19 +13,16 @@ import os
 
 
 class Bnpy(MynaApp):
-    def __init__(
-        self,
-        sim_type,
-    ):
-        super().__init__("bnpy")
-        self.simulation_type = sim_type
+    def __init__(self):
+        super().__init__()
+        self.app_type = "bnpy"
         self.sF = 0.5
         self.gamma = 8
         self.settings = load_input(os.environ["MYNA_INPUT"])
         self.input_dir = os.path.dirname(os.environ["MYNA_INPUT"])
         self.resource_dir = os.path.join(self.input_dir, "myna_resources")
         self.resource_template_dir = os.path.join(
-            self.resource_dir, self.simulation_type
+            self.resource_dir, *self.name.split("/")
         )
         self.training_dir = os.path.join(
             self.resource_template_dir, "training_supervoxels"
@@ -58,7 +55,7 @@ class Bnpy(MynaApp):
     def get_model_dir_path(self):
         model_dir = os.path.join(
             self.resource_template_dir,
-            f"{self.simulation_type}-sF={self.sF}-gamma={self.gamma}",
+            f"{'_'.join(self.name.split('/'))}-sF={self.sF}-gamma={self.gamma}",
         )
         return model_dir
 

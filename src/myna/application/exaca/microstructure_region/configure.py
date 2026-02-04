@@ -13,8 +13,7 @@ import shutil
 import json
 import numpy as np
 import polars as pl
-
-from myna.application.exaca import ExaCA
+from .app import ExaCAMicrostructureRegion
 
 
 def setup_case(
@@ -24,7 +23,7 @@ def setup_case(
     layer_thickness,
 ):
     # Copy template to case directory
-    sim.copy(case_dir)
+    sim.copy_template_to_case(case_dir)
 
     # Get case settings and template input JSON
     myna_settings = load_input(os.path.join(case_dir, "myna_data.yaml"))
@@ -122,8 +121,8 @@ def setup_case(
 
 
 def main():
-    # Create ExaCA instance
-    app = ExaCA("microstructure_region")
+    # Create ExaCA app instance
+    app = ExaCAMicrostructureRegion()
 
     # Get expected Myna output files
     settings = app.settings

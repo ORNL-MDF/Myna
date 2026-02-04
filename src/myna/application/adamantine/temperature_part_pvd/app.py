@@ -37,9 +37,9 @@ class AdamantineTemperatureApp(AdamantineApp):
     """Simulate the temperature evolution of a part, outputting the results to a VTK
     PVD-format file"""
 
-    def __init__(self, name="temperature_part_pvd"):
-        super().__init__(name)
-        self.path = str(Path(self.path) / "temperature_part_pvd")
+    def __init__(self):
+        super().__init__()
+        self.class_name = "temperature_part_pvd"
 
         # Define case file names
         self.case_files = {
@@ -194,7 +194,7 @@ class AdamantineTemperatureApp(AdamantineApp):
         """Configures the case directory based on available Myna data"""
 
         # Copy the template to the case directory
-        self.copy(case_dict["case_dir"])
+        self.copy_template_to_case(case_dict["case_dir"])
 
         # Load in the input file
         input_path = Path(case_dict["case_dir"]) / Path(self.case_files["input"])

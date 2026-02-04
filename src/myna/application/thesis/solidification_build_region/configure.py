@@ -24,7 +24,7 @@ def configure_case(case_dir, sim, myna_input="myna_data.yaml"):
     settings = load_input(input_path)
 
     # Copy template case
-    sim.copy(case_dir)
+    sim.copy_template_to_case(case_dir)
     beam_file_template = os.path.join(case_dir, "Beam.txt")
 
     # Get relevant data from all parts in the build_region
@@ -103,7 +103,8 @@ def configure_case(case_dir, sim, myna_input="myna_data.yaml"):
 
 
 def main():
-    sim = Thesis("solidification_build_region")
+    sim = Thesis()
+    sim.class_name = "solidification_build_region"
 
     # Get expected Myna output files
     myna_files = sim.settings["data"]["output_paths"][sim.step_name]

@@ -29,11 +29,9 @@ class CubitVtkToExodusApp(CubitApp):
     """Myna application to convert an ExaCA VTK file with an ID array into an Exodus
     mesh with the original ID array stored on the corresponding mesh blocks."""
 
-    def __init__(
-        self,
-        sim_type="vtk_to_exodus",
-    ):
-        super().__init__(sim_type)
+    def __init__(self):
+        super().__init__()
+        self.class_name = "vtk_to_exodus"
         self.parser.add_argument(
             "--field",
             default="GrainID",
