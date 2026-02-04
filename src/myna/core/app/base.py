@@ -50,7 +50,6 @@ class MynaApp:
         self.input_file = os.environ.get(self.ENV_SETTINGS_FILE)
         self.settings = {}
         self.step_number = None
-        self.template = None
         if self.input_file is not None:
             self.settings = load_input(self.input_file)
             self.step_number = [

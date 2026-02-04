@@ -49,10 +49,10 @@ class AdditiveFOAMCalibration(AdditiveFOAM):
 
     def __init__(
         self,
-        name: str = "single_track_calibration",
         config: Optional[CalibrationConfig] = None,
     ):
-        super().__init__(name)
+        super().__init__()
+        self.class_name = "single_track_calibration"
         self.config: CalibrationConfig = config or CalibrationConfig()
         self.config_file = "config.yaml"
         self.single_track_length = 3e-3
@@ -61,7 +61,7 @@ class AdditiveFOAMCalibration(AdditiveFOAM):
             level=logging.INFO,
             format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
         )
-        self.logger = logging.getLogger(f"{__name__}.{name}")
+        self.logger = logging.getLogger(f"{self.name}")
 
     def parse_configure_arguments(self):
         """Check for arguments relevant to the configure step and update app settings"""
