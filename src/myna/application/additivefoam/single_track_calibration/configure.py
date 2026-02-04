@@ -9,6 +9,7 @@
 """Script to be executed by the configure stage of `myna.core.workflow.run` to set up
 a valid calibration case based on the specified user inputs and template
 """
+
 from myna.application.additivefoam.single_track_calibration.app import (
     AdditiveFOAMCalibration,
 )

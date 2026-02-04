@@ -7,6 +7,7 @@
 # License: 3-clause BSD, see https://opensource.org/licenses/BSD-3-Clause.
 #
 """Module for functions related to AdditiveFOAM scan paths"""
+
 from pathlib import Path
 import pandas as pd
 import polars as pl
