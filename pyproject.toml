@@ -63,6 +63,10 @@ cubit = [
 deer = [
     'netCDF4',
 ]
+additivefoam = [
+    'pymc',
+    'arviz',
+]
 
 [project.scripts]
 myna = "myna.core.workflow.all:main"
