@@ -10,7 +10,6 @@ from myna.core.app.base import MynaApp
 
 
 class ExaCA(MynaApp):
-
     def __init__(self):
         super().__init__()
         self.app_type = "exaca"

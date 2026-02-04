@@ -340,7 +340,6 @@ def run(
 
 
 def main():
-
     app = Bnpy()
     app.class_name = "cluster_supervoxel"
     app.__init__()

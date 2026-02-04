@@ -53,7 +53,6 @@ def find_part_central_rve(app, part, layerset, rve_dict, rve_id):
 
 
 def main():
-
     app = RVE()
     app.class_name = "rve_part_center"
     app.__init__()

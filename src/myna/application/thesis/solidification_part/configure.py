@@ -73,7 +73,6 @@ def configure_case(case_dir, sim, myna_input="myna_data.yaml"):
 
 
 def main():
-
     sim = Thesis()
     sim.class_name = "solidification_part"
 
