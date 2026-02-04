@@ -13,9 +13,12 @@ from myna.core.workflow import config, write_input
 
 
 def main():
-    app = RVE()
-    app.class_name = "rve_part_center"
-    app.__init__()
+    class RVEPartCenter(RVE):
+        def __init__(self):
+            super().__init__()
+            self.class_name = "rve_part_center"
+
+    app = RVEPartCenter()
 
     # Get expected Myna output files
     step_name = os.environ["MYNA_STEP_NAME"]
