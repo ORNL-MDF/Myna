@@ -8,7 +8,7 @@
 #
 """Define loading of the preheat temperature (in Kelvin) from databases"""
 
-from .data import *
+from .data import BuildMetadata
 
 
 class Preheat(BuildMetadata):

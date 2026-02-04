@@ -58,7 +58,6 @@ class AdditiveFOAMRegionReducedSTL(AdditiveFOAMRegionReduced):
         """
 
         if not self.can_use_existing_stl_mesh_resource(case_dict):
-
             # Preprocess the STL
             working_stl_path = openfoam.mesh.preprocess_stl(
                 case_dict["resource_template_dir"], case_dict["stl"], self.args.scale

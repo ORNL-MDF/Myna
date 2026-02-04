@@ -6,11 +6,8 @@
 #
 # License: 3-clause BSD, see https://opensource.org/licenses/BSD-3-Clause.
 #
-import pytest
 from importlib.metadata import version
 import os
-
-import myna
 
 
 # This test is primarily intended to ensure the test suite itself is working.
@@ -20,7 +17,7 @@ def test_version():
         lines = f.readlines()
 
     toml_version = (
-        lines[["version = " in l for l in lines].index(True)]
+        lines[["version = " in line for line in lines].index(True)]
         .split(" = ")[-1]
         .split('"')[1]
     )

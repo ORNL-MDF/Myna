@@ -29,7 +29,7 @@ def format_class_string_to_list(
     indent = ""
     emphasis = ""
     obj_type = object_instance.__mro__[-2]
-    link = f'https://github.com/ORNL-MDF/Myna/tree/{branch}/src/{object_instance.__mro__[0].__module__.replace(".", "/")}.py'
+    link = f"https://github.com/ORNL-MDF/Myna/tree/{branch}/src/{object_instance.__mro__[0].__module__.replace('.', '/')}.py"
     depth = len(object_instance.__mro__)
     if depth == 2:
         emphasis = "**"
@@ -98,7 +98,7 @@ def write_codebase_status_to_file(parser):
         lines.append("{: .no_toc }\n")
         lines.append("\n## Table of Contents\n{: .no_toc .text-delta }\n")
         lines.append("\n1. TOC\n{:toc}\n")
-    lines.append(f'\nMyna version: {version("myna")}\n')
+    lines.append(f"\nMyna version: {version('myna')}\n")
     lines.append(
         "\nThis page contains the list of available classes within Myna for"
         + " workflow components, input and output data, and applications.\n"
@@ -109,7 +109,6 @@ def write_codebase_status_to_file(parser):
     lines.append("\n## Workflow Component Classes\n\n")
     for key in vars(obj).keys():
         if key[0] != "_":
-            key_type = type(vars(obj)[key])
             obj_inst = vars(obj)[key]
             try:
                 lines.append(
@@ -128,7 +127,6 @@ def write_codebase_status_to_file(parser):
     lines.append("\n## Output File Classes\n\n")
     for key in vars(obj).keys():
         if key[0] != "_":
-            key_type = type(vars(obj)[key])
             obj_inst = vars(obj)[key]
             try:
                 lines.append(
@@ -144,7 +142,6 @@ def write_codebase_status_to_file(parser):
     lines.append("\n## Input Metadata and File Classes\n\n")
     for key in vars(obj).keys():
         if key[0] != "_":
-            key_type = type(vars(obj)[key])
             obj_inst = vars(obj)[key]
             try:
                 lines.append(

@@ -141,7 +141,6 @@ class CubitVtkToExodusApp(CubitApp):
         with working_directory(case_directory):
             log_file = os.path.join(case_directory, "psculpt.log")
             with open(log_file, "w", encoding="utf-8") as f:
-
                 sculpt_cmd = [
                     self.exe_psculpt,
                     "-isp",
@@ -195,7 +194,6 @@ class CubitVtkToExodusApp(CubitApp):
 
                 # Append grain ID array and Euler angles to Exodus file
                 with Dataset(exodus_prefix + ".e", "r+") as exodus_object:
-
                     # Get ID array data to write
                     elem_block_ids = exodus_object.variables["eb_prop1"][:]
                     elem_orig_ids = np.array(

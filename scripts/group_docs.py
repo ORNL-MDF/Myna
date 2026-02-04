@@ -10,15 +10,14 @@ from lazydocs import generate_docs
 
 
 def remove_global_variables(filepath):
-
     with open(filepath, "r", encoding="utf-8") as f:
         lines = f.readlines()
     i0 = None
     i1 = None
-    for i, l in enumerate(lines):
-        if l == "**Global Variables**\n":
+    for i, line in enumerate(lines):
+        if line == "**Global Variables**\n":
             i0 = i
-        if (l == "---\n") and isinstance(i0, int):
+        if (line == "---\n") and isinstance(i0, int):
             i1 = i
     if (i0 is not None) and (i1 is not None):
         newlines = lines[:i0] + lines[i1:]
@@ -32,9 +31,9 @@ def rename_module_heading_to_subpackage(filepath):
     """Returns True/False if the file is a subpackage header"""
     with open(filepath, "r", encoding="utf-8") as f:
         lines = f.readlines()
-    for i, l in enumerate(lines):
-        if "# <kbd>module</kbd>" in l:
-            lines[i] = l.replace("<kbd>module</kbd>", "<kbd>subpackage</kbd>")
+    for i, line in enumerate(lines):
+        if "# <kbd>module</kbd>" in line:
+            lines[i] = line.replace("<kbd>module</kbd>", "<kbd>subpackage</kbd>")
             with open(filepath, "w", encoding="utf-8") as f:
                 f.writelines(lines)
 
@@ -92,7 +91,6 @@ def group_api_docs(api_docs_dir: str | Path, base_package_name: str):
     # Iterate through all files
     files = sorted(os.listdir(api_docs_dir))
     for filename in files:
-
         src_path = Path(api_docs_dir, filename)
         module_parts = Path(filename).stem.split(".")
         is_subpackage = remove_global_variables(src_path)
@@ -100,7 +98,6 @@ def group_api_docs(api_docs_dir: str | Path, base_package_name: str):
         # Parse module name parts
         # myna.<pkg0>.<pkg1>.<...>.module.py
         if module_parts[0] == base_package_name:
-
             # Handle package index files
             if is_subpackage:
                 target_dir = Path(api_docs_dir, *module_parts[1:])
@@ -128,7 +125,6 @@ def group_api_docs(api_docs_dir: str | Path, base_package_name: str):
 
 
 if __name__ == "__main__":
-
     # Remove existing API docs and regenerate
     API_DIR = str(Path("docs", "api-docs").absolute())
     shutil.rmtree(API_DIR, ignore_errors=True)

@@ -23,19 +23,38 @@ metadata currently implemented:
 """
 
 # Import all metadata data classes
-from .data import *
-from .data_spot_size import *
-from .data_material import *
-from .data_laser_power import *
-from .data_layer_thickness import *
-from .data_preheat import *
-from .data_print_order import *
+from .data import BuildMetadata, PartMetadata
+from .data_laser_power import LaserPower
+from .data_layer_thickness import LayerThickness
+from .data_material import Material
+from .data_preheat import Preheat
+from .data_print_order import PrintOrder
+from .data_spot_size import SpotSize
 
 # Import all metadata file classes
-from .file import *
-from .file_scanpath import *
-from .file_stl import *
-from .file_part_id_map import *
+from .file import BuildFile, BuildLayerPartsetFile, PartFile, LayerFile
+from .file_part_id_map import PartIDMap
+from .file_scanpath import Scanpath
+from .file_stl import STL
 
 # Import metadata data class name lookup
-from .data_class_lookup import *
+from .data_class_lookup import return_data_class_name
+
+__all__ = [
+    "BuildMetadata",
+    "PartMetadata",
+    "LaserPower",
+    "LayerThickness",
+    "Material",
+    "Preheat",
+    "PrintOrder",
+    "SpotSize",
+    "BuildFile",
+    "BuildLayerPartsetFile",
+    "PartFile",
+    "LayerFile",
+    "PartIDMap",
+    "Scanpath",
+    "STL",
+    "return_data_class_name",
+]

@@ -448,13 +448,12 @@ class AdditiveFOAMRegionReduced(AdditiveFOAM):
 
         # Update decomposeParDict
         openfoam.mesh.update_parameter(
-            f'{case_dict["case_dir"]}/system/decomposeParDict',
+            f"{case_dict['case_dir']}/system/decomposeParDict",
             "numberOfSubdomains",
             self.args.np,
         )
 
         with working_directory(case_dict["case_dir"]):
-
             # Determine if parallel execution
             parallel = self.args.np > 1
 
@@ -499,7 +498,6 @@ class AdditiveFOAMRegionReduced(AdditiveFOAM):
         case_dict = self.parse_mynafile_path_to_dict(mynafile)
 
         with working_directory(case_dict["case_dir"]):
-
             # Determine if parallel execution
             np = nested_get(
                 self.settings["steps"][int(os.environ["MYNA_STEP_INDEX"])][
@@ -511,7 +509,6 @@ class AdditiveFOAMRegionReduced(AdditiveFOAM):
             parallel = np > 1
             if parallel:
                 with open("reconstructPar.log", "w", encoding="utf-8") as f:
-
                     # Reconstruct decomposed cases
                     process = self.start_subprocess(
                         ["reconstructPar"],
@@ -524,7 +521,7 @@ class AdditiveFOAMRegionReduced(AdditiveFOAM):
             with open("myna_postprocess.log", "w", encoding="utf-8") as f:
                 with open(mynafile, "w", encoding="utf-8") as mf:
                     # Check data exists
-                    datafiles = sorted(glob.glob(f'{case_dict["case_dir"]}/ExaCA/*'))
+                    datafiles = sorted(glob.glob(f"{case_dict['case_dir']}/ExaCA/*"))
                     if len(datafiles) > 0:
                         # Header
                         process = self.start_subprocess(

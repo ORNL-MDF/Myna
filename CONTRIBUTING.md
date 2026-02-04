@@ -24,9 +24,15 @@ Adding `--no-verify` to the commit options can be used to skip these checks for 
 
 Checks can instead be done manually, described next for formatting.
 
-## Code formatting
+## Code formatting and linting
 
-Myna is formatted with `black`. You can run `black .` from the top level directory.
+Myna uses `ruff` autoformatting (`ruff format`) and linting (`ruff check`). You can
+run either from the top-level directory and both are included in the pre-commit
+and CI pipelines.
+
+A `pylint` check is included in the GitHub CI, which enforces more detailed linting
+analysis than Ruff. Some pylint warnings are allowed, but the CI will fail if too many
+new warnings are introduced and the overall code quality drops below a pre-defined limit.
 
 ## Unit testing
 

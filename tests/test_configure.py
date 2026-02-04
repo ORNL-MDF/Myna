@@ -6,9 +6,10 @@
 #
 # License: 3-clause BSD, see https://opensource.org/licenses/BSD-3-Clause.
 #
-import pytest
 import argparse
-import sys, os, shutil
+import sys
+import os
+import shutil
 
 import myna
 

@@ -9,7 +9,6 @@
 """Defines `myna sync` functionality"""
 
 import os
-import argparse
 import myna.core.utils
 import myna.core.components
 import myna.database

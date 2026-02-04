@@ -15,3 +15,5 @@ to represent that geometry within the simulation.
 """
 
 from .app import AdditiveFOAMRegionReduced
+
+__all__ = ["AdditiveFOAMRegionReduced"]

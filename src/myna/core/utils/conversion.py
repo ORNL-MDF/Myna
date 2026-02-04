@@ -12,7 +12,7 @@
 def str_to_list(str_list):
     """Converts string containing list to Python list"""
     output = None
-    if type(str_list) == str:
+    if isinstance(str_list, str):
         output = str_list.replace("[", "").replace("]", "").replace(" ", "").split(",")
     return output
 
@@ -26,7 +26,6 @@ def get_quoted_str(str_value):
     fixed_str = str(str_value)
 
     for q in ["'", '"']:
-
         # Check for bracing quotes
         is_quoted = (str_value[0] == q) and (str_value[-1] == q)
 

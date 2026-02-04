@@ -34,7 +34,6 @@ def run_case(
 
     # Run Simulation
     case_directory = os.path.abspath(sim.input_dir)
-    output_name = read_parameter(sim.input_file, "Name")[0]
     result_file = os.path.join(sim.input_dir, "Data", "snapshot_data.csv")
     procs = proc_list.copy()
     procs = sim.run_thesis_case(case_directory, procs)
@@ -84,7 +83,6 @@ def main():
     # Post-process results to convert to Myna format
     if output_files:
         for mynafile, segment_files in zip(myna_files, output_files):
-
             # Append all segment files
             thesis_to_myna_mapping = {
                 "Time (s)": "time (s)",

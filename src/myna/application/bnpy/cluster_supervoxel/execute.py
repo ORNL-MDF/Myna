@@ -11,7 +11,6 @@ import glob
 import pandas as pd
 import polars as pl
 import numpy as np
-from myna.core.workflow.load_input import load_input
 import matplotlib.pyplot as plt
 import myna.application.bnpy as myna_bnpy
 from myna.application.bnpy import Bnpy
@@ -27,7 +26,6 @@ def reduce_voxel_file_to_supervoxel_df(
     write_csv=False,
     output_file="supervoxel_composition.csv",
 ):
-
     # Load voxel cluster data
     df = pl.read_csv(voxel_file)
 
@@ -58,10 +56,10 @@ def reduce_voxel_file_to_supervoxel_df(
     for id in ids:
         df = df.with_columns((pl.col("id") == id).alias(f"is_{id}"))
         drop_cols.append(f"is_{id}")
-        df = df.with_columns((pl.col(f"id").count().over("i", "j")).alias("count"))
+        df = df.with_columns((pl.col("id").count().over("i", "j")).alias("count"))
         drop_cols.append("count")
         df = df.with_columns(
-            ((pl.col(f"is_{id}").sum().over("i", "j")) / (pl.col(f"count")))
+            ((pl.col(f"is_{id}").sum().over("i", "j")) / (pl.col("count")))
             .log10()
             .replace([float("inf"), float("-inf")], 0)
             .alias(f"c_{id}")
@@ -115,20 +113,10 @@ def train_supervoxel_model(
 
     # Add training data from each thermal file
     composition_files = []
-    supervoxel_step = app.args.res
     for myna_file, myna_voxel_file in zip(myna_files, myna_voxel_files):
-
         # Get case myna_data
         case_dir = os.path.dirname(myna_file)
         os.chdir(case_dir)
-        myna_data = load_input(os.path.join(case_dir, "myna_data.yaml"))
-
-        # Generate case information from myna_data
-        build = myna_data["build"]["name"]
-        part = list(myna_data["build"]["parts"].keys())[0]
-        part_dict = myna_data["build"]["parts"][part]
-        layer = list(part_dict["layer_data"].keys())[0]
-        layer_dict = part_dict["layer_data"][layer]
 
         # Create symbolic links to all available clustering results
         voxel_dir = "voxel_data"
@@ -141,7 +129,6 @@ def train_supervoxel_model(
         composition_file = os.path.join(case_dir, comp_file_name)
 
         # Load voxel information
-        df_voxel = pl.read_csv(myna_voxel_file)
         df_composition = reduce_voxel_file_to_supervoxel_df(
             myna_voxel_file,
             app,
@@ -353,7 +340,6 @@ def run(
 
 
 def main():
-
     app = Bnpy("cluster_supervoxel")
 
     # Set up argparse
@@ -395,14 +381,10 @@ def main():
     voxel_model_path = voxel_model_path.replace("/", os.sep)
     voxel_model_path = sorted(
         glob.glob(os.path.join(voxel_model_path, "*")), reverse=True
-    )[
-        0
-    ]  # Model iteration
+    )[0]  # Model iteration
     voxel_model_path = sorted(
         glob.glob(os.path.join(voxel_model_path, "*")), reverse=True
-    )[
-        0
-    ]  # Training iteration
+    )[0]  # Training iteration
     voxel_model, lap_val = bnpy.load_model_at_lap(voxel_model_path, None)
     app.n_voxel_clusters = max(voxel_model.allocModel.K, 2)
 

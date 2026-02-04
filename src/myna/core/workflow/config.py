@@ -95,7 +95,7 @@ def config(input_file, output_file=None, show_avail=False, overwrite=False):
     user_name = ""
     try:
         user_name = getpass.getuser()  # may fail when run by service manager, e.g., CI
-    except:
+    except OSError:
         pass
     configure_dict = {
         "datetime-start": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
@@ -192,7 +192,6 @@ def config(input_file, output_file=None, show_avail=False, overwrite=False):
     # Determine which data needs to be added based on component class requirements
     step_obj_prev = None
     for i, step in enumerate(settings["steps"]):
-
         # Get the step component class name and class object
         step_name = [x for x in step.keys()][0]
         component_class_name = step[step_name]["class"]
@@ -222,7 +221,6 @@ def config(input_file, output_file=None, show_avail=False, overwrite=False):
 
         # Get the data requirements associated with that class
         for data_req in step_obj.data_requirements:
-
             # For each data requirements, lookup the corresponding data object
             data_class_name = metadata.return_data_class_name(data_req)
             constructor = vars(metadata)[data_class_name]
@@ -335,8 +333,8 @@ def config(input_file, output_file=None, show_avail=False, overwrite=False):
                             part_layers = nested_get(
                                 settings, nested_keys + [build_region, "layerlist"], []
                             )
-                            for l in part_layers:
-                                layer = f"{l}"
+                            for part_layer in part_layers:
+                                layer = f"{part_layer}"
                                 nested_layerkeys = nested_keys + [
                                     build_region,
                                     "parts",
@@ -353,8 +351,8 @@ def config(input_file, output_file=None, show_avail=False, overwrite=False):
                     for part in parts.keys():
                         # Check for layers in part dictionary
                         part_layers = nested_get(parts, [part, "layers"], [])
-                        for l in part_layers:
-                            layer = f"{l}"
+                        for part_layer in part_layers:
+                            layer = f"{part_layer}"
                             nested_keys = [
                                 "data",
                                 "build",
@@ -374,8 +372,8 @@ def config(input_file, output_file=None, show_avail=False, overwrite=False):
                             region_layers = nested_get(
                                 parts, [part, "regions", region, "layers"], []
                             )
-                            for l in region_layers:
-                                layer = f"{l}"
+                            for region_layer in region_layers:
+                                layer = f"{region_layer}"
                                 nested_keys = [
                                     "data",
                                     "build",

@@ -37,7 +37,6 @@ dependencies = [
 dev = [
   'pytest',
   'pytest-xdist',
-  'black>26.0.0',
   'pylint',
   'licenseheaders',
   'pre-commit',
@@ -47,6 +46,7 @@ dev = [
   'mkdocs-awesome-pages-plugin',
   'mkdocs-github-admonitions-plugin',
   'mkdocs-material',
+  'ruff',
 ]
 exaca = [
   'pyebsd @ git+https://github.com/arthursn/pyebsd.git',

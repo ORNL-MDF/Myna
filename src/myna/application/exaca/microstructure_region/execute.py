@@ -35,11 +35,11 @@ def run_case(app, case_dir):
 
     # Run case using "runCase.sh" script
     process = None
-    os.system(f'chmod 755 {os.path.join(case_dir, "runCase.sh")}')
+    os.system(f"chmod 755 {os.path.join(case_dir, 'runCase.sh')}")
     if not app.args.batch:
-        os.system(f'{os.path.join(case_dir, "runCase.sh")}')
+        os.system(f"{os.path.join(case_dir, 'runCase.sh')}")
     else:
-        command = f'{os.path.join(case_dir, "runCase.sh")}'
+        command = f"{os.path.join(case_dir, 'runCase.sh')}"
         print(f"{command=}")
         process = subprocess.Popen(command, shell=True)
 

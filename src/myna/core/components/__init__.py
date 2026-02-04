@@ -39,10 +39,85 @@ following attributes of Component:
     hierarchical types.
 """
 
-from .component_class_lookup import *
-from .component_solidification import *
-from .component_cluster import *
-from .component_creep import *
-from .component_microstructure import *
-from .component_rve import *
-from .component import *
+from .component_class_lookup import return_step_class
+from .component_cluster import (
+    ComponentCluster,
+    ComponentClusterSolidification,
+    ComponentClusterSupervoxel,
+)
+from .component_creep import (
+    ComponentCreepTimeSeries,
+    ComponentCreepTimeSeriesPart,
+    ComponentCreepTimeSeriesRegion,
+)
+from .component_melt_pool_geometry import (
+    ComponentMeltPoolGeometry,
+    ComponentMeltPoolGeometryPart,
+)
+from .component_mesh import (
+    ComponentMesh,
+    ComponentPartMesh,
+    ComponentPartMeshVTK,
+    ComponentVTKToExodusMeshPart,
+    ComponentVTKToExodusMeshRegion,
+)
+from .component_microstructure import (
+    ComponentMicrostructure,
+    ComponentMicrostructurePart,
+    ComponentMicrostructureRegion,
+    ComponentMicrostructureRegionSlice,
+)
+from .component_rve import ComponentRVE, ComponentCentroidRVE
+from .component_solidification import (
+    ComponentSolidification,
+    ComponentSolidificationPart,
+    ComponentSolidificationRegion,
+    ComponentSolidificationBuildRegion,
+    ComponentSolidificationPartSTL,
+    ComponentSolidificationRegionSTL,
+    ComponentSolidificationPartReduced,
+    ComponentSolidificationRegionReduced,
+    ComponentSolidificationRegionReducedSTL,
+)
+from .component_temperature import (
+    ComponentTemperature,
+    ComponentTemperaturePart,
+    ComponentTemperaturePartPVD,
+)
+from .component import Component
+
+__all__ = [
+    "return_step_class",
+    "ComponentCluster",
+    "ComponentClusterSolidification",
+    "ComponentClusterSupervoxel",
+    "ComponentCreepTimeSeries",
+    "ComponentCreepTimeSeriesPart",
+    "ComponentCreepTimeSeriesRegion",
+    "ComponentMeltPoolGeometry",
+    "ComponentMeltPoolGeometryPart",
+    "ComponentMesh",
+    "ComponentPartMesh",
+    "ComponentPartMeshVTK",
+    "ComponentVTKToExodusMeshPart",
+    "ComponentVTKToExodusMeshRegion",
+    "ComponentMicrostructure",
+    "ComponentMicrostructurePart",
+    "ComponentMicrostructureRegion",
+    "ComponentMicrostructureRegionSlice",
+    "ComponentRVE",
+    "ComponentCentroidRVE",
+    "ComponentSolidification",
+    "ComponentSolidificationPart",
+    "ComponentSolidificationRegion",
+    "ComponentSolidificationBuildRegion",
+    "ComponentSolidificationPartSTL",
+    "ComponentSolidificationRegionSTL",
+    "ComponentSolidificationPartReduced",
+    "ComponentSolidificationRegionReduced",
+    "ComponentSolidificationRegionReducedSTL",
+    "ComponentTemperature",
+    "ComponentTemperaturePart",
+    "ComponentTemperaturePartPVD",
+    "Component",
+]

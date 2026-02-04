@@ -82,7 +82,7 @@ class AMBench2022(Database):
             return 298  # K
 
         elif metadata_type == metadata.STL:
-            file_database = os.path.join(self.simulation_dir, part, f"part.stl")
+            file_database = os.path.join(self.simulation_dir, part, "part.stl")
             if not os.path.exists(file_database):
                 part_bounds = self.get_part_bounds(part)
                 if part[0] == "P":
@@ -138,7 +138,6 @@ class AMBench2022(Database):
 
             # Only create scan files if files don't already exist
             if not os.path.exists(file_database):
-
                 # For Myna default format, Pmod should be a multiple of the
                 # nominal power for the part
                 power = 1
@@ -213,17 +212,14 @@ class AMBench2022(Database):
                 # Iterate through rows sequentially to generate scan path
                 time_last_row = None
                 for index, row in enumerate(df.iter_rows(named=True)):
-
                     # If first row in XYPT file, go to point
-                    if time_last_row == None:
-
+                    if time_last_row is None:
                         df_row = make_polars_scan_df(
                             [1], [row["X"]], [row["Y"]], [0], [0], [0]
                         )
 
                     # If the next time is farther away than the scan_timestep, go to start point
                     elif np.abs(row["dt_next"] - scan_timestep) > abs_tol:
-
                         df_row = make_polars_scan_df(
                             [1], [row["X"]], [row["Y"]], [0], [0], [row["dt_last"]]
                         )
@@ -392,7 +388,6 @@ class AMBench2022(Database):
 
                     # Get metadata from file path
                     split_path = f.split(os.path.sep)
-                    app = split_path[-2]
                     if is_region_type:
                         region = split_path[-3]
                         part = split_path[-4]

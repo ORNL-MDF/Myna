@@ -27,7 +27,7 @@ def convert_peregrine_scanpath(filename, export_path, power=1):
     df[round_cols] = df[round_cols].round(6)
     for col in round_cols:
         df[col] = df[col].map(
-            lambda x: f'{str(x).ljust(7+len(str(x).split(".", maxsplit=1)[0]),"0")}'
+            lambda x: f"{str(x).ljust(7 + len(str(x).split('.', maxsplit=1)[0]), '0')}"
         )
 
     # set the laser power

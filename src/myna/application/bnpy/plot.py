@@ -57,7 +57,6 @@ def add_cluster_colormap_colorbar(fig, ax, colors, cmap, n_clusters):
     # Create the colorbar
     divider1 = make_axes_locatable(ax)
     cax1 = divider1.append_axes("right", size="5%", pad=0.05)
-    mappable1 = ax.collections[0]
 
     # Draw colorbar for cluster IDs
     bounds = np.arange(len(colors) + 1)
@@ -135,7 +134,7 @@ def voxel_GV_plot(df, colors, cmap, exportName, dpi=150):
     """
     Plot GV plot for a cluster pandas.dataFrame with the given colormap
     """
-    fig = plt.figure(figsize=(9, 4), dpi=dpi)
+    plt.figure(figsize=(9, 4), dpi=dpi)
     ax = plt.gca()
 
     for i in df["id"].unique():
@@ -157,8 +156,6 @@ def voxel_GV_plot(df, colors, cmap, exportName, dpi=150):
     # Create the colorbar
     divider1 = make_axes_locatable(ax)
     cax1 = divider1.append_axes("right", size="5%", pad=0.05)
-    mappable1 = ax.collections[0]
-    cbar1 = fig.colorbar(mappable=mappable1, cax=cax1)
 
     # Draw colorbar for cluster IDs
     bounds = np.arange(len(colors) + 1)
@@ -306,7 +303,6 @@ def supervoxel_id_colormesh(
     # Draw colorbar
     divider1 = make_axes_locatable(axs)
     cax1 = divider1.append_axes("right", size="5%", pad=0.05)
-    mappable = axs.collections[0]
     bounds = np.arange(n_digits + 1)
     norm = mpl.colors.BoundaryNorm(bounds, cmap.N)
     cbar = mpl.colorbar.ColorbarBase(
@@ -362,7 +358,6 @@ def combined_composition_colormesh(id, nrows=3, ncols=5, dpi=150):
     xx = mesh["X(mm)"].to_numpy().reshape((nx, ny))
     yy = mesh["Y(mm)"].to_numpy().reshape((nx, ny))
 
-    minVal = 0
     maxVal = -1e6
     minValLog = 1e6
     maxValLog = -1e6
@@ -478,7 +473,6 @@ def combined_supervoxel_composition_scatter(
     dpi=150,
     export_name="supervoxel_composition_map.png",
 ):
-
     # Get possible cluster ids
     clusters = np.arange(n_voxel_clusters)
 

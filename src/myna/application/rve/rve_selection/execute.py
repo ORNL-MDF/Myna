@@ -87,7 +87,9 @@ def run_rve_selection(
     l0s = []
     l1s = []
     pns = []
+    fileset = []
     filesets = []
+    l0 = None
     last_part = None
     last_layer = None
 
@@ -96,7 +98,6 @@ def run_rve_selection(
         print(f"Checking {myna_id_file}...")
         # Parse info from file path
         split_path = myna_id_file.split(os.path.sep)
-        app = split_path[-2]
         layer = int(split_path[-3])
         part = split_path[-4]
         is_last_layer = myna_id_file == myna_id_files[-1]
@@ -151,7 +152,6 @@ def run_rve_selection(
     layer_starts = []
     layer_ends = []
     ps = []
-    region_dfs = []
 
     # Iterate through the groups
     # TODO: Update to handle multiple layers
@@ -189,9 +189,9 @@ def run_rve_selection(
         # Shift layer grids to be coincident
         minx = region_df["x (m)"].min()
         miny = region_df["y (m)"].min()
-        for l in region_df["layer"].unique():
+        for layer in region_df["layer"].unique():
             # Mask current layer
-            mask = region_df["layer"] == l
+            mask = region_df["layer"] == layer
 
             # Get grid spacing for the layer
             nx = len(region_df.loc[mask, "x (m)"].unique())
@@ -218,18 +218,18 @@ def run_rve_selection(
 
             # Update values in region_df
             for old_x, new_x in zip(old_xs, new_xs):
-                mask_x = (region_df["layer"] == l) & (region_df["x (m)"] == old_x)
+                mask_x = (region_df["layer"] == layer) & (region_df["x (m)"] == old_x)
                 region_df.loc[mask_x, "x (m)"] = new_x
             for old_y, new_y in zip(old_ys, new_ys):
-                mask_y = (region_df["layer"] == l) & (region_df["y (m)"] == old_y)
+                mask_y = (region_df["layer"] == layer) & (region_df["y (m)"] == old_y)
                 region_df.loc[mask_y, "y (m)"] = new_y
             minx_layer = region_df.loc[mask, "x (m)"].min()
             miny_layer = region_df.loc[mask, "y (m)"].min()
 
         # Print number of unique x and y values in region_df
         region_df.round(6)
-        print(f'nx (region) = {len(region_df["x (m)"].unique())}')
-        print(f'ny (region) = {len(region_df["y (m)"].unique())}')
+        print(f"nx (region) = {len(region_df['x (m)'].unique())}")
+        print(f"ny (region) = {len(region_df['y (m)'].unique())}")
 
         # Get colormap for plotting
         n_digits = len(region_df["id"].unique())

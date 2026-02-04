@@ -10,8 +10,6 @@ import mistlib as mist
 import os
 from myna.core.workflow.load_input import load_input
 from myna.application.thesis.parse import adjust_parameter
-import argparse
-import sys
 import shutil
 import numpy as np
 
@@ -75,11 +73,9 @@ def configure_case(case_dir, sim, myna_input="myna_data.yaml"):
 
 
 def main():
-
     sim = Thesis("solidification_part")
 
     # Get expected Myna output files
-    step_name = os.environ["MYNA_STEP_NAME"]
     myna_files = sim.settings["data"]["output_paths"][sim.step_name]
 
     # Run each case

@@ -75,7 +75,6 @@ class Thesis(MynaApp):
             case_directory: (str) path to case directory to run
             active_processes: (list) list of Popen process objects"""
         with working_directory(case_directory):
-
             logfile = os.path.join(self.output_dir, "myna_thesis_run.log")
             with open(logfile, "w", encoding="utf-8") as f:
                 f.write("# Myna 3DThesis simulation log\n\n")

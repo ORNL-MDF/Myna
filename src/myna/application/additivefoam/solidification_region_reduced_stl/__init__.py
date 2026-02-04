@@ -17,3 +17,5 @@ surrounding powder bed.
 """
 
 from .app import AdditiveFOAMRegionReducedSTL
+
+__all__ = ["AdditiveFOAMRegionReducedSTL"]

@@ -249,7 +249,7 @@ class Component:
                                 regions = list(
                                     self.data["build"]["parts"][part]["regions"].keys()
                                 )
-                            except:
+                            except LookupError:
                                 print("    - No regions specified in input file")
                                 return []
                         if regions is not None:
@@ -344,15 +344,16 @@ class Component:
         exists = []
         valid = []
 
-        for f in files:
-            # Check if output file exists and is valid
-            if os.path.exists(f):
-                exists.append(True)
-                file_obj = self.output_requirement(f)
-                valid.append(file_obj.file_is_valid())
-            else:
-                exists.append(False)
-                valid.append(False)
+        if self.output_requirement is not None:
+            for f in files:
+                # Check if output file exists and is valid
+                if os.path.exists(f):
+                    exists.append(True)
+                    file_obj = self.output_requirement(f)
+                    valid.append(file_obj.file_is_valid())
+                else:
+                    exists.append(False)
+                    valid.append(False)
 
         return files, exists, valid
 
@@ -443,10 +444,10 @@ class Component:
             if dict_key in obsolete_keys:
                 warning_msg = (
                     f" Step {self.name} {operation}"
-                    f' argument "{dict_key}" for {operation} is'
+                    + f' argument "{dict_key}" for {operation} is'
                     + " obsolete. Using default value. Instead, use: "
                     + f"  \n\t{self.name}:"
-                    + f"  \n\t  executable: {value}\n",
+                    + f"  \n\t  executable: {value}\n"
                 )
                 warnings.warn(warning_msg)
                 return True

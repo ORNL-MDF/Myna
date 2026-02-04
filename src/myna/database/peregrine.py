@@ -20,7 +20,6 @@ import warnings
 
 
 class PeregrineDB(Database):
-
     synonyms = {
         "laser_power": ["Laser Beam Power (W)", "Power (W)"],
         "laser_spot_size": ["Laser Spot Size (µm)", "Spot Size (µm)", "Spot Size (mm)"],
@@ -73,7 +72,7 @@ class PeregrineDB(Database):
                 cui_dict["flag_sensitive"] = data["flag_sensitive"]
                 cui_dict["bannerLine"] = data["bannerLine"]
                 cui_dict["signatureBlock"] = data["signatureBlock"]
-        except:
+        except (LookupError, FileNotFoundError):
             pass
         return cui_dict
 
@@ -148,7 +147,7 @@ class PeregrineDB(Database):
             return value
 
         elif metadata_type == metadata.STL:
-            file_database = os.path.join(self.simulation_dir, part, f"part.stl")
+            file_database = os.path.join(self.simulation_dir, part, "part.stl")
             return file_database
 
         elif metadata_type == metadata.Scanpath:
@@ -348,7 +347,6 @@ class PeregrineDB(Database):
 
                     # Get metadata from file path
                     split_path = f.split(os.path.sep)
-                    app = split_path[-2]
                     if is_region_type:
                         region = split_path[-3]
                         part = split_path[-4]

@@ -6,8 +6,6 @@
 #
 # License: 3-clause BSD, see https://opensource.org/licenses/BSD-3-Clause.
 #
-import pytest
-from importlib.metadata import version
 import os
 
 import myna
@@ -16,7 +14,6 @@ import myna.database
 
 # This test is intended to ensure the database parsing is working
 def test_database_PeregrineHDF5():
-
     db = myna.database.PeregrineHDF5()
     path = os.path.dirname(os.path.abspath(__file__))
     db.set_path(os.path.join(path, "..", "examples", "PeregrineHDF5", "minimal.hdf5"))
@@ -35,7 +32,6 @@ def test_database_PeregrineHDF5():
 
 # This test is intended to ensure the database parsing is working
 def test_database_Peregrine():
-
     db = myna.database.PeregrineDB()
     path = os.path.dirname(os.path.abspath(__file__))
     db.set_path(os.path.join(path, "..", "examples"))

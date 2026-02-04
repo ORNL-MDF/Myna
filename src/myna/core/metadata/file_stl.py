@@ -8,7 +8,7 @@
 #
 """Define loading behavior for STL geometry files in databases"""
 
-from .file import *
+from .file import PartFile
 import os
 
 

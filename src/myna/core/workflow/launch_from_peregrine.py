@@ -14,7 +14,7 @@ import datetime
 import yaml
 import shutil
 from myna.core.utils import working_directory
-from myna.core.workflow import write_input
+from .load_input import write_input
 
 
 def launch_from_peregrine(parser):
@@ -82,7 +82,7 @@ def launch_from_peregrine(parser):
 
     # Write Peregrine input to log file lines
     lines = []
-    lines.append(f"Peregrine inputs:\n")
+    lines.append("Peregrine inputs:\n")
     lines.append(f"- {build_path=}\n")
     lines.append(f"- {layers=}\n")
     lines.append(f"- {exported_parts=}\n")
@@ -125,7 +125,6 @@ def launch_from_peregrine(parser):
 
     # Set working directory to run all myna scripts
     with working_directory(myna_working_dir):
-
         # Construct myna config command
         lines.append("\nStarting configuration of simulation cases:\n")
         cmd = f'myna config --input "{input_file_configured}"'

@@ -11,7 +11,6 @@ import pandas as pd
 import numpy as np
 from myna.core.workflow.load_input import load_input
 import myna.application.bnpy as myna_bnpy
-import sys
 import glob
 import matplotlib.pyplot as plt
 from myna.application.bnpy import Bnpy, get_representative_distribution
@@ -59,21 +58,12 @@ def train_voxel_model(myna_files, thermal_files, sF, gamma, input_dir):
 
     # Add training data from each thermal file
     for myna_file, thermal_file in zip(myna_files, thermal_files):
-
         # Go to case directory
         case_dir = os.path.dirname(myna_file)
         os.chdir(case_dir)
 
         # Get case myna_data
-        myna_data = load_input(os.path.join(case_dir, "myna_data.yaml"))
         resource_dir = os.path.join(input_dir, "myna_resources")
-
-        # Generate case information from myna_data
-        build = myna_data["build"]["name"]
-        part = list(myna_data["build"]["parts"].keys())[0]
-        part_dict = myna_data["build"]["parts"][part]
-        layer = list(part_dict["layer_data"].keys())[0]
-        layer_dict = part_dict["layer_data"][layer]
 
         # Set directory for training data
         resource_template_dir = os.path.join(resource_dir, "cluster_solidification")
@@ -228,15 +218,7 @@ def run_clustering(
     os.chdir(case_dir)
 
     # Get case myna_data
-    myna_data = load_input(os.path.join(case_dir, "myna_data.yaml"))
     resource_dir = os.path.join(input_dir, "myna_resources")
-
-    # Generate case information from myna_data
-    build = myna_data["build"]["name"]
-    part = list(myna_data["build"]["parts"].keys())[0]
-    part_dict = myna_data["build"]["parts"][part]
-    layer = list(part_dict["layer_data"].keys())[0]
-    layer_dict = part_dict["layer_data"][layer]
 
     # Set directory for training data
     resource_template_dir = os.path.join(resource_dir, "cluster_solidification")
@@ -270,17 +252,11 @@ def run_clustering(
         glob.glob(os.path.join(latest_model, "*")), reverse=True
     )[0]
     task_output_path = latest_model_iteration
-    model_num = int(latest_model.split(os.sep)[-1])
     cur_model, lap_val = bnpy.load_model_at_lap(task_output_path, None)
 
     # Assign cluster IDs, or overwrite them if specified
-    result_file = os.path.join(cluster_dir, f"cluster_ids.csv")
+    result_file = os.path.join(cluster_dir, "cluster_ids.csv")
     if not os.path.exists(result_file) or overwrite:
-        compIDs = np.arange(0, cur_model.obsModel.K)
-        if cur_model.allocModel.K == cur_model.obsModel.K:
-            w = cur_model.allocModel.get_active_comp_probs()
-        else:
-            w = np.ones(cur_model.obsModel.K)
         K = cur_model.allocModel.K
 
         # Assign current data to clusters
