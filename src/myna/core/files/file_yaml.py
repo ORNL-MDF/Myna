@@ -6,8 +6,14 @@
 #
 # License: 3-clause BSD, see https://opensource.org/licenses/BSD-3-Clause.
 #
-"""Define the requirements and behavior of Myna databases."""
+"""Define a file format class for YAML output data"""
 
-from .database import Database, NoDatabase
+from .file import File
 
-__all__ = ["Database", "NoDatabase"]
+
+class FileYAML(File):
+    """File format class for YAML output data"""
+
+    def __init__(self, file):
+        super().__init__(file)
+        self.filetype = ".yaml"

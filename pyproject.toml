@@ -31,7 +31,8 @@ dependencies = [
     'scipy',
     'gitpython',
     'zarr',
-    'docker']
+    'docker',
+    'pydantic']
 
 [project.optional-dependencies]
 dev = [
@@ -61,6 +62,10 @@ cubit = [
 ]
 deer = [
     'netCDF4',
+]
+additivefoam = [
+    'pymc',
+    'arviz',
 ]
 
 [project.scripts]

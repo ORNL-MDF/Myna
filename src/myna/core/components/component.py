@@ -9,6 +9,7 @@
 """Base class for workflow components"""
 
 import os
+from typing import Literal
 import subprocess
 import myna
 import myna.database
@@ -200,7 +201,7 @@ class Component:
 
         # Get build name
         input_dir = os.path.abspath(os.path.dirname(os.environ["MYNA_INPUT"]))
-        build = self.data["build"]["name"]
+        build = nested_get(self.data, ["build", "name"], "myna_output")
 
         # Get all other names that are set by the component
         vars = self.types[1:]
@@ -422,7 +423,9 @@ class Component:
 
         return synced_files
 
-    def get_step_args_list(self, operation):
+    def get_step_args_list(
+        self, operation: Literal["configure", "execute", "postprocess"]
+    ):
         """Get the command list for the configure, execute, or postprocess operation
         that can be passed to `subprocess.Popen`
 
@@ -434,7 +437,6 @@ class Component:
         """
 
         # Initialize
-        assert operation in set(["configure", "execute", "postprocess"])
         arg_dict = getattr(self, f"{operation}_dict")
         arglist = []
 
@@ -453,7 +455,30 @@ class Component:
                 return True
             return False
 
-        # Get values from the workspace
+        def _get_arglist(key, value, operation) -> list:
+            """Parse the value to the expected flag format"""
+            if not check_obsolete_args(key, value, operation):
+                # Check for boolean flag
+                if isinstance(value, bool):
+                    # Assume that default flag behavior is False
+                    if value:
+                        return [f"--{key}"]
+
+                # Handle string value
+                if isinstance(value, str):
+                    if " " in value:
+                        return ["--" + str(key), get_quoted_str(value)]
+                    else:
+                        return ["--" + str(key), str(value)]
+
+                # Handle list value
+                elif isinstance(value, list):
+                    arglist.extend(["--" + str(key), *[str(x) for x in value]])
+
+                # If unhandled, return empty
+                return []
+
+        # Get values from the workspace, ignoring any that are in the input file
         if self.workspace is not None:
             workspace_dict = load_input(self.workspace)
             workspace_dict = workspace_dict.get(self.component_application, {})
@@ -462,33 +487,11 @@ class Component:
             for key in workspace_dict.keys():
                 if key not in arg_dict.keys():
                     value = workspace_dict[key]
-                    # Check for flag
-                    if isinstance(workspace_dict[key], bool) and (
-                        not check_obsolete_args(key, value, operation)
-                    ):
-                        # Assume that default flag behavior is False
-                        if value:
-                            arglist.append(f"--{key}")
-
-                    # Else, get value
-                    elif not check_obsolete_args(key, value, operation):
-                        if " " in str(value):
-                            arglist.extend(["--" + str(key), get_quoted_str(value)])
-                        else:
-                            arglist.extend(["--" + str(key), str(value)])
+                    arglist.extend(_get_arglist(key, value, operation))
 
         # Overwrite workspace with any values from the input file
         for key in arg_dict.keys():
             value = arg_dict[key]
-            if isinstance(value, bool) and (
-                not check_obsolete_args(key, value, operation)
-            ):
-                if value:
-                    arglist.append(f"--{key}")
-            elif not check_obsolete_args(key, value, operation):
-                if " " in str(value):
-                    arglist.extend(["--" + str(key), get_quoted_str(value)])
-                else:
-                    arglist.extend(["--" + str(key), str(value)])
+            arglist.extend(_get_arglist(key, value, operation))
 
         return arglist

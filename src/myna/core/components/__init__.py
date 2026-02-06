@@ -40,6 +40,7 @@ following attributes of Component:
 """
 
 from .component_class_lookup import return_step_class
+from .component_calibration import SingleTrackCalibrationComponent
 from .component_cluster import (
     ComponentCluster,
     ComponentClusterSolidification,
@@ -88,6 +89,7 @@ from .component import Component
 
 __all__ = [
     "return_step_class",
+    "SingleTrackCalibrationComponent",
     "ComponentCluster",
     "ComponentClusterSolidification",
     "ComponentClusterSupervoxel",
