@@ -514,7 +514,7 @@ class AdditiveFOAMCalibration(AdditiveFOAM):
             self.logger.debug(
                 f"Copying template ({self.template})\n\t-> case dir ({case_dir})"
             )
-            self.copy(case_dir)
+            self.copy_template_to_case(case_dir)
             self.update_beam_spot_size(None, case_dir, 0.5 * spot * 1e-3)
             heatsource_model = "projectedGaussian"
             update_parameter(
