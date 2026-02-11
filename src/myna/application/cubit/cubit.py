@@ -10,7 +10,6 @@
 inherited by all Myna Component applications in this module."""
 
 import os
-import shutil
 from myna.core.app.base import MynaApp
 
 
