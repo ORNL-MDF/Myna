@@ -68,7 +68,7 @@ class CreepTimeseriesRegionDeerApp(DeerApp):
         Args:
             case_dir: directory to configure into a valid Deer case
             exodus_file: Exodus mesh file associated with the case"""
-        self.copy_template_to_dir(case_dir)
+        self.copy_template_to_case(case_dir)
         self.generate_orientation_file(case_dir, exodus_file)
         self.update_case_loading_parameters(case_dir, exodus_file)
 
