@@ -410,7 +410,7 @@ class AdditiveFOAMRegionReduced(AdditiveFOAM):
         """
 
         # Copy app template to the resource directory
-        self.copy_template_to_dir(case_dict["resource_template_dir"])
+        self.copy_template_to_case(case_dict["resource_template_dir"])
 
         # Generate coarse background mesh
         self.create_coarse_mesh(case_dict)
@@ -478,7 +478,7 @@ class AdditiveFOAMRegionReduced(AdditiveFOAM):
 
     def postprocess(self):
         """Postprocesses all cases"""
-        _, _, files_are_valid = self.sim_class_obj.get_output_files()
+        _, _, files_are_valid = self.component.get_output_files()
         if not all(files_are_valid):
             mynafiles = self.settings["data"]["output_paths"][self.step_name]
             for mynafile in mynafiles:
