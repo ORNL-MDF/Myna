@@ -294,7 +294,7 @@ class MynaApp:
         try:
             case_dir_files = os.listdir(case_dir)
             case_dir_files.remove("myna_data.yaml")
-        except ValueError:
+        except (ValueError, FileNotFoundError):
             case_dir_files = []
 
         # Copy if there are no existing files in the case directory or overwrite is specified
