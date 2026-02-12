@@ -170,7 +170,7 @@ class MynaApp:
         return Path(self.args.template)
 
     @property
-    def sim_class_obj(self):
+    def component_obj(self):
         """Return the corresponding component class. This will be None if
         class name is not in the Component lookup dictionary"""
         if self.class_name is not None:
