@@ -521,7 +521,7 @@ class AdditiveFOAMRegionReduced(AdditiveFOAM):
                     if len(datafiles) > 0:
                         # Header
                         process = self.start_subprocess(
-                            ["echo", "x,y,z,tm,ts,cr"],
+                            ["echo", "x (m),y (m),z (m),tm (s),ts (s),cr (k/s)"],
                             stdout=mf,
                             stderr=f,
                         )
