@@ -478,7 +478,7 @@ class AdditiveFOAMRegionReduced(AdditiveFOAM):
 
     def postprocess(self):
         """Postprocesses all cases"""
-        _, _, files_are_valid = self.component_obj.get_output_files()
+        _, _, files_are_valid = self.component.get_output_files()
         if not all(files_are_valid):
             mynafiles = self.settings["data"]["output_paths"][self.step_name]
             for mynafile in mynafiles:
