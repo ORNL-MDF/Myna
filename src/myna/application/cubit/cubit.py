@@ -10,7 +10,6 @@
 inherited by all Myna Component applications in this module."""
 
 import os
-import shutil
 from myna.core.app.base import MynaApp
 
 
@@ -50,10 +49,3 @@ class CubitApp(MynaApp):
             )
         else:
             self.args.exec = original_executable_arg
-
-    def copy_template_to_dir(self, target_dir):
-        """Copies the specified template directory to the specified target directory"""
-        # Ensure directory structure to target exists
-        os.makedirs(os.path.dirname(target_dir), exist_ok=True)
-        if self.args.template is not None:
-            shutil.copytree(self.args.template, target_dir, dirs_exist_ok=True)

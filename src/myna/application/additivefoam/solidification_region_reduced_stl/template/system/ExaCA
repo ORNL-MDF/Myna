@@ -7,7 +7,7 @@
 ExaCA
 {
     type ExaCA;
-    libs ("libExaCAFunctionObject.so");
+    libs ("libadditiveFoamFunctionObjects.so");
 
     box         ( 0.172 0.072 -0.0003 ) ( 0.173 0.073 0 );
     dx          2.5e-6;

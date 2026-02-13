@@ -115,7 +115,7 @@ class AdditiveFOAMRegionReducedSTL(AdditiveFOAMRegionReduced):
         ]["file_local"]
 
         # Copy app template to the resource directory
-        self.copy_template_to_dir(case_dict["resource_template_dir"])
+        self.copy_template_to_case(case_dict["resource_template_dir"])
 
         # Generate coarse background mesh
         self.create_coarse_mesh(case_dict)

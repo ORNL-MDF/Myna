@@ -56,20 +56,6 @@ class MynaApp:
                 list(x.keys())[0] for x in self.settings["steps"]
             ].index(self.step_name)
 
-        # Check if there is a corresponding component class. This will be None if
-        # class name is not in the Component lookup dictionary
-        if self.class_name is not None:
-            self.sim_class_obj = None
-            try:
-                self.sim_class_obj = return_step_class(self.class_name, verbose=False)
-                self.sim_class_obj.apply_settings(
-                    self.settings["steps"][self.step_number],
-                    self.settings.get("data"),
-                    self.settings.get("myna"),
-                )
-            except KeyError:
-                pass
-
         # Set up argparse
         self.parser = argparse.ArgumentParser(
             description="Configure input files for specified Myna cases"
@@ -183,6 +169,23 @@ class MynaApp:
             return Path(self.path) / "template"
         return Path(self.args.template)
 
+    @property
+    def component(self):
+        """Return the corresponding component class. This will be None if
+        class name is not in the Component lookup dictionary"""
+        if self.class_name is not None:
+            obj = None
+            try:
+                obj = return_step_class(self.class_name, verbose=False)
+                obj.apply_settings(
+                    self.settings["steps"][self.step_number],
+                    self.settings.get("data"),
+                    self.settings.get("myna"),
+                )
+                return obj
+            except KeyError:
+                return obj
+
     def parse_known_args(self):
         """Parse known command line arguments to update self.args and apply
         any corrections"""
@@ -291,7 +294,7 @@ class MynaApp:
         try:
             case_dir_files = os.listdir(case_dir)
             case_dir_files.remove("myna_data.yaml")
-        except ValueError:
+        except (ValueError, FileNotFoundError):
             case_dir_files = []
 
         # Copy if there are no existing files in the case directory or overwrite is specified
