@@ -29,6 +29,7 @@ from .file_reduced_solidification import FileReducedSolidification
 from .file_region import FileRegion, FileBuildRegion
 from .file_temperature import FileTemperature
 from .file_vtk import FileVTK, FilePVD
+from .file_yaml import FileYAML
 
 __all__ = [
     "File",
@@ -45,4 +46,5 @@ __all__ = [
     "FileTemperature",
     "FileVTK",
     "FilePVD",
+    "FileYAML",
 ]

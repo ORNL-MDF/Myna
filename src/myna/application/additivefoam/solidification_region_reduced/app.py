@@ -449,32 +449,7 @@ class AdditiveFOAMRegionReduced(AdditiveFOAM):
             self.args.np,
         )
 
-        with working_directory(case_dict["case_dir"]):
-            # Determine if parallel execution
-            parallel = self.args.np > 1
-
-            # Decompose case
-            if parallel:
-                with open("decomposePar.log", "w", encoding="utf-8") as f:
-                    process = self.start_subprocess(
-                        ["decomposePar", "-force"],
-                        stdout=f,
-                        stderr=subprocess.STDOUT,
-                    )
-                    self.wait_for_process_success(process)
-
-            # Launch job, using MPI arguments if specified
-            with open("additiveFoam.log", "w", encoding="utf-8") as f:
-                cmd_args = [self.args.exec]
-                if parallel:
-                    cmd_args.append("-parallel")
-                process = self.start_subprocess_with_mpi_args(
-                    cmd_args,
-                    stdout=f,
-                    stderr=subprocess.STDOUT,
-                )
-
-        return process
+        return self.run_case(case_dict["case_dir"])
 
     def postprocess(self):
         """Postprocesses all cases"""

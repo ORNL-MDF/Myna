@@ -11,12 +11,15 @@
 import os
 import shutil
 import subprocess
+from pathlib import Path
 import yaml
 import mistlib as mist
 import pandas as pd
 import numpy as np
+from docker.models.containers import Container
 from myna.core.app.base import MynaApp
 from myna.application.openfoam.mesh import update_parameter
+from myna.core.utils import working_directory
 
 
 class AdditiveFOAM(MynaApp):
@@ -29,9 +32,7 @@ class AdditiveFOAM(MynaApp):
 
         # Parse app-specific arguments
         self.parse_known_args()
-        super().validate_executable(
-            "additiveFoam",
-        )
+        print(f"{self.args.exec=}")
         if self.args.exec is None:
             self.args.exec = "additiveFoam"
 
@@ -58,14 +59,17 @@ class AdditiveFOAM(MynaApp):
             matches.append(entry_match)
         return bool(all(matches))
 
-    def update_material_properties(self, case_dir):
+    def update_material_properties(
+        self, case_dir, material: str | None = None
+    ) -> mist.core.MaterialInformation:
         """Update the material properties for the AdditiveFOAM case based on Mist data
 
         Args:
             case_dir: path to the case directory to update
         """
 
-        material = self.settings["data"]["build"]["build_data"]["material"]["value"]
+        if material is None:
+            material = self.settings["data"]["build"]["build_data"]["material"]["value"]
         material_data = os.path.join(
             os.environ["MYNA_INSTALL_PATH"],
             "mist_material_data",
@@ -105,6 +109,7 @@ class AdditiveFOAM(MynaApp):
         if os.path.exists(exaca_dict):
             liquidus = mat.get_property("liquidus_temperature", None, None)
             update_parameter(exaca_dict, "ExaCA/isoValue", liquidus)
+        return mat
 
     def get_region_resource_template_dir(self, part, region):
         """Provides the path to the template directory in the myna_resources folder
@@ -123,19 +128,21 @@ class AdditiveFOAM(MynaApp):
             "template",
         )
 
-    def update_beam_spot_size(self, part, case_dir):
+    def update_beam_spot_size(self, part, case_dir, spot_size: float | None = None):
         """Updates the beam spot size in the case directory's constant/heatSourceDict
 
         Args:
             part: name of part to get spot size from
             case_dir: directory that contains AdditiveFOAM case files to update
+            spot_size: if specified, 2 sigma spot size (i.e., beam radius) in meters
         """
         # Extract the spot size (diameter -> radius & mm -> m)
-        spot_size = (
-            0.5
-            * self.settings["data"]["build"]["parts"][part]["spot_size"]["value"]
-            * 1e-3
-        )
+        if spot_size is None:
+            spot_size = (
+                0.5
+                * self.settings["data"]["build"]["parts"][part]["spot_size"]["value"]
+                * 1e-3
+            )
 
         # Get heatSourceModel
         heat_source_model = (
@@ -180,7 +187,9 @@ class AdditiveFOAM(MynaApp):
             heat_source_dim_string,
         )
 
-    def update_region_start_and_end_times(self, case_dir, bb_dict, scanpath_name):
+    def update_region_start_and_end_times(
+        self, case_dir, bb_dict, scanpath_name
+    ) -> tuple[float, float]:
         """Updates the start and end times of the specified case based on the scan path's
         intersection with the domain
 
@@ -188,6 +197,9 @@ class AdditiveFOAM(MynaApp):
             case_dir: case directory to update
             bb_dict: dictionary defining the bounding box of the region
             scanpath_name: name of the scanpath file in the case's `constant` directory
+
+        Returns:
+            start_time, end_time
         """
         # Read scan path
         df = pd.read_csv(f"{case_dir}/constant/{scanpath_name}", sep=r"\s+")
@@ -204,12 +216,14 @@ class AdditiveFOAM(MynaApp):
                 p1 = [row["X(m)"], row["Y(m)"]]
                 xs = np.linspace(p0[0], p1[0], 1000)
                 ys = np.linspace(p0[1], p1[1], 1000)
-                in_region = any(
-                    (xs > bb_dict["bb_min"][0])
-                    & (xs < bb_dict["bb_max"][0])
-                    & (ys > bb_dict["bb_min"][1])
-                    & (ys < bb_dict["bb_max"][1])
-                )
+                in_region = True
+                if bb_dict is not None:
+                    in_region = any(
+                        (xs > bb_dict["bb_min"][0])
+                        & (xs < bb_dict["bb_max"][0])
+                        & (ys > bb_dict["bb_min"][1])
+                        & (ys < bb_dict["bb_max"][1])
+                    )
                 if in_region:
                     time_bounds[1] = None
                 if in_region and (time_bounds[0] is None):
@@ -233,6 +247,7 @@ class AdditiveFOAM(MynaApp):
 
         time_bounds = np.round(time_bounds, 5)
         self.update_start_and_end_times(case_dir, time_bounds[0], time_bounds[1])
+        return (time_bounds[0], time_bounds[1])
 
     def update_start_and_end_times(self, case_dir, start_time, end_time):
         """Updates the case to adjust the start and end time by adjusting:"
@@ -290,3 +305,37 @@ class AdditiveFOAM(MynaApp):
             "ExaCA/box",
             f"( {bb[0][0]} {bb[0][1]} {bb[0][2]} ) ( {bb[1][0]} {bb[1][1]} {bb[1][2]} )",
         )
+
+    def run_case(self, case_dir: str | Path) -> subprocess.Popen | Container:
+        """Launch the AdditiveFOAM case directory using the MynaApp settings specified"""
+        with working_directory(case_dir):
+            # Determine if parallel execution
+            parallel = self.args.np > 1
+
+            # Decompose case
+            if parallel:
+                update_parameter(
+                    "system/decomposeParDict",
+                    "numberOfSubdomains",
+                    self.args.np,
+                )
+                with open("decomposePar.log", "w", encoding="utf-8") as f:
+                    process = self.start_subprocess(
+                        ["decomposePar", "-force"],
+                        stdout=f,
+                        stderr=subprocess.STDOUT,
+                    )
+                    self.wait_for_process_success(process)
+
+            # Launch job, using MPI arguments if specified
+            with open("additiveFoam.log", "w", encoding="utf-8") as f:
+                cmd_args = [self.args.exec]
+                if parallel:
+                    cmd_args.append("-parallel")
+                process = self.start_subprocess_with_mpi_args(
+                    cmd_args,
+                    stdout=f,
+                    stderr=subprocess.STDOUT,
+                )
+
+            return process
