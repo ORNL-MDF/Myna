@@ -21,6 +21,7 @@ steps:
       overwrite: True
       np: 16
       mpiexec: mpirun
+      mpiargs: --bind-to none
 data:
   build:
     datatype: Peregrine

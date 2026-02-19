@@ -16,9 +16,11 @@ steps:
       exaca-mesh: 10.0e-6
       np: 2
       mpiexec: mpirun
+      mpiargs: --bind-to none
     execute:
       np: 2
       mpiexec: mpirun
+      mpiargs: --bind-to none
 data:
   build:
     datatype: Peregrine

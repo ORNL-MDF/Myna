@@ -16,6 +16,7 @@ steps:
       batch: True
       np: 2
       mpiexec: mpirun
+      mpiargs: --bind-to none
 - exaca:
     class: microstructure_region
     application: exaca

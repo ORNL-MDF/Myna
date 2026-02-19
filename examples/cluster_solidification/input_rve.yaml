@@ -39,6 +39,7 @@ steps:
         batch: True
         np: 24
         mpiexec: mpirun
+        mpiargs: --bind-to none
 data:
   build:
     datatype: Peregrine
