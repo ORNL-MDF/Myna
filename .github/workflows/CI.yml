@@ -33,7 +33,7 @@ jobs:
       matrix:
         python: ["3.10"]
     env:
-      UV_PYTHON: ${{ matrix.python-version }}
+      UV_PYTHON: ${{ matrix.python }}
     steps:
       - name: Checkout Myna
         uses: actions/checkout@v6
@@ -68,7 +68,7 @@ jobs:
       matrix:
         python: ["3.10"]
     env:
-      UV_PYTHON: ${{ matrix.python-version }}
+      UV_PYTHON: ${{ matrix.python }}
     container:
       image: ghcr.io/ornl-mdf/containers/ubuntu:dev
       options: --user root
@@ -84,9 +84,6 @@ jobs:
         with:
           version: "0.9.27"
           enable-cache: true
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
           python-version: ${{ matrix.python }}
       - name: Install the uv project
         run: |
