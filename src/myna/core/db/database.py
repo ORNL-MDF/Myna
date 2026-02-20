@@ -108,5 +108,3 @@ class NoDatabase(Database):
     def sync(self, component_type, step_types, output_class, files):
         """Returns an empty list since there is no database to sync to."""
         return []
-
-    
