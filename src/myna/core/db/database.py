@@ -96,3 +96,17 @@ class NoDatabase(Database):
 
     def exists(self) -> bool:
         return True
+
+    def load(self, metadata_type, **kwargs):
+        """Returns None since there is no database to load from."""
+        return None
+
+    def get_cui_info(self):
+        """Returns 'N/A' since there is no database."""
+        return "N/A"
+
+    def sync(self, component_type, step_types, output_class, files):
+        """Returns an empty list since there is no database to sync to."""
+        return []
+
+    
