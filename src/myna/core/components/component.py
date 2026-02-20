@@ -465,14 +465,14 @@ class Component:
                         return [f"--{key}"]
 
                 # Handle string value
-                if isinstance(value, (str, float, int)):
+                elif isinstance(value, (str, float, int)):
                     if " " in str(value):
                         return ["--" + str(key), get_quoted_str(value)]
                     else:
                         return ["--" + str(key), str(value)]
 
                 # Handle list value
-                if isinstance(value, list):
+                elif isinstance(value, list):
                     return ["--" + str(key), *[str(x) for x in value]]
 
                 # If unhandled, return empty
