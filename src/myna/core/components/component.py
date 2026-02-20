@@ -200,7 +200,7 @@ class Component:
 
         # Get build name
         input_dir = os.path.abspath(os.path.dirname(os.environ["MYNA_INPUT"]))
-        build = self.data["build"]["name"]
+        build = nested_get(self.data, ["build", "name"], "myna_output")
 
         # Get all other names that are set by the component
         vars = self.types[1:]
