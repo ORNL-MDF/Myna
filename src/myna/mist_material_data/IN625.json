@@ -57,7 +57,7 @@
         },
         "marangoni_coefficient": {
             "print_name": "Marangoni coefficient",
-            "value": 2.0e-5,
+            "value": -2.0e-5,
             "unit": "N/(m~K)",
             "reference": "Z. Gan, Y. Lian, S.E. Lin, K.K. Jones, W.K. Liu, G.J. Wagner, Benchmark Study of Thermal Behavior, Surface Topography, and Dendritic Microstructure in Selective Laser Melting of Inconel 625, Integrating Materials and Manufacturing Innovation 8(2) (2019) 178-193.",
             "uncertainty": "None",
@@ -136,5 +136,5 @@
             "print_symbol": "\\alpha"
         }
     },
-    "note": "None."
+    "note": "- The Marangoni coefficient in Gan et al. (2019) is based on fitting of a thermofluidic model to experimental data, not direct measurement"
 }

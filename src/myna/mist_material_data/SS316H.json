@@ -129,7 +129,15 @@
             "reference": "None",
             "uncertainty": "None",
             "print_symbol": "\\alpha"
+        },
+        "marangoni_coefficient": {
+            "print_name": "Marangoni coefficient",
+            "value": -4.0e-4,
+            "unit": "N/(m~K)",
+            "reference": "K.C. Mills, Y. Su, Z. Li, R.F. Brooks, Equations for the calculation of the thermo-physical properties of stainless steel, ISIJ international 44(10) (2004) 1661-1668. DOI:  https://doi.org/10.2355/isijinternational.44.1661.",
+            "uncertainty": "None",
+            "print_symbol": "\frac{\\partial \\gamma}{\\partial T}"
         }
     },
-    "note": "This file currently excludes the surface tension, marangoni coefficient, and the vapor pressure due to the need for function representations other than Laurent polynomials."
+    "note": "- The Marangoni coefficient in Mills et al. (2004) is evaluated at 1925 K and 0 ppm S\n- This file currently excludes the the vapor pressure due to the need for function representations other than Laurent polynomials."
 }
