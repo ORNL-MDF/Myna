@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2024 Oak Ridge National Laboratory.
+# Copyright (c) Oak Ridge National Laboratory.
 #
 # This file is part of Myna. For details, see the top-level license
 # at https://github.com/ORNL-MDF/Myna/LICENSE.md.
@@ -9,6 +9,7 @@
 """Defines application behavior for the thesis/depth_map_part
 simulation type
 """
+
 import os
 import glob
 import polars as pl
@@ -110,7 +111,6 @@ class ThesisDepthMapPart(Thesis):
 
         # Post-process results to convert to Myna format
         for mynafile in myna_files:
-
             # Get list of result file(s), accounting for MPI ranks
             case_directory = os.path.dirname(mynafile)
             case_input_file = os.path.join(case_directory, "ParamInput.txt")

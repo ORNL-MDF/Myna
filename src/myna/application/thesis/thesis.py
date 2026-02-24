@@ -89,7 +89,6 @@ class Thesis(MynaApp):
             case_directory: (str) path to case directory to run
             active_processes: (list) list of Popen process objects"""
         with working_directory(case_directory):
-
             logfile = "myna_thesis_run.log"
             with open(logfile, "w", encoding="utf-8") as f:
                 f.write("# Myna 3DThesis simulation log\n\n")
@@ -149,7 +148,6 @@ class Thesis(MynaApp):
 
         # UPDATE PART-SPECIFIC PARAMETERS
         if part is not None:
-
             # Set beam data
             # - For setting spot size, assume provided spot size is $D4 \sigma$
             # - 3DThesis spot size is $\sqrt(6) \sigma$
@@ -177,7 +175,6 @@ class Thesis(MynaApp):
 
             # UPDATE REGION-SPECIFIC PARAMETERS
             if region is not None:
-
                 # UPDATE LAYER-SPECIFIC PARAMETERS WITHIN THE REGION
                 if layer is not None:
                     # Set up scan path
@@ -189,7 +186,6 @@ class Thesis(MynaApp):
 
             # UPDATE LAYER-SPECIFIC PARAMETERS IF THERE IS NO REGION
             elif layer is not None:
-
                 # Set up scan path
                 myna_scanfile = self.settings["data"]["build"]["parts"][part][
                     "layer_data"
