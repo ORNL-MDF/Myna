@@ -15,13 +15,7 @@ import numpy as np
 import mistlib as mist
 from myna.core.workflow.load_input import load_input
 from myna.core.metadata import Scanpath
-from myna.application.thesis import (
-    get_scan_stats,
-    get_initial_wait_time,
-    get_final_wait_time,
-    adjust_parameter,
-    Thesis,
-)
+from myna.application.thesis import adjust_parameter, Thesis, Path as ThesisPath
 
 
 def configure_case(case_dir, sim, myna_input="myna_data.yaml"):
@@ -103,9 +97,11 @@ def configure_case(case_dir, sim, myna_input="myna_data.yaml"):
             df_segment_only = df[pair[0] : pair[1] + 1]
             df_segment_only.write_csv(fp.name, separator="\t")
             fp.close()
-            segment_time, _ = get_scan_stats(fp.name)
-            segment_time_wait_ini = get_initial_wait_time(fp.name)
-            segment_time_wait_fin = get_final_wait_time(fp.name)
+            thesis_scanpath = ThesisPath()
+            thesis_scanpath.loadData(fp.name)
+            segment_time, _, segment_time_wait_ini, segment_time_wait_fin = (
+                thesis_scanpath.get_all_scan_stats()
+            )
             fraction_segments = int(sim.args.nout * (len(df_segment_only) / len(df)))
             segment_times = np.linspace(
                 elapsed_time + segment_time_wait_ini,
