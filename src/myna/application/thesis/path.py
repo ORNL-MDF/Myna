@@ -170,16 +170,12 @@ class Path:
     def get_initial_wait_time(self) -> float:
         """Returns the wait time at the beginning of a scan path"""
         time = self._get_spot_offtime(0)
-        if time is not None:
-            return float(time)
-        return 0.0
+        return time if time is not None else 0.0
 
     def get_final_wait_time(self) -> float:
         """Returns the wait time at the end of a scan path"""
         time = self._get_spot_offtime(-1)
-        if time is not None:
-            return float(time)
-        return 0.0
+        return time if time is not None else 0.0
 
     data = None
     size = None
