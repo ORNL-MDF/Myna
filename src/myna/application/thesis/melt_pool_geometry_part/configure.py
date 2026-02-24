@@ -93,10 +93,9 @@ def configure_case(case_dir, sim, myna_input="myna_data.yaml"):
         # the write times for the melt pool geometry:
         # - Ignore wait times at beginning and end of the scan segment
         # - Distribute `nout` proportionally by segment row count
-        with tempfile.NamedTemporaryFile(delete=False) as fp:
+        with tempfile.NamedTemporaryFile() as fp:
             df_segment_only = df[pair[0] : pair[1] + 1]
             df_segment_only.write_csv(fp.name, separator="\t")
-            fp.close()
             thesis_scanpath = ThesisPath()
             thesis_scanpath.loadData(fp.name)
             segment_time, _, segment_time_wait_ini, segment_time_wait_fin = (
