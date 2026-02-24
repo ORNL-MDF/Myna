@@ -14,7 +14,7 @@ import polars as pl
 from myna.core.app import MynaApp
 from myna.core.utils import nested_set
 from myna.core.metadata.file_scanpath import Scanpath
-from myna.application.thesis import get_scan_stats, get_initial_wait_time
+import myna.application.thesis as thesis
 
 
 class AdamantineApp(MynaApp):
@@ -147,14 +147,17 @@ class AdamantineApp(MynaApp):
         # Construct output dictionary using the thesis app utilities, given
         # that the Myna scan path is natively in 3DThesis format
         # Units correspond to adamantine units (metric)
-        elapsed_time, scan_distance = get_scan_stats(Path(scanpath_obj.file_local))
-        initial_wait_time = get_initial_wait_time(Path(scanpath_obj.file_local))
+        thesis_scanpath = thesis.Path()
+        thesis_scanpath.loadData(Path(scanpath_obj.file_local))
+        elapsed_time, scan_distance, initial_wait_time, _ = (
+            thesis_scanpath.get_all_scan_stats()
+        )
         scan_dict = {
             "myna_scanfile": Path(scanpath_obj.file_local),
             "case_scanfile": Path(export_file),
             "elapsed_time": elapsed_time - initial_wait_time,
             "scan_distance": scan_distance * 1e-3,
-            "initial_wait": get_initial_wait_time(Path(scanpath_obj.file_local)),
+            "initial_wait": initial_wait_time,
             "bounds": [
                 [df["x"].min(), df["y"].min(), df["z"].min()],
                 [df["x"].max(), df["y"].max(), df["z"].max()],
