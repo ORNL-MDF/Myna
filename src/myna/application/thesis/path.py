@@ -159,8 +159,12 @@ class Path:
         None if the given row index is not a spot command with zero power."""
         if self.data is None:
             return None
+        if len(self.data) == 0:
+            return None
         if row_index < 0:
             row_index = len(self.data) + row_index
+        if row_index < 0 or row_index >= len(self.data):
+            return None
         if (self.data.at[row_index, "Mode"] == 1) and (
             self.data.at[row_index, "Pmod"] == 0
         ):
