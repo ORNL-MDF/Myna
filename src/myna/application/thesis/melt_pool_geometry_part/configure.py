@@ -77,6 +77,7 @@ def configure_case(case_dir, sim, myna_input="myna_data.yaml"):
     pattern = str(Path(case_dir) / "*.txt")
     configured_case_files = sorted(glob.glob(pattern))
     elapsed_time = 0.0
+    total_segments = 0
     for index, pair in enumerate(index_pairs):
         segment_dir = Path(case_dir) / f"path_segment_{index:03}"
         os.makedirs(segment_dir, exist_ok=True)
@@ -93,6 +94,8 @@ def configure_case(case_dir, sim, myna_input="myna_data.yaml"):
         # the write times for the melt pool geometry:
         # - Ignore wait times at beginning and end of the scan segment
         # - Distribute `nout` proportionally by segment row count
+        # - If last segment, ensure that any missing segments due to int() rounding
+        #   are included
         with tempfile.NamedTemporaryFile() as fp:
             df_segment_only = df[pair[0] : pair[1] + 1]
             df_segment_only.write_csv(fp.name, separator="\t")
@@ -101,7 +104,14 @@ def configure_case(case_dir, sim, myna_input="myna_data.yaml"):
             segment_time, _, segment_time_wait_ini, segment_time_wait_fin = (
                 thesis_scanpath.get_all_scan_stats()
             )
-            fraction_segments = int(sim.args.nout * (len(df_segment_only) / len(df)))
+            fraction_segments = (
+                int(sim.args.nout * (len(df_segment_only) / len(df)))
+                if len(df) > 0
+                else 0
+            )
+            total_segments += fraction_segments
+            if index == (len(index_pairs) - 1):
+                fraction_segments += sim.args.nout - total_segments
             segment_times = np.linspace(
                 elapsed_time + segment_time_wait_ini,
                 elapsed_time + segment_time - segment_time_wait_fin,
