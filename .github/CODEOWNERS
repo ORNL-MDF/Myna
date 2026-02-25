@@ -1,0 +1,35 @@
+# Default owners
+*       @gknapp1 @liamnwhite1
+
+# CI / automation
+/.github/   @liamnwhite1
+
+# Core
+/src/myna/core/   @liamnwhite1
+
+# Application wrappers
+/src/myna/application/                @liamnwhite1
+/src/myna/application/adamantine/     @liamnwhite1
+/src/myna/application/additivefoam/   @liamnwhite1
+/src/myna/application/bnpy/           @liamnwhite1
+/src/myna/application/cubit/          @liamnwhite1
+/src/myna/application/deer/           @liamnwhite1
+/src/myna/application/exaca/          @liamnwhite1
+/src/myna/application/openfoam/       @liamnwhite1
+/src/myna/application/rve/            @liamnwhite1
+/src/myna/application/thesis/         @liamnwhite1
+
+# Databases
+/src/myna/database/             @liamnwhite1
+/src/myna/mist_material_data/   @liamnwhite1
+
+# Docs
+/docs/                   @liamnwhite1
+/mkdocs.yml              @liamnwhite1
+/scripts/group_docs.py   @liamnwhite1
+
+# Examples
+/examples/   @liamnwhite1
+
+# Tests
+/tests/      @liamnwhite1
