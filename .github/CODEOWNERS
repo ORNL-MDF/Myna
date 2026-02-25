@@ -1,0 +1,16 @@
+# Code owners are automatically requested for review when someone opens a pull request that modifies code that they own. Code owners 
+# are not automatically requested to review draft pull requests. For more information about code owners, see the GitHub documentation:
+# https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Default owners
+*       @gknapp1 @streeve
+
+# CI / automation
+/.github/   @streeve @gknapp1 @liamnwhite1
+
+# Application wrappers
+/src/myna/application/adamantine/     @stvdwtt @gknapp1
+/src/myna/application/additivefoam/   @colemanjs @gknapp1
+/src/myna/application/exaca/          @MattRolchigo @gknapp1
+/src/myna/application/openfoam/       @colemanjs @gknapp1
+/src/myna/application/thesis/         @JamieStumpORNL @gknapp1
