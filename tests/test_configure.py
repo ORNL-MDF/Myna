@@ -42,6 +42,7 @@ def run_configure(path, example):
 def test_configure():
     examples = [
         "cluster_solidification",
+        "depth_map_part",
         "melt_pool_geometry_part",
         "microstructure_region",
         "microstructure_region_slice",
