@@ -9,6 +9,7 @@
 import os
 import shutil
 import subprocess
+from types import MappingProxyType
 import numpy as np
 import mistlib as mist
 from myna.core.app.base import MynaApp
@@ -66,17 +67,19 @@ class Thesis(MynaApp):
         self.parts = []
 
         # Set case file names
-        self.case_files = {
-            "beam": "Beam.txt",
-            "domain": "Domain.txt",
-            "material": "Material.txt",
-            "path": "Path.txt",
-            "mode": "Mode.txt",
-            "output": "Output.txt",
-            "param": "ParamInput.txt",
-            "settings": "Settings.txt",
-            "log": "myna_thesis_run.log",
-        }
+        self.case_files = MappingProxyType(
+            {
+                "beam": "Beam.txt",
+                "domain": "Domain.txt",
+                "material": "Material.txt",
+                "path": "Path.txt",
+                "mode": "Mode.txt",
+                "output": "Output.txt",
+                "param": "ParamInput.txt",
+                "settings": "Settings.txt",
+                "log": "myna_thesis_run.log",
+            }
+        )
 
     def set_case(self, input_dir, output_dir):
         self.input_dir = input_dir
