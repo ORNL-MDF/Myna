@@ -45,7 +45,7 @@ class ThesisDepthMapPart(Thesis):
         case_info = self.parse_mynafile_path_to_dict(myna_file)
 
         # Copy template case
-        self.copy(case_info["case_dir"])
+        self.copy_template_to_case(case_info["case_dir"])
 
         # Update case parameters
         self.update_case_parameters(
