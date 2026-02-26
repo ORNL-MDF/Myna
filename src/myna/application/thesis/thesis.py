@@ -13,6 +13,7 @@ import numpy as np
 import mistlib as mist
 from myna.core.app.base import MynaApp
 from myna.core.utils import working_directory
+from myna.core.metadata import Scanpath
 from myna.application.thesis import adjust_parameter
 
 
@@ -141,6 +142,8 @@ class Thesis(MynaApp):
             os.environ["MYNA_INSTALL_PATH"], "mist_material_data"
         )
         mist_path = os.path.join(material_dir, f"{material}.json")
+        if not mist_path.startswith(os.path.realpath(material_dir)):
+            raise ValueError(f"Invalid material path: {material}")
         mist_material = mist.core.MaterialInformation(mist_path)
         mist_material.write_3dthesis_input(case_dict["material"])
         laser_absorption = mist_material.get_property("laser_absorption", None, None)
@@ -173,22 +176,9 @@ class Thesis(MynaApp):
             )
             adjust_parameter(case_dict["beam"], "Power", power)
 
-            # UPDATE REGION-SPECIFIC PARAMETERS
-            if region is not None:
-                # UPDATE LAYER-SPECIFIC PARAMETERS WITHIN THE REGION
-                if layer is not None:
-                    # Set up scan path
-                    myna_scanfile = self.settings["data"]["build"]["parts"][part][
-                        "regions"
-                    ][region]["layer_data"][layer]["scanpath"]["file_local"]
-                    case_scanfile = os.path.join(case_directory, "Path.txt")
-                    shutil.copy(myna_scanfile, case_dict["path"])
-
-            # UPDATE LAYER-SPECIFIC PARAMETERS IF THERE IS NO REGION
-            elif layer is not None:
-                # Set up scan path
-                myna_scanfile = self.settings["data"]["build"]["parts"][part][
-                    "layer_data"
-                ][layer]["scanpath"]["file_local"]
-                case_scanfile = os.path.join(case_directory, "Path.txt")
-                shutil.copy(myna_scanfile, case_scanfile)
+            # UPDATE LAYER-SPECIFIC PARAMETERS
+            if layer is not None:
+                # Set up scan path from file object local path to avoid security issues
+                # with reading the file path from (user-modifiable) settings file
+                myna_scanfile = Scanpath(None, part, layer).file_local
+                shutil.copy(myna_scanfile, case_dict["path"])
