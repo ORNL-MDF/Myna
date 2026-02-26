@@ -75,6 +75,7 @@ class Thesis(MynaApp):
             "output": "Output.txt",
             "param": "ParamInput.txt",
             "settings": "Settings.txt",
+            "log": "myna_thesis_run.log",
         }
 
     def set_case(self, input_dir, output_dir):
@@ -90,7 +91,7 @@ class Thesis(MynaApp):
             case_directory: (str) path to case directory to run
             active_processes: (list) list of Popen process objects"""
         with working_directory(case_directory):
-            logfile = "myna_thesis_run.log"
+            logfile = self.case_files["log"]
             with open(logfile, "w", encoding="utf-8") as f:
                 f.write("# Myna 3DThesis simulation log\n\n")
                 f.write(f"- Simulation input directory: {self.input_dir}\n")
