@@ -6,9 +6,9 @@
 #
 # License: 3-clause BSD, see https://opensource.org/licenses/BSD-3-Clause.
 #
+import os
 import pandas as pd
 import numpy as np
-import os
 
 
 class Path:
@@ -122,6 +122,64 @@ class Path:
             self.setEnd()
             if loadIfExists is not None and saveFile:
                 self.data.to_csv(loadIfExists, index=False)
+
+    def get_all_scan_stats(self) -> tuple[float | None, float | None, float, float]:
+        """Returns a list summary information about the currently loaded data:
+
+        - elapsed time of the scan path (s)
+        - linear distance of the scan path (mm)
+        - initial wait time (s)
+        - final wait time (s)
+        """
+        elapsed_time, linear_distance = self.get_elapsed_path_stats()
+        initial_wait_time = self.get_initial_wait_time()
+        final_wait_time = self.get_final_wait_time()
+        return (elapsed_time, linear_distance, initial_wait_time, final_wait_time)
+
+    def get_elapsed_path_stats(self) -> list[float] | list[None]:
+        """Extracts the elapsed time (s) and linear distance (mm) of scanning"""
+
+        if self.data is None:
+            return [None, None]
+
+        # Elapsed time of scan, in seconds
+        elapsed_time = self.data["time"].max()
+
+        # Total path distance, in millimeters
+        self.data["path distance"] = np.power(
+            np.power(self.data["xe"] - self.data["xs"], 2)
+            + np.power(self.data["ye"] - self.data["ys"], 2),
+            0.5,
+        )
+        linear_distance = self.data["path distance"].sum()
+        return [float(elapsed_time), float(linear_distance)]
+
+    def _get_spot_offtime(self, row_index) -> float | None:
+        """Gets the offtime of a spot melt for the given scan path row index, returns
+        None if the given row index is not a spot command with zero power."""
+        if self.data is None:
+            return None
+        if len(self.data) == 0:
+            return None
+        if row_index < 0:
+            row_index = len(self.data) + row_index
+        if row_index < 0 or row_index >= len(self.data):
+            return None
+        if (self.data.at[row_index, "Mode"] == 1) and (
+            self.data.at[row_index, "Pmod"] == 0
+        ):
+            return float(self.data.at[row_index, "tParam"])
+        return None
+
+    def get_initial_wait_time(self) -> float:
+        """Returns the wait time at the beginning of a scan path"""
+        time = self._get_spot_offtime(0)
+        return time if time is not None else 0.0
+
+    def get_final_wait_time(self) -> float:
+        """Returns the wait time at the end of a scan path"""
+        time = self._get_spot_offtime(-1)
+        return time if time is not None else 0.0
 
     data = None
     size = None
