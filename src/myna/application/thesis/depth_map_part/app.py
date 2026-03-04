@@ -19,8 +19,9 @@ from myna.application.thesis import Thesis, adjust_parameter, read_parameter
 class ThesisDepthMapPart(Thesis):
     """Simulation type to simulate a map of the melt pool depth for layers of a part"""
 
-    def __init__(self, name="depth_map_part"):
-        super().__init__(name, output_suffix=".Solidification")
+    def __init__(self):
+        super().__init__(output_suffix=".Solidification")
+        self.class_name = "depth_map_part"
 
     def parse_mynafile_path_to_dict(self, mynafile):
         """Parses the path of the output Myna file into a dictionary containing the
@@ -120,6 +121,7 @@ class ThesisDepthMapPart(Thesis):
             )
             output_files = sorted(glob.glob(result_file_pattern))
             for i, filepath in enumerate(output_files):
+                print(i, ":", filepath)
                 df = pl.read_csv(filepath)
                 df = df.filter(pl.col("z") == df["z"].max())
                 df = df.rename({"x": "x (m)", "y": "y (m)", "depth": "depth (m)"})
