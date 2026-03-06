@@ -146,9 +146,12 @@ class Thesis(MynaApp):
             os.environ["MYNA_INSTALL_PATH"], "mist_material_data"
         )
         mist_path = os.path.join(material_dir, f"{material}.json")
-        if not mist_path.startswith(os.path.realpath(material_dir)):
+        real_material_dir = os.path.realpath(material_dir)
+        real_mist_path = os.path.realpath(mist_path)
+        common_path = os.path.commonpath([real_material_dir, real_mist_path])
+        if common_path != real_material_dir:
             raise ValueError(f"Invalid material path: {material}")
-        mist_material = mist.core.MaterialInformation(mist_path)
+        mist_material = mist.core.MaterialInformation(real_mist_path)
         mist_material.write_3dthesis_input(case_dict["material"])
         laser_absorption = mist_material.get_property("laser_absorption", None, None)
         adjust_parameter(case_dict["beam"], "Efficiency", laser_absorption)
