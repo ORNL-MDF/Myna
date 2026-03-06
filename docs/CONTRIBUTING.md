@@ -21,7 +21,9 @@ Formatting and testing tools are included in optional development dependencies:
 pip install -e .[dev]
 ```
 
-### 2. Run automatic commit checks with pre-commit
+### 2. Make your desired changes.
+
+### 3. Run automatic commit checks with pre-commit
 
 Use `pre-commit` to ensure local changes are ready for review.
 
@@ -41,7 +43,7 @@ Use `pre-commit` to ensure local changes are ready for review.
 
 To skip hooks for a single commit, use `--no-verify`. You can also run checks manually using the commands below.
 
-### 3. Run formatting and linting
+### 4. Run formatting and linting
 
 Myna uses `ruff` for formatting and linting. Run these from the repository root:
 
@@ -52,7 +54,7 @@ ruff check
 
 `pylint` also runs in GitHub CI for deeper analysis. Some warnings are allowed, but CI will fail if too many new warnings reduce quality below the configured threshold.
 
-### 4. Run unit tests
+### 5. Run unit tests
 
 Myna uses `pytest`. Run all tests from the repository root:
 
