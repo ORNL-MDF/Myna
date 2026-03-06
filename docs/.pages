@@ -4,4 +4,5 @@ nav:
   - docker.md
   - cli.md
   - developer_guide.md
+  - CONTRIBUTING.md
   - api-docs

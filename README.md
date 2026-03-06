@@ -117,7 +117,7 @@ available Peregrine v2023-10 dataset. If you use this data, please cite
 
 ## Development
 
-See the [guidelines](CONTRIBUTING.md) on how to contribute.
+See the [guidelines](docs/CONTRIBUTING.md) on how to contribute.
 
 ## License
 
