@@ -144,6 +144,10 @@ Examples:
 
 ### Breaking Changes
 
+Breaking changes are considered to be anything which breaks a previous **user input** or **user interface**.
+Breaking changes also include substantive change to application behavior due to internal changes (e.g.
+new default values).
+
 Use either:
 
 1. `!` before the colon:
