@@ -195,7 +195,7 @@ Branch names follow a similar convention to commit messages:
 
 ### Allowed Types
 
-Branch types include all commit types plus two additional types:
+Branch types include all commit types:
 
 - `feat`
 - `fix`
@@ -208,8 +208,6 @@ Branch types include all commit types plus two additional types:
 - `ci`
 - `chore`
 - `revert`
-- `hotfix`: urgent fixes to production code
-- `release`: release branches
 
 ### Description
 
@@ -220,5 +218,4 @@ Branch types include all commit types plus two additional types:
 Examples:
 
 - `feat/add_export_support`
-- `hotfix/issue_413_fix_crash`
-- `release/v1.2.0`
+- `ci/fix_pipeline`
