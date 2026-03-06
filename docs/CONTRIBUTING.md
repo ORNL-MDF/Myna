@@ -213,12 +213,12 @@ Branch types include all commit types plus two additional types:
 
 ### Description
 
-- Use lowercase, hyphen-separated words.
+- Use lowercase, underscore-separated words.
 - Keep it concise and specific.
 - Include issue identifiers when useful.
 
 Examples:
 
-- `feat/add-export-support`
-- `hotfix/issue-413-fix-crash`
+- `feat/add_export_support`
+- `hotfix/issue_413_fix_crash`
 - `release/v1.2.0`
