@@ -120,6 +120,12 @@ class ThesisDepthMapPart(Thesis):
                 case_directory, "Data", f"{output_name}{self.output_suffix}.Final*.csv"
             )
             output_files = sorted(glob.glob(result_file_pattern))
+            if len(output_files) == 0:
+                print(
+                    "Warning: No depth map result files found for "
+                    f"{case_directory} with pattern {result_file_pattern}"
+                )
+                continue
             for i, filepath in enumerate(output_files):
                 print(i, ":", filepath)
                 df = pl.read_csv(filepath)
