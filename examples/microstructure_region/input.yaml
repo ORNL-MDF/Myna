@@ -15,11 +15,11 @@ steps:
       exaca-mesh: 10.0e-6
       np: 2
       mpiexec: mpirun
-      mpiargs: --bind-to none
+      mpiflags: --bind-to none
     execute:
       np: 2
       mpiexec: mpirun
-      mpiargs: --bind-to none
+      mpiflags: --bind-to none
 - exaca:
     class: microstructure_region
     application: exaca
