@@ -196,6 +196,31 @@ class MynaApp:
             print(f"- Skipping part of step {self.step_name}")
             sys.exit()
 
+    def parse_configure_arguments(self):
+        """Register arguments used by the configure stage.
+
+        Subclasses can override this method and call `self.parse_known_args()`.
+        """
+
+    def parse_execute_arguments(self):
+        """Register arguments used by the execute stage.
+
+        Subclasses can override this method and call `self.parse_known_args()`.
+        """
+
+    def parse_shared_arguments(self):
+        """Register arguments shared across multiple app stages.
+
+        Subclasses can override this method and call `self.parse_known_args()` in the
+        relevant stage-specific parse methods.
+        """
+
+    def parse_postprocess_arguments(self):
+        """Register arguments used by the postprocess stage.
+
+        Subclasses can override this method and call `self.parse_known_args()`.
+        """
+
     def _mpiargs_to_current(self):
         """Function to convert the deprecated `--mpiargs` option to the current
         `--mpiexec`, `--np`, and `--mpiflags` options
