@@ -14,7 +14,8 @@ class ExaCA(MynaApp):
         super().__init__()
         self.app_type = "exaca"
 
-        # Setup ExaCA specific inputs
+    def parse_shared_arguments(self):
+        """Setup ExaCA-specific inputs"""
         self.parser.add_argument(
             "--cell-size", type=float, help="(float) ExaCA cell size in microns"
         )
@@ -44,4 +45,10 @@ class ExaCA(MynaApp):
             help="(float) Grain size of substrate, in microns",
         )
 
+    def parse_configure_arguments(self):
+        self.parse_shared_arguments()
+        self.parse_known_args()
+
+    def parse_execute_arguments(self):
+        self.parse_shared_arguments()
         self.parse_known_args()
