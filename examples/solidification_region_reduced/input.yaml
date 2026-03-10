@@ -16,7 +16,7 @@ steps:
     execute:
       np: 2
       mpiexec: mpirun
-      mpiargs: --bind-to none
+      mpiflags: --bind-to none
 data:
   build:
     datatype: Peregrine
