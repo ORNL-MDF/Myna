@@ -221,6 +221,30 @@ class MynaApp:
         Subclasses can override this method and call `self.parse_known_args()`.
         """
 
+    def configure(self):
+        """Configure the application workflow step.
+
+        Subclasses should override this method instead of implementing workflow logic
+        in the stage wrapper scripts.
+        """
+        raise NotImplementedError
+
+    def execute(self):
+        """Execute the application workflow step.
+
+        Subclasses should override this method instead of implementing workflow logic
+        in the stage wrapper scripts.
+        """
+        raise NotImplementedError
+
+    def postprocess(self):
+        """Postprocess the application workflow step.
+
+        Subclasses should override this method instead of implementing workflow logic
+        in the stage wrapper scripts.
+        """
+        raise NotImplementedError
+
     def _mpiargs_to_current(self):
         """Function to convert the deprecated `--mpiargs` option to the current
         `--mpiexec`, `--np`, and `--mpiflags` options
