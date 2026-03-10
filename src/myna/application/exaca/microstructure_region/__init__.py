@@ -8,3 +8,7 @@
 #
 """Myna application for calculating the microstructure within a given region from
 the reduced data format-type solidification data (FileReducedSolidification)"""
+
+from .app import ExaCAMicrostructureRegion
+
+__all__ = ["ExaCAMicrostructureRegion"]
