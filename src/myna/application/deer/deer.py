@@ -19,10 +19,19 @@ class DeerApp(MynaApp):
     def __init__(self):
         super().__init__()
         self.app_type = "deer"
+
+    def parse_shared_arguments(self):
         self.parser.add_argument(
             "--moosepath",
             default=None,
             type=str,
             help="Path to the root Moose install directory",
         )
+
+    def parse_configure_arguments(self):
+        self.parse_shared_arguments()
+        self.parse_known_args()
+
+    def parse_execute_arguments(self):
+        self.parse_shared_arguments()
         self.parse_known_args()
