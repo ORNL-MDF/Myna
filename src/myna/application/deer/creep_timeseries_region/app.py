@@ -60,7 +60,7 @@ class CreepTimeseriesRegionDeerApp(DeerApp):
             type=float,
             help="(float) load in Newtons",
         )
-        self.parse_known_args()
+        super().parse_configure_arguments()
 
     def configure_case(self, case_dir, exodus_file):
         """Configure a single case
@@ -121,6 +121,7 @@ class CreepTimeseriesRegionDeerApp(DeerApp):
 
     def execute(self):
         """Run all cases for the Myna step"""
+        self.parse_execute_arguments()
         exodus_files = self.settings["data"]["output_paths"][self.last_step_name]
         csv_files = self.settings["data"]["output_paths"][self.step_name]
         processes = []
@@ -133,24 +134,11 @@ class CreepTimeseriesRegionDeerApp(DeerApp):
                 if self.args.batch:
                     processes.append(process)
                 else:
-                    returncode = process.wait()
-                    if returncode != 0:
-                        error_msg = (
-                            f"Subprocess exited with return code {returncode}."
-                            + " Check case log files for details."
-                        )
-                        raise subprocess.SubprocessError(error_msg)
+                    self.wait_for_process_success(process)
 
         # Wait for batched jobs to finish
         if self.args.batch:
-            for process in processes:
-                returncode = process.wait()
-                if returncode != 0:
-                    error_msg = (
-                        f"Subprocess exited with return code {returncode}. "
-                        + "Check case log files for details."
-                    )
-                    raise subprocess.SubprocessError(error_msg)
+            self.wait_for_all_process_success(processes)
 
         # Copy output to the Myna format
         # Deer output has the following column names (units):
