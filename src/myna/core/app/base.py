@@ -194,6 +194,24 @@ class MynaApp:
             )
         return self.component.get_output_files()
 
+    def get_step_output_paths(self, step_name=None):
+        """Return configured output file paths for a workflow step."""
+        if step_name is None:
+            step_name = self.step_name
+        try:
+            return self.settings["data"]["output_paths"][step_name]
+        except KeyError as e:
+            raise KeyError(
+                f"Could not find output paths for step '{step_name}'. "
+                f"Missing key {e} in settings dictionary structure."
+            ) from e
+
+    def get_case_dirs(self, step_name=None, output_paths=None):
+        """Return case directories associated with workflow output files."""
+        if output_paths is None:
+            output_paths = self.get_step_output_paths(step_name)
+        return [os.path.dirname(x) for x in output_paths]
+
     def parse_known_args(self):
         """Parse known command line arguments to update self.args and apply
         any corrections"""
