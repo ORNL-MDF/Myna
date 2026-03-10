@@ -6,8 +6,8 @@
 #
 # License: 3-clause BSD, see https://opensource.org/licenses/BSD-3-Clause.
 #
-"""Myna application for selecting the center of a region"""
+"""RVE application for selecting representative regions from ID maps."""
 
-from .app import RVEPartCenter
+from .app import RVESelection
 
-__all__ = ["RVEPartCenter"]
+__all__ = ["RVESelection"]
