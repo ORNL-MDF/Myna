@@ -8,3 +8,7 @@
 #
 """Myna application for applying a clustering algorithm to solidification data
 (G and V magnitudes and orientations)"""
+
+from .app import BnpyClusterSolidification
+
+__all__ = ["BnpyClusterSolidification"]

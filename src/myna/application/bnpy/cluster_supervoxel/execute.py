@@ -13,7 +13,7 @@ import polars as pl
 import numpy as np
 import matplotlib.pyplot as plt
 import myna.application.bnpy as myna_bnpy
-from .app import BnpyClusterSupervoxel
+from myna.application.bnpy.cluster_supervoxel import BnpyClusterSupervoxel
 from myna.application.bnpy import (
     add_cluster_colormap_colorbar,
     get_scatter_marker_size,
@@ -341,90 +341,7 @@ def run(
 
 def main():
     app = BnpyClusterSupervoxel()
-
-    # Set up argparse
-    parser = app.parser
-    parser.add_argument(
-        "--cluster",
-        default="",
-        type=str,
-        help="input cluster step name" + ", for example: " + "--cluster cluster",
-    )
-    parser.add_argument(
-        "--voxel-model",
-        dest="voxel_model",
-        default="myna_resources/cluster_solidification/voxel_model-sF=0.5-gamma=8",
-        type=str,
-        help="path to model for voxel clustering",
-    )
-    parser.add_argument(
-        "--res",
-        default=250.0e-6,
-        type=float,
-        help="resolution to use for super-voxel size, in meters"
-        + ", for example: "
-        + "--res 250.0e-6",
-    )
-
-    # Parse command line arguments
-    app.args = parser.parse_args()
-
-    try:
-        import bnpy
-    except ImportError:
-        raise ImportError(
-            'Myna bnpy app requires "pip install .[bnpy]" optional dependencies!'
-        )
-
-    # Get latest voxel model
-    voxel_model_path = app.args.voxel_model
-    voxel_model_path = voxel_model_path.replace("/", os.sep)
-    voxel_model_path = sorted(
-        glob.glob(os.path.join(voxel_model_path, "*")), reverse=True
-    )[0]  # Model iteration
-    voxel_model_path = sorted(
-        glob.glob(os.path.join(voxel_model_path, "*")), reverse=True
-    )[0]  # Training iteration
-    voxel_model, lap_val = bnpy.load_model_at_lap(voxel_model_path, None)
-    app.n_voxel_clusters = max(voxel_model.allocModel.K, 2)
-
-    # Get expected Myna output files
-    step_name = os.environ["MYNA_STEP_NAME"]
-    myna_files = app.settings["data"]["output_paths"][step_name]
-    cluster_step_name = app.args.cluster
-    if cluster_step_name == "":
-        cluster_step_name = os.environ["MYNA_LAST_STEP_NAME"]
-    voxel_cluster_files = app.settings["data"]["output_paths"][cluster_step_name]
-
-    # Assemble training data and train model
-    supervoxel_composition_filename = "supervoxel_composition.csv"
-    app.sF = 0.5
-    app.gamma = 8.0
-    if app.args.train_model:
-        trained_model_path, composition_files = train_supervoxel_model(
-            myna_files,
-            voxel_cluster_files,
-            app,
-            comp_file_name=supervoxel_composition_filename,
-        )
-    else:
-        trained_model_path = app.get_latest_model_path()
-        composition_files = [
-            os.path.join(os.path.dirname(myna_file), supervoxel_composition_filename)
-            for myna_file in myna_files
-        ]
-        pass
-
-    # Run clustering on supervoxel compositions
-    print("- Clustering supervoxel data:")
-    for myna_file, composition_file in zip(myna_files, composition_files):
-        print(f"  - {composition_file=}")
-        run(
-            myna_file,
-            composition_file,
-            trained_model_path,
-            app,
-        )
+    app.execute()
 
 
 if __name__ == "__main__":
