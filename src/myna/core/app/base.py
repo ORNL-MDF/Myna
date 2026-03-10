@@ -186,6 +186,14 @@ class MynaApp:
             except KeyError:
                 return obj
 
+    def get_output_file_status(self):
+        """Return the component output file paths, existence, and validity flags."""
+        if self.component is None:
+            raise ValueError(
+                f"MynaApp {self.name} does not have an associated component class."
+            )
+        return self.component.get_output_files()
+
     def parse_known_args(self):
         """Parse known command line arguments to update self.args and apply
         any corrections"""
