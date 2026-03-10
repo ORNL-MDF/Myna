@@ -24,7 +24,23 @@ class Thesis(MynaApp):
     ):
         super().__init__()
         self.app_type = "thesis"
+        self._validate_thesis_executable = validate_executable
 
+        # Set case directories and input files
+        self.input_filename = input_filename
+        self.material_filename = material_filename
+        if input_dir is not None:
+            if output_dir is not None:
+                self.set_case(input_dir, output_dir)
+            else:
+                self.set_case(input_dir, input_dir)
+        self.output_suffix = output_suffix
+
+        # Initialize layer and part tracking arrays
+        self.layers = []
+        self.parts = []
+
+    def parse_shared_arguments(self):
         self.parser.add_argument(
             "--res",
             default=12.5e-6,
@@ -38,25 +54,17 @@ class Thesis(MynaApp):
             help="(int) number of snapshot outputs",
         )
 
+    def parse_configure_arguments(self):
+        self.parse_shared_arguments()
         self.parse_known_args()
-
-        # Set case directories and input files
-        self.input_filename = input_filename
-        self.material_filename = material_filename
-        if input_dir is not None:
-            if output_dir is not None:
-                self.set_case(input_dir, output_dir)
-            else:
-                self.set_case(input_dir, input_dir)
-        self.output_suffix = output_suffix
-
-        # Validate executable
-        if validate_executable:
+        if self._validate_thesis_executable:
             super().validate_executable("3DThesis")
 
-        # Initialize layer and part tracking arrays
-        self.layers = []
-        self.parts = []
+    def parse_execute_arguments(self):
+        self.parse_shared_arguments()
+        self.parse_known_args()
+        if self._validate_thesis_executable:
+            super().validate_executable("3DThesis")
 
     def set_case(self, input_dir, output_dir):
         self.input_dir = input_dir
