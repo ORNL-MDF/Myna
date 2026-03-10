@@ -202,11 +202,22 @@ class MynaApp:
 
         TODO: Remove this function in next release"""
         if self.args.mpiargs is not None:
+            if self.args.mpiexec is not None:
+                raise ValueError(
+                    "--mpiargs (deprecated) may not be used with --mpiexec"
+                )
+            if self.args.mpiflags is not None:
+                warnings.warn(
+                    "--mpiargs (deprecated) settings will overwrite --mpiflags settings"
+                )
             args = self.args.mpiargs.split(" ")
             self.args.mpiexec = args[0].replace('"', "").replace("'", "")
             del args[0]
             for flag in ["-n", "--n", "-np", "--np"]:
                 if flag in args:
+                    warnings.warn(
+                        f"--mpiargs (deprecated) settings will overwrite --{flag} settings"
+                    )
                     np_flag_index = args.index(flag)
                     self.args.np = int(args[np_flag_index + 1])
                     del args[np_flag_index + 1]
