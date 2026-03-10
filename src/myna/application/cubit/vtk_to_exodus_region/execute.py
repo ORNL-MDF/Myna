@@ -12,10 +12,9 @@ from myna.application.cubit.vtk_to_exodus_region import CubitVtkToExodusApp
 
 
 def execute():
-    """Configure all cubit/vtk_to_exodus case directories"""
-    # Create app instance and configure all cases
+    """Execute all cubit/vtk_to_exodus case directories."""
     app = CubitVtkToExodusApp()
-    app.mesh_all_cases()
+    app.execute()
 
 
 if __name__ == "__main__":
