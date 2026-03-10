@@ -27,17 +27,19 @@ class AdditiveFOAMRegionReducedSTL(AdditiveFOAMRegionReduced):
         self.class_name = "solidification_region_reduced_stl"
         self.stl_mesh_dict_name = "stl_mesh_dict.yaml"
 
-    def configure(self):
-        """Configure all cases for the application"""
-        # Check for arguments relevant to the configure step
-        self.parse_configure_arguments()  # args from the AdditiveFOAMRegionReduced app
+    def parse_configure_arguments(self):
         self.parser.add_argument(
             "--scale",
             default=0.001,
             type=float,
             help="Multiple by which to scale the STL file dimensions (default = 0.001, mm -> m)",
         )
-        self.parse_known_args()
+        super().parse_configure_arguments()
+
+    def configure(self):
+        """Configure all cases for the application"""
+        # Check for arguments relevant to the configure step
+        self.parse_configure_arguments()
 
         # Get list of expected output files and iterate through the cases
         mynafiles = self.settings["data"]["output_paths"][self.step_name]
