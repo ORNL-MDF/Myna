@@ -211,11 +211,11 @@ Branch types include all commit types:
 
 ### Description
 
-- Use lowercase, underscore-separated words.
+- Use lowercase, hyphen-separated words.
 - Keep it concise and specific.
 - Include issue identifiers when useful.
 
 Examples:
 
-- `feat/add_export_support`
-- `ci/fix_pipeline`
+- `feat/add-export-support`
+- `ci/fix-pipeline`
