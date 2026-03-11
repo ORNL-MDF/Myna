@@ -1,4 +1,4 @@
-# Code owners are automatically requested for review when someone opens a pull request that modifies code that they own. Code owners 
+# Code owners are automatically requested for review when someone opens a pull request that modifies code that they own. Code owners
 # are not automatically requested to review draft pull requests. For more information about code owners, see the GitHub documentation:
 # https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
 

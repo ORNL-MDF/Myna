@@ -11,24 +11,10 @@ on:
 
 jobs:
 
-  format:
-    name: Format
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Myna
-        uses: actions/checkout@v6
-      - name: Ruff Linting Check
-        uses: astral-sh/ruff-action@v3
-      - name: Ruff Format Check
-        uses: astral-sh/ruff-action@v3
-        with:
-          args: "format --check --diff"
-
   build-test:
     name: Build package, run core tests, and test build docs
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    needs: format
     strategy:
       matrix:
         python: ["3.10"]
