@@ -160,9 +160,9 @@ Use either:
 
    ```text
    <type>(<optional scope>): <description>
-   
+
    <optional body>
-   
+
    BREAKING CHANGE: <description of the breaking change>
    ```
 
@@ -219,3 +219,4 @@ Examples:
 
 - `feat/add-export-support`
 - `ci/fix-pipeline`
+- `fix/113-handle-missing-field`
