@@ -1,0 +1,131 @@
+# Updating the Changelog
+
+`CHANGELOG.md` records notable project changes. Update it for any pull request that introduces behavior, features, fixes, or changes that users, developers, or downstream integrations should be able to discover later.
+
+Myna follows:
+
+* [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
+* [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
+
+> Note: Versions `1.0.0` and `1.1.0` predate this format and do not conform. All newer releases must follow these guidelines.
+
+---
+
+## Where to edit
+
+* Edit [`CHANGELOG.md`](https://github.com/ORNL-MDF/Myna/blob/main/CHANGELOG.md) at the repository root.
+* Add all new changes under `## Unreleased`.
+* Keep releases in reverse chronological order (newest first).
+* Separate releases with `---`.
+
+---
+
+## Versioning
+
+Use `MAJOR.MINOR.PATCH - YYYY-MM-DD` (e.g., `1.2.0 - 2026-03-12`):
+
+* **MAJOR**: backward-incompatible changes
+* **MINOR**: backward-compatible features or enhancements
+* **PATCH**: backward-compatible fixes or minor improvements
+
+---
+
+## Change types
+
+Use only relevant sections:
+
+* `Added`
+* `Changed`
+* `Deprecated`
+* `Removed`
+* `Fixed`
+* `Security`
+* `Breaking changes`
+
+Omit empty sections.
+
+---
+
+## Writing guidelines
+
+* Start each bullet with a verb (`Added`, `Changed`, `Fixed`, etc.).
+* Focus on user-visible outcomes, not implementation details.
+* End each bullet with:
+
+  * Pull request link
+  * All substantive contributors
+* Use the PR that best represents the change.
+* Do not include placeholder text (e.g., `None.`).
+
+---
+
+## Workflow
+
+1. Add changes under `## Unreleased` as PRs merge.
+2. When releasing:
+
+   * Rename `## Unreleased` → `## MAJOR.MINOR.PATCH - YYYY-MM-DD`
+   * Add `### Release highlights` (2–5 bullets summarizing key changes)
+   * Insert a new empty `## Unreleased` section at the top
+
+---
+
+## Canonical structure
+
+Use a single structure for both **Unreleased** and **released versions**:
+
+```markdown
+## <VERSION OR "Unreleased">
+<!--
+- Use "Unreleased" with no date
+- Use "MAJOR.MINOR.PATCH - YYYY-MM-DD" for releases
+- Omit empty sections
+-->
+
+### Release highlights
+<!-- Only include for released versions -->
+
+- Added ...
+- Changed ...
+
+### Added
+
+- Added ... in [#PR_NUMBER](https://github.com/ORNL-MDF/Myna/pull/PR_NUMBER) by [@USERNAME](https://github.com/USERNAME)
+
+### Changed
+
+- Changed ... in [#PR_NUMBER](https://github.com/ORNL-MDF/Myna/pull/PR_NUMBER) by [@USERNAME](https://github.com/USERNAME)
+
+### Deprecated
+
+- Deprecated ... in [#PR_NUMBER](https://github.com/ORNL-MDF/Myna/pull/PR_NUMBER) by [@USERNAME](https://github.com/USERNAME)
+
+### Removed
+
+- Removed ... in [#PR_NUMBER](https://github.com/ORNL-MDF/Myna/pull/PR_NUMBER) by [@USERNAME](https://github.com/USERNAME)
+
+### Fixed
+
+- Fixed ... in [#PR_NUMBER](https://github.com/ORNL-MDF/Myna/pull/PR_NUMBER) by [@USERNAME](https://github.com/USERNAME)
+
+### Security
+
+- Improved security around ... in [#PR_NUMBER](https://github.com/ORNL-MDF/Myna/pull/PR_NUMBER) by [@USERNAME](https://github.com/USERNAME)
+
+### Breaking changes
+
+- Changed ... in [#PR_NUMBER](https://github.com/ORNL-MDF/Myna/pull/PR_NUMBER) by [@USERNAME](https://github.com/USERNAME)
+```
+
+### Key differences
+
+* **Unreleased**
+
+  * Title: `## Unreleased`
+  * No date
+  * No `Release highlights`
+
+* **Released versions**
+
+  * Title includes version and date
+  * Must include `### Release highlights`
