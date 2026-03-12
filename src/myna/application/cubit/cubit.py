@@ -22,13 +22,17 @@ class CubitApp(MynaApp):
     def __init__(self):
         super().__init__()
         self.app_type = "cubit"
+
+    def parse_shared_arguments(self):
         self.parser.add_argument(
             "--cubitpath",
             default=None,
             type=str,
             help="Path to the root Cubit install directory",
         )
-        self.parse_known_args()
+
+    def _validate_cubit_executables(self):
+        """Check that Cubit executables are accessible for the parsed options."""
 
         # Check that all needed executables are accessible. This overrides the
         # assumed behavior that each app only has one executable passed through the
@@ -49,3 +53,13 @@ class CubitApp(MynaApp):
             )
         else:
             self.args.exec = original_executable_arg
+
+    def parse_configure_arguments(self):
+        self.parse_shared_arguments()
+        self.parse_known_args()
+        self._validate_cubit_executables()
+
+    def parse_execute_arguments(self):
+        self.parse_shared_arguments()
+        self.parse_known_args()
+        self._validate_cubit_executables()

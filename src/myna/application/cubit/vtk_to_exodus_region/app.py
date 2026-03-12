@@ -32,6 +32,8 @@ class CubitVtkToExodusApp(CubitApp):
     def __init__(self):
         super().__init__()
         self.class_name = "vtk_to_exodus"
+
+    def parse_execute_arguments(self):
         self.parser.add_argument(
             "--field",
             default="GrainID",
@@ -64,7 +66,7 @@ class CubitVtkToExodusApp(CubitApp):
             help="(str) name of input file in ExaCA Myna workflow step template"
             + "generated the VTK file",
         )
-        self.parse_known_args()
+        super().parse_execute_arguments()
 
     def get_vtk_file_data(self, vtk_file):
         """Extract the data object from a VTK file
@@ -158,13 +160,7 @@ class CubitVtkToExodusApp(CubitApp):
                     stdout=f,
                     stderr=subprocess.STDOUT,
                 )
-                returncode = process.wait()
-                if returncode != 0:
-                    error_msg = (
-                        f"Subprocess exited with return code {returncode}."
-                        + "Check {log_file} for details."
-                    )
-                    raise subprocess.SubprocessError(error_msg)
+                self.wait_for_process_success(process)
 
                 # If mesh was generated in parallel, combine and clean the split mesh
                 tmp_files = glob.glob(exodus_prefix + ".e.*")
@@ -175,13 +171,7 @@ class CubitVtkToExodusApp(CubitApp):
                         stdout=f,
                         stderr=subprocess.STDOUT,
                     )
-                    returncode = process.wait()
-                    if returncode != 0:
-                        error_msg = (
-                            f"Subprocess exited with return code {returncode}."
-                            + " Check {log_file} for details."
-                        )
-                        raise subprocess.SubprocessError(error_msg)
+                    self.wait_for_process_success(process)
 
                     for tmp_file in tmp_files:
                         os.remove(tmp_file)
@@ -239,3 +229,8 @@ class CubitVtkToExodusApp(CubitApp):
         for vtk_file, exodus_file in zip(vtk_files, exodus_files):
             if (not os.path.exists(exodus_file)) or (self.args.overwrite):
                 self.mesh_vtk_file(vtk_file, exodus_file)
+
+    def execute(self):
+        """Execute all cubit/vtk_to_exodus_region cases."""
+        self.parse_execute_arguments()
+        self.mesh_all_cases()
