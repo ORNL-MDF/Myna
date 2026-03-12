@@ -11,7 +11,11 @@ import os
 from myna.core.workflow.load_input import load_input
 import shutil
 import numpy as np
-from myna.application.thesis import get_scan_stats, adjust_parameter, Thesis
+from myna.application.thesis import (
+    adjust_parameter,
+    Thesis,
+    Path as ThesisPath,
+)
 
 
 def configure_case(case_dir, sim, myna_input="myna_data.yaml"):
@@ -69,7 +73,9 @@ def configure_case(case_dir, sim, myna_input="myna_data.yaml"):
 
     # Update output times
     mode_file = os.path.join(case_dir, "Mode.txt")
-    elapsed_time, _ = get_scan_stats(case_scanfile)
+    thesis_scanpath = ThesisPath()
+    thesis_scanpath.loadData(case_scanfile)
+    elapsed_time, _ = thesis_scanpath.get_elapsed_path_stats()
     times = np.linspace(0, elapsed_time, sim.args.nout)
     adjust_parameter(mode_file, "Times", ",".join([str(x) for x in times]))
 
