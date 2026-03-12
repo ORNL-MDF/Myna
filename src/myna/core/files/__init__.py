@@ -21,6 +21,7 @@ component.
 from .file import File, Variable
 from .file_creep import FileCreepTimeSeries
 from .file_exodus import FileExodus
+from .file_depth_map import FileDepthMap
 from .file_grains import FileGrainSlice
 from .file_gv import FileGV
 from .file_id import FileID
@@ -35,6 +36,7 @@ __all__ = [
     "Variable",
     "FileCreepTimeSeries",
     "FileExodus",
+    "FileDepthMap",
     "FileGrainSlice",
     "FileGV",
     "FileID",

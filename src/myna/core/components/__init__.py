@@ -53,6 +53,8 @@ from .component_creep import (
 from .component_melt_pool_geometry import (
     ComponentMeltPoolGeometry,
     ComponentMeltPoolGeometryPart,
+    ComponentDepthMap,
+    ComponentDepthMapPart,
 )
 from .component_mesh import (
     ComponentMesh,
@@ -96,6 +98,8 @@ __all__ = [
     "ComponentCreepTimeSeriesRegion",
     "ComponentMeltPoolGeometry",
     "ComponentMeltPoolGeometryPart",
+    "ComponentDepthMap",
+    "ComponentDepthMapPart",
     "ComponentMesh",
     "ComponentPartMesh",
     "ComponentPartMeshVTK",
