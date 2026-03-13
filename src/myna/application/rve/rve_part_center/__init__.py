@@ -7,3 +7,7 @@
 # License: 3-clause BSD, see https://opensource.org/licenses/BSD-3-Clause.
 #
 """Myna application for selecting the center of a region"""
+
+from .app import RVEPartCenter
+
+__all__ = ["RVEPartCenter"]

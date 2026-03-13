@@ -6,13 +6,8 @@
 #
 # License: 3-clause BSD, see https://opensource.org/licenses/BSD-3-Clause.
 #
-from .app import ExaCAMicrostructureRegionSlice
+"""Myna application for 3DThesis part melt pool geometry outputs."""
 
+from .app import ThesisMeltPoolGeometryPart
 
-def main():
-    app = ExaCAMicrostructureRegionSlice()
-    app.execute()
-
-
-if __name__ == "__main__":
-    main()
+__all__ = ["ThesisMeltPoolGeometryPart"]

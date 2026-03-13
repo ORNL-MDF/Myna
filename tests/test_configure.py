@@ -43,6 +43,7 @@ def test_configure():
     examples = [
         "cluster_solidification",
         "melt_pool_geometry_part",
+        "melt_pool_geometry_part_pelican",
         "microstructure_region",
         "microstructure_region_slice",
         "openfoam_meshing",
@@ -51,9 +52,12 @@ def test_configure():
         "solidification_part",
         "solidification_part_hdf5",
         "solidification_part_json",
+        "solidification_part_pelican",
         "solidification_region_reduced",
         "solidification_region_reduced_stl",
         "temperature_part",
+        "temperature_part_pvd",
+        "vtk_to_exodus_region",
     ]
 
     # This file will be in myna/tests

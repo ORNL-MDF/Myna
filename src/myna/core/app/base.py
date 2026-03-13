@@ -186,6 +186,26 @@ class MynaApp:
             except KeyError:
                 return obj
 
+    def get_output_file_status(self):
+        """Return the component output file paths, existence, and validity flags."""
+        if self.component is None:
+            raise ValueError(
+                f"MynaApp {self.name} does not have an associated component class."
+            )
+        return self.component.get_output_files()
+
+    def get_step_output_paths(self, step_name=None):
+        """Return configured output file paths for a workflow step."""
+        if step_name is None:
+            step_name = self.step_name
+        return self.settings["data"]["output_paths"][step_name]
+
+    def get_case_dirs(self, step_name=None, output_paths=None):
+        """Return case directories associated with workflow output files."""
+        if output_paths is None:
+            output_paths = self.get_step_output_paths(step_name)
+        return [os.path.dirname(x) for x in output_paths]
+
     def parse_known_args(self):
         """Parse known command line arguments to update self.args and apply
         any corrections"""
@@ -195,6 +215,52 @@ class MynaApp:
         if self.args.skip:
             print(f"- Skipping part of step {self.step_name}")
             sys.exit()
+
+    def parse_configure_arguments(self):
+        """Register arguments used by the configure stage.
+
+        Subclasses can override this method and call `self.parse_known_args()`.
+        """
+
+    def parse_execute_arguments(self):
+        """Register arguments used by the execute stage.
+
+        Subclasses can override this method and call `self.parse_known_args()`.
+        """
+
+    def parse_shared_arguments(self):
+        """Register arguments shared across multiple app stages.
+
+        Subclasses can override this method and call `self.parse_known_args()` in the
+        relevant stage-specific parse methods.
+        """
+
+    def parse_postprocess_arguments(self):
+        """Register arguments used by the postprocess stage.
+
+        Subclasses can override this method and call `self.parse_known_args()`.
+        """
+
+    def configure(self):
+        """Configure the application workflow step.
+
+        Subclasses should override this method instead of implementing workflow logic
+        in the stage wrapper scripts.
+        """
+
+    def execute(self):
+        """Execute the application workflow step.
+
+        Subclasses should override this method instead of implementing workflow logic
+        in the stage wrapper scripts.
+        """
+
+    def postprocess(self):
+        """Postprocess the application workflow step.
+
+        Subclasses should override this method instead of implementing workflow logic
+        in the stage wrapper scripts.
+        """
 
     def _mpiargs_to_current(self):
         """Function to convert the deprecated `--mpiargs` option to the current

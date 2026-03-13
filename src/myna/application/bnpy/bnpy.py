@@ -7,7 +7,6 @@
 # License: 3-clause BSD, see https://opensource.org/licenses/BSD-3-Clause.
 #
 from myna.core.app.base import MynaApp
-from myna.core.workflow.load_input import load_input
 import glob
 import os
 
@@ -18,17 +17,12 @@ class Bnpy(MynaApp):
         self.app_type = "bnpy"
         self.sF = 0.5
         self.gamma = 8
-        self.settings = load_input(os.environ["MYNA_INPUT"])
-        self.input_dir = os.path.dirname(os.environ["MYNA_INPUT"])
+        self.input_dir = os.path.dirname(self.input_file)
         self.resource_dir = os.path.join(self.input_dir, "myna_resources")
-        self.resource_template_dir = os.path.join(
-            self.resource_dir, *self.name.split("/")
-        )
-        self.training_dir = os.path.join(
-            self.resource_template_dir, "training_supervoxels"
-        )
-        self.make_directory_structure()
+        self.resource_template_dir = None
+        self.training_dir = None
 
+    def parse_shared_arguments(self):
         self.parser.add_argument(
             "--model",
             default=None,
@@ -42,6 +36,11 @@ class Bnpy(MynaApp):
             action="store_false",
             help="flag to use pre-trained model",
         )
+
+    def parse_execute_arguments(self):
+        self.update_resource_paths()
+        self.parse_shared_arguments()
+        self.parse_known_args()
 
     def get_latest_model_path(self):
         latest_model = sorted(
@@ -62,3 +61,14 @@ class Bnpy(MynaApp):
     def make_directory_structure(self):
         os.makedirs(self.resource_template_dir, exist_ok=True)
         os.makedirs(self.training_dir, exist_ok=True)
+
+    def update_resource_paths(self):
+        if self.class_name is None:
+            return
+        self.resource_template_dir = os.path.join(
+            self.resource_dir, *self.name.split("/")
+        )
+        self.training_dir = os.path.join(
+            self.resource_template_dir, "training_supervoxels"
+        )
+        self.make_directory_structure()

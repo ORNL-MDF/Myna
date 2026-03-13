@@ -6,13 +6,8 @@
 #
 # License: 3-clause BSD, see https://opensource.org/licenses/BSD-3-Clause.
 #
-from .app import ExaCAMicrostructureRegionSlice
+"""RVE application for selecting representative regions from ID maps."""
 
+from .app import RVESelection
 
-def main():
-    app = ExaCAMicrostructureRegionSlice()
-    app.execute()
-
-
-if __name__ == "__main__":
-    main()
+__all__ = ["RVESelection"]

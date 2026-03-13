@@ -9,3 +9,7 @@
 """Myna application for applying a clustering algorithm to supervoxelized data
 containing composition data, intended to be run after the bnpy/cluster_solidification
 app"""
+
+from .app import BnpyClusterSupervoxel
+
+__all__ = ["BnpyClusterSupervoxel"]

@@ -9,12 +9,11 @@
 import os
 import pandas as pd
 import numpy as np
-from myna.core.workflow.load_input import load_input
 import myna.application.bnpy as myna_bnpy
 import glob
 import matplotlib.pyplot as plt
 from myna.application.bnpy import get_representative_distribution
-from .app import BnpyClusterSolidification
+from myna.application.bnpy.cluster_solidification import BnpyClusterSolidification
 
 
 def reduce_thermal_file_to_df(thermal_file):
@@ -330,61 +329,7 @@ def run_clustering(
 
 def main():
     app = BnpyClusterSolidification()
-
-    # Set up argparse
-    parser = app.parser
-    parser.add_argument(
-        "--thermal",
-        default=None,
-        type=str,
-        help='thermal step name, for example: "--thermal 3dthesis"',
-    )
-
-    # Parse command line arguments
-    args = parser.parse_args()
-    settings = load_input(os.environ["MYNA_INPUT"])
-    train_model = args.train_model
-    overwrite = args.overwrite
-
-    # Get expected Myna output files
-    step_name = os.environ["MYNA_STEP_NAME"]
-    myna_files = settings["data"]["output_paths"][step_name]
-    thermal_step_name = args.thermal
-    if thermal_step_name is None:
-        thermal_step_name = os.environ["MYNA_LAST_STEP_NAME"]
-    thermal_files = settings["data"]["output_paths"][thermal_step_name]
-
-    # Assemble training data and train model
-    gamma = 8
-    sF = 0.5
-    if train_model:
-        train_voxel_model(
-            myna_files, thermal_files, sF, gamma, os.path.dirname(app.input_file)
-        )
-
-    # Run clustering using trained model
-    output_files = []
-    for case_dir, thermal_file in zip(
-        [os.path.dirname(x) for x in myna_files], thermal_files
-    ):
-        print("Running clustering for:")
-        print(f"- {case_dir=}")
-        print(f"- {thermal_file=}")
-        output_files.append(
-            run_clustering(
-                case_dir,
-                thermal_file,
-                sF,
-                gamma,
-                overwrite,
-                os.path.dirname(app.input_file),
-            )
-        )
-
-    # Post-process results to convert to Myna format
-    for filepath, mynafile in zip(output_files, myna_files):
-        df = pd.read_csv(filepath)
-        df.to_csv(mynafile, index=False)
+    app.execute()
 
 
 if __name__ == "__main__":
