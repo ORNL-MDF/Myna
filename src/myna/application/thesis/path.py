@@ -64,7 +64,7 @@ class Path:
         saveFile=True,
         xName="X(mm)",
         yName="Y(mm)",
-        timeName="Time(s)",
+        timeName="tParam",
     ):
         if loadIfExists is not None and os.path.exists(loadIfExists):
             self.data = pd.read_csv(loadIfExists)
