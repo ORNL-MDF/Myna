@@ -204,7 +204,7 @@ class MynaApp:
         if self.args.mpiargs is not None:
             if self.args.mpiexec is not None:
                 raise ValueError(
-                    "--mpiargs (deprecated) may not be used with --mpiexec"
+                    "--mpiargs (deprecated input) may not be used with --mpiexec"
                 )
             if self.args.mpiflags is not None:
                 warnings.warn(
@@ -216,7 +216,7 @@ class MynaApp:
             for flag in ["-n", "--n", "-np", "--np"]:
                 if flag in args:
                     warnings.warn(
-                        f"--mpiargs (deprecated) settings will overwrite --{flag} settings"
+                        f"--mpiargs (deprecated input) settings will overwrite {flag} input"
                     )
                     np_flag_index = args.index(flag)
                     self.args.np = int(args[np_flag_index + 1])
