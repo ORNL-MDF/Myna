@@ -9,6 +9,7 @@
 """Base class for workflow components"""
 
 import os
+from pathlib import Path
 from typing import Literal
 import subprocess
 import myna
@@ -202,10 +203,10 @@ class Component:
         # Get build name
         input_dir = os.path.abspath(os.path.dirname(os.environ["MYNA_INPUT"]))
         build = nested_get(self.data, ["build", "name"], "myna_output")
+        filled_template = template.replace("{{build}}", build)
 
         # Get all other names that are set by the component
         vars = self.types[1:]
-        vars_symbols = [f"{{{x}}}" for x in vars]
 
         # Get all possible file names based on template
         if len(vars) >= 1:
@@ -216,6 +217,9 @@ class Component:
             if "build_region" in vars:
                 build_regions = nested_get(self.data, ["build", "build_regions"], {})
                 for build_region in build_regions.keys():
+                    filled_br_template = filled_template.replace(
+                        "{{build_region}}", build_region
+                    )
                     if "layer" in vars:
                         layers = nested_get(
                             self.data,
@@ -223,20 +227,23 @@ class Component:
                             [],
                         )
                         filelist = [
-                            os.path.join(
-                                input_dir,
-                                build,
-                                build_region,
-                                str(x),
-                                self.name,
-                                template,
+                            self._resolve_template_path(
+                                Path(input_dir)
+                                / build
+                                / build_region
+                                / str(x)
+                                / self.name,
+                                filled_br_template.replace("{{layer}}", str(x)),
+                                abspath=abspath,
                             )
                             for x in layers
                         ]
                     else:
                         filelist = [
-                            os.path.join(
-                                input_dir, build, build_region, self.name, template
+                            self._resolve_template_path(
+                                Path(input_dir) / build / build_region / self.name,
+                                filled_br_template,
+                                abspath=abspath,
                             )
                         ]
                     files.extend(filelist)
@@ -245,6 +252,7 @@ class Component:
                     parts = list(self.data["build"]["parts"].keys())
                 if parts is not None:
                     for part in parts:
+                        filled_part_template = filled_template.replace("{{part}}", part)
                         if "region" in vars:
                             try:
                                 regions = list(
@@ -255,30 +263,37 @@ class Component:
                                 return []
                         if regions is not None:
                             for region in regions:
+                                filled_region_template = filled_part_template.replace(
+                                    "{{region}}", region
+                                )
                                 r = self.data["build"]["parts"][part]["regions"][region]
                                 if "layer" in vars:
                                     layers = r["layers"]
                                     filelist = [
-                                        os.path.join(
-                                            input_dir,
-                                            build,
-                                            part,
-                                            region,
-                                            str(x),
-                                            self.name,
-                                            template,
+                                        self._resolve_template_path(
+                                            Path(input_dir)
+                                            / build
+                                            / part
+                                            / region
+                                            / str(x)
+                                            / self.name,
+                                            filled_region_template.replace(
+                                                "{{layer}}", str(x)
+                                            ),
+                                            abspath=abspath,
                                         )
                                         for x in layers
                                     ]
                                 else:
                                     filelist = [
-                                        os.path.join(
-                                            input_dir,
-                                            build,
-                                            part,
-                                            region,
-                                            self.name,
-                                            template,
+                                        self._resolve_template_path(
+                                            Path(input_dir)
+                                            / build
+                                            / part
+                                            / region
+                                            / self.name,
+                                            filled_region_template,
+                                            abspath=abspath,
                                         )
                                     ]
                                 files.extend(filelist)
@@ -286,40 +301,67 @@ class Component:
                             if "layer" in vars:
                                 layers = self.data["build"]["parts"][part]["layers"]
                                 filelist = [
-                                    os.path.join(
-                                        input_dir,
-                                        build,
-                                        part,
-                                        str(x),
-                                        self.name,
-                                        template,
+                                    self._resolve_template_path(
+                                        Path(input_dir)
+                                        / build
+                                        / part
+                                        / str(x)
+                                        / self.name,
+                                        filled_part_template.replace(
+                                            "{{layer}}", str(x)
+                                        ),
+                                        abspath=abspath,
                                     )
                                     for x in layers
                                 ]
                             else:
                                 filelist = [
-                                    os.path.join(
-                                        input_dir, build, part, self.name, template
+                                    self._resolve_template_path(
+                                        Path(input_dir) / build / part / self.name,
+                                        filled_part_template,
+                                        abspath=abspath,
                                     )
                                 ]
                             files.extend(filelist)
 
         elif len(self.types) == 1:
-            files.append(os.path.join(input_dir, build, self.name, template))
+            files.append(
+                self._resolve_template_path(
+                    Path(input_dir) / build / self.name,
+                    filled_template,
+                    abspath=abspath,
+                )
+            )
 
         else:
             print(
                 f"- step {self.name}: No component type specified. Cannot locate output files."
             )
 
-        # Update template symbols with actual values
-        for i in range(len(files)):
-            for var_symbol, var in zip(vars_symbols, vars):
-                files[i] = files[i].replace(var_symbol, var)
-            if abspath:
-                files[i] = os.path.abspath(files[i])
-
         return files
+
+    def _resolve_template_path(self, case_dir, template, abspath=True):
+        """Build a template path and ensure it remains in its case directory."""
+
+        case_dir = Path(case_dir).resolve(strict=False)
+        template_path = Path(template)
+        if template_path.is_absolute():
+            raise ValueError(
+                f"Configured template path must be relative to the workflow case directory: {template}"
+            )
+
+        unresolved_path = case_dir / template_path
+        resolved_path = unresolved_path.resolve(strict=False)
+        try:
+            resolved_path.relative_to(case_dir)
+        except ValueError as exc:
+            raise ValueError(
+                f"Configured template path escapes the workflow case directory: {template}"
+            ) from exc
+
+        if abspath:
+            return str(resolved_path)
+        return str(unresolved_path)
 
     def get_input_files(self, last_step_obj):
         """Return input file paths associated with the component.
