@@ -21,7 +21,7 @@ class DeerApp(MynaApp):
         self.app_type = "deer"
 
     def parse_shared_arguments(self):
-        self.parser.add_argument(
+        self.register_argument(
             "--moosepath",
             default=None,
             type=str,

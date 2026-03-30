@@ -24,7 +24,7 @@ class CubitApp(MynaApp):
         self.app_type = "cubit"
 
     def parse_shared_arguments(self):
-        self.parser.add_argument(
+        self.register_argument(
             "--cubitpath",
             default=None,
             type=str,

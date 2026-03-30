@@ -34,32 +34,32 @@ class CubitVtkToExodusApp(CubitApp):
         self.class_name = "vtk_to_exodus"
 
     def parse_execute_arguments(self):
-        self.parser.add_argument(
+        self.register_argument(
             "--field",
             default="GrainID",
             type=str,
             help="(str) field name of material ids in ExaCA VTK file to use for "
             + "conformal meshing",
         )
-        self.parser.add_argument(
+        self.register_argument(
             "--spn",
             default="material_ids.spn",
             type=str,
             help="output file name containing 1D array of material ids in volume",
         )
-        self.parser.add_argument(
+        self.register_argument(
             "--downsample",
             default=5,
             type=int,
             help="Sample frequency in XYZ (1 is full dataset)",
         )
-        self.parser.add_argument(
+        self.register_argument(
             "--sculptflags",
             default="-S 2 -CS 5 -LI 2 -OI 150 -df 1 -rb 0.2 -A 7 -SS 5",
             type=str,
             help="(str) flags to pass to `psculpt` to control mesh generation",
         )
-        self.parser.add_argument(
+        self.register_argument(
             "--exacainput",
             default="inputs.json",
             type=str,

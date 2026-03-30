@@ -84,20 +84,20 @@ class AdamantineTemperatureApp(AdamantineApp):
 
     def parse_configure_arguments(self):
         """Check for arguments relevant to the configure step and update app settings"""
-        self.parser.add_argument(
+        self.register_argument(
             "--mesh-substrate-depth",
             default=1e-3,
             type=float,
             help="Depth of the substrate to mesh below the scan path, in meters",
         )
-        self.parser.add_argument(
+        self.register_argument(
             "--mesh-substrate-xy-pad",
             default=0.5e-3,
             type=float,
             help="XY padding of the substrate relative to the scan "
             "path bounds, in meters",
         )
-        self.parser.add_argument(
+        self.register_argument(
             "--mesh-size-factor",
             default=1,
             type=float,
@@ -105,7 +105,7 @@ class AdamantineTemperatureApp(AdamantineApp):
             "In x and y, the mesh size is equal to the factor * nominal spot size. "
             "In z, the mesh size is equal to the factor * layer thickness",
         )
-        self.parser.add_argument(
+        self.register_argument(
             "--write-frequency-factor",
             default=5,
             type=float,
@@ -113,26 +113,26 @@ class AdamantineTemperatureApp(AdamantineApp):
             "Output frequency is equal to the"
             "(factor * nominal spot size) / median scan speed",
         )
-        self.parser.add_argument(
+        self.register_argument(
             "--convection-heat-transfer-coef",
             default=100.0,
             type=float,
             help="Heat transfer coefficient for the solid & liquid "
             "convective boundary condition (W m^-2)",
         )
-        self.parser.add_argument(
+        self.register_argument(
             "--convection-temperature-infty",
             default=300.0,
             type=float,
             help="Temperature at x -> infinity for convective boundary condition (K)",
         )
-        self.parser.add_argument(
+        self.register_argument(
             "--radiation-temperature-infty",
             default=300.0,
             type=float,
             help="Temperature at x -> infinity for radiative boundary condition (K)",
         )
-        self.parser.add_argument(
+        self.register_argument(
             "--courant",
             default=0.1,
             type=float,

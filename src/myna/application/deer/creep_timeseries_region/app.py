@@ -48,13 +48,13 @@ class CreepTimeseriesRegionDeerApp(DeerApp):
 
     def parse_configure_arguments(self):
         """Check for arguments relevant to the configure step and update app settings"""
-        self.parser.add_argument(
+        self.register_argument(
             "--loaddir",
             default="z",
             type=str,
             help='(str) loading direction ("x" , "y", "z")',
         )
-        self.parser.add_argument(
+        self.register_argument(
             "--load",
             default="100",
             type=float,

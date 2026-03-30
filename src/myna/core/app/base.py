@@ -18,6 +18,7 @@ import warnings
 from pathlib import Path
 import docker
 from docker.models.containers import Container
+from myna.core.app._argument_registrar import _ArgumentRegistrar
 from myna.core.workflow.load_input import load_input
 from myna.core.utils import is_executable, get_quoted_str
 from myna.core.components import return_step_class
@@ -60,14 +61,15 @@ class MynaApp:
         self.parser = argparse.ArgumentParser(
             description="Configure input files for specified Myna cases"
         )
-        self.parser.add_argument(
+        self._argument_registrar = _ArgumentRegistrar(self.parser)
+        self.register_argument(
             "--template",
             default=None,
             type=str,
             help="(str) path to template, if not specified"
             + " then assume default location",
         )
-        self.parser.add_argument(
+        self.register_argument(
             "--overwrite",
             dest="overwrite",
             default=False,
@@ -75,13 +77,13 @@ class MynaApp:
             help="force regeneration of each run and overwrite of any existing data,"
             + " default = False",
         )
-        self.parser.add_argument(
+        self.register_argument(
             "--exec",
             default=None,
             type=str,
             help="(str) Path to executable",
         )
-        self.parser.add_argument(
+        self.register_argument(
             "--np",
             default=1,
             type=int,
@@ -89,7 +91,7 @@ class MynaApp:
             + "correct to the maximum available processors if "
             + "set too large",
         )
-        self.parser.add_argument(
+        self.register_argument(
             "--maxproc",
             default=None,
             type=int,
@@ -97,14 +99,14 @@ class MynaApp:
             + "correct to the maximum available processors if "
             + "set too large",
         )
-        self.parser.add_argument(
+        self.register_argument(
             "--batch",
             dest="batch",
             default=False,
             action="store_true",
             help="(flag) run jobs in parallel",
         )
-        self.parser.add_argument(
+        self.register_argument(
             "--skip",
             dest="skip",
             default=False,
@@ -112,27 +114,27 @@ class MynaApp:
             help="(flag) if parsed by the app, skip the corresponding"
             + " stage of the component, default = False",
         )
-        self.parser.add_argument(
+        self.register_argument(
             "--mpiexec",
             default=None,
             type=str,
             help="(str) MPI executable to prepend for MPI parallel execution"
             + " (for use with --mpiflags)",
         )
-        self.parser.add_argument(
+        self.register_argument(
             "--mpiflags",
             default=None,
             type=str,
             help="(str) MPI flags to append for MPI parallel execution"
             + " (for use with --mpiexec)",
         )
-        self.parser.add_argument(
+        self.register_argument(
             "--env",
             default=None,
             type=str,
             help="(str) file to source to set up environment for executable",
         )
-        self.parser.add_argument(
+        self.register_argument(
             "--docker-image",
             default=None,
             type=str,
@@ -140,7 +142,7 @@ class MynaApp:
             "MPI options, and environment file will be applied within "
             "the docker container",
         )
-        self.parser.add_argument(
+        self.register_argument(
             "--mpiargs",
             default=None,
             type=str,
@@ -221,6 +223,13 @@ class MynaApp:
         if self.args.skip:
             print(f"- Skipping part of step {self.step_name}")
             sys.exit()
+
+    def register_argument(self, *name_or_flags, **kwargs):
+        """Register an argument with duplicate detection."""
+        return self._argument_registrar.register(
+            *name_or_flags,
+            **kwargs,
+        )
 
     def parse_configure_arguments(self):
         """Register arguments used by the configure stage.

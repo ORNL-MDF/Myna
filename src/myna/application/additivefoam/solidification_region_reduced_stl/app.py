@@ -28,7 +28,7 @@ class AdditiveFOAMRegionReducedSTL(AdditiveFOAMRegionReduced):
         self.stl_mesh_dict_name = "stl_mesh_dict.yaml"
 
     def parse_configure_arguments(self):
-        self.parser.add_argument(
+        self.register_argument(
             "--scale",
             default=0.001,
             type=float,

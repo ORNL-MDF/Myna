@@ -34,65 +34,65 @@ class AdditiveFOAMRegionReduced(AdditiveFOAM):
     def parse_configure_arguments(self):
         """Check for arguments relevant to the configure step and update app settings"""
         # Parse app-specific arguments
-        self.parser.add_argument(
+        self.register_argument(
             "--exaca-mesh",
             default=2.5e-6,
             type=float,
             help="Mesh size for the ExaCA simulations, in meters",
         )
-        self.parser.add_argument(
+        self.register_argument(
             "--rx",
             default=1e-3,
             type=float,
             help="(float) width of region along X-axis, in meters",
         )
-        self.parser.add_argument(
+        self.register_argument(
             "--ry",
             default=1e-3,
             type=float,
             help="(float) width of region along Y-axis, in meters",
         )
-        self.parser.add_argument(
+        self.register_argument(
             "--rz",
             default=1e-3,
             type=float,
             help="(float) depth of region along Z-axis, in meters",
         )
-        self.parser.add_argument(
+        self.register_argument(
             "--pad-xy",
             default=2e-3,
             type=float,
             help="(float) size of single-refinement mesh region around"
             + " the double-refined region in XY, in meters",
         )
-        self.parser.add_argument(
+        self.register_argument(
             "--pad-z",
             default=1e-3,
             type=float,
             help="(float) size of single-refinement mesh region around"
             + " the double-refined region in Z, in meters",
         )
-        self.parser.add_argument(
+        self.register_argument(
             "--pad-sub",
             default=1e-3,
             type=float,
             help="(float) size of coarse mesh cubic region below"
             + " the refined regions in Z, in meters",
         )
-        self.parser.add_argument(
+        self.register_argument(
             "--coarse",
             default=640e-6,
             type=float,
             help="(float) size of fine mesh, in meters",
         )
-        self.parser.add_argument(
+        self.register_argument(
             "--refine-layer",
             default=5,
             type=int,
             help="(int) number of region mesh refinement"
             + " levels in layer (each level halves coarse mesh)",
         )
-        self.parser.add_argument(
+        self.register_argument(
             "--refine-region",
             default=1,
             type=int,
