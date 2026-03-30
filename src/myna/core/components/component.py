@@ -217,7 +217,9 @@ class Component:
             if "build_region" in vars:
                 build_regions = nested_get(self.data, ["build", "build_regions"], {})
                 for build_region in build_regions.keys():
-                    filled_br_template = filled_template.replace("{{build_region}}", build_region)
+                    filled_br_template = filled_template.replace(
+                        "{{build_region}}", build_region
+                    )
                     if "layer" in vars:
                         layers = nested_get(
                             self.data,
@@ -261,7 +263,9 @@ class Component:
                                 return []
                         if regions is not None:
                             for region in regions:
-                                filled_region_template = filled_part_template.replace("{{region}}", region)
+                                filled_region_template = filled_part_template.replace(
+                                    "{{region}}", region
+                                )
                                 r = self.data["build"]["parts"][part]["regions"][region]
                                 if "layer" in vars:
                                     layers = r["layers"]
@@ -273,7 +277,9 @@ class Component:
                                             / region
                                             / str(x)
                                             / self.name,
-                                            filled_region_template.replace("{{layer}}", str(x)),
+                                            filled_region_template.replace(
+                                                "{{layer}}", str(x)
+                                            ),
                                             abspath=abspath,
                                         )
                                         for x in layers
@@ -301,7 +307,9 @@ class Component:
                                         / part
                                         / str(x)
                                         / self.name,
-                                        filled_part_template.replace("{{layer}}", str(x)),
+                                        filled_part_template.replace(
+                                            "{{layer}}", str(x)
+                                        ),
                                         abspath=abspath,
                                     )
                                     for x in layers
