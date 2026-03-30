@@ -203,13 +203,10 @@ class Component:
         # Get build name
         input_dir = os.path.abspath(os.path.dirname(os.environ["MYNA_INPUT"]))
         build = nested_get(self.data, ["build", "name"], "myna_output")
+        filled_template = template.replace("{{build}}", build)
 
         # Get all other names that are set by the component
         vars = self.types[1:]
-        vars_symbols = [f"{{{x}}}" for x in vars]
-        resolved_template = template
-        for var_symbol, var in zip(vars_symbols, vars):
-            resolved_template = resolved_template.replace(var_symbol, var)
 
         # Get all possible file names based on template
         if len(vars) >= 1:
@@ -220,6 +217,7 @@ class Component:
             if "build_region" in vars:
                 build_regions = nested_get(self.data, ["build", "build_regions"], {})
                 for build_region in build_regions.keys():
+                    filled_br_template = filled_template.replace("{{build_region}}", build_region)
                     if "layer" in vars:
                         layers = nested_get(
                             self.data,
@@ -233,7 +231,7 @@ class Component:
                                 / build_region
                                 / str(x)
                                 / self.name,
-                                resolved_template,
+                                filled_br_template.replace("{{layer}}", str(x)),
                                 abspath=abspath,
                             )
                             for x in layers
@@ -242,7 +240,7 @@ class Component:
                         filelist = [
                             self._resolve_template_path(
                                 Path(input_dir) / build / build_region / self.name,
-                                resolved_template,
+                                filled_br_template,
                                 abspath=abspath,
                             )
                         ]
@@ -252,6 +250,7 @@ class Component:
                     parts = list(self.data["build"]["parts"].keys())
                 if parts is not None:
                     for part in parts:
+                        filled_part_template = filled_template.replace("{{part}}", part)
                         if "region" in vars:
                             try:
                                 regions = list(
@@ -262,6 +261,7 @@ class Component:
                                 return []
                         if regions is not None:
                             for region in regions:
+                                filled_region_template = filled_part_template.replace("{{region}}", region)
                                 r = self.data["build"]["parts"][part]["regions"][region]
                                 if "layer" in vars:
                                     layers = r["layers"]
@@ -273,7 +273,7 @@ class Component:
                                             / region
                                             / str(x)
                                             / self.name,
-                                            resolved_template,
+                                            filled_region_template.replace("{{layer}}", str(x)),
                                             abspath=abspath,
                                         )
                                         for x in layers
@@ -286,7 +286,7 @@ class Component:
                                             / part
                                             / region
                                             / self.name,
-                                            resolved_template,
+                                            filled_region_template,
                                             abspath=abspath,
                                         )
                                     ]
@@ -301,7 +301,7 @@ class Component:
                                         / part
                                         / str(x)
                                         / self.name,
-                                        resolved_template,
+                                        filled_part_template.replace("{{layer}}", str(x)),
                                         abspath=abspath,
                                     )
                                     for x in layers
@@ -310,7 +310,7 @@ class Component:
                                 filelist = [
                                     self._resolve_template_path(
                                         Path(input_dir) / build / part / self.name,
-                                        resolved_template,
+                                        filled_part_template,
                                         abspath=abspath,
                                     )
                                 ]
@@ -320,7 +320,7 @@ class Component:
             files.append(
                 self._resolve_template_path(
                     Path(input_dir) / build / self.name,
-                    resolved_template,
+                    filled_template,
                     abspath=abspath,
                 )
             )

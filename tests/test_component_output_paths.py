@@ -46,6 +46,144 @@ def test_get_files_from_template_allows_relative_subdirectories(component, tmp_p
     ]
 
 
+def test_get_files_from_template_renders_part_and_layer_placeholders(
+    component, tmp_path
+):
+    component.types = ["build", "part", "layer"]
+    component.data = {
+        "build": {
+            "name": "build-1",
+            "parts": {
+                "part-a": {"layers": [10]},
+                "part-b": {"layers": [20]},
+            },
+        }
+    }
+
+    files = component.get_files_from_template(
+        "results/{{build}}-{{part}}-{{layer}}.csv"
+    )
+
+    assert files == [
+        str(
+            (
+                tmp_path
+                / "build-1"
+                / "part-a"
+                / "10"
+                / "demo-step"
+                / "results"
+                / "build-1-part-a-10.csv"
+            ).resolve()
+        ),
+        str(
+            (
+                tmp_path
+                / "build-1"
+                / "part-b"
+                / "20"
+                / "demo-step"
+                / "results"
+                / "build-1-part-b-20.csv"
+            ).resolve()
+        ),
+    ]
+
+
+def test_get_files_from_template_renders_part_region_layer_placeholders(
+    component, tmp_path
+):
+    component.types = ["build", "part", "region", "layer"]
+    component.data = {
+        "build": {
+            "name": "build-1",
+            "parts": {
+                "part-a": {
+                    "regions": {
+                        "region-1": {"layers": [30]},
+                        "region-2": {"layers": [40]},
+                    }
+                }
+            },
+        }
+    }
+
+    files = component.get_files_from_template(
+        "results/{{build}}-{{part}}-{{region}}-{{layer}}.csv"
+    )
+
+    assert files == [
+        str(
+            (
+                tmp_path
+                / "build-1"
+                / "part-a"
+                / "region-1"
+                / "30"
+                / "demo-step"
+                / "results"
+                / "build-1-part-a-region-1-30.csv"
+            ).resolve()
+        ),
+        str(
+            (
+                tmp_path
+                / "build-1"
+                / "part-a"
+                / "region-2"
+                / "40"
+                / "demo-step"
+                / "results"
+                / "build-1-part-a-region-2-40.csv"
+            ).resolve()
+        ),
+    ]
+
+
+def test_get_files_from_template_renders_build_region_and_layer_placeholders(
+    component, tmp_path
+):
+    component.types = ["build", "build_region", "layer"]
+    component.data = {
+        "build": {
+            "name": "build-1",
+            "build_regions": {
+                "region-alpha": {"layerlist": [5]},
+                "region-beta": {"layerlist": [6]},
+            },
+        }
+    }
+
+    files = component.get_files_from_template(
+        "results/{{build}}-{{build_region}}-{{layer}}.csv"
+    )
+
+    assert files == [
+        str(
+            (
+                tmp_path
+                / "build-1"
+                / "region-alpha"
+                / "5"
+                / "demo-step"
+                / "results"
+                / "build-1-region-alpha-5.csv"
+            ).resolve()
+        ),
+        str(
+            (
+                tmp_path
+                / "build-1"
+                / "region-beta"
+                / "6"
+                / "demo-step"
+                / "results"
+                / "build-1-region-beta-6.csv"
+            ).resolve()
+        ),
+    ]
+
+
 def test_get_output_files_rejects_traversal(component):
     component.output_template = "../../secret.csv"
 
