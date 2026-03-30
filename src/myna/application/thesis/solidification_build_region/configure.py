@@ -10,7 +10,7 @@ import mistlib as mist
 import os
 from myna.core.workflow.load_input import load_input
 from myna.application.thesis.parse import adjust_parameter
-from myna.application.thesis import get_scan_stats
+from myna.application.thesis import Path as ThesisPath
 import shutil
 import numpy as np
 import polars as pl
@@ -46,7 +46,9 @@ def configure_case(case_dir, sim, myna_input="myna_data.yaml"):
             shutil.copy(myna_scanfile, case_scanfile)
 
             # Add elapsed time to start of scanpath
-            scan_time, _ = get_scan_stats(case_scanfile)
+            thesis_scanpath = ThesisPath()
+            thesis_scanpath.loadData(case_scanfile)
+            scan_time, _ = thesis_scanpath.get_elapsed_path_stats()
             df_scan = pl.read_csv(case_scanfile, separator="\t")
             wait_dict = df_scan.row(0, named=True)
             wait_dict["Mode"] = 1
