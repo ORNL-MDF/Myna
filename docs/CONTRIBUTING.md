@@ -62,6 +62,31 @@ Myna uses `pytest`. Run all tests from the repository root:
 python -m pytest
 ```
 
+### 6. Use the portable Myna agent docs when helpful
+
+Myna includes a portable set of development agent specifications in
+[`docs/agents.md`](agents.md) and [`docs/agents/`](agents/). These documents are
+tool-agnostic and can be used with Codex, Gemini, another assistant, or manually as
+structured review checklists.
+
+Use them when:
+
+- you want a clear primary owner for a task across `core`, applications, tests, and docs
+- a change crosses subsystem boundaries and needs coordination
+- you want consistent done criteria for implementation, regression coverage, and docs
+- you want a review pass on branch hygiene, PR readiness, security-sensitive changes, or PR text
+
+The canonical source of truth is the Markdown documentation in `docs/agents.md`. Any
+tool-specific overlays should defer to these docs rather than redefine the roles.
+
+Codex-specific custom agents are available in `.codex/agents/` as TOML files, with
+shared agent settings in `.codex/config.toml`, but they remain secondary to the
+canonical Markdown docs in `docs/agents/`.
+
+If a branch is otherwise complete but needs pull request cleanup, use the `reviewer`
+agent to assess whether it is single-focus, whether commit history should be rewritten,
+and whether the PR title and description match the actual change.
+
 ## Commit Message Convention
 
 Use [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/):
