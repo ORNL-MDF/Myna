@@ -9,11 +9,15 @@
 
 ## Overview / context
 <!--- Describe the context for this change based on the selected pull request type. -->
-<!--- Bug fix: summarize the bug, how it was reproduced, the root cause, and why this fix addresses it. -->
-<!--- Feature: describe the user problem, the capability added, and the workflow or use case it enables. -->
-<!--- Performance: describe the bottleneck or performance problem and the improvement this change is intended to deliver. -->
-<!--- Refactor: describe the maintainability or architectural problem being addressed and the rationale for the refactor. -->
-<!--- Chore: describe the project, tooling, documentation, configuration, or maintenance goal this change addresses. -->
+<!---
+Pull request types are defined in `docs/CONTRIBUTING.md`. For the more common types,
+please include the relevant details below:
+  - Bug fix (`fix`): summarize the bug, how it was reproduced, the root cause, and why this fix addresses it.
+  - Feature (`feat`): describe the user problem, the capability added, and the workflow or use case it enables.
+  - Performance (`perf`): describe the bottleneck or performance problem and the improvement this change is intended to deliver.
+  - Refactor (`refactor`): describe the maintainability or architectural problem being addressed and the rationale for the refactor.
+  - Chore (`chore`): describe the project, tooling, documentation, configuration, or maintenance goal this change addresses.
+-->
 
 
 ## Implementation approach
@@ -48,19 +52,17 @@
 
 ## Attachments
 <!--- Attach the code, workflow files, artifacts, and evidence that demonstrate the change. -->
-<!--- If an item is not relevant, write N/A. -->
-
-- **Artifacts included:**
-- **Input file (`input.yaml`, `ic.yaml`, or equivalent):**
-- **Workspace file (`*.yaml` or `*.myna-workspace`, if used):**
-- **Example case, CLI workflow, or step added, changed, or validated:**
-- **Example output, synced result, or expected result:**
-- **Minimal example data, build metadata, or directory layout:**
-- **Relevant generated files from `myna_output` and/or `myna_resources`:**
-- **Benchmark, profiling data, logs, terminal output, crash report, or stack trace:**
-- **Screenshot(s), graph(s), diagram(s), or before/after evidence:**
-- **Test output:**
-
+<!---
+Potentially relevant testing artifacts may include:
+- Input file (`input.yaml`, `ic.yaml`, or equivalent):
+- Workspace file (`*.yaml` or `*.myna-workspace`, if used):
+- Example case or CLI workflow used for validation:
+  - Example output, synced result, or expected result:
+  - Relevant generated files/snippets from `myna_output` and/or `myna_resources`:
+- Benchmark, profiling data:
+- Screenshot(s), graph(s), diagram(s):
+- Test output:
+-->
 
 ## Regression risk
 <!--- Assess the risk of regression caused by this change and how it was mitigated. -->
