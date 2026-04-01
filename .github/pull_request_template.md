@@ -5,9 +5,12 @@
 ## Related issues
 <!--- Link to the relevant issue(s) (e.g., "Closes #12" or "Related to #13"). -->
 <!--- This helps automatically link this pull request to the issue in GitHub. -->
+<!--- If no related issues, check the box below to indicate you have considered this -->
+
+- [ ] No related issues.
 
 
-## Overview / context
+## Details
 <!--- Describe the context for this change based on the selected pull request type. -->
 <!---
 Pull request types are defined in `docs/CONTRIBUTING.md`. For the more common types,
@@ -18,9 +21,6 @@ please include the relevant details below:
   - Refactor (`refactor`): describe the maintainability or architectural problem being addressed and the rationale for the refactor.
   - Chore (`chore`): describe the project, tooling, documentation, configuration, or maintenance goal this change addresses.
 -->
-
-
-## Implementation approach
 <!--- Explain how this change was implemented and which parts of the application were changed. -->
 <!--- Focus on the behavior change, structural change, optimization strategy, or workflow outcome rather than just a file list. -->
 
@@ -28,29 +28,24 @@ please include the relevant details below:
 ## Impact
 <!--- Describe any impact on functionality, workflows, performance, maintainability, or user experience. -->
 <!--- If behavior is intended to remain unchanged, state that explicitly. -->
-<!--- If this is a performance change, include measured impact here or in Validation and write N/A if not applicable. -->
+<!--- If this is a performance change, include measured impact here or in Testing strategy details. -->
+
+- Overall risk level of changes (High / Medium / Low) and why:
 
 
 ## Testing strategy
 <!--- Explain how this change was tested or validated to ensure the intended result was achieved without introducing regressions. -->
-<!--- Mark applicable items and write N/A in the surrounding notes when an item does not apply. -->
+<!--- Testing environment details should generally include OS/shell, Python version, install
+method (`uv`/`pip`/`Docker`), command or workflow tested, external application version if relevant,
+and hardware specs if performance-sensitive. -->
 
-- **Testing environment:** [e.g., Myna commit/branch, Python version, install method (`uv`/`pip`/`Docker`), command or workflow tested, input/workspace file, external application version if relevant, OS/shell, hardware specs if performance-sensitive]
-- **Tests performed:**
-  - [ ] The change was tested locally where applicable.
-  - [ ] The primary workflow affected by this change was validated.
-  - [ ] Relevant nearby functionality was checked for regressions.
-  - [ ] Before and after behavior was compared where applicable.
-  - [ ] Before and after performance measurements were collected where applicable.
-  - [ ] Edge cases or failure cases were considered and tested where applicable.
-  - [ ] Non-code or configuration changes were verified where applicable.
-
-## Validation
-<!--- Summarize the evidence that this change is correct. -->
-<!--- Include before/after behavior, screenshots, logs, benchmarks, profiling output, or test results as needed. -->
+  - [ ] The CI test suite covers this change.
+  - [ ] Manual testing performed for this change. If so, please describe.
 
 
-## Attachments
+<!--- Optional Sections: -->
+
+<!-- ## Attachments -->
 <!--- Attach the code, workflow files, artifacts, and evidence that demonstrate the change. -->
 <!---
 Potentially relevant testing artifacts may include:
@@ -63,10 +58,3 @@ Potentially relevant testing artifacts may include:
 - Screenshot(s), graph(s), diagram(s):
 - Test output:
 -->
-
-## Regression risk
-<!--- Assess the risk of regression caused by this change and how it was mitigated. -->
-
-- Risk level (High / Medium / Low):
-- Why:
-- Mitigation or checks performed:
