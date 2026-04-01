@@ -40,24 +40,30 @@ git clone https://github.com/ORNL-MDF/Myna
 Installation and usage using `uv`:
 
 ```bash
-# Depends on installing uv: https://docs.astral.sh/uv/getting-started/installation
-# First, use uv sync to create project .venv and install dependencies
+# Install uv first: https://docs.astral.sh/uv/getting-started/installation
+# Sync the repository environment from the checked-in lockfile
 cd $HOME/Myna
-uv sync
+uv sync --frozen
 
-# Working inside of the repository source, you will be able to use the following,
-# which will automatically update dependencies and changes to the package
+# To work on Myna itself, include the development tools as well
+uv sync --frozen --extra dev
+
+# Working inside the repository source, use uv run to execute the installed CLI
 cd $HOME/Myna/examples/solidification_part
 uv run myna config --output ic.yaml
 uv run myna run --input ic.yaml
 
-# You can also activate the Myna project uv virtual environment like classic Python venv
-# and it will keep up with any changes to the source code (like `pip install -e`)
+# You can also activate the repository virtual environment directly
+# The project itself is installed from the local source tree
 . $HOME/Myna/.venv/bin/activate
 myna config --output ic.yaml
 myna run --input ic.yaml
 
-# To install Myna into an new uv project
+# Add optional application dependencies only when you need them
+cd $HOME/Myna
+uv sync --frozen --extra exaca
+
+# To install Myna into a new uv project
 cd $HOME
 mkdir new-project
 cd new-project
@@ -69,6 +75,8 @@ cd $HOME
 cd existing-project
 uv add $HOME/Myna # use `--editable` flag if desired, default for uv add is not-editable
 ```
+
+If you change dependencies locally, rerun `uv lock` and commit the updated `uv.lock`.
 
 Installation and usage using `pip`:
 

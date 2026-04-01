@@ -34,8 +34,8 @@ jobs:
           python-version: ${{ matrix.python }}
       - name: Install the uv project
         run: |
-          uv lock
-          uv sync --locked --all-extras --dev
+          uv lock --check
+          uv sync --locked --extra dev
       - name: Run pytest (without examples)
         run: uv run --frozen --no-sync pytest
       - name: Analyzing code with pylint
@@ -73,8 +73,8 @@ jobs:
           python-version: ${{ matrix.python }}
       - name: Install the uv project
         run: |
-          uv lock
-          uv sync --locked --all-extras --dev
+          uv lock --check
+          uv sync --locked --all-extras
       - name: Configure Git Safe Directory
         # Needed due to Myna's self-check if it is a git repo
         run: git config --global --add safe.directory $GITHUB_WORKSPACE

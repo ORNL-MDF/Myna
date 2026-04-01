@@ -15,7 +15,14 @@ Open a [pull request](https://help.github.com/articles/using-pull-requests/) aga
 
 ### 1. Install development dependencies
 
-Formatting and testing tools are included in optional development dependencies:
+The recommended workflow uses `uv` and the checked-in `uv.lock` file. Install the
+development tools from the repository root with:
+
+```bash
+uv sync --frozen --extra dev
+```
+
+If you prefer `pip`, the equivalent install is:
 
 ```bash
 pip install -e .[dev]
@@ -30,16 +37,10 @@ Use `pre-commit` to ensure local changes are ready for review.
 1. Install it locally:
 
    ```bash
-   pip install pre-commit
+   uv run pre-commit install
    ```
 
-2. Enable it in this repository:
-
-   ```bash
-   pre-commit install
-   ```
-
-3. Commit normally and allow hooks to run.
+2. Commit normally and allow hooks to run.
 
 To skip hooks for a single commit, use `--no-verify`. You can also run checks manually using the commands below.
 
@@ -48,8 +49,8 @@ To skip hooks for a single commit, use `--no-verify`. You can also run checks ma
 Myna uses `ruff` for formatting and linting. Run these from the repository root:
 
 ```bash
-ruff format
-ruff check
+uv run ruff format
+uv run ruff check
 ```
 
 `pylint` also runs in GitHub CI for deeper analysis. Some warnings are allowed, but CI will fail if too many new warnings reduce quality below the configured threshold.
@@ -59,7 +60,7 @@ ruff check
 Myna uses `pytest`. Run all tests from the repository root:
 
 ```bash
-python -m pytest
+uv run pytest
 ```
 
 ## Commit Message Convention
