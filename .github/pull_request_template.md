@@ -34,7 +34,7 @@ Pull request types are defined in `docs/CONTRIBUTING.md`. For the more common ty
 
 ## Testing strategy
 <!-- Explain how this change was tested or validated to ensure the intended result was achieved without introducing regressions. -->
-<!-- 
+<!--
 Testing environment details should generally include:
 - OS/shell
 - Python version
@@ -48,9 +48,7 @@ Testing environment details should generally include:
 - [ ] Manual testing performed for this change. If so, please describe.
 
 
-<!-- Optional Sections: -->
-
-<!-- ## Attachments -->
+## Attachments
 <!-- Attach the code, workflow files, artifacts, and evidence that demonstrate the change. -->
 <!--
 Potentially relevant testing artifacts may include:
@@ -63,3 +61,6 @@ Potentially relevant testing artifacts may include:
 - Screenshot(s), graph(s), diagram(s)
 - Test output
 -->
+<!-- If there are no attachments relevant to this pull request, check the box below to indicate that you have considered this. -->
+
+- [ ] No relevant attachments.
