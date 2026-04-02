@@ -2,7 +2,7 @@
 
 Thank you for contributing to Myna.
 
-Open a [pull request](https://help.github.com/articles/using-pull-requests/) against `main` with a clear description of your changes. All pull requests must pass CI checks and be approved by at least one Myna developer.
+Open a [pull request](https://help.github.com/articles/using-pull-requests/) against `main` with a clear description of your changes. When opening the pull request, complete the repository PR template to include details relevant to your change. All pull requests must pass CI checks and be approved by at least one Myna developer.
 
 ## Table of Contents
 
