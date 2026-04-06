@@ -5,7 +5,6 @@
 Myna follows:
 
 * [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
-* [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 > Note: Versions `1.0.0` and `1.1.0` predate this format and do not conform. All newer releases must follow these guidelines.
 
@@ -22,11 +21,15 @@ Myna follows:
 
 ## Versioning
 
-Use `MAJOR.MINOR.PATCH - YYYY-MM-DD` (e.g., `1.2.0 - 2026-03-12`):
+Use `MAJOR.MINOR.PATCH - YYYY-MM-DD` (e.g., `1.2.0 - 2026-03-12`) in the header to describe the release:
 
-* **MAJOR**: backward-incompatible changes
-* **MINOR**: backward-compatible features or enhancements
-* **PATCH**: backward-compatible fixes or minor improvements
+- MAJOR: version when you add substantial capability and/or dependency changes
+- MINOR: version when you add incremental functionality
+- PATCH: version when you make backward compatible bug fixes
+
+The release versioning will correspond to the package version in `pyproject.toml`.
+
+Unreleased changes will correspond to the package version of the next MINOR release (e.g., `1.2.0-dev0` is the development package version following `1.1.0` release).
 
 ---
 
