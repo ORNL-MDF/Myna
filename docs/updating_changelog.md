@@ -4,7 +4,7 @@
 
 Myna follows:
 
-* [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
+- [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 > Note: Versions `1.0.0` and `1.1.0` predate this format and do not conform. All newer releases must follow these guidelines.
 
@@ -12,10 +12,10 @@ Myna follows:
 
 ## Where to edit
 
-* Edit [`CHANGELOG.md`](https://github.com/ORNL-MDF/Myna/blob/main/CHANGELOG.md) at the repository root.
-* Add all new changes under `## Unreleased`.
-* Keep releases in reverse chronological order (newest first).
-* Separate releases with `---`.
+- Edit [`CHANGELOG.md`](https://github.com/ORNL-MDF/Myna/blob/main/CHANGELOG.md) at the repository root.
+- Add all new changes under `## Unreleased`.
+- Keep releases in reverse chronological order (newest first).
+- Separate releases with `---`.
 
 ---
 
@@ -37,13 +37,13 @@ Unreleased changes will correspond to the package version of the next MINOR rele
 
 Use only relevant sections:
 
-* `Added`
-* `Changed`
-* `Deprecated`
-* `Removed`
-* `Fixed`
-* `Security`
-* `Breaking changes`
+- `Added`
+- `Changed`
+- `Deprecated`
+- `Removed`
+- `Fixed`
+- `Security`
+- `Breaking changes`
 
 Omit empty sections.
 
@@ -51,14 +51,13 @@ Omit empty sections.
 
 ## Writing guidelines
 
-* Start each bullet with a verb (`Added`, `Changed`, `Fixed`, etc.).
-* Focus on user-visible outcomes, not implementation details.
-* End each bullet with:
-
-  * Pull request link
-  * All substantive contributors
-* Use the PR that best represents the change.
-* Do not include placeholder text (e.g., `None.`).
+- Start each bullet with a verb (`Added`, `Changed`, `Fixed`, etc.).
+- Focus on user-visible outcomes, not implementation details.
+- End each bullet with:
+  - Pull request link
+  - All substantive contributors
+- Use the PR that best represents the change.
+- Do not include placeholder text (e.g., `None.`).
 
 ---
 
@@ -67,15 +66,15 @@ Omit empty sections.
 1. Add changes under `## Unreleased` as PRs merge.
 2. When releasing:
 
-   * Rename `## Unreleased` → `## MAJOR.MINOR.PATCH - YYYY-MM-DD`
-   * Add `### Release highlights` (2–5 bullets summarizing key changes)
-   * Insert a new empty `## Unreleased` section at the top
+   - Rename `## Unreleased` → `## MAJOR.MINOR.PATCH - YYYY-MM-DD`
+   - Add `### Release highlights` (2–5 bullets summarizing key changes)
+   - Insert a new empty `## Unreleased` section at the top
 
 ---
 
 ## Canonical structure
 
-Use a single structure for both **Unreleased** and **released versions**:
+Use a single structure for both **Unreleased*- and **released versions**:
 
 ```markdown
 ## <VERSION OR "Unreleased">
@@ -122,13 +121,13 @@ Use a single structure for both **Unreleased** and **released versions**:
 
 ### Key differences
 
-* **Unreleased**
+- **Unreleased**
 
-  * Title: `## Unreleased`
-  * No date
-  * No `Release highlights`
+  - Title: `## Unreleased`
+  - No date
+  - No `Release highlights`
 
-* **Released versions**
+- **Released versions**
 
-  * Title includes version and date
-  * Must include `### Release highlights`
+  - Title includes version and date
+  - Must include `### Release highlights`
