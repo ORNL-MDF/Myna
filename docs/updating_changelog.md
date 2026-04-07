@@ -5,6 +5,7 @@
 Myna follows:
 
 - [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
+- [The Good Docs Project - Changelog Template](https://www.thegooddocsproject.dev/template/changelog)
 
 ---
 
@@ -79,36 +80,49 @@ Use a single structure for both **Unreleased** and **released versions**:
 -->
 
 ### Release highlights
-<!-- Only include for released versions -->
+<!--
+Only include for released versions.
+Summarize the most important new features, enhancements, fixes, or breaking changes that were introduced in this release.
+-->
 
 - Added ...
 - Changed ...
 
 ### Added
+<!-- Describe new features added since the last release and why they matter. -->
 
 - Added ...
 
 ### Changed
+<!-- Describe updates to existing functionality, such as improved behavior, performance, or error handling. -->
 
 - Changed ...
 
 ### Deprecated
+<!-- List features being phased out, explain why, and point readers to the recommended alternative. -->
 
 - Deprecated ...
 
 ### Removed
+<!-- List features, commands, APIs, or behaviors that were removed in this release. -->
 
 - Removed ...
 
 ### Fixed
+<!--
+Describe bugs fixed in this release and how the fixes improve the user experience.
+Link to the PR or issue that fixed the bug, if applicable.
+-->
 
 - Fixed ...
 
 ### Security
+<!-- List any resolved common vulnerabilities and exposures (CVEs) or other security improvements. -->
 
 - Improved security around ...
 
 ### Breaking changes
+<!-- Describe incompatible changes and any upgrade steps users need to take. -->
 
 - Changed ...
 ```
