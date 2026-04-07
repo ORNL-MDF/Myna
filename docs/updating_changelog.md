@@ -6,8 +6,6 @@ Myna follows:
 
 - [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
-> Note: Versions `1.0.0` and `1.1.0` predate this format and do not conform. All newer releases must follow these guidelines.
-
 ---
 
 ## Where to edit
@@ -53,10 +51,6 @@ Omit empty sections.
 
 - Start each bullet with a verb (`Added`, `Changed`, `Fixed`, etc.).
 - Focus on user-visible outcomes, not implementation details.
-- End each bullet with:
-  - Pull request link
-  - All substantive contributors
-- Use the PR that best represents the change.
 - Do not include placeholder text (e.g., `None.`).
 
 ---
@@ -74,7 +68,7 @@ Omit empty sections.
 
 ## Canonical structure
 
-Use a single structure for both **Unreleased*- and **released versions**:
+Use a single structure for both **Unreleased** and **released versions**:
 
 ```markdown
 ## <VERSION OR "Unreleased">
@@ -92,31 +86,31 @@ Use a single structure for both **Unreleased*- and **released versions**:
 
 ### Added
 
-- Added ... in [#PR_NUMBER](https://github.com/ORNL-MDF/Myna/pull/PR_NUMBER) by [@USERNAME](https://github.com/USERNAME)
+- Added ...
 
 ### Changed
 
-- Changed ... in [#PR_NUMBER](https://github.com/ORNL-MDF/Myna/pull/PR_NUMBER) by [@USERNAME](https://github.com/USERNAME)
+- Changed ...
 
 ### Deprecated
 
-- Deprecated ... in [#PR_NUMBER](https://github.com/ORNL-MDF/Myna/pull/PR_NUMBER) by [@USERNAME](https://github.com/USERNAME)
+- Deprecated ...
 
 ### Removed
 
-- Removed ... in [#PR_NUMBER](https://github.com/ORNL-MDF/Myna/pull/PR_NUMBER) by [@USERNAME](https://github.com/USERNAME)
+- Removed ...
 
 ### Fixed
 
-- Fixed ... in [#PR_NUMBER](https://github.com/ORNL-MDF/Myna/pull/PR_NUMBER) by [@USERNAME](https://github.com/USERNAME)
+- Fixed ...
 
 ### Security
 
-- Improved security around ... in [#PR_NUMBER](https://github.com/ORNL-MDF/Myna/pull/PR_NUMBER) by [@USERNAME](https://github.com/USERNAME)
+- Improved security around ...
 
 ### Breaking changes
 
-- Changed ... in [#PR_NUMBER](https://github.com/ORNL-MDF/Myna/pull/PR_NUMBER) by [@USERNAME](https://github.com/USERNAME)
+- Changed ...
 ```
 
 ### Key differences
