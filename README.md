@@ -123,7 +123,9 @@ available Peregrine v2023-10 dataset. If you use this data, please cite
 
 ## Development
 
-See the [guidelines](docs/CONTRIBUTING.md) on how to contribute.
+See the [guidelines](docs/CONTRIBUTING.md) on how to contribute. Contributors who want
+structured task routing can also use the portable Myna agent docs in
+[docs/agents.md](docs/agents.md).
 
 ## License
 
