@@ -30,17 +30,20 @@ pip install -e .[dev]
 
 ### 2. Make your desired changes.
 
+If you change dependencies locally, rerun `uv lock` and commit the updated `uv.lock`.
+
 ### 3. Run automatic commit checks with pre-commit
 
 Use `pre-commit` to ensure local changes are ready for review.
 
-1. Install it locally:
+First, install pre-commit locally:
 
-   ```bash
-   uv run pre-commit install
-   ```
+```bash
+uv tool install pre-commit --with pre-commit-uv
+```
 
-2. Commit normally and allow hooks to run.
+Then commit normally and allow hooks to run. You can run `pre-commit` in the repo root
+directory to manually run pre-commit hooks at any time.
 
 To skip hooks for a single commit, use `--no-verify`. You can also run checks manually using the commands below.
 

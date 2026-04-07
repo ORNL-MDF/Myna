@@ -76,8 +76,6 @@ cd existing-project
 uv add $HOME/Myna # use `--editable` flag if desired, default for uv add is not-editable
 ```
 
-If you change dependencies locally, rerun `uv lock` and commit the updated `uv.lock`.
-
 Installation and usage using `pip`:
 
 ```bash
