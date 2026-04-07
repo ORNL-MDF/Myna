@@ -24,6 +24,7 @@ repos:
         # Ref abbrev, variable name, Mist mis-spelling
         # Passing config from toml does not work.
         args: ["-L", "mater,nd,coefficent,ot"]
+        exclude: "uv.lock"
 
   - repo: https://github.com/johann-petrak/licenseheaders
     rev: v0.8.8

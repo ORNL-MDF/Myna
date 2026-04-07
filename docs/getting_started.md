@@ -6,10 +6,9 @@ title: Getting Started
 
 ### Local Installation
 
-Myna is a Python package which requires Python 3. You must install it locally as an
-editable package using `pip install -e .`, which is a temporary requirement that will
-be changed in future releases. The `myna` package is not on PyPI. To install `myna`
-follow the instructions below.
+Myna is a Python package which requires Python 3.10 or later. The `myna` package is
+not on PyPI, so install it from a local clone of this repository. The recommended
+workflow uses `uv` and the checked-in `uv.lock` file.
 
 If you have anaconda3 installed, you can use the `install_conda_env.sh`
 script to create a conda environment named "myna" that has Myna installed.
@@ -19,27 +18,52 @@ script to create a conda environment named "myna" that has Myna installed.
 git clone https://github.com/ORNL-MDF/Myna
 cd Myna
 
-# Myna MUST be installed as an editable package using the `-e` flag
-pip install -e .
+# Install uv first: https://docs.astral.sh/uv/getting-started/installation
+# Sync the default runtime environment from the checked-in lockfile
+uv sync --frozen
 ```
 
 Note that this does not install external, non-Python dependencies. See
 [Installation of external dependencies](#installation-of-external-dependencies)
 for additional details.
 
-#### Installation for Developers
-
-For developers, `pip install -e .[dev]` will install the optional `pytest` dependency,
-as well as `ruff` for autoformatting and linting. The repository currently uses the default `ruff`
-autoformatting. Test scripts are included with the repository in the "tests" directory.
-Examples of using pytest are given below.
+If you prefer to use `pip`, the following still works:
 
 ```bash
-# Default tests for aspects myna Python package installation
-pytest
+pip install -e .
+```
+
+#### Installation for Developers
+
+For developers, install the optional `dev` extra so that `pytest`, `ruff`,
+`pre-commit`, and the documentation tooling are available:
+
+```bash
+uv sync --frozen --extra dev
+```
+
+You can add other optional application dependencies only when you need them:
+
+```bash
+uv sync --frozen --extra exaca
+uv sync --frozen --extra bnpy
+```
+
+If you prefer `pip`, the equivalent developer install is:
+
+```bash
+pip install -e .[dev]
+```
+
+Test scripts are included with the repository in the `tests` directory. Examples of
+using `pytest` are given below.
+
+```bash
+# Default tests for aspects of the Myna Python package installation
+uv run pytest
 
 # Include optional tests that check application functionality
-pytest --apps
+uv run pytest --apps
 ```
 
 #### Installation of External Dependencies
