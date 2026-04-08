@@ -14,5 +14,5 @@
 
 
 ## Acceptance criteria
-<!-- List the conditions that must be met for this work to be considered complete and successful. -->
-<!-- These should be specific, testable, and measurable criteria covering behavior, maintainability, performance targets, or completion outcomes as relevant. -->
+<!-- List the conditions that must be met to close this issue as complete. -->
+<!-- Criteria should be specific and measurable, e.g., "Myna is able to read .XYZ format of input file". Checklist format is preferred. -->
