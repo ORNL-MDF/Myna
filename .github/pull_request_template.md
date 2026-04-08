@@ -13,7 +13,7 @@
 ## Details
 <!-- Describe the context for this change based on the selected pull request type. -->
 <!--
-Pull request types are defined in `docs/CONTRIBUTING.md`. For the more common types, please include the relevant details below:
+Pull request types are defined in `CONTRIBUTING.md`. For the more common types, please include the relevant details below:
 - Bug fix (`fix`): summarize the bug, how it was reproduced, the root cause, and why this fix addresses it.
 - Feature (`feat`): describe the user problem, the capability added, and the workflow or use case it enables.
 - Performance (`perf`): describe the bottleneck or performance problem and the improvement this change is intended to deliver.
