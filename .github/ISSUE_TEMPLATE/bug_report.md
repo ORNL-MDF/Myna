@@ -4,28 +4,19 @@
 
 ## Steps to reproduce
 <!-- List the exact commands, inputs, or workflow steps needed to reproduce the issue. -->
+<!-- Describe how often this happens and whether you have noticed any pattern. -->
 
 
-## Actual behavior
-<!-- Describe what actually happened, including errors, crashes, incorrect output, or other unexpected results. -->
+## Observed behavior
+<!-- Describe what happened when following the steps above, including any errors, crashes, incorrect output, or other unexpected results. -->
 
 
 ## Expected behavior
 <!-- Describe what you expected to happen when following the same steps. -->
 
 
-## Reproducibility
-<!-- Describe how often this happens and whether you have noticed any pattern. -->
-
-- Reproduces: always / sometimes / once
-- Frequency or pattern:
-
 ## Environment
 <!-- Describe the setup where the issue occurred, including OS, shell, Python version, Myna version, install method, and any other relevant environment details. -->
-
-
-## Additional context
-<!-- Add supporting details such as logs, screenshots, workarounds, or links to related issues. -->
 
 
 ## Possible solution
