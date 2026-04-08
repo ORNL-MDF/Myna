@@ -1,6 +1,6 @@
 ## Summary
-<!-- Briefly describe the requested development work as concisely as possible. -->
-<!-- This may be a refactor, performance improvement, or chore. -->
+<!-- Briefly describe the development task being requested. -->
+<!-- This may be a refactor, performance improvement, chore, etc. -->
 
 
 ## Background
