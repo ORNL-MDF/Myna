@@ -5,9 +5,6 @@
 ## Steps to reproduce
 <!-- List the exact commands, inputs, or workflow steps needed to reproduce the issue. -->
 
-1.
-2.
-3.
 
 ## Actual behavior
 <!-- Describe what actually happened, including errors, crashes, incorrect output, or other unexpected results. -->
