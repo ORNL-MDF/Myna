@@ -49,7 +49,7 @@ uv sync --frozen
 uv sync --frozen --extra dev
 
 # Working inside the repository source, use uv run to execute the installed CLI
-cd $HOME/Myna/examples/solidification_part
+cd $HOME/Myna/examples/cases/solidification_part
 uv run myna config --output ic.yaml
 uv run myna run --input ic.yaml
 
@@ -84,7 +84,7 @@ pip install .    # non-editable install
 pip install -e . # editable install
 
 # Run an example
-cd $HOME/Myna/examples/solidification_part
+cd $HOME/Myna/examples/cases/solidification_part
 myna config --output ic.yaml
 myna run --input ic.yaml
 ```
@@ -100,9 +100,12 @@ intend to use:
 
 Myna input files define the order of simulation steps and the options for each step.
 Optional workspaces can also be created as `.yaml` or `.myna-workspace` files that can
-be referenced to share common settings across multiple input files. See
-[examples/solidification_part/readme.md](examples/solidification_part/readme.md) for
-details on running an example case.
+be referenced to share common settings across multiple input files. Runnable examples
+live in `examples/cases/`, fixture data in `examples/databases/`, and shared example
+resources in `examples/shared/`. See [examples/cases/README.md](examples/cases/README.md)
+for the per-example dependency matrix and
+[examples/cases/solidification_part/readme.md](examples/cases/solidification_part/readme.md)
+for detailed steps for one example case.
 
 ## Attribution
 
@@ -117,7 +120,7 @@ In addition, please cite any of the relevant journal articles:
   concept of leverging the digital thread for simulations using the precursor to
   Myna and provides details on the solidification data clustering approach.
 
-The `examples/Peregrine` directory used for examples are from the publicly
+The `examples/databases/Peregrine` directory used for examples are from the publicly
 available Peregrine v2023-10 dataset. If you use this data, please cite
 [Scime et al. (2023)](https://doi.ccs.ornl.gov/dataset/be65285a-316d-534d-989e-eacb30cb6e46).
 

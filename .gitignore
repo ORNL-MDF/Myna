@@ -19,12 +19,12 @@ build
 myna_resources/
 demo_build/
 myna_output/
-examples/Peregrine/registered
-examples/Peregrine/simulation
-examples/PeregrineHDF5/simulation
-examples/PeregrineHDF5/registered
-examples/Pelican/myna_scanpaths
-examples/Pelican/registered_timeseries
+examples/databases/Peregrine/registered
+examples/databases/Peregrine/simulation
+examples/databases/PeregrineHDF5/simulation
+examples/databases/PeregrineHDF5/registered
+examples/databases/Pelican/myna_scanpaths
+examples/databases/Pelican/registered_timeseries
 *.parquet
 
 # other typical case file names

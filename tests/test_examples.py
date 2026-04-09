@@ -29,25 +29,23 @@ from myna.core.utils import working_directory
 from myna.core.workflow.config import config
 from myna.core.workflow.run import run
 
+from .example_paths import CASES_DIR
+
 
 def get_example_dir(example_name):
-    """Creates a temporary directory for running the example"""
-    test_path = os.path.dirname(os.path.abspath(__file__))
-    myna_path = os.path.abspath(os.path.join(test_path, ".."))
-    return os.path.join(myna_path, "examples", example_name)
+    """Return the directory for a runnable example case."""
+    return CASES_DIR / example_name
 
 
 def run_example_test(example_name):
     """Perform a test run of the example case in a temporary directory, then clean up"""
 
     # Setup the temporary directory for the example to run.
-    # The `tmp` directories need to be in `examples/` to find the database files.
+    # The `tmp` directories need to be in `examples/cases/` to find the database files.
     example_dir = get_example_dir(example_name)
-    tmp_dir = example_dir + "_tmp"
+    tmp_dir = example_dir.parent / f"{example_dir.name}_tmp"
     os.makedirs(tmp_dir)
-    shutil.copyfile(
-        os.path.join(example_dir, "input.yaml"), os.path.join(tmp_dir, "input.yaml")
-    )
+    shutil.copyfile(example_dir / "input.yaml", tmp_dir / "input.yaml")
 
     # Run and clean the example
     try:
