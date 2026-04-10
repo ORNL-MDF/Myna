@@ -3,7 +3,7 @@
 
 
 ## Related issues
-<!-- 
+<!--
 If this PR addresses one or more issues, list them here with the appropriate keywords:
 - Closes #12
 - Related to #13
@@ -27,11 +27,12 @@ Focus on the behavior change, structural change, optimization strategy, or workf
 
 
 ## Impact
-<!-- Describe any impact on functionality, workflows, performance, maintainability, or user experience. -->
-<!-- If behavior is intended to remain unchanged, state that explicitly. -->
-<!-- If this is a performance change, include measured impact here or in Testing strategy details. -->
-
-- Overall risk level of changes (High / Medium / Low) and why:
+<!--
+Describe the impact of this change on the project. Consider functionality, workflows, performance, maintainability, and user experience.
+If the change is intended to have no impact on behavior, state that explicitly.
+If this change is a performance improvement, include any measured impact here or in the Testing strategy details.
+Describe the overall risk level of these changes (High / Medium / Low) and the rationale for that assessment.
+-->
 
 
 ## Testing strategy
