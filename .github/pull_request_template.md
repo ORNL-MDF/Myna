@@ -36,16 +36,14 @@ Describe the overall risk level of these changes (High / Medium / Low) and the r
 
 
 ## Testing strategy
-<!-- Explain how this change was tested or validated to ensure the intended result was achieved without introducing regressions. -->
 <!--
-Testing environment details should generally include:
+Describe the testing strategy for this change and include any relevant details about the testing environment or configuration:
 - OS/shell
 - Python version
 - Install method (`uv`/`pip`/`Docker`)
 - Command or workflow tested
 - External application version if relevant
 - Hardware specs if performance-sensitive
+If the change is covered by the CI test suite, state that explicitly.
+If manual testing was performed, describe the testing process and results.
 -->
-
-- [ ] The CI test suite covers this change.
-- [ ] Manual testing performed for this change. If so, please describe.
