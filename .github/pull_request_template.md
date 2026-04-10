@@ -3,11 +3,14 @@
 
 
 ## Related issues
-<!-- Link to the relevant issue(s) (e.g., "Closes #12" or "Related to #13"). -->
-<!-- This helps automatically link this pull request to the issue in GitHub. -->
-<!-- If no related issues, check the box below to indicate you have considered this. -->
-
-- [ ] No related issues.
+<!-- 
+If this PR addresses one or more issues, list them here with the appropriate keywords:
+- Closes #12
+- Related to #13
+- Depends on #14
+If there are no related issues, state that explicitly:
+- No related issues.
+-->
 
 
 ## Details
