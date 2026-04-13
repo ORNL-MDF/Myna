@@ -9,6 +9,7 @@
 """Base class for workflow components"""
 
 import os
+import sys
 from pathlib import Path
 from typing import Literal
 import subprocess
@@ -55,7 +56,7 @@ class Component:
             "configure.py",
         )
         if os.path.exists(configure_path):
-            cmd = ["python", configure_path]
+            cmd = [sys.executable, configure_path]
             cmd.extend(self.get_step_args_list("configure"))
             cmd = self.cmd_preformat(cmd)
             print(f"myna run: {cmd=}")
@@ -71,7 +72,7 @@ class Component:
             "execute.py",
         )
         if os.path.exists(execute_path):
-            cmd = ["python", execute_path]
+            cmd = [sys.executable, execute_path]
             cmd.extend(self.get_step_args_list("execute"))
             cmd = self.cmd_preformat(cmd)
             print(f"myna run: {cmd=}")
@@ -87,7 +88,7 @@ class Component:
             "postprocess.py",
         )
         if os.path.exists(postprocess_path):
-            cmd = ["python", postprocess_path]
+            cmd = [sys.executable, postprocess_path]
             cmd.extend(self.get_step_args_list("postprocess"))
             cmd = self.cmd_preformat(cmd)
             print(f"myna run: {cmd=}")
