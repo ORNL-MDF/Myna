@@ -13,6 +13,7 @@ import pytest
 from myna.application.cubit.cubit import CubitApp
 from myna.application.deer.deer import DeerApp
 from myna.application.exaca.exaca import ExaCA
+from myna.application.openfoam.mesh_part_vtk.app import OpenFOAMMeshPartVTK
 from myna.application.thesis.thesis import Thesis
 from myna.core.app.base import MynaApp
 
@@ -237,3 +238,15 @@ def test_exaca_stage_parsers_set_default_executable(monkeypatch, stage_call):
     getattr(app, stage_call)()
 
     assert app.args.exec == "ExaCA"
+
+
+def test_openfoam_mesh_part_vtk_execute_parser_is_idempotent(monkeypatch):
+    monkeypatch.setattr(sys, "argv", ["test"])
+    app = OpenFOAMMeshPartVTK()
+
+    app.parse_execute_arguments()
+    app.parse_execute_arguments()
+
+    assert _count_option_actions(app.parser, "--scale") == 1
+    assert _count_option_actions(app.parser, "--coarse") == 1
+    assert _count_option_actions(app.parser, "--refine") == 1

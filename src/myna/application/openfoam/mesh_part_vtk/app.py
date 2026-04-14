@@ -26,19 +26,19 @@ class OpenFOAMMeshPartVTK(MynaApp):
 
     def parse_execute_arguments(self):
         """Parse execute-step arguments."""
-        self.parser.add_argument(
+        self.register_argument(
             "--scale",
             default=0.001,
             type=float,
             help="Multiple by which to scale STL dimensions (default=0.001, mm->m)",
         )
-        self.parser.add_argument(
+        self.register_argument(
             "--coarse",
             default=320e-6,
             type=float,
             help="Size of coarse mesh in scaled mesh units",
         )
-        self.parser.add_argument(
+        self.register_argument(
             "--refine",
             default=1,
             type=int,
@@ -73,7 +73,9 @@ class OpenFOAMMeshPartVTK(MynaApp):
         self.parse_execute_arguments()
         myna_files = self.get_step_output_paths()
 
-        for myna_file, case_dir in zip(myna_files, self.get_case_dirs(output_paths=myna_files)):
+        for myna_file, case_dir in zip(
+            myna_files, self.get_case_dirs(output_paths=myna_files)
+        ):
             output_file = self.create_mesh(
                 case_dir, self.args.scale, self.args.coarse, self.args.refine
             )
