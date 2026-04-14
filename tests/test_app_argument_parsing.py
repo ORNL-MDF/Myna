@@ -12,6 +12,7 @@ import pytest
 
 from myna.application.cubit.cubit import CubitApp
 from myna.application.deer.deer import DeerApp
+from myna.application.exaca.exaca import ExaCA
 from myna.application.thesis.thesis import Thesis
 from myna.core.app.base import MynaApp
 
@@ -196,3 +197,43 @@ def test_thesis_stage_parsers_set_default_executable(monkeypatch, stage_call):
     getattr(app, stage_call)()
 
     assert app.args.exec == "3DThesis"
+
+
+@pytest.mark.parametrize(
+    "stage_calls",
+    [
+        ("parse_execute_arguments", "parse_configure_arguments"),
+        ("parse_configure_arguments", "parse_execute_arguments"),
+        ("parse_execute_arguments", "parse_execute_arguments"),
+    ],
+)
+def test_exaca_stage_parsers_are_idempotent(monkeypatch, stage_calls):
+    monkeypatch.setattr(sys, "argv", ["test"])
+    monkeypatch.setattr(ExaCA, "validate_executable", lambda self, default: None)
+    app = ExaCA()
+
+    for stage_call in stage_calls:
+        getattr(app, stage_call)()
+
+    assert _count_option_actions(app.parser, "--cell-size") == 1
+    assert _count_option_actions(app.parser, "--nd") == 1
+    assert _count_option_actions(app.parser, "--mu") == 1
+    assert _count_option_actions(app.parser, "--std") == 1
+    assert _count_option_actions(app.parser, "--sub-size") == 1
+
+
+@pytest.mark.parametrize(
+    "stage_call",
+    [
+        "parse_configure_arguments",
+        "parse_execute_arguments",
+    ],
+)
+def test_exaca_stage_parsers_set_default_executable(monkeypatch, stage_call):
+    monkeypatch.setattr(sys, "argv", ["test"])
+    monkeypatch.setattr(ExaCA, "validate_executable", lambda self, default: None)
+    app = ExaCA()
+
+    getattr(app, stage_call)()
+
+    assert app.args.exec == "ExaCA"

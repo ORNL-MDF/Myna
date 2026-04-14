@@ -16,29 +16,29 @@ class ExaCA(MynaApp):
 
     def parse_shared_arguments(self):
         """Setup ExaCA-specific inputs"""
-        self.parser.add_argument(
+        self.register_argument(
             "--cell-size", type=float, help="(float) ExaCA cell size in microns"
         )
-        self.parser.add_argument(
+        self.register_argument(
             "--nd",
             type=float,
             default=1,
             help="(float) Multiplier for nucleation density, 10^(12) * nd)",
         )
-        self.parser.add_argument(
+        self.register_argument(
             "--mu",
             type=float,
             default=10,
             help="(float) Critical undercooling mean temperature "
             + "for nucleation, in Kelvin",
         )
-        self.parser.add_argument(
+        self.register_argument(
             "--std",
             type=float,
             default=2,
             help="(float) Standard deviation for undercooling, in Kelvin",
         )
-        self.parser.add_argument(
+        self.register_argument(
             "--sub-size",
             type=float,
             default=12.5,
@@ -48,7 +48,17 @@ class ExaCA(MynaApp):
     def parse_configure_arguments(self):
         self.parse_shared_arguments()
         self.parse_known_args()
+        self.validate_executable("ExaCA")
+        if self.args.exec is None:
+            self.args.exec = "ExaCA"
 
     def parse_execute_arguments(self):
+        self.parse_shared_arguments()
+        self.parse_known_args()
+        self.validate_executable("ExaCA")
+        if self.args.exec is None:
+            self.args.exec = "ExaCA"
+
+    def parse_postprocess_arguments(self):
         self.parse_shared_arguments()
         self.parse_known_args()
