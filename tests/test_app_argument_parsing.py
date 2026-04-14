@@ -1,0 +1,160 @@
+#
+# Copyright (c) Oak Ridge National Laboratory.
+#
+# This file is part of Myna. For details, see the top-level license
+# at https://github.com/ORNL-MDF/Myna/LICENSE.md.
+#
+# License: 3-clause BSD, see https://opensource.org/licenses/BSD-3-Clause.
+#
+import sys
+
+import pytest
+
+from myna.application.cubit.cubit import CubitApp
+from myna.application.deer.deer import DeerApp
+from myna.core.app.base import MynaApp
+
+
+def _count_option_actions(parser, option_string):
+    return sum(option_string in action.option_strings for action in parser._actions)
+
+
+def test_register_argument_skips_duplicate_option_registration(monkeypatch):
+    monkeypatch.setattr(sys, "argv", ["test"])
+    app = MynaApp()
+
+    app.register_argument(
+        "--demo",
+        default="value",
+        type=str,
+        help="Demo parser option for regression coverage",
+    )
+    app.register_argument(
+        "--demo",
+        default="value",
+        type=str,
+        help="Demo parser option for regression coverage",
+    )
+    app.parse_known_args()
+
+    assert _count_option_actions(app.parser, "--demo") == 1
+    assert app.args.demo == "value"
+
+
+def test_register_argument_rejects_conflicting_option_redefinitions(monkeypatch):
+    monkeypatch.setattr(sys, "argv", ["test"])
+    app = MynaApp()
+
+    app.register_argument(
+        "--demo",
+        default="value",
+        type=str,
+        help="Demo parser option for regression coverage",
+    )
+
+    with pytest.raises(ValueError, match="option '--demo'"):
+        app.register_argument(
+            "--demo",
+            default="different",
+            type=str,
+            help="Demo parser option for regression coverage",
+        )
+
+
+def test_register_argument_deduplicates_across_hooks(monkeypatch):
+    monkeypatch.setattr(sys, "argv", ["test"])
+    app = MynaApp()
+
+    app.register_argument(
+        "--demo",
+        default="value",
+        type=str,
+        help="Demo parser option for regression coverage",
+    )
+    app.register_argument(
+        "--demo",
+        default="value",
+        type=str,
+        help="Demo parser option for regression coverage",
+    )
+    app.parse_known_args()
+
+    assert _count_option_actions(app.parser, "--demo") == 1
+    assert app.args.demo == "value"
+
+
+def test_register_argument_rejects_shadowing_base_arguments(monkeypatch):
+    monkeypatch.setattr(sys, "argv", ["test"])
+    app = MynaApp()
+
+    with pytest.raises(ValueError, match="option '--np'"):
+        app.register_argument(
+            "--np",
+            default=2,
+            type=int,
+            help="Conflicting processor override",
+        )
+
+
+def test_register_argument_skips_duplicate_positional_registration(monkeypatch):
+    monkeypatch.setattr(sys, "argv", ["test"])
+    app = MynaApp()
+
+    app.register_argument("demo_positional")
+    app.register_argument("demo_positional")
+
+    positional_actions = [
+        action for action in app.parser._actions if action.dest == "demo_positional"
+    ]
+    assert len(positional_actions) == 1
+
+
+def test_register_argument_rejects_conflicting_positional_dest_redefinitions(
+    monkeypatch,
+):
+    monkeypatch.setattr(sys, "argv", ["test"])
+    app = MynaApp()
+
+    app.register_argument("demo_positional")
+
+    with pytest.raises(ValueError, match="dest 'demo_positional'"):
+        app.register_argument("demo_positional", nargs="?")
+
+
+@pytest.mark.parametrize(
+    "stage_calls",
+    [
+        ("parse_execute_arguments", "parse_configure_arguments"),
+        ("parse_configure_arguments", "parse_execute_arguments"),
+        ("parse_execute_arguments", "parse_execute_arguments"),
+    ],
+)
+def test_deer_stage_parsers_are_idempotent(monkeypatch, stage_calls):
+    monkeypatch.setattr(sys, "argv", ["test"])
+    app = DeerApp()
+
+    for stage_call in stage_calls:
+        getattr(app, stage_call)()
+
+    assert _count_option_actions(app.parser, "--moosepath") == 1
+    assert app.args.moosepath is None
+
+
+@pytest.mark.parametrize(
+    "stage_calls",
+    [
+        ("parse_execute_arguments", "parse_configure_arguments"),
+        ("parse_configure_arguments", "parse_execute_arguments"),
+        ("parse_execute_arguments", "parse_execute_arguments"),
+    ],
+)
+def test_cubit_stage_parsers_are_idempotent(monkeypatch, stage_calls):
+    monkeypatch.setattr(sys, "argv", ["test"])
+    monkeypatch.setattr(CubitApp, "_validate_cubit_executables", lambda self: None)
+    app = CubitApp()
+
+    for stage_call in stage_calls:
+        getattr(app, stage_call)()
+
+    assert _count_option_actions(app.parser, "--cubitpath") == 1
+    assert app.args.cubitpath is None

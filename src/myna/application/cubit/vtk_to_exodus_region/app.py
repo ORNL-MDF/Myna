@@ -32,39 +32,41 @@ class CubitVtkToExodusApp(CubitApp):
     def __init__(self):
         super().__init__()
         self.class_name = "vtk_to_exodus"
-        self.parser.add_argument(
+
+    def parse_execute_arguments(self):
+        self.register_argument(
             "--field",
             default="GrainID",
             type=str,
             help="(str) field name of material ids in ExaCA VTK file to use for "
             + "conformal meshing",
         )
-        self.parser.add_argument(
+        self.register_argument(
             "--spn",
             default="material_ids.spn",
             type=str,
             help="output file name containing 1D array of material ids in volume",
         )
-        self.parser.add_argument(
+        self.register_argument(
             "--downsample",
             default=5,
             type=int,
             help="Sample frequency in XYZ (1 is full dataset)",
         )
-        self.parser.add_argument(
+        self.register_argument(
             "--sculptflags",
             default="-S 2 -CS 5 -LI 2 -OI 150 -df 1 -rb 0.2 -A 7 -SS 5",
             type=str,
             help="(str) flags to pass to `psculpt` to control mesh generation",
         )
-        self.parser.add_argument(
+        self.register_argument(
             "--exacainput",
             default="inputs.json",
             type=str,
             help="(str) name of input file in ExaCA Myna workflow step template"
             + "generated the VTK file",
         )
-        self.parse_known_args()
+        super().parse_execute_arguments()
 
     def get_vtk_file_data(self, vtk_file):
         """Extract the data object from a VTK file
@@ -158,13 +160,7 @@ class CubitVtkToExodusApp(CubitApp):
                     stdout=f,
                     stderr=subprocess.STDOUT,
                 )
-                returncode = process.wait()
-                if returncode != 0:
-                    error_msg = (
-                        f"Subprocess exited with return code {returncode}."
-                        + "Check {log_file} for details."
-                    )
-                    raise subprocess.SubprocessError(error_msg)
+                self.wait_for_process_success(process)
 
                 # If mesh was generated in parallel, combine and clean the split mesh
                 tmp_files = glob.glob(exodus_prefix + ".e.*")
@@ -175,13 +171,7 @@ class CubitVtkToExodusApp(CubitApp):
                         stdout=f,
                         stderr=subprocess.STDOUT,
                     )
-                    returncode = process.wait()
-                    if returncode != 0:
-                        error_msg = (
-                            f"Subprocess exited with return code {returncode}."
-                            + " Check {log_file} for details."
-                        )
-                        raise subprocess.SubprocessError(error_msg)
+                    self.wait_for_process_success(process)
 
                     for tmp_file in tmp_files:
                         os.remove(tmp_file)
@@ -239,3 +229,8 @@ class CubitVtkToExodusApp(CubitApp):
         for vtk_file, exodus_file in zip(vtk_files, exodus_files):
             if (not os.path.exists(exodus_file)) or (self.args.overwrite):
                 self.mesh_vtk_file(vtk_file, exodus_file)
+
+    def execute(self):
+        """Execute all cubit/vtk_to_exodus_region cases."""
+        self.parse_execute_arguments()
+        self.mesh_all_cases()
