@@ -31,14 +31,14 @@ class RVESelection(RVE):
 
     def parse_execute_arguments(self):
         self.parse_shared_arguments()
-        self.parser.add_argument(
+        self.register_argument(
             "--bid",
             dest="bid",
             default=0,
             type=int,
             help="id for background region",
         )
-        self.parser.add_argument(
+        self.register_argument(
             "--max-layers-per-region",
             default=25,
             type=int,

@@ -14,6 +14,7 @@ from myna.application.cubit.cubit import CubitApp
 from myna.application.deer.deer import DeerApp
 from myna.application.exaca.exaca import ExaCA
 from myna.application.openfoam.mesh_part_vtk.app import OpenFOAMMeshPartVTK
+from myna.application.rve.rve import RVE
 from myna.application.thesis.thesis import Thesis
 from myna.core.app.base import MynaApp
 
@@ -238,6 +239,43 @@ def test_exaca_stage_parsers_set_default_executable(monkeypatch, stage_call):
     getattr(app, stage_call)()
 
     assert app.args.exec == "ExaCA"
+
+
+@pytest.mark.parametrize(
+    "stage_calls",
+    [
+        ("parse_execute_arguments", "parse_postprocess_arguments"),
+        ("parse_postprocess_arguments", "parse_execute_arguments"),
+        ("parse_execute_arguments", "parse_execute_arguments"),
+    ],
+)
+def test_rve_stage_parsers_are_idempotent(monkeypatch, stage_calls):
+    monkeypatch.setattr(sys, "argv", ["test"])
+    app = RVE()
+
+    for stage_call in stage_calls:
+        getattr(app, stage_call)()
+
+    assert _count_option_actions(app.parser, "--num-region") == 1
+    assert _count_option_actions(app.parser, "--max-layers") == 1
+
+
+def test_rve_selection_execute_parser_is_idempotent(monkeypatch):
+    pytest.importorskip("matplotlib")
+    pytest.importorskip("scipy")
+    pytest.importorskip("skimage")
+    from myna.application.rve.rve_selection.app import RVESelection
+
+    monkeypatch.setattr(sys, "argv", ["test"])
+    app = RVESelection()
+
+    app.parse_execute_arguments()
+    app.parse_execute_arguments()
+
+    assert _count_option_actions(app.parser, "--num-region") == 1
+    assert _count_option_actions(app.parser, "--max-layers") == 1
+    assert _count_option_actions(app.parser, "--bid") == 1
+    assert _count_option_actions(app.parser, "--max-layers-per-region") == 1
 
 
 def test_openfoam_mesh_part_vtk_execute_parser_is_idempotent(monkeypatch):

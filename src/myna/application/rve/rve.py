@@ -17,14 +17,14 @@ class RVE(MynaApp):
         self.app_type = "rve"
 
     def parse_shared_arguments(self):
-        self.parser.add_argument(
+        self.register_argument(
             "--num-region",
             default=1,
             type=int,
             help="(int) number of regions to select per system (build or part)",
         )
 
-        self.parser.add_argument(
+        self.register_argument(
             "--max-layers",
             default=20,
             type=int,
