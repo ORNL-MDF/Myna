@@ -41,13 +41,13 @@ class Thesis(MynaApp):
         self.parts = []
 
     def parse_shared_arguments(self):
-        self.parser.add_argument(
+        self.register_argument(
             "--res",
             default=12.5e-6,
             type=float,
             help="(float) resolution to use for simulations in meters",
         )
-        self.parser.add_argument(
+        self.register_argument(
             "--nout",
             default=1000,
             type=int,
@@ -59,12 +59,16 @@ class Thesis(MynaApp):
         self.parse_known_args()
         if self._validate_thesis_executable:
             super().validate_executable("3DThesis")
+        if self.args.exec is None:
+            self.args.exec = "3DThesis"
 
     def parse_execute_arguments(self):
         self.parse_shared_arguments()
         self.parse_known_args()
         if self._validate_thesis_executable:
             super().validate_executable("3DThesis")
+        if self.args.exec is None:
+            self.args.exec = "3DThesis"
 
     def set_case(self, input_dir, output_dir):
         self.input_dir = input_dir

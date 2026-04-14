@@ -12,6 +12,7 @@ import pytest
 
 from myna.application.cubit.cubit import CubitApp
 from myna.application.deer.deer import DeerApp
+from myna.application.thesis.thesis import Thesis
 from myna.core.app.base import MynaApp
 
 
@@ -158,3 +159,40 @@ def test_cubit_stage_parsers_are_idempotent(monkeypatch, stage_calls):
 
     assert _count_option_actions(app.parser, "--cubitpath") == 1
     assert app.args.cubitpath is None
+
+
+@pytest.mark.parametrize(
+    "stage_calls",
+    [
+        ("parse_execute_arguments", "parse_configure_arguments"),
+        ("parse_configure_arguments", "parse_execute_arguments"),
+        ("parse_execute_arguments", "parse_execute_arguments"),
+    ],
+)
+def test_thesis_stage_parsers_are_idempotent(monkeypatch, stage_calls):
+    monkeypatch.setattr(sys, "argv", ["test"])
+    app = Thesis(validate_executable=False)
+
+    for stage_call in stage_calls:
+        getattr(app, stage_call)()
+
+    assert _count_option_actions(app.parser, "--res") == 1
+    assert _count_option_actions(app.parser, "--nout") == 1
+    assert app.args.res == pytest.approx(12.5e-6)
+    assert app.args.nout == 1000
+
+
+@pytest.mark.parametrize(
+    "stage_call",
+    [
+        "parse_configure_arguments",
+        "parse_execute_arguments",
+    ],
+)
+def test_thesis_stage_parsers_set_default_executable(monkeypatch, stage_call):
+    monkeypatch.setattr(sys, "argv", ["test"])
+    app = Thesis(validate_executable=False)
+
+    getattr(app, stage_call)()
+
+    assert app.args.exec == "3DThesis"
