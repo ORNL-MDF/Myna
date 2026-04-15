@@ -3,46 +3,47 @@
 
 
 ## Related issues
-<!-- Link to the relevant issue(s) (e.g., "Closes #12" or "Related to #13"). -->
-<!-- This helps automatically link this pull request to the issue in GitHub. -->
-<!-- If no related issues, check the box below to indicate you have considered this. -->
-
-- [ ] No related issues.
+<!--
+If this PR addresses one or more issues, list them here with the appropriate keywords:
+- Closes #12
+- Related to #13
+- Depends on #14
+If there are no related issues, state that explicitly:
+- No related issues.
+-->
 
 
 ## Details
-<!-- Describe the context for this change based on the selected pull request type. -->
 <!--
-Pull request types are defined in `CONTRIBUTING.md`. For the more common types, please include the relevant details below:
+Depending on the pull request type, please include the relevant details here:
 - Bug fix (`fix`): summarize the bug, how it was reproduced, the root cause, and why this fix addresses it.
-- Feature (`feat`): describe the user problem, the capability added, and the workflow or use case it enables.
-- Performance (`perf`): describe the bottleneck or performance problem and the improvement this change is intended to deliver.
+- New feature (`feat`): describe the user problem, the capability added, and the workflow or use case it enables.
+- Performance improvement (`perf`): describe the bottleneck or performance problem and the improvement this change is intended to deliver.
 - Refactor (`refactor`): describe the maintainability or architectural problem being addressed and the rationale for the refactor.
 - Chore (`chore`): describe the project, tooling, documentation, configuration, or maintenance goal this change addresses.
+Explain how this change was implemented and which parts of the application were changed.
+Focus on the behavior change, structural change, optimization strategy, or workflow outcome rather than just a file list.
 -->
-<!-- Explain how this change was implemented and which parts of the application were changed. -->
-<!-- Focus on the behavior change, structural change, optimization strategy, or workflow outcome rather than just a file list. -->
 
 
 ## Impact
-<!-- Describe any impact on functionality, workflows, performance, maintainability, or user experience. -->
-<!-- If behavior is intended to remain unchanged, state that explicitly. -->
-<!-- If this is a performance change, include measured impact here or in Testing strategy details. -->
-
-- Overall risk level of changes (High / Medium / Low) and why:
+<!--
+Describe the impact of this change on the project. Consider functionality, workflows, performance, maintainability, and user experience.
+If the change is intended to have no impact on behavior, state that explicitly.
+If this change is a performance improvement, include any measured impact here or in the Testing strategy details.
+Describe the overall risk level of these changes (High / Medium / Low) and the rationale for that assessment.
+-->
 
 
 ## Testing strategy
-<!-- Explain how this change was tested or validated to ensure the intended result was achieved without introducing regressions. -->
 <!--
-Testing environment details should generally include:
+Describe the testing strategy for this change and include any relevant details about the testing environment or configuration:
 - OS/shell
 - Python version
 - Install method (`uv`/`pip`/`Docker`)
 - Command or workflow tested
 - External application version if relevant
 - Hardware specs if performance-sensitive
+If the change is covered by the CI test suite, state that explicitly.
+If manual testing was performed, describe the testing process and results.
 -->
-
-- [ ] The CI test suite covers this change.
-- [ ] Manual testing performed for this change. If so, please describe.
