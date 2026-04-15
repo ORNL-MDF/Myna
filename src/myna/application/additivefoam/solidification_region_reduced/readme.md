@@ -10,7 +10,7 @@
     in a given rectangular XY region surrounding the region center
     and in a given depth from the top of the layer.
 - Example case
-  - `examples/demo_solidification_region`
+  - `examples/cases/solidification_region_reduced`
 
 ## Available options
 

@@ -77,12 +77,20 @@ class MynaJSON(Database):
         """Return formatted layer number string"""
         return f"{int(layernumber):07}"
 
+    def resolve_path(self, path):
+        """Resolve database-relative paths against the JSON file location."""
+        if os.path.isabs(path):
+            return path
+        return os.path.abspath(os.path.join(self.path_dir, path))
+
     def get_scan_path(self, data, part, layer):
         """Returns the scanpath file path, converting or extracting information to a
         file if necessary"""
         pathtype = nested_get(data, [part, layer, "scanpath", "type"])
         if pathtype == "mynafile":
-            return nested_get(data, [part, layer, "scanpath", "file"])
+            return self.resolve_path(
+                nested_get(data, [part, layer, "scanpath", "file"])
+            )
         else:
             raise KeyError(
                 f'Invalid entry for "{part}/{layer}/scanpath/type": "{pathtype}"'

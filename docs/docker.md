@@ -29,6 +29,10 @@ use the Myna Docker container hosted at
      instructions and troubleshooting, see the
      [Docker extension documentation](https://code.visualstudio.com/docs/containers/overview).
 7. Within the Docker container, the Myna examples are located at `/opt/myna/examples/`.
-   These can be copied to your current working directory with
-   `cp -r /opt/myna/examples ./myna_examples`. To run examples, follow the instructions
-   at [Getting Started: Using Myna](https://ornl-mdf.github.io/myna-docs/getting_started#using-myna).
+   Runnable cases are under `/opt/myna/examples/cases/`, sample databases are under
+   `/opt/myna/examples/databases/`, workspace files are under
+   `/opt/myna/examples/workspaces/`, and standalone scripts are under
+   `/opt/myna/examples/utils/`. These can be copied to your current working
+   directory with `cp -r /opt/myna/examples ./myna_examples`. To run examples,
+   follow the instructions at
+   [Getting Started: Using Myna](https://ornl-mdf.github.io/myna-docs/getting_started#using-myna).

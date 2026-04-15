@@ -1,0 +1,18 @@
+steps:
+- 3dthesis:
+    class: temperature_part
+    application: thesis
+    executable: 3DThesis
+    configure:
+      res: 25.0e-6
+    execute:
+      np: 8
+      batch: True
+data:
+  build:
+    datatype: Peregrine
+    name: myna_output
+    path: ../../databases
+    parts:
+      P5:
+        layers: [51]

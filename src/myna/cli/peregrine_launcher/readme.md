@@ -11,12 +11,12 @@ To run an example using the example database provided with the `myna` repository
 the following command:
 
 ```bash
-# set to the directory where Myna repository was cloned
-MYNA_EXAMPLES_PATH="./examples"
+# set to the example database directory in the cloned Myna repository
+MYNA_DATABASES_PATH="./examples/databases"
 
 # set the directory to the installed myna package
 MYNA_INSTALL_PATH=$(python -c 'import myna; import os; print(os.environ["MYNA_INSTALL_PATH"])')
 
 # Launch the melt pool geometry simulation
-myna launch_peregrine --build "$MYNA_EXAMPLES_PATH" --parts [P5] --layers [50,51,52] --workspace "$MYNA_INSTALL_PATH/cli/peregrine_launcher/peregrine_default_workspace.yaml" --mode "meltpool_geometry"
+myna launch_peregrine --build "$MYNA_DATABASES_PATH" --parts [P5] --layers [50,51,52] --workspace "$MYNA_INSTALL_PATH/cli/peregrine_launcher/peregrine_default_workspace.yaml" --mode "meltpool_geometry"
 ```

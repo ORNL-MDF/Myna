@@ -13,26 +13,28 @@ import shutil
 
 import myna
 
+from .example_paths import CASES_DIR
+
 
 # This test checks that all examples can be correctly configured.
-def run_configure(path, example):
+def run_configure(example):
     parser = argparse.ArgumentParser("test")
 
     # Currently required to run from the example folder
     test_dir = os.getcwd()
-    example_path = os.path.join(path, "../examples", example)
+    example_path = CASES_DIR / example
     os.chdir(example_path)
 
     # Rely heavily on defaults (modify output to avoid local changes from test)
-    output_dir = os.path.join(example_path, "tmp")
-    output_file = os.path.join(output_dir, "test.json")
-    if not os.path.exists(output_dir):
-        os.mkdir(output_dir)
-    sys.argv = ["test", "--output", output_file]
+    output_dir = example_path / "tmp"
+    output_file = output_dir / "test.json"
+    if not output_dir.exists():
+        output_dir.mkdir()
+    sys.argv = ["test", "--output", os.fspath(output_file)]
     myna.core.workflow.config.parse(parser)
 
     # Check if output file was generated
-    assert os.path.exists(output_file)
+    assert output_file.exists()
 
     # Cleanup
     shutil.rmtree(output_dir)
@@ -60,7 +62,5 @@ def test_configure():
         "vtk_to_exodus_region",
     ]
 
-    # This file will be in myna/tests
-    abs_path = os.path.dirname(os.path.abspath(__file__))
     for example in examples:
-        run_configure(abs_path, example)
+        run_configure(example)

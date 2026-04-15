@@ -1,0 +1,12 @@
+steps:
+- meshing:
+    class: mesh_part_vtk
+    application: openfoam
+data:
+  build:
+    datatype: Peregrine
+    name: myna_output
+    path: ../../databases
+    parts:
+      P5:
+        layers: []

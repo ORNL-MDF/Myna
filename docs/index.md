@@ -23,7 +23,7 @@ In addition, please cite any of the relevant journal articles:
   concept of leverging the digital thread for simulations using the precursor to
   Myna and provides details on the solidification data clustering approach.
 
-The `examples/Peregrine` directory used for examples are from the publicly
+The `examples/databases/Peregrine` directory used for examples are from the publicly
 available Peregrine v2023-10 dataset. If you use this data, please cite
 [Scime et al. (2023)](https://doi.ccs.ornl.gov/dataset/be65285a-316d-534d-989e-eacb30cb6e46).
 

@@ -101,8 +101,21 @@ requirements of the defined Myna workflow steps
 
 Examples for the various types of simulation pipelines can be found in the
 [Myna examples folder](https://github.com/ORNL-MDF/Myna/tree/main/examples).
+Runnable cases live in
+[`examples/cases`](https://github.com/ORNL-MDF/Myna/tree/main/examples/cases),
+sample databases live in
+[`examples/databases`](https://github.com/ORNL-MDF/Myna/tree/main/examples/databases),
+workspace files live in
+[`examples/workspaces`](https://github.com/ORNL-MDF/Myna/tree/main/examples/workspaces),
+and standalone Python API examples live in
+[`examples/utils`](https://github.com/ORNL-MDF/Myna/tree/main/examples/utils).
+The
+[`examples/cases/README.md`](https://github.com/ORNL-MDF/Myna/blob/main/examples/cases/README.md)
+file includes a dependency matrix for each case, and
+[`examples/utils/README.md`](https://github.com/ORNL-MDF/Myna/blob/main/examples/utils/README.md)
+describes the standalone utility scripts.
 
-In general, these examples can be run by navigating into any of the example directories
+In general, these examples can be run by navigating into any of the case directories
 and then executing:
 
 ```shell
@@ -111,11 +124,12 @@ myna run
 myna sync
 ```
 
-You can also copy the directories out of the Myna repository to run elsewhere. You will
-need to update the path to the build under the `data` section of the `input.yaml` file
-to point to the correct location. Regardless of your current working directory when
-you execute the Myna `config`, `run`, and `sync` commands, the output directory will
-be the same directory as the input file.
+You can also copy the full `examples/` tree out of the Myna repository to run
+elsewhere. If you copy an individual case instead, update the path to the build under
+the `data` section of the `input.yaml` file and any `myna.workspace` entry to point to
+the correct location. Regardless of your current working directory when you execute
+the Myna `config`, `run`, and `sync` commands, the output directory will be the same
+directory as the input file.
 
 > [!warning]
 > Spaces in the path to the input file may lead to unexpected behavior and/or failed
@@ -125,6 +139,6 @@ be the same directory as the input file.
 
 Aside from the command line tools, Myna can also be used as a Python library via
 `import myna`. The
-[openfoam_meshing_script](https://github.com/ORNL-MDF/Myna/tree/main/examples/openfoam_meshing_script)
+[openfoam_meshing_script](https://github.com/ORNL-MDF/Myna/tree/main/examples/utils/openfoam_meshing_script)
 example provides a demonstration of importing Myna functions to use in a standalone
 Python script.
