@@ -29,4 +29,4 @@ data:
       P5:
         layers: [51]
 myna:
-  workspace: ../../shared/example-workspace.yaml
+  workspace: ../../workspaces/example-workspace.yaml

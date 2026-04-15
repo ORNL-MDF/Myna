@@ -6,7 +6,7 @@
 #
 # License: 3-clause BSD, see https://opensource.org/licenses/BSD-3-Clause.
 #
-"""Shared test paths for example fixtures and runnable cases."""
+"""Shared test paths for example fixtures, cases, and utility scripts."""
 
 from pathlib import Path
 
@@ -16,4 +16,5 @@ REPO_ROOT = TESTS_DIR.parent
 EXAMPLES_DIR = REPO_ROOT / "examples"
 CASES_DIR = EXAMPLES_DIR / "cases"
 DATABASES_DIR = EXAMPLES_DIR / "databases"
-SHARED_DIR = EXAMPLES_DIR / "shared"
+UTILS_DIR = EXAMPLES_DIR / "utils"
+WORKSPACES_DIR = EXAMPLES_DIR / "workspaces"

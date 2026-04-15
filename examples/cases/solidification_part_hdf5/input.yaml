@@ -15,4 +15,4 @@ data:
       P1:
         layers: [0]
 myna:
-  workspace: ../../shared/example-workspace.yaml
+  workspace: ../../workspaces/example-workspace.yaml

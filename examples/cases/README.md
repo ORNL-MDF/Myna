@@ -1,12 +1,14 @@
-# Runnable examples
+# Runnable workflow cases
 
-This directory contains runnable Myna workflow cases and standalone script examples.
+This directory contains runnable Myna workflow cases.
 The cases are organized by workflow rather than by dependency so examples that span
 multiple tools stay grouped by outcome instead of by implementation detail.
 
 All cases assume the repository `examples/` layout. If you copy a case to another
 location, update the `data.build.path` and `myna.workspace` entries in the copied
-input file to match the new location of your databases and shared files.
+input file to match the new location of your databases and workspace files.
+
+Standalone Python API examples live in `../utils/`.
 
 `core only` means the default Myna install is sufficient on the Python side. Optional
 dependency groups refer to `uv sync --frozen --extra <group>` or `pip install -e .[group]`.
@@ -20,7 +22,6 @@ External tools still need to be installed and configured separately.
 | `microstructure_region` | Peregrine fixture | `exaca` | AdditiveFOAM, ExaCA |
 | `microstructure_region_slice` | Peregrine fixture | `exaca` | AdditiveFOAM, ExaCA |
 | `openfoam_meshing` | Peregrine fixture | core only | OpenFOAM |
-| `openfoam_meshing_script` | standalone script | core only | OpenFOAM |
 | `rve_part_center` | Peregrine fixture | core only | AdditiveFOAM |
 | `solidification_build_region` | Peregrine fixture | core only | 3DThesis |
 | `solidification_part` | Peregrine fixture | core only | 3DThesis |

@@ -5,7 +5,7 @@ To configure the example, first update the path to your 3DThesis executable by e
 - a) setting the path to the 3DThesis executable in the `steps:3dthesis:executable`
   entry in `input.yaml`
 - b) setting the executable path under the `thesis:solidification_part:executable`
-  entry in the example workspace `../../shared/example-workspace.yaml` and ensuring that the
+  entry in the example workspace `../../workspaces/example-workspace.yaml` and ensuring that the
   workspace file is set in the `myna:workspace` entry in `input.yaml`.
 
 For instructions on building 3DThesis, see the documentation on the

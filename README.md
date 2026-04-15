@@ -100,10 +100,12 @@ intend to use:
 
 Myna input files define the order of simulation steps and the options for each step.
 Optional workspaces can also be created as `.yaml` or `.myna-workspace` files that can
-be referenced to share common settings across multiple input files. Runnable examples
-live in `examples/cases/`, fixture data in `examples/databases/`, and shared example
-resources in `examples/shared/`. See [examples/cases/README.md](examples/cases/README.md)
-for the per-example dependency matrix and
+be referenced to share common settings across multiple input files. Runnable workflow
+cases live in `examples/cases/`, sample databases in `examples/databases/`, example
+workspace files in `examples/workspaces/`, and standalone Python API examples in
+`examples/utils/`. See [examples/cases/README.md](examples/cases/README.md) for the
+per-case dependency matrix,
+[examples/utils/README.md](examples/utils/README.md) for standalone utility scripts, and
 [examples/cases/solidification_part/readme.md](examples/cases/solidification_part/readme.md)
 for detailed steps for one example case.
 

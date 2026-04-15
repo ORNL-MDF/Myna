@@ -105,11 +105,15 @@ Runnable cases live in
 [`examples/cases`](https://github.com/ORNL-MDF/Myna/tree/main/examples/cases),
 sample databases live in
 [`examples/databases`](https://github.com/ORNL-MDF/Myna/tree/main/examples/databases),
-and shared example resources live in
-[`examples/shared`](https://github.com/ORNL-MDF/Myna/tree/main/examples/shared).
+workspace files live in
+[`examples/workspaces`](https://github.com/ORNL-MDF/Myna/tree/main/examples/workspaces),
+and standalone Python API examples live in
+[`examples/utils`](https://github.com/ORNL-MDF/Myna/tree/main/examples/utils).
 The
 [`examples/cases/README.md`](https://github.com/ORNL-MDF/Myna/blob/main/examples/cases/README.md)
-file includes a dependency matrix for each case.
+file includes a dependency matrix for each case, and
+[`examples/utils/README.md`](https://github.com/ORNL-MDF/Myna/blob/main/examples/utils/README.md)
+describes the standalone utility scripts.
 
 In general, these examples can be run by navigating into any of the case directories
 and then executing:
@@ -135,6 +139,6 @@ directory as the input file.
 
 Aside from the command line tools, Myna can also be used as a Python library via
 `import myna`. The
-[openfoam_meshing_script](https://github.com/ORNL-MDF/Myna/tree/main/examples/cases/openfoam_meshing_script)
+[openfoam_meshing_script](https://github.com/ORNL-MDF/Myna/tree/main/examples/utils/openfoam_meshing_script)
 example provides a demonstration of importing Myna functions to use in a standalone
 Python script.
