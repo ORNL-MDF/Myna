@@ -44,6 +44,21 @@ Myna is a Python package for configuring and running additive-manufacturing simu
 - Use the same Conventional Commit format for pull request titles.
 - When opening a PR, complete the template in `.github/pull_request_template.md`.
 
+## GitHub comment attribution
+
+- For all agent-authored GitHub comments, use the GitHub connector app tools so GitHub can display the `with ChatGPT Codex Connector` badge.
+- This applies to issue comments, pull request conversation comments, pull request reviews, and inline review replies.
+- Do not use `gh issue comment`, `gh pr comment`, `gh api` write calls, browser/manual comment flows, or any PAT/OAuth token path for agent-authored GitHub comments when badge attribution is required.
+- If connector-based comment writing is unavailable or cannot preserve the badge, stop and report the blocker instead of falling back to another write path.
+- Read-only GitHub inspection through `gh` is allowed when the connector does not expose the needed metadata.
+- When comment attribution matters, verify the resulting comment in the GitHub UI or through issue or pull request event metadata before considering the task complete.
+
+### Why
+
+- GitHub shows the connector badge when a GitHub App acts on behalf of the user.
+- Comments posted through `gh` in this environment normally use a regular GitHub CLI OAuth token and will be attributed to the user without the connector badge.
+- A GitHub App installation token would attribute the action to the app itself rather than jointly to the user and the app.
+
 ## Formatting
 
 - Always put a blank line after a heading in markdown files.
