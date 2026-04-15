@@ -25,8 +25,6 @@ Myna is a Python package for configuring and running additive-manufacturing simu
 
 - Keep changes focused on the relevant subsystem and update tests or docs when behavior changes.
 - For Python changes, run:
-  - `uv run ruff format`
-  - `uv run ruff check`
   - `uv run pytest`
 - For documentation changes or API-surface changes that can affect docs, also run `uv run mkdocs build --strict`.
 - Before handing off PR-ready work, run `uv run pre-commit run --all-files`.
@@ -34,7 +32,9 @@ Myna is a Python package for configuring and running additive-manufacturing simu
 ## Testing notes
 
 - The default `pytest` configuration excludes tests marked `apps`.
-- Example and external-application tests require optional dependencies and executables such as 3DThesis, AdditiveFOAM, or ExaCA. Do not assume they are runnable in a normal local environment.
+- Example and external-application tests require optional dependencies and executables such as 3DThesis, AdditiveFOAM, or ExaCA.
+- If an `apps`-marked test needs a missing executable and `spack` is available, prefer using `spack` to install or load the required app before concluding the test cannot run.
+- Do not assume `apps`-marked tests are runnable in a normal local environment.
 - If a required tool or dependency is unavailable, run the relevant subset of checks you can and clearly report what was not run.
 
 ## Git and PR conventions
