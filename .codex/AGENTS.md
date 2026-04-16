@@ -24,8 +24,7 @@ Myna is a Python package for configuring and running additive-manufacturing simu
 ## Development expectations
 
 - Keep changes focused on the relevant subsystem and update tests or docs when behavior changes.
-- For Python changes, run:
-  - `uv run pytest`
+- For Python changes, run: `uv run pytest`.
 - For documentation changes or API-surface changes that can affect docs, also run `uv run mkdocs build --strict`.
 - Before handing off PR-ready work, run `uv run pre-commit run --all-files`.
 
