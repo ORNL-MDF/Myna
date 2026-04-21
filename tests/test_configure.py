@@ -57,6 +57,7 @@ def test_configure():
         "solidification_part_pelican",
         "solidification_region_reduced",
         "solidification_region_reduced_stl",
+        "temperature_surface_part",
         "temperature_part",
         "temperature_part_pvd",
         "vtk_to_exodus_region",

@@ -6,6 +6,7 @@
 #
 # License: 3-clause BSD, see https://opensource.org/licenses/BSD-3-Clause.
 #
+import json
 import sys
 
 import pytest
@@ -16,6 +17,9 @@ from myna.application.exaca.exaca import ExaCA
 from myna.application.openfoam.mesh_part_vtk.app import OpenFOAMMeshPartVTK
 from myna.application.rve.rve import RVE
 from myna.application.thesis.thesis import Thesis
+from myna.application.thesis.temperature_surface_part import (
+    ThesisTemperatureSurfacePart,
+)
 from myna.core.app.base import MynaApp
 
 
@@ -125,6 +129,36 @@ def test_register_argument_rejects_conflicting_positional_dest_redefinitions(
         app.register_argument("demo_positional", nargs="?")
 
 
+def test_myna_app_init_tolerates_missing_step_name(monkeypatch, tmp_path):
+    monkeypatch.setattr(sys, "argv", ["test"])
+    input_file = tmp_path / "input.json"
+    input_file.write_text(
+        json.dumps(
+            {
+                "steps": [
+                    {
+                        "3dthesis": {
+                            "class": "temperature_surface_part",
+                            "application": "thesis",
+                        }
+                    }
+                ],
+                "data": {"output_paths": {"3dthesis": []}},
+                "myna": {},
+            }
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("MYNA_INPUT", str(input_file))
+    monkeypatch.delenv("MYNA_STEP_NAME", raising=False)
+
+    app = MynaApp()
+
+    assert app.step_name is None
+    assert app.step_number is None
+    assert app.component is None
+
+
 @pytest.mark.parametrize(
     "stage_calls",
     [
@@ -195,6 +229,51 @@ def test_thesis_stage_parsers_are_idempotent(monkeypatch, stage_calls):
 def test_thesis_stage_parsers_set_default_executable(monkeypatch, stage_call):
     monkeypatch.setattr(sys, "argv", ["test"])
     app = Thesis(validate_executable=False)
+
+    getattr(app, stage_call)()
+
+    assert app.args.exec == "3DThesis"
+
+
+@pytest.mark.parametrize(
+    "stage_calls",
+    [
+        ("parse_execute_arguments", "parse_configure_arguments"),
+        ("parse_configure_arguments", "parse_execute_arguments"),
+        ("parse_execute_arguments", "parse_execute_arguments"),
+    ],
+)
+def test_temperature_surface_part_stage_parsers_are_idempotent(
+    monkeypatch, stage_calls
+):
+    monkeypatch.setattr(sys, "argv", ["test"])
+    app = ThesisTemperatureSurfacePart()
+    app._validate_thesis_executable = False
+
+    for stage_call in stage_calls:
+        getattr(app, stage_call)()
+
+    assert _count_option_actions(app.parser, "--res") == 1
+    assert _count_option_actions(app.parser, "--wait") == 1
+    assert _count_option_actions(app.parser, "--use-prior-layer-average") == 1
+    assert app.args.res == pytest.approx(100e-6)
+    assert app.args.wait == pytest.approx(0.0)
+    assert app.args.use_prior_layer_average is False
+
+
+@pytest.mark.parametrize(
+    "stage_call",
+    [
+        "parse_configure_arguments",
+        "parse_execute_arguments",
+    ],
+)
+def test_temperature_surface_part_stage_parsers_set_default_executable(
+    monkeypatch, stage_call
+):
+    monkeypatch.setattr(sys, "argv", ["test"])
+    app = ThesisTemperatureSurfacePart()
+    app._validate_thesis_executable = False
 
     getattr(app, stage_call)()
 
