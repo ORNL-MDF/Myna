@@ -13,11 +13,9 @@ import os
 import shutil
 import tempfile
 from pathlib import Path
-import mistlib as mist
 import numpy as np
 import polars as pl
 from myna.core.metadata import Scanpath
-from myna.core.workflow.load_input import load_input
 from myna.application.thesis import (
     Thesis,
     Path as ThesisPath,
@@ -34,54 +32,23 @@ class ThesisMeltPoolGeometryPart(Thesis):
         self.class_name = "melt_pool_geometry_part"
 
     def configure_case(self, case_dir, myna_input="myna_data.yaml"):
-        input_path = os.path.join(case_dir, myna_input)
-        settings = load_input(input_path)
+        settings = self._load_case_settings(case_dir, myna_input=myna_input)
 
         part = list(settings["build"]["parts"].keys())[0]
         layer = list(settings["build"]["parts"][part]["layer_data"].keys())[0]
 
-        self.copy_template_to_case(case_dir)
-
         scan_obj = Scanpath(None, part, layer)
         myna_scanfile = scan_obj.file_local
-        case_scanfile = os.path.join(case_dir, "Path.txt")
-        shutil.copy(myna_scanfile, case_scanfile)
+        self._configure_standard_part_case(
+            case_dir,
+            myna_scanfile,
+            settings["build"]["parts"][part]["laser_power"]["value"],
+            settings["build"]["parts"][part]["spot_size"]["value"],
+            settings["build"]["parts"][part]["spot_size"]["unit"],
+            settings,
+        )
 
         index_pairs, df = scan_obj.get_constant_z_slice_indices()
-
-        beam_file = os.path.join(case_dir, "Beam.txt")
-        power = settings["build"]["parts"][part]["laser_power"]["value"]
-        spot_size = settings["build"]["parts"][part]["spot_size"]["value"]
-        spot_unit = settings["build"]["parts"][part]["spot_size"]["unit"]
-        spot_scale = 1
-        if spot_unit == "mm":
-            spot_scale = 1e-3
-        elif spot_unit == "um":
-            spot_scale = 1e-6
-
-        adjust_parameter(
-            beam_file, "Width_X", 0.25 * np.sqrt(6) * spot_size * spot_scale
-        )
-        adjust_parameter(
-            beam_file, "Width_Y", 0.25 * np.sqrt(6) * spot_size * spot_scale
-        )
-        adjust_parameter(beam_file, "Power", power)
-
-        material = settings["build"]["build_data"]["material"]["value"]
-        material_dir = os.path.join(
-            os.environ["MYNA_INSTALL_PATH"], "mist_material_data"
-        )
-        mist_path = os.path.join(material_dir, f"{material}.json")
-        mist_mat = mist.core.MaterialInformation(mist_path)
-        mist_mat.write_3dthesis_input(os.path.join(case_dir, "Material.txt"))
-        laser_absorption = mist_mat.get_property("laser_absorption", None, None)
-        adjust_parameter(beam_file, "Efficiency", laser_absorption)
-
-        preheat = settings["build"]["build_data"]["preheat"]["value"]
-        adjust_parameter(os.path.join(case_dir, "Material.txt"), "T_0", preheat)
-
-        domain_file = os.path.join(case_dir, "Domain.txt")
-        adjust_parameter(domain_file, "Res", self.args.res)
 
         # For each index pair, create a separate case
         pattern = str(Path(case_dir) / "*.txt")
@@ -138,19 +105,15 @@ class ThesisMeltPoolGeometryPart(Thesis):
             self.configure_case(case_dir)
 
     def run_case(self, proc_list, check_for_existing_results=True):
-        settings_file = os.path.join(self.input_dir, "Settings.txt")
-        adjust_parameter(settings_file, "MaxThreads", self.args.np)
-
         result_file = os.path.join(self.input_dir, "Data", "snapshot_data.csv")
-        if check_for_existing_results:
-            if os.path.exists(result_file) and not self.args.overwrite:
-                print(f"{self.input_dir} has already been simulated. Skipping.")
-                return [result_file, proc_list]
-
-        case_directory = os.path.abspath(self.input_dir)
-        procs = proc_list.copy()
-        procs = self.run_thesis_case(case_directory, procs)
-        return [result_file, procs]
+        existing_results = []
+        if check_for_existing_results and os.path.exists(result_file):
+            existing_results = [result_file]
+        return self._run_case_with_optional_result(
+            proc_list,
+            result_file=result_file,
+            existing_results=existing_results,
+        )
 
     def execute(self):
         self.parse_execute_arguments()

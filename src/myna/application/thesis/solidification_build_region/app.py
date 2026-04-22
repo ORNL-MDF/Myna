@@ -8,16 +8,10 @@
 #
 """Defines application behavior for thesis/solidification_build_region."""
 
-import glob
 import os
 import shutil
-import mistlib as mist
-import numpy as np
-import pandas as pd
 import polars as pl
-from myna.core.workflow.load_input import load_input
 from myna.application.thesis import (
-    adjust_parameter,
     read_parameter,
     Thesis,
     Path as ThesisPath,
@@ -32,8 +26,7 @@ class ThesisSolidificationBuildRegion(Thesis):
         self.class_name = "solidification_build_region"
 
     def configure_case(self, case_dir, myna_input="myna_data.yaml"):
-        input_path = os.path.join(case_dir, myna_input)
-        settings = load_input(input_path)
+        settings = self._load_case_settings(case_dir, myna_input=myna_input)
 
         self.copy_template_to_case(case_dir)
         beam_file_template = os.path.join(case_dir, "Beam.txt")
@@ -68,38 +61,16 @@ class ThesisSolidificationBuildRegion(Thesis):
 
                 beam_file = os.path.join(case_dir, f"Beam_{beam_index}.txt")
                 shutil.copy(beam_file_template, beam_file)
-                power = build_region_dict["parts"][part]["laser_power"]["value"]
-                spot_size = build_region_dict["parts"][part]["spot_size"]["value"]
-                spot_unit = build_region_dict["parts"][part]["spot_size"]["unit"]
-                spot_scale = 1
-                if spot_unit == "mm":
-                    spot_scale = 1e-3
-                elif spot_unit == "um":
-                    spot_scale = 1e-6
-
-                adjust_parameter(
-                    beam_file, "Width_X", 0.25 * np.sqrt(6) * spot_size * spot_scale
+                self._configure_beam_file(
+                    beam_file,
+                    build_region_dict["parts"][part]["laser_power"]["value"],
+                    build_region_dict["parts"][part]["spot_size"]["value"],
+                    build_region_dict["parts"][part]["spot_size"]["unit"],
                 )
-                adjust_parameter(
-                    beam_file, "Width_Y", 0.25 * np.sqrt(6) * spot_size * spot_scale
-                )
-                adjust_parameter(beam_file, "Power", power)
 
                 beam_index += 1
 
-        material = settings["build"]["build_data"]["material"]["value"]
-        material_dir = os.path.join(
-            os.environ["MYNA_INSTALL_PATH"], "mist_material_data"
-        )
-        mist_path = os.path.join(material_dir, f"{material}.json")
-        mist_mat = mist.core.MaterialInformation(mist_path)
-        mist_mat.write_3dthesis_input(os.path.join(case_dir, "Material.txt"))
-
-        preheat = settings["build"]["build_data"]["preheat"]["value"]
-        adjust_parameter(os.path.join(case_dir, "Material.txt"), "T_0", preheat)
-
-        domain_file = os.path.join(case_dir, "Domain.txt")
-        adjust_parameter(domain_file, "Res", self.args.res)
+        self._configure_case_material_and_domain(case_dir, settings)
 
         os.remove(beam_file_template)
 
@@ -109,24 +80,19 @@ class ThesisSolidificationBuildRegion(Thesis):
             self.configure_case(case_dir)
 
     def run_case(self, proc_list, check_for_existing_results=True):
-        settings_file = os.path.join(self.input_dir, "Settings.txt")
-        adjust_parameter(settings_file, "MaxThreads", self.args.np)
-
-        if check_for_existing_results:
-            output_files = glob.glob(os.path.join(self.input_dir, "Data", "*.csv"))
-            if (len(output_files) > 0) and not self.args.overwrite:
-                print(f"{self.input_dir} has already been simulated. Skipping.")
-                result_file = output_files[0]
-                return [result_file, proc_list]
-
         case_directory = os.path.abspath(self.input_dir)
         output_name = read_parameter(self.input_file, "Name")[0]
         result_file = os.path.join(
             case_directory, "Data", f"{output_name}{self.output_suffix}.Final.csv"
         )
-        procs = proc_list.copy()
-        procs = self.run_thesis_case(case_directory, procs)
-        return [result_file, procs]
+        existing_results = []
+        if check_for_existing_results:
+            existing_results = self._existing_case_results()
+        return self._run_case_with_optional_result(
+            proc_list,
+            result_file=result_file,
+            existing_results=existing_results,
+        )
 
     def execute(self):
         self.parse_execute_arguments()
@@ -143,10 +109,13 @@ class ThesisSolidificationBuildRegion(Thesis):
             self.wait_for_all_process_success(proc_list)
 
         for filepath, mynafile in zip(output_files, myna_files):
-            df = pd.read_csv(filepath)
-            df["x (m)"] = df["x"]
-            df["y (m)"] = df["y"]
-            df["G (K/m)"] = df["G"]
-            df["V (m/s)"] = df["V"]
-            df = df[["x (m)", "y (m)", "G (K/m)", "V (m/s)"]]
-            df.to_csv(mynafile, index=False)
+            self._export_single_csv_result(
+                filepath,
+                mynafile,
+                {
+                    "x": "x (m)",
+                    "y": "y (m)",
+                    "G": "G (K/m)",
+                    "V": "V (m/s)",
+                },
+            )
