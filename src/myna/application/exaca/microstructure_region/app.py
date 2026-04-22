@@ -9,10 +9,8 @@
 import json
 import os
 import shutil
-import numpy as np
 import polars as pl
 from myna.core.utils import nested_get, nested_set
-from myna.core.workflow.load_input import load_input
 from myna.application.exaca import ExaCA, add_rgb_to_vtk
 
 
@@ -23,51 +21,11 @@ class ExaCAMicrostructureRegion(ExaCA):
 
     def setup_case(self, case_dir, solid_files, layer_thickness):
         """Configure a valid ExaCA case directory for the current region."""
-        self.copy_template_to_case(case_dir)
+        input_settings = self.setup_exaca_case(case_dir, solid_files, layer_thickness)
+        self._configure_case_analysis(case_dir, input_settings)
 
-        myna_settings = load_input(os.path.join(case_dir, "myna_data.yaml"))
-        input_file = os.path.join(case_dir, "inputs.json")
-        with open(input_file, "r", encoding="utf-8") as f:
-            input_settings = json.load(f)
-
-        material = myna_settings["build"]["build_data"]["material"]["value"]
-        material_file = os.path.join(
-            os.environ["MYNA_APP_PATH"], "exaca", "materials", f"{material}.json"
-        )
-        input_settings["MaterialFileName"] = material_file
-
-        exaca_install_dir = os.path.dirname(
-            os.path.dirname(shutil.which(self.args.exec))
-        )
-        orientation_file = os.path.join(
-            exaca_install_dir, "share", "ExaCA", "GrainOrientationVectors.csv"
-        )
-        input_settings["GrainOrientationFile"] = orientation_file
-
-        nested_set(input_settings, ["Domain", "CellSize"], self.args.cell_size)
-        cells_per_layer = np.ceil(layer_thickness / self.args.cell_size)
-        nested_set(input_settings, ["Domain", "LayerOffset"], cells_per_layer)
-        nested_set(input_settings, ["Domain", "NumberOfLayers"], len(solid_files))
-        nested_set(input_settings, ["TemperatureData", "TemperatureFiles"], solid_files)
-        nested_set(input_settings, ["Nucleation", "Density"], self.args.nd)
-        nested_set(input_settings, ["Nucleation", "MeanUndercooling"], self.args.mu)
-        nested_set(input_settings, ["Nucleation", "StDev"], self.args.std)
-        nested_set(input_settings, ["Substrate", "MeanSize"], self.args.sub_size)
-
-        with open(input_file, "w", encoding="utf-8") as f:
-            json.dump(input_settings, f, indent=2)
-
-        run_script = os.path.join(case_dir, "runCase.sh")
-        with open(run_script, "r", encoding="utf-8") as f:
-            lines = f.readlines()
-        bin_path = os.path.dirname(shutil.which(self.args.exec))
-        exec_name = os.path.basename(self.args.exec)
-        for i, line in enumerate(lines):
-            lines[i] = line.replace("{{EXACA_BIN_PATH}}", bin_path)
-            lines[i] = lines[i].replace("{{EXACA_EXEC}}", exec_name)
-        with open(run_script, "w", encoding="utf-8") as f:
-            f.writelines(lines)
-
+    def _configure_case_analysis(self, case_dir, input_settings):
+        """Populate grain-analysis slice bounds for a region case."""
         analysis_file = os.path.join(case_dir, "analysis.json")
         with open(analysis_file, "r", encoding="utf-8") as f:
             analysis_settings = json.load(f)
@@ -103,43 +61,59 @@ class ExaCAMicrostructureRegion(ExaCA):
         with open(analysis_file, "w", encoding="utf-8") as f:
             json.dump(analysis_settings, f, indent=2)
 
-    def configure(self):
-        """Configure all ExaCA microstructure_region cases."""
-        self.parse_configure_arguments()
+    def _get_region_case_setup_data(self):
+        """Return region case directories paired with their solidification inputs."""
         myna_files = self.get_step_output_paths()
         myna_solid_files = self.get_step_output_paths(self.last_step_name)
         solid_file_sets = []
-        for part in self.settings["data"]["build"]["parts"]:
-            part_dict = self.settings["data"]["build"]["parts"][part]
+        for part, part_dict in self.settings["data"]["build"]["parts"].items():
             for region in part_dict["regions"]:
                 id_str = os.path.join(part, region)
                 solid_file_sets.append(
-                    sorted([x for x in myna_solid_files if id_str in x])
+                    sorted(
+                        [
+                            filepath
+                            for filepath in myna_solid_files
+                            if id_str in filepath
+                        ]
+                    )
                 )
+
         layer_thickness = (
             1e6
             * self.settings["data"]["build"]["build_data"]["layer_thickness"]["value"]
         )
-        for case_dir, solid_files in zip(
-            self.get_case_dirs(output_paths=myna_files), solid_file_sets
-        ):
+        return [
+            (case_dir, solid_files, layer_thickness)
+            for case_dir, solid_files in zip(
+                self.get_case_dirs(output_paths=myna_files), solid_file_sets
+            )
+        ]
+
+    def configure(self):
+        """Configure all ExaCA microstructure_region cases."""
+        self.parse_configure_arguments()
+        for (
+            case_dir,
+            solid_files,
+            layer_thickness,
+        ) in self._get_region_case_setup_data():
             self.setup_case(case_dir, solid_files, layer_thickness)
 
     def run_case(self, case_dir):
         """Launch the `runCase.sh` script for the given case."""
+        self._patch_case_ranks(case_dir)
         run_script = os.path.join(case_dir, "runCase.sh")
-        with open(run_script, "r", encoding="utf-8") as f:
-            lines = f.readlines()
-        for i, line in enumerate(lines):
-            lines[i] = line.replace("{{RANKS}}", f"{self.args.np}")
-        with open(run_script, "w", encoding="utf-8") as f:
-            f.writelines(lines)
 
         chmod_process = self.start_subprocess(["chmod", "755", run_script])
         self.wait_for_process_success(chmod_process)
         process = self.start_subprocess([run_script])
         result_file = os.path.join(case_dir, "exaca.vtk")
         return result_file, process
+
+    def _finalize_case_output(self, filepath, myna_file):
+        """Promote the raw ExaCA VTK to the workflow output path."""
+        shutil.move(filepath, myna_file)
 
     def execute(self):
         """Execute all ExaCA microstructure_region cases."""
@@ -168,7 +142,7 @@ class ExaCAMicrostructureRegion(ExaCA):
             output_files, myna_files, files_are_valid
         ):
             if not file_is_valid and os.path.exists(filepath):
-                shutil.move(filepath, mynafile)
+                self._finalize_case_output(filepath, mynafile)
 
     def postprocess(self):
         """Export RGB-colored VTKs for valid ExaCA outputs."""
