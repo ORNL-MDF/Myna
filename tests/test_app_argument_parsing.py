@@ -238,7 +238,8 @@ def test_exaca_stage_parsers_set_default_executable(monkeypatch, stage_call):
 
     getattr(app, stage_call)()
 
-    assert app.args.exec == "ExaCA"
+    if "execute" in stage_call:
+        assert app.args.exec == "ExaCA"
 
 
 @pytest.mark.parametrize(
