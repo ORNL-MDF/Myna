@@ -9,3 +9,7 @@
 """Myna application for calculating the microstructure statistics for a slice
 within a given region from reduced data format-type solidification data
 (FileGrainSlice)"""
+
+from .app import ExaCAMicrostructureRegionSlice
+
+__all__ = ["ExaCAMicrostructureRegionSlice"]
