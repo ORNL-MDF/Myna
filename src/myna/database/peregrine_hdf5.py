@@ -38,6 +38,7 @@ class PeregrineHDF5(PeregrineDB):
             "parts/process_parameters/laser_spot_size",
             "parts/process_parameters/spot_size",
             "parts/process_parameters/bulk_laser_spot_size",
+            "parts/process_parameters/bulk_spot_size",
         ],
         "laser_scan_speed": [
             "parts/process_parameters/laser_beam_speed",
@@ -48,6 +49,7 @@ class PeregrineHDF5(PeregrineDB):
         ],
         "material_name": [
             "material/composition",
+            "material/type",
             "material/feedstock_0/type",
         ],
     }
