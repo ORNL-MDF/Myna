@@ -9,19 +9,24 @@
 import math
 import glob
 import os
+import re
 import shutil
 import subprocess
 
 import mistlib as mist
 import pandas as pd
 
-from myna.application.thesis.parse import adjust_parameter
+from myna.application.thesis.parse import adjust_parameter, read_parameter
 from myna.core.app.base import MynaApp
 from myna.core.utils import working_directory
 from myna.core.workflow.load_input import load_input
 
+_UNSET = object()
+
 
 class Thesis(MynaApp):
+    supports_part_layer_initial_temperature = False
+
     def __init__(
         self,
         input_dir=None,
@@ -48,6 +53,9 @@ class Thesis(MynaApp):
         # Initialize layer and part tracking arrays
         self.layers = []
         self.parts = []
+        self._prior_temperature_surface_step_name = _UNSET
+        self._prior_temperature_surface_output_index = _UNSET
+        self._initial_temperature_lookup = _UNSET
 
     def _load_case_settings(self, case_dir, myna_input="myna_data.yaml"):
         """Load per-case Myna settings for a configured case directory."""
@@ -95,13 +103,17 @@ class Thesis(MynaApp):
         if laser_absorption is not None:
             adjust_parameter(beam_file, "Efficiency", laser_absorption)
 
-    def _configure_case_material_and_domain(self, case_dir, settings):
+    def _configure_case_material_and_domain(
+        self, case_dir, settings, *, initial_temperature=None
+    ):
         """Apply shared material, preheat, and domain settings for a case."""
         material = settings["build"]["build_data"]["material"]["value"]
         mist_mat = self._write_case_material(case_dir, material)
 
-        preheat = settings["build"]["build_data"]["preheat"]["value"]
-        adjust_parameter(os.path.join(case_dir, "Material.txt"), "T_0", preheat)
+        temperature = settings["build"]["build_data"]["preheat"]["value"]
+        if initial_temperature is not None:
+            temperature = initial_temperature
+        adjust_parameter(os.path.join(case_dir, "Material.txt"), "T_0", temperature)
         adjust_parameter(os.path.join(case_dir, "Domain.txt"), "Res", self.args.res)
         return mist_mat
 
@@ -117,13 +129,18 @@ class Thesis(MynaApp):
         beam_filename="Beam.txt",
         scan_filename="Path.txt",
         include_beam_efficiency=True,
+        initial_temperature=None,
     ):
         """Populate a standard single-beam Thesis case directory."""
         self.copy_template_to_case(case_dir)
         case_scanfile = self._copy_scanfile(scanfile, case_dir, filename=scan_filename)
         beam_file = os.path.join(case_dir, beam_filename)
 
-        mist_mat = self._configure_case_material_and_domain(case_dir, settings)
+        mist_mat = self._configure_case_material_and_domain(
+            case_dir,
+            settings,
+            initial_temperature=initial_temperature,
+        )
         laser_absorption = None
         if include_beam_efficiency:
             laser_absorption = mist_mat.get_property("laser_absorption", None, None)
@@ -135,6 +152,43 @@ class Thesis(MynaApp):
             laser_absorption=laser_absorption,
         )
         return case_scanfile
+
+    def _configure_standard_part_layer_case(
+        self,
+        case_dir,
+        settings,
+        *,
+        scanfile=None,
+        beam_filename="Beam.txt",
+        scan_filename="Path.txt",
+        include_beam_efficiency=True,
+        apply_initial_temperature=False,
+    ):
+        """Populate a standard single part/layer Thesis case directory."""
+        part, layer, part_settings, layer_settings = self._get_case_part_layer_settings(
+            settings
+        )
+        resolved_scanfile = layer_settings["scanpath"]["file_local"]
+        if scanfile is not None:
+            resolved_scanfile = scanfile
+
+        initial_temperature = None
+        if apply_initial_temperature:
+            initial_temperature = self._resolve_part_layer_initial_temperature(settings)
+
+        case_scanfile = self._configure_standard_part_case(
+            case_dir,
+            resolved_scanfile,
+            part_settings["laser_power"]["value"],
+            part_settings["spot_size"]["value"],
+            part_settings["spot_size"]["unit"],
+            settings,
+            beam_filename=beam_filename,
+            scan_filename=scan_filename,
+            include_beam_efficiency=include_beam_efficiency,
+            initial_temperature=initial_temperature,
+        )
+        return part, layer, case_scanfile
 
     def parse_shared_arguments(self):
         self.register_argument(
@@ -150,7 +204,25 @@ class Thesis(MynaApp):
             help="(int) number of snapshot outputs",
         )
 
-    def parse_configure_arguments(self):
+    def parse_part_layer_initial_temperature_arguments(self):
+        """Register configure-stage options for automatic part/layer `T_0` setup."""
+        self.register_argument(
+            "--initial-temperature-file",
+            default=None,
+            type=str,
+            help='(str) CSV file with columns "layer" and "T_0 (K)" '
+            "for manual per-layer initialization temperatures",
+        )
+        self.register_argument(
+            "--no-auto-initial-temperature",
+            dest="auto_initial_temperature",
+            default=True,
+            action="store_false",
+            help="(flag) disable automatic `T_0` initialization from prior "
+            "`temperature_surface_part` outputs or a manual per-layer CSV",
+        )
+
+    def _parse_thesis_stage_arguments(self):
         self.parse_shared_arguments()
         self.parse_known_args()
         if self._validate_thesis_executable:
@@ -158,19 +230,222 @@ class Thesis(MynaApp):
         if self.args.exec is None:
             self.args.exec = "3DThesis"
 
+    def parse_configure_arguments(self):
+        if self.supports_part_layer_initial_temperature:
+            self.parse_part_layer_initial_temperature_arguments()
+        self._parse_thesis_stage_arguments()
+
     def parse_execute_arguments(self):
-        self.parse_shared_arguments()
-        self.parse_known_args()
-        if self._validate_thesis_executable:
-            super().validate_executable("3DThesis")
-        if self.args.exec is None:
-            self.args.exec = "3DThesis"
+        self._parse_thesis_stage_arguments()
 
     def set_case(self, input_dir, output_dir):
         self.input_dir = input_dir
         self.output_dir = output_dir
         self.input_file = os.path.join(self.input_dir, self.input_filename)
         self.material_dir = os.path.join(self.input_dir, self.material_filename)
+
+    def _normalize_layer_identifier(self, layer):
+        """Normalize a case layer identifier into an integer layer number."""
+        if isinstance(layer, int):
+            return int(layer)
+        if isinstance(layer, float) and layer.is_integer():
+            return int(layer)
+        layer_str = str(layer)
+        try:
+            return int(layer_str)
+        except ValueError:
+            matches = re.findall(r"\d+", layer_str)
+            if len(matches) == 1:
+                return int(matches[0])
+        raise ValueError(
+            f"{self.name}: Could not parse a numeric layer identifier from {layer!r}"
+        )
+
+    def _get_case_part_layer_settings(self, settings):
+        """Return the single configured part/layer payload for a case."""
+        try:
+            part, part_settings = next(iter(settings["build"]["parts"].items()))
+            layer, layer_settings = next(iter(part_settings["layer_data"].items()))
+        except StopIteration as exc:
+            raise ValueError(
+                f"{self.name}: Expected at least one configured part and layer."
+            ) from exc
+        return part, layer, part_settings, layer_settings
+
+    def _get_case_part_and_layer(self, settings):
+        """Return the single part/layer pair configured for a case directory."""
+        part, layer, _, _ = self._get_case_part_layer_settings(settings)
+        return part, layer
+
+    def _get_case_part_and_layer_index(self, settings):
+        """Return the normalized `(part, layer)` key for one case directory."""
+        part, layer = self._get_case_part_and_layer(settings)
+        return part, self._normalize_layer_identifier(layer)
+
+    def _get_average_temperature(self, output_file):
+        """Compute the average temperature from a prior-layer output file."""
+        df = pd.read_csv(output_file)
+        temperature_column = "T (K)" if "T (K)" in df.columns else "T"
+        return float(df[temperature_column].mean())
+
+    def _get_case_initial_temperature(self, case_dir):
+        """Read the configured `T_0` value from a Thesis case directory."""
+        material_file = os.path.join(case_dir, "Material.txt")
+        return float(read_parameter(material_file, "T_0")[0])
+
+    def _find_latest_prior_temperature_surface_step_name(self):
+        """Return the nearest earlier `temperature_surface_part` step name."""
+        if self._prior_temperature_surface_step_name is not _UNSET:
+            return self._prior_temperature_surface_step_name
+
+        step_name = None
+        if self.step_number is not None:
+            for step in self.settings.get("steps", [])[: self.step_number]:
+                candidate_name = next(iter(step))
+                if step[candidate_name].get("class") == "temperature_surface_part":
+                    step_name = candidate_name
+
+        self._prior_temperature_surface_step_name = step_name
+        return step_name
+
+    def _get_prior_temperature_surface_output_index(self):
+        """Map prior `temperature_surface_part` outputs by `(part, layer)`."""
+        if self._prior_temperature_surface_output_index is not _UNSET:
+            return self._prior_temperature_surface_output_index
+
+        step_name = self._find_latest_prior_temperature_surface_step_name()
+        if step_name is None:
+            self._prior_temperature_surface_output_index = {}
+            return self._prior_temperature_surface_output_index
+
+        try:
+            output_paths = self.get_step_output_paths(step_name)
+        except KeyError as exc:
+            print(
+                f"{self.name}: Could not find output paths for prior "
+                f"`temperature_surface_part` step {step_name}. "
+                f"Using remaining `T_0` fallbacks. ({exc})"
+            )
+            self._prior_temperature_surface_output_index = {}
+            return self._prior_temperature_surface_output_index
+
+        output_index = {}
+        for output_path in output_paths:
+            case_dir = os.path.dirname(output_path)
+            try:
+                settings = self._load_case_settings(case_dir)
+                output_index[self._get_case_part_and_layer_index(settings)] = (
+                    output_path
+                )
+            except (FileNotFoundError, KeyError, ValueError, IndexError) as exc:
+                print(
+                    f"{self.name}: Failed to map prior `temperature_surface_part` "
+                    f"output {output_path} to a part/layer case. Skipping. ({exc})"
+                )
+
+        self._prior_temperature_surface_output_index = output_index
+        return self._prior_temperature_surface_output_index
+
+    def _load_initial_temperature_lookup(self):
+        """Load a manual per-layer `T_0` lookup from CSV when configured."""
+        if self._initial_temperature_lookup is not _UNSET:
+            return self._initial_temperature_lookup
+
+        initial_temperature_file = getattr(self.args, "initial_temperature_file", None)
+        if initial_temperature_file is None:
+            self._initial_temperature_lookup = {}
+            return self._initial_temperature_lookup
+
+        if not os.path.exists(initial_temperature_file):
+            raise FileNotFoundError(
+                f"{self.name}: Initial temperature file was not found: "
+                f"{initial_temperature_file}"
+            )
+
+        try:
+            df = pd.read_csv(initial_temperature_file)
+        except (OSError, pd.errors.EmptyDataError, pd.errors.ParserError) as exc:
+            raise ValueError(
+                f"{self.name}: Failed to read initial temperature file "
+                f"{initial_temperature_file}. ({exc})"
+            ) from exc
+
+        required_columns = {"layer", "T_0 (K)"}
+        missing_columns = required_columns - set(df.columns)
+        if missing_columns:
+            raise ValueError(
+                f"{self.name}: Initial temperature file {initial_temperature_file} "
+                f'must contain columns "layer" and "T_0 (K)".'
+            )
+
+        try:
+            layer_values = pd.to_numeric(df["layer"], errors="raise")
+            temperature_values = pd.to_numeric(df["T_0 (K)"], errors="raise")
+        except ValueError as exc:
+            raise ValueError(
+                f"{self.name}: Initial temperature file {initial_temperature_file} "
+                'must contain numeric values for columns "layer" and "T_0 (K)".'
+            ) from exc
+
+        if layer_values.isna().any() or temperature_values.isna().any():
+            raise ValueError(
+                f"{self.name}: Initial temperature file {initial_temperature_file} "
+                "must not contain empty layer or temperature values."
+            )
+        if ((layer_values % 1) != 0).any():
+            raise ValueError(
+                f"{self.name}: Initial temperature file {initial_temperature_file} "
+                'must contain integer values in the "layer" column.'
+            )
+
+        lookup = {}
+        for layer, temperature in zip(
+            layer_values.astype(int), temperature_values.astype(float)
+        ):
+            if layer in lookup:
+                raise ValueError(
+                    f"{self.name}: Initial temperature file {initial_temperature_file} "
+                    f"contains duplicate entries for layer {layer}."
+                )
+            lookup[int(layer)] = float(temperature)
+
+        self._initial_temperature_lookup = lookup
+        return self._initial_temperature_lookup
+
+    def _resolve_part_layer_initial_temperature(self, settings):
+        """Resolve the configured `T_0` for a part/layer thesis case."""
+        preheat = settings["build"]["build_data"]["preheat"]["value"]
+        if not getattr(self.args, "auto_initial_temperature", True):
+            return preheat
+
+        part, layer = self._get_case_part_and_layer_index(settings)
+        previous_output = self._get_prior_temperature_surface_output_index().get(
+            (part, layer)
+        )
+        if previous_output is not None:
+            previous_case_dir = os.path.dirname(previous_output)
+            if os.path.exists(previous_case_dir):
+                try:
+                    return self._get_case_initial_temperature(previous_case_dir)
+                except (OSError, ValueError, IndexError) as exc:
+                    print(
+                        f"{self.name}: Failed to read prior "
+                        f"`temperature_surface_part` case T_0 from "
+                        f"{previous_case_dir}. "
+                        f"Using remaining `T_0` fallbacks. ({exc})"
+                    )
+            else:
+                print(
+                    f"{self.name}: Prior `temperature_surface_part` case "
+                    f"{previous_case_dir} was not found. Using remaining `T_0` "
+                    "fallbacks."
+                )
+
+        lookup = self._load_initial_temperature_lookup()
+        if layer in lookup:
+            return lookup[layer]
+
+        return preheat
 
     def _set_max_threads(self):
         """Write the current processor count into the Thesis settings file."""

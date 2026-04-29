@@ -16,7 +16,10 @@ from myna.application.deer.deer import DeerApp
 from myna.application.exaca.exaca import ExaCA
 from myna.application.openfoam.mesh_part_vtk.app import OpenFOAMMeshPartVTK
 from myna.application.rve.rve import RVE
+from myna.application.thesis.melt_pool_geometry_part import ThesisMeltPoolGeometryPart
+from myna.application.thesis.solidification_part import ThesisSolidificationPart
 from myna.application.thesis.thesis import Thesis
+from myna.application.thesis.temperature_part import ThesisTemperaturePart
 from myna.application.thesis.temperature_surface_part import (
     ThesisTemperatureSurfacePart,
 )
@@ -233,6 +236,38 @@ def test_thesis_stage_parsers_set_default_executable(monkeypatch, stage_call):
     getattr(app, stage_call)()
 
     assert app.args.exec == "3DThesis"
+
+
+@pytest.mark.parametrize(
+    "app_cls",
+    [
+        ThesisTemperaturePart,
+        ThesisSolidificationPart,
+        ThesisMeltPoolGeometryPart,
+    ],
+)
+@pytest.mark.parametrize(
+    "stage_calls",
+    [
+        ("parse_configure_arguments", "parse_execute_arguments"),
+        ("parse_execute_arguments", "parse_configure_arguments"),
+        ("parse_configure_arguments", "parse_configure_arguments"),
+    ],
+)
+def test_thesis_part_layer_configure_parsers_register_initial_temperature_arguments(
+    monkeypatch, app_cls, stage_calls
+):
+    monkeypatch.setattr(sys, "argv", ["test"])
+    app = app_cls()
+    app._validate_thesis_executable = False
+
+    for stage_call in stage_calls:
+        getattr(app, stage_call)()
+
+    assert _count_option_actions(app.parser, "--initial-temperature-file") == 1
+    assert _count_option_actions(app.parser, "--no-auto-initial-temperature") == 1
+    assert app.args.initial_temperature_file is None
+    assert app.args.auto_initial_temperature is True
 
 
 @pytest.mark.parametrize(

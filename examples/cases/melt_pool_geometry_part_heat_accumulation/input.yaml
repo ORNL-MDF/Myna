@@ -1,0 +1,29 @@
+steps:
+- surface:
+    class: temperature_surface_part
+    application: thesis
+    executable: 3DThesis
+    configure:
+      res: 100.0e-6
+      wait: 10.0
+    execute:
+      np: 1
+      batch: True
+      use-prior-layer-average: True
+- geometry:
+    class: melt_pool_geometry_part
+    application: thesis
+    executable: 3DThesis
+    configure:
+      res: 25.0e-6
+    execute:
+      np: 2
+      batch: True
+data:
+  build:
+    datatype: Peregrine
+    name: myna_output
+    path: ../../databases
+    parts:
+      P5:
+        layers: [50, 51, 52, 53, 54]

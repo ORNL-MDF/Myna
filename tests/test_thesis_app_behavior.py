@@ -11,6 +11,7 @@ from types import SimpleNamespace
 
 import pandas as pd
 import polars as pl
+import pytest
 
 from myna.application.thesis import read_parameter
 from myna.application.thesis.melt_pool_geometry_part import ThesisMeltPoolGeometryPart
@@ -23,16 +24,24 @@ import myna.application.thesis.melt_pool_geometry_part.app as melt_pool_app_modu
 import myna.application.thesis.thesis as thesis_module
 
 
-def _write_settings(tmp_path, step_name, step_output_paths):
+def _build_thesis_step(step_name, class_name=None):
+    return {
+        step_name: {
+            "class": step_name if class_name is None else class_name,
+            "application": "thesis",
+        }
+    }
+
+
+def _write_settings(
+    tmp_path, step_name, step_output_paths, *, steps=None, output_paths=None
+):
+    steps = [_build_thesis_step(step_name)] if steps is None else steps
+    output_paths = (
+        {step_name: step_output_paths} if output_paths is None else output_paths
+    )
     settings = {
-        "steps": [
-            {
-                step_name: {
-                    "class": step_name,
-                    "application": "thesis",
-                }
-            }
-        ],
+        "steps": steps,
         "data": {
             "build": {
                 "build_data": {
@@ -43,7 +52,7 @@ def _write_settings(tmp_path, step_name, step_output_paths):
                 "parts": {},
                 "build_regions": {},
             },
-            "output_paths": {step_name: step_output_paths},
+            "output_paths": output_paths,
         },
         "myna": {},
     }
@@ -52,9 +61,23 @@ def _write_settings(tmp_path, step_name, step_output_paths):
     return input_file
 
 
-def _configure_workflow_env(monkeypatch, tmp_path, step_name, step_output_paths=None):
+def _configure_workflow_env(
+    monkeypatch,
+    tmp_path,
+    step_name,
+    step_output_paths=None,
+    *,
+    workflow_steps=None,
+    output_paths=None,
+):
     step_output_paths = [] if step_output_paths is None else step_output_paths
-    input_file = _write_settings(tmp_path, step_name, step_output_paths)
+    input_file = _write_settings(
+        tmp_path,
+        step_name,
+        step_output_paths,
+        steps=workflow_steps,
+        output_paths=output_paths,
+    )
     monkeypatch.setenv("MYNA_INPUT", str(input_file))
     monkeypatch.setenv("MYNA_STEP_NAME", step_name)
     monkeypatch.delenv("MYNA_LAST_STEP_NAME", raising=False)
@@ -96,15 +119,15 @@ def _write_case_metadata(case_dir, payload):
     )
 
 
-def _build_part_case_payload(scanfile):
+def _build_part_case_payload(scanfile, *, part="part-a", layer="layer-1"):
     return {
         "build": {
             "parts": {
-                "part-a": {
+                part: {
                     "laser_power": {"value": 200.0},
                     "spot_size": {"value": 100.0, "unit": "um"},
                     "layer_data": {
-                        "layer-1": {
+                        layer: {
                             "scanpath": {"file_local": str(scanfile)},
                         }
                     },
@@ -164,7 +187,33 @@ def _build_args(template_dir, *, overwrite=False, nout=4, batch=False):
         np=3,
         batch=batch,
         exec="3DThesis",
+        initial_temperature_file=None,
+        auto_initial_temperature=True,
     )
+
+
+def _write_temperature_surface_output_case(
+    case_dir,
+    scanfile,
+    temperatures,
+    *,
+    part="part-a",
+    layer="layer-1",
+    filename="temperature_surface.csv",
+    initial_temperature=450.0,
+):
+    output_path = case_dir / filename
+    _write_case_metadata(
+        case_dir,
+        _build_part_case_payload(scanfile, part=part, layer=layer),
+    )
+    case_dir.mkdir(parents=True, exist_ok=True)
+    (case_dir / "Material.txt").write_text(
+        f"\tT_0\t{initial_temperature}\n",
+        encoding="utf-8",
+    )
+    pd.DataFrame({"T (K)": temperatures}).to_csv(output_path, index=False)
+    return output_path
 
 
 def _patch_material_information(monkeypatch, laser_absorption=0.35):
@@ -230,6 +279,214 @@ def test_temperature_and_solidification_part_setup_share_case_configuration(
     assert len([x for x in temperature_times.split(",") if x != ""]) == 5
     assert solidification_times == "unset"
     assert read_parameter(str(temperature_case / "Beam.txt"), "Efficiency") == ["0.35"]
+
+
+def test_temperature_part_configure_uses_latest_prior_temperature_surface_t0(
+    monkeypatch, tmp_path
+):
+    scanfile = tmp_path / "scan.txt"
+    _write_scanfile(scanfile)
+    prior_old_case = tmp_path / "surface-old-case"
+    prior_new_case = tmp_path / "surface-new-case"
+    current_case = tmp_path / "temperature-case"
+    prior_old_output = _write_temperature_surface_output_case(
+        prior_old_case,
+        scanfile,
+        [300.0, 350.0],
+        initial_temperature=320.0,
+    )
+    prior_new_output = _write_temperature_surface_output_case(
+        prior_new_case,
+        scanfile,
+        [500.0, 600.0],
+        initial_temperature=515.0,
+    )
+    workflow_steps = [
+        _build_thesis_step("surface-old", "temperature_surface_part"),
+        _build_thesis_step("surface-new", "temperature_surface_part"),
+        _build_thesis_step("temperature_part"),
+    ]
+    _configure_workflow_env(
+        monkeypatch,
+        tmp_path,
+        "temperature_part",
+        workflow_steps=workflow_steps,
+        output_paths={
+            "surface-old": [str(prior_old_output)],
+            "surface-new": [str(prior_new_output)],
+            "temperature_part": [],
+        },
+    )
+    monkeypatch.setenv("MYNA_INSTALL_PATH", str(tmp_path / "install"))
+    _patch_material_information(monkeypatch)
+
+    template_dir = tmp_path / "template"
+    _write_template(template_dir)
+    _write_case_metadata(current_case, _build_part_case_payload(scanfile))
+
+    app = ThesisTemperaturePart()
+    app.args = _build_args(template_dir)
+    app.configure_case(str(current_case))
+
+    assert float(read_parameter(str(current_case / "Material.txt"), "T_0")[0]) == (
+        pytest.approx(515.0)
+    )
+
+
+def test_solidification_part_configure_uses_manual_initial_temperature_without_match(
+    monkeypatch, tmp_path
+):
+    scanfile = tmp_path / "scan.txt"
+    _write_scanfile(scanfile)
+    prior_case = tmp_path / "surface-case"
+    current_case = tmp_path / "solidification-case"
+    prior_output = _write_temperature_surface_output_case(
+        prior_case,
+        scanfile,
+        [700.0, 800.0],
+        part="part-b",
+    )
+    workflow_steps = [
+        _build_thesis_step("surface", "temperature_surface_part"),
+        _build_thesis_step("solidification_part"),
+    ]
+    _configure_workflow_env(
+        monkeypatch,
+        tmp_path,
+        "solidification_part",
+        workflow_steps=workflow_steps,
+        output_paths={
+            "surface": [str(prior_output)],
+            "solidification_part": [],
+        },
+    )
+    monkeypatch.setenv("MYNA_INSTALL_PATH", str(tmp_path / "install"))
+    _patch_material_information(monkeypatch)
+
+    template_dir = tmp_path / "template"
+    _write_template(template_dir)
+    _write_case_metadata(current_case, _build_part_case_payload(scanfile))
+    initial_temperature_file = tmp_path / "initial_temperatures.csv"
+    initial_temperature_file.write_text(
+        "layer,T_0 (K)\n1,525.0\n",
+        encoding="utf-8",
+    )
+
+    app = ThesisSolidificationPart()
+    app.args = _build_args(template_dir)
+    app.args.initial_temperature_file = str(initial_temperature_file)
+    app.configure_case(str(current_case))
+
+    assert float(read_parameter(str(current_case / "Material.txt"), "T_0")[0]) == (
+        pytest.approx(525.0)
+    )
+
+
+def test_temperature_part_configure_uses_preheat_when_auto_initial_temperature_disabled(
+    monkeypatch, tmp_path
+):
+    scanfile = tmp_path / "scan.txt"
+    _write_scanfile(scanfile)
+    prior_case = tmp_path / "surface-case"
+    current_case = tmp_path / "temperature-case"
+    prior_output = _write_temperature_surface_output_case(
+        prior_case,
+        scanfile,
+        [500.0, 600.0],
+    )
+    workflow_steps = [
+        _build_thesis_step("surface", "temperature_surface_part"),
+        _build_thesis_step("temperature_part"),
+    ]
+    _configure_workflow_env(
+        monkeypatch,
+        tmp_path,
+        "temperature_part",
+        workflow_steps=workflow_steps,
+        output_paths={
+            "surface": [str(prior_output)],
+            "temperature_part": [],
+        },
+    )
+    monkeypatch.setenv("MYNA_INSTALL_PATH", str(tmp_path / "install"))
+    _patch_material_information(monkeypatch)
+
+    template_dir = tmp_path / "template"
+    _write_template(template_dir)
+    _write_case_metadata(current_case, _build_part_case_payload(scanfile))
+    initial_temperature_file = tmp_path / "initial_temperatures.csv"
+    initial_temperature_file.write_text(
+        "layer,T_0 (K)\n1,525.0\n",
+        encoding="utf-8",
+    )
+
+    app = ThesisTemperaturePart()
+    app.args = _build_args(template_dir)
+    app.args.initial_temperature_file = str(initial_temperature_file)
+    app.args.auto_initial_temperature = False
+    app.configure_case(str(current_case))
+
+    assert float(read_parameter(str(current_case / "Material.txt"), "T_0")[0]) == (
+        pytest.approx(450.0)
+    )
+
+
+def test_temperature_part_configure_falls_back_to_preheat_without_prior_or_csv_match(
+    monkeypatch, tmp_path
+):
+    _configure_workflow_env(monkeypatch, tmp_path, "temperature_part")
+    monkeypatch.setenv("MYNA_INSTALL_PATH", str(tmp_path / "install"))
+    _patch_material_information(monkeypatch)
+
+    scanfile = tmp_path / "scan.txt"
+    _write_scanfile(scanfile)
+    template_dir = tmp_path / "template"
+    _write_template(template_dir)
+    current_case = tmp_path / "temperature-case"
+    _write_case_metadata(current_case, _build_part_case_payload(scanfile))
+    initial_temperature_file = tmp_path / "initial_temperatures.csv"
+    initial_temperature_file.write_text(
+        "layer,T_0 (K)\n2,610.0\n",
+        encoding="utf-8",
+    )
+
+    app = ThesisTemperaturePart()
+    app.args = _build_args(template_dir)
+    app.args.initial_temperature_file = str(initial_temperature_file)
+    app.configure_case(str(current_case))
+
+    assert float(read_parameter(str(current_case / "Material.txt"), "T_0")[0]) == (
+        pytest.approx(450.0)
+    )
+
+
+def test_temperature_part_configure_rejects_malformed_initial_temperature_file(
+    monkeypatch, tmp_path
+):
+    _configure_workflow_env(monkeypatch, tmp_path, "temperature_part")
+    monkeypatch.setenv("MYNA_INSTALL_PATH", str(tmp_path / "install"))
+    _patch_material_information(monkeypatch)
+
+    scanfile = tmp_path / "scan.txt"
+    _write_scanfile(scanfile)
+    template_dir = tmp_path / "template"
+    _write_template(template_dir)
+    current_case = tmp_path / "temperature-case"
+    _write_case_metadata(current_case, _build_part_case_payload(scanfile))
+    initial_temperature_file = tmp_path / "initial_temperatures.csv"
+    initial_temperature_file.write_text(
+        "layer,temperature\n1,610.0\n",
+        encoding="utf-8",
+    )
+
+    app = ThesisTemperaturePart()
+    app.args = _build_args(template_dir)
+    app.args.initial_temperature_file = str(initial_temperature_file)
+
+    with pytest.raises(
+        ValueError, match='must contain columns "layer" and "T_0 \\(K\\)"'
+    ):
+        app.configure_case(str(current_case))
 
 
 def test_solidification_build_region_configure_creates_ordered_paths_and_beams(
@@ -342,6 +599,70 @@ def test_melt_pool_geometry_configure_creates_segment_cases(monkeypatch, tmp_pat
         )
         == 3
     )
+
+
+def test_melt_pool_geometry_segments_inherit_resolved_initial_temperature(
+    monkeypatch, tmp_path
+):
+    _configure_workflow_env(monkeypatch, tmp_path, "melt_pool_geometry_part")
+    monkeypatch.setenv("MYNA_INSTALL_PATH", str(tmp_path / "install"))
+    _patch_material_information(monkeypatch)
+
+    scanfile = tmp_path / "scan.txt"
+    _write_scanfile(scanfile)
+    template_dir = tmp_path / "template"
+    _write_template(template_dir)
+    initial_temperature_file = tmp_path / "initial_temperatures.csv"
+    initial_temperature_file.write_text(
+        "layer,T_0 (K)\n1,610.0\n",
+        encoding="utf-8",
+    )
+
+    case_dir = tmp_path / "case"
+    _write_case_metadata(case_dir, _build_part_case_payload(scanfile))
+
+    class FakeScanpath:
+        def __init__(self, _path, _part, _layer):
+            self.file_local = str(scanfile)
+
+        def get_constant_z_slice_indices(self):
+            return (
+                [(0, 1), (2, 3)],
+                pl.DataFrame(
+                    {
+                        "X(mm)": [0.0, 1.0, 2.0, 3.0],
+                        "Y(mm)": [0.0, 0.0, 1.0, 1.0],
+                        "Mode": [1, 0, 0, 0],
+                        "Pmod": [0, 1, 1, 1],
+                        "tParam": [0.0, 0.002, 0.002, 0.002],
+                    }
+                ),
+            )
+
+    class FakeThesisPath:
+        def loadData(self, _file):
+            return None
+
+        def get_all_scan_stats(self):
+            return (10.0, 0.0, 1.0, 1.0)
+
+    monkeypatch.setattr(melt_pool_app_module, "Scanpath", FakeScanpath)
+    monkeypatch.setattr(melt_pool_app_module, "ThesisPath", FakeThesisPath)
+
+    app = ThesisMeltPoolGeometryPart()
+    app.args = _build_args(template_dir, nout=5)
+    app.args.initial_temperature_file = str(initial_temperature_file)
+    app.configure_case(str(case_dir))
+
+    assert float(read_parameter(str(case_dir / "Material.txt"), "T_0")[0]) == (
+        pytest.approx(610.0)
+    )
+    assert float(
+        read_parameter(str(case_dir / "path_segment_000" / "Material.txt"), "T_0")[0]
+    ) == pytest.approx(610.0)
+    assert float(
+        read_parameter(str(case_dir / "path_segment_001" / "Material.txt"), "T_0")[0]
+    ) == pytest.approx(610.0)
 
 
 def test_temperature_execute_exports_snapshot_schema(monkeypatch, tmp_path):
