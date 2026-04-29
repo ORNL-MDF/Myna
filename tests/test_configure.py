@@ -45,6 +45,7 @@ def test_configure():
     examples = [
         "cluster_solidification",
         "melt_pool_geometry_part",
+        "melt_pool_geometry_part_heat_accumulation",
         "melt_pool_geometry_part_pelican",
         "microstructure_region",
         "microstructure_region_slice",
@@ -57,6 +58,7 @@ def test_configure():
         "solidification_part_pelican",
         "solidification_region_reduced",
         "solidification_region_reduced_stl",
+        "temperature_surface_part",
         "temperature_part",
         "temperature_part_pvd",
         "vtk_to_exodus_region",

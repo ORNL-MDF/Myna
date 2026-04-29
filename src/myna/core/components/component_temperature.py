@@ -11,6 +11,7 @@
 Available subclasses:
   ComponentTemperature
   ComponentTemperaturePart
+  ComponentTemperatureSurfacePart
 """
 
 from .component import Component
@@ -52,6 +53,15 @@ class ComponentTemperaturePart(ComponentTemperature):
     def __init__(self):
         ComponentTemperature.__init__(self)
         self.types.extend(["part", "layer"])
+
+
+class ComponentTemperatureSurfacePart(ComponentTemperaturePart):
+    """Layer-wise Component that outputs top-surface temperature snapshots
+    for a part in the format of the class `FileTemperature`.
+    """
+
+    def __init__(self):
+        super().__init__()
 
 
 class ComponentTemperaturePartPVD(ComponentTemperaturePart):
