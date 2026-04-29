@@ -53,9 +53,9 @@ class MynaApp:
         self.step_number = None
         if self.input_file is not None:
             self.settings = load_input(self.input_file)
-            self.step_number = [
-                list(x.keys())[0] for x in self.settings["steps"]
-            ].index(self.step_name)
+            step_names = [list(x.keys())[0] for x in self.settings.get("steps", [])]
+            if self.step_name in step_names:
+                self.step_number = step_names.index(self.step_name)
 
         # Set up argparse
         self.parser = argparse.ArgumentParser(
@@ -175,18 +175,16 @@ class MynaApp:
     def component(self):
         """Return the corresponding component class. This will be None if
         class name is not in the Component lookup dictionary"""
+        obj = None
         if self.class_name is not None:
-            obj = None
-            try:
-                obj = return_step_class(self.class_name, verbose=False)
+            obj = return_step_class(self.class_name, verbose=False)
+            if self.step_number is not None:
                 obj.apply_settings(
                     self.settings["steps"][self.step_number],
                     self.settings.get("data"),
                     self.settings.get("myna"),
                 )
-                return obj
-            except KeyError:
-                return obj
+        return obj
 
     def get_output_file_status(self):
         """Return the component output file paths, existence, and validity flags."""
