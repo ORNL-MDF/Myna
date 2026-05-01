@@ -12,6 +12,9 @@ import os
 import shutil
 
 import myna
+import yaml
+
+from myna.core.workflow.load_input import load_input, write_input
 
 from .example_paths import CASES_DIR
 
@@ -66,3 +69,48 @@ def test_configure():
 
     for example in examples:
         run_configure(example)
+
+
+def test_config_writes_relative_runtime_paths_and_absolute_provenance(tmp_path):
+    example = "solidification_part_json"
+    example_path = CASES_DIR / example
+    tmp_dir = tmp_path / example
+    tmp_dir.mkdir()
+
+    source_settings = load_input(example_path / "input.yaml")
+    input_file = tmp_dir / "input.yaml"
+    write_input(source_settings, input_file)
+
+    myna.core.workflow.config.config(os.fspath(input_file))
+
+    raw_settings = yaml.safe_load(input_file.read_text(encoding="utf-8"))
+    output_path = raw_settings["data"]["output_paths"]["3dthesis"][0]
+    scanpath = raw_settings["data"]["build"]["parts"]["P5"]["layer_data"]["51"][
+        "scanpath"
+    ]
+
+    assert not os.path.isabs(output_path)
+    assert not os.path.isabs(raw_settings["myna"]["workspace"])
+    assert not os.path.isabs(scanpath["file_local"])
+    assert os.path.isabs(scanpath["file_database"])
+    assert os.path.isabs(raw_settings["data"]["build"]["path"])
+
+    case_dir = tmp_dir / os.path.dirname(output_path)
+    case_raw = yaml.safe_load((case_dir / "myna_data.yaml").read_text(encoding="utf-8"))
+    case_scanpath = case_raw["build"]["parts"]["P5"]["layer_data"]["51"]["scanpath"]
+
+    assert not os.path.isabs(case_scanpath["file_local"])
+    assert os.path.isabs(case_scanpath["file_database"])
+    assert (case_dir / case_scanpath["file_local"]).resolve() == (
+        tmp_dir / "myna_resources" / "P5" / "51" / "scanpath.txt"
+    ).resolve()
+
+    loaded_settings = load_input(input_file)
+    assert os.path.isabs(loaded_settings["myna"]["workspace"])
+    assert os.path.isabs(loaded_settings["data"]["build"]["path"])
+    assert os.path.isabs(loaded_settings["data"]["output_paths"]["3dthesis"][0])
+    assert os.path.isabs(
+        loaded_settings["data"]["build"]["parts"]["P5"]["layer_data"]["51"]["scanpath"][
+            "file_local"
+        ]
+    )

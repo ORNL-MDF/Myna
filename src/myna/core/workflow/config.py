@@ -550,7 +550,7 @@ def config(input_file, output_file=None, show_avail=False, overwrite=False):
 
             # Write data to case directory
             myna_data_file = os.path.join(case_dir, "myna_data.yaml")
-            write_input(data_dict_case, myna_data_file)
+            write_input(data_dict_case, myna_data_file, relative_paths=True)
 
         # Show the inputs associated with the step
         if step_obj.input_requirement is not None:
@@ -585,4 +585,4 @@ def config(input_file, output_file=None, show_avail=False, overwrite=False):
         datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
     )
 
-    write_input(settings, output_file)
+    write_input(settings, output_file, relative_paths=True)
