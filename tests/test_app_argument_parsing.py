@@ -7,9 +7,11 @@
 # License: 3-clause BSD, see https://opensource.org/licenses/BSD-3-Clause.
 #
 import json
+from types import SimpleNamespace
 import sys
 
 import pytest
+import yaml
 
 from myna.application.cubit.cubit import CubitApp
 from myna.application.deer.deer import DeerApp
@@ -160,6 +162,80 @@ def test_myna_app_init_tolerates_missing_step_name(monkeypatch, tmp_path):
     assert app.step_name is None
     assert app.step_number is None
     assert app.component is None
+
+
+def test_myna_app_registers_docker_config_argument(monkeypatch):
+    monkeypatch.setattr(sys, "argv", ["test"])
+    app = MynaApp()
+
+    assert _count_option_actions(app.parser, "--docker-config") == 1
+    assert app.args.docker_config is None
+
+
+def test_start_subprocess_loads_docker_run_kwargs_from_config(monkeypatch, tmp_path):
+    docker_config_file = tmp_path / "docker-run.yaml"
+    docker_config_file.write_text(
+        yaml.safe_dump({"remove": True, "volumes": {"/host": {"bind": "/data"}}}),
+        encoding="utf-8",
+    )
+
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "test",
+            "--docker-image",
+            "example:latest",
+            "--docker-config",
+            str(docker_config_file),
+        ],
+    )
+
+    captured = {}
+
+    class FakeContainers:
+        def run(self, image, command, **kwargs):
+            captured["image"] = image
+            captured["command"] = command
+            captured["kwargs"] = kwargs
+            return SimpleNamespace(name="fake-container")
+
+    monkeypatch.setattr(
+        "myna.core.app.base.docker.from_env",
+        lambda: SimpleNamespace(containers=FakeContainers()),
+    )
+
+    app = MynaApp()
+    app.start_subprocess(["echo", "hello"], volumes={"/override": {"bind": "/work"}})
+
+    assert captured["image"] == "example:latest"
+    assert captured["command"] == "-c 'echo hello'"
+    assert captured["kwargs"]["entrypoint"] == "bash"
+    assert captured["kwargs"]["detach"] is True
+    assert captured["kwargs"]["remove"] is True
+    assert captured["kwargs"]["volumes"] == {"/override": {"bind": "/work"}}
+
+
+def test_start_subprocess_rejects_non_mapping_docker_config(monkeypatch, tmp_path):
+    docker_config_file = tmp_path / "docker-run.yaml"
+    docker_config_file.write_text("- remove\n", encoding="utf-8")
+
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "test",
+            "--docker-image",
+            "example:latest",
+            "--docker-config",
+            str(docker_config_file),
+        ],
+    )
+
+    app = MynaApp()
+
+    with pytest.raises(TypeError, match="mapping of docker run kwargs"):
+        app.start_subprocess(["echo", "hello"])
 
 
 @pytest.mark.parametrize(

@@ -9,6 +9,7 @@
 """Module to define the base behavior of a Myna simulation application"""
 
 import argparse
+import json
 import os
 import sys
 import time
@@ -18,6 +19,7 @@ import warnings
 from pathlib import Path
 import docker
 from docker.models.containers import Container
+import yaml
 from myna.core.app._argument_registrar import _ArgumentRegistrar
 from myna.core.workflow.load_input import load_input
 from myna.core.utils import is_executable, get_quoted_str
@@ -141,6 +143,13 @@ class MynaApp:
             help="(str) Docker image to use to run the app. The executable, "
             "MPI options, and environment file will be applied within "
             "the docker container",
+        )
+        self.register_argument(
+            "--docker-config",
+            default=None,
+            type=str,
+            help="(str) YAML or JSON file with kwargs expanded into "
+            "docker.containers.run(...)",
         )
         self.register_argument(
             "--mpiargs",
@@ -420,19 +429,57 @@ class MynaApp:
         if self.args.env is not None:
             cmd_arg_str = f". {self.args.env}; " + cmd_arg_str
         cmd_arg_str = f"-c '{cmd_arg_str}'"
+        docker_run_kwargs = self._get_docker_run_kwargs()
+        volume_dict = {}
+        if "volumes" in kwargs:
+            volume_dict.update(kwargs["volumes"])
+        if "volumes" in docker_run_kwargs:
+            volume_dict.update(docker_run_kwargs["volumes"])
+        docker_run_kwargs.update(kwargs)
+        docker_run_kwargs["volumes"] = volume_dict
         client = docker.from_env()
         process = client.containers.run(
             self.args.docker_image,
             cmd_arg_str,
             entrypoint="bash",
             detach=True,
-            **kwargs,
+            **docker_run_kwargs,
         )
         print(
             f"myna docker container {self.args.docker_image} ({process.name}):"
             f" {cmd_arg_str}"
         )
         return process
+
+    def _get_docker_run_kwargs(self) -> dict:
+        """Load user-provided docker run kwargs to be passed to `DockerClient.containers.run`
+        from a YAML or JSON file."""
+
+        docker_config = self.args.docker_config
+        if docker_config is None:
+            return {}
+
+        docker_config_path = Path(docker_config).expanduser()
+        with open(docker_config_path, "r", encoding="utf-8") as f:
+            suffix = docker_config_path.suffix.lower()
+            if suffix in (".yaml", ".yml"):
+                docker_run_kwargs = yaml.safe_load(f)
+            elif suffix == ".json":
+                docker_run_kwargs = json.load(f)
+            else:
+                raise ValueError(
+                    "Docker config file must be YAML (.yaml/.yml) or JSON (.json): "
+                    f"{docker_config_path}"
+                )
+
+        if docker_run_kwargs is None:
+            return {}
+        if not isinstance(docker_run_kwargs, dict):
+            raise TypeError(
+                "Docker config file must define a mapping of docker run kwargs: "
+                f"{docker_config_path}"
+            )
+        return docker_run_kwargs
 
     def start_subprocess_with_mpi_args(self, cmd_args, **kwargs):
         """Starts a subprocess using `Popen` while taking into account the MynaApp
