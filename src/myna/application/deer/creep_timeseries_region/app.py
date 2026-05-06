@@ -9,6 +9,7 @@
 """Defines the application behavior for the `deer/creep_timeseries_region` application"""
 
 import os
+import shutil
 import subprocess
 import numpy as np
 import polars as pl
@@ -68,6 +69,7 @@ class CreepTimeseriesRegionDeerApp(DeerApp):
         Args:
             case_dir: directory to configure into a valid Deer case
             exodus_file: Exodus mesh file associated with the case"""
+        exodus_file = self.copy_mesh_to_case(case_dir, exodus_file)
         self.copy_template_to_case(case_dir)
         self.generate_orientation_file(case_dir, exodus_file)
         self.update_case_loading_parameters(case_dir, exodus_file)
@@ -85,6 +87,15 @@ class CreepTimeseriesRegionDeerApp(DeerApp):
         for case_dir, exodus_file in zip(case_dirs, exodus_files):
             self.configure_case(case_dir, exodus_file)
 
+    def copy_mesh_to_case(self, case_dir, exodus_mesh_file):
+        """Copy the upstream mesh into the current case directory and return its path."""
+
+        case_dir = os.path.abspath(case_dir)
+        exodus_mesh_file = os.path.abspath(exodus_mesh_file)
+        case_mesh_file = os.path.join(case_dir, os.path.basename(exodus_mesh_file))
+        shutil.copy2(exodus_mesh_file, case_mesh_file)
+        return case_mesh_file
+
     def run_case(self, exodus_mesh_file, case_dir):
         """Run a case based on the given input and output file paths
 
@@ -97,38 +108,66 @@ class CreepTimeseriesRegionDeerApp(DeerApp):
         mesh_data = NetCDF4Dataset(exodus_mesh_file)
 
         # Launch process
+        case_dir = os.path.abspath(case_dir)
+        exodus_mesh_file = os.path.abspath(exodus_mesh_file)
+        host_path_map = {
+            "grain_boundary": os.path.join(case_dir, self.grain_boundary_file_name),
+            "case_input": os.path.join(case_dir, self.case_input_file_name),
+            "exodus_mesh": exodus_mesh_file,
+            "orientation": os.path.join(case_dir, self.orientation_file_name),
+            "material_model": os.path.join(case_dir, self.material_model_file_name),
+        }
         with working_directory(case_dir):
             with open("deer_run.log", "w", encoding="utf-8") as f:
+                container_case_path = "/home/myna"
+                path_map = host_path_map
+                kwargs = {
+                    "stdout": f,
+                    "stderr": subprocess.STDOUT,
+                }
+                if self.args.docker_image is not None:
+                    path_map = {
+                        key: os.path.join(
+                            container_case_path,
+                            os.path.relpath(path, start=case_dir),
+                        )
+                        for key, path in host_path_map.items()
+                    }
+                    kwargs = {
+                        "remove": True,
+                        "volumes": {
+                            case_dir: {"bind": container_case_path},
+                        },
+                        "working_dir": container_case_path,
+                    }
                 cmd_args = [
                     self.args.exec,
                     "-i",
-                    f"{os.path.join(case_dir, self.grain_boundary_file_name)}",
-                    f"{os.path.join(case_dir, self.case_input_file_name)}",
-                    f"Mesh/base/file={exodus_mesh_file}",
+                    path_map["grain_boundary"],
+                    path_map["case_input"],
+                    f"Mesh/base/file={path_map['exodus_mesh']}",
                     "UserObjects/euler_angle_file/prop_file_name"
-                    + f"={os.path.join(case_dir, self.orientation_file_name)}",
+                    + f"={path_map['orientation']}",
                     "UserObjects/euler_angle_file/read_type=block",
                     f"UserObjects/euler_angle_file/nblock={mesh_data.max_block_number}",
-                    "Materials/stress/database"
-                    + f"={os.path.join(case_dir, self.material_model_file_name)}",
+                    "Materials/stress/database" + f"={path_map['material_model']}",
                 ]
-                process = self.start_subprocess_with_mpi_args(
-                    cmd_args,
-                    stdout=f,
-                    stderr=subprocess.STDOUT,
-                )
+                if self.args.docker_image is not None:
+                    cmd_args.extend([">>", "deer_run.log", "2>&1"])
+                process = self.start_subprocess_with_mpi_args(cmd_args, **kwargs)
         return process
 
     def execute(self):
         """Run all cases for the Myna step"""
         self.parse_execute_arguments()
-        exodus_files = self.settings["data"]["output_paths"][self.last_step_name]
         csv_files = self.settings["data"]["output_paths"][self.step_name]
         processes = []
-        for exodus_file, csv_file in zip(exodus_files, csv_files):
+        for csv_file in csv_files:
             if (not os.path.exists(csv_file)) or (self.args.overwrite):
                 # Execute the case
-                process = self.run_case(exodus_file, os.path.dirname(csv_file))
+                case_dir = os.path.dirname(csv_file)
+                exodus_file = self.get_case_mesh_path(case_dir)
+                process = self.run_case(exodus_file, case_dir)
 
                 # Handle serial versus batch submission processes
                 if self.args.batch:
@@ -176,6 +215,27 @@ class CreepTimeseriesRegionDeerApp(DeerApp):
             delimiter=" ",
             fmt="%.6f",
         )
+
+    def get_case_mesh_path(self, case_dir):
+        """Return the staged Exodus mesh path for a configured case."""
+
+        configured_outputs = {
+            os.path.basename(path)
+            for path in self.settings["data"]["output_paths"][self.step_name]
+        }
+        case_files = [
+            os.path.join(case_dir, filename)
+            for filename in os.listdir(case_dir)
+            if filename.endswith((".e", ".exo", ".exoII"))
+            and filename not in configured_outputs
+            and os.path.isfile(os.path.join(case_dir, filename))
+        ]
+        if len(case_files) != 1:
+            raise FileNotFoundError(
+                f"Expected exactly one staged Exodus mesh in {case_dir}, found "
+                + f"{len(case_files)}: {sorted(os.path.basename(x) for x in case_files)}"
+            )
+        return case_files[0]
 
     def update_case_loading_parameters(self, case_dir, exodus_mesh_file):
         """Update case input file with loading direction, load, and RVE size
