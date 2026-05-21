@@ -294,8 +294,14 @@ def test_cubit_vtk_to_exodus_stage_parsers_are_idempotent(monkeypatch, stage_cal
     for stage_call in stage_calls:
         getattr(app, stage_call)()
 
+    assert _count_option_actions(app.parser, "--spn-xyz-order") == 1
     assert _count_option_actions(app.parser, "--orientation-segment-gb") == 1
+    assert _count_option_actions(app.parser, "--centroid-bbox-size") == 1
+    assert _count_option_actions(app.parser, "--min-grain-voxel-count") == 1
+    assert app.args.spn_xyz_order == 5
     assert app.args.orientation_segment_gb is None
+    assert app.args.centroid_bbox_size is None
+    assert app.args.min_grain_voxel_count == 10
 
 
 @pytest.mark.parametrize(
