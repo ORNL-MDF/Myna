@@ -8,13 +8,16 @@
 #
 """Base class for workflow components"""
 
+import importlib
+import importlib.util
 import os
 import sys
+from contextlib import contextmanager
 from pathlib import Path
 from typing import Literal
-import subprocess
 import myna
 import myna.database
+from myna.core.context import get_workflow_input_file, workflow_context
 from myna.core.workflow import load_input
 from myna.core.utils import nested_get, get_quoted_str
 import warnings
@@ -43,57 +46,17 @@ class Component:
         self.data = {}
         self.types = ["build"]
         self.workspace = None
+        self.input_file = None
+        self.step_index = None
+        self.last_step_name = None
+        self.last_step_class = None
 
     def run_component(self):
-        """Runs the configure.py, execute.py, and postprocess.py
-        for selected component class & application combination"""
+        """Run configure, execute, and postprocess stages for this component."""
 
-        # Run component configure.py script
-        configure_path = os.path.join(
-            os.environ["MYNA_APP_PATH"],
-            self.component_application,
-            self.component_class,
-            "configure.py",
-        )
-        if os.path.exists(configure_path):
-            cmd = [sys.executable, configure_path]
-            cmd.extend(self.get_step_args_list("configure"))
-            cmd = self.cmd_preformat(cmd)
-            print(f"myna run: {cmd=}")
-            with subprocess.Popen(cmd) as p:
-                p.wait()
-
-        # Run component execute.py script
-        has_executed = False
-        execute_path = os.path.join(
-            os.environ["MYNA_APP_PATH"],
-            self.component_application,
-            self.component_class,
-            "execute.py",
-        )
-        if os.path.exists(execute_path):
-            cmd = [sys.executable, execute_path]
-            cmd.extend(self.get_step_args_list("execute"))
-            cmd = self.cmd_preformat(cmd)
-            print(f"myna run: {cmd=}")
-            with subprocess.Popen(cmd) as p:
-                p.wait()
-            has_executed = True
-
-        # Run component postprocess.py script
-        postprocess_path = os.path.join(
-            os.environ["MYNA_APP_PATH"],
-            self.component_application,
-            self.component_class,
-            "postprocess.py",
-        )
-        if os.path.exists(postprocess_path):
-            cmd = [sys.executable, postprocess_path]
-            cmd.extend(self.get_step_args_list("postprocess"))
-            cmd = self.cmd_preformat(cmd)
-            print(f"myna run: {cmd=}")
-            with subprocess.Popen(cmd) as p:
-                p.wait()
+        self._run_stage("configure")
+        has_executed = self._run_stage("execute")
+        self._run_stage("postprocess")
 
         # Check output of component
         output_files, _, valid = self.get_output_files()
@@ -112,6 +75,67 @@ class Component:
                     f"No execute command was specified for step {self.name}. The expected output files are:"
                 )
                 [print("\t" + x) for x in output_files]
+
+    def _run_stage(self, operation: Literal["configure", "execute", "postprocess"]):
+        """Import and run an application stage module in the current process."""
+
+        module_name = ".".join(
+            [
+                "myna",
+                "application",
+                self.component_application,
+                self.component_class,
+                operation,
+            ]
+        )
+        try:
+            spec = importlib.util.find_spec(module_name)
+        except ModuleNotFoundError:
+            spec = None
+        if spec is None:
+            return False
+
+        module = importlib.import_module(module_name)
+        stage_func = getattr(module, operation, None)
+        if stage_func is None:
+            stage_func = getattr(module, "main", None)
+        if stage_func is None:
+            raise AttributeError(
+                f"Application stage module '{module_name}' does not define "
+                f"'{operation}()' or 'main()'."
+            )
+
+        stage_args = self.cmd_preformat(self.get_step_args_list(operation))
+        script_name = spec.origin or module_name
+        cmd = [sys.executable, script_name]
+        cmd.extend(stage_args)
+        print(f"myna run: {cmd=}")
+
+        with workflow_context(
+            input_file=self.input_file,
+            step_name=self.name,
+            step_class=self.component_class,
+            step_index=self.step_index,
+            last_step_name=self.last_step_name,
+            last_step_class=self.last_step_class,
+        ):
+            with self._stage_argv(script_name, stage_args):
+                try:
+                    stage_func()
+                except SystemExit as exc:
+                    if exc.code not in (None, 0):
+                        raise
+        return True
+
+    @contextmanager
+    def _stage_argv(self, script_name, args):
+        previous_argv = sys.argv
+        sys.argv = [script_name]
+        sys.argv.extend(args)
+        try:
+            yield
+        finally:
+            sys.argv = previous_argv
 
     def cmd_preformat(self, raw_cmd):
         """Replace placeholder names in command arguments and adds executable argument
@@ -202,7 +226,11 @@ class Component:
         files = []
 
         # Get build name
-        input_dir = os.path.abspath(os.path.dirname(os.environ["MYNA_INPUT"]))
+        input_file = self.input_file or get_workflow_input_file()
+        if input_file is None:
+            input_dir = os.getcwd()
+        else:
+            input_dir = os.path.abspath(os.path.dirname(input_file))
         build = nested_get(self.data, ["build", "name"], "myna_output")
         filled_template = template.replace("{{build}}", build)
 
@@ -460,9 +488,13 @@ class Component:
             print(f"- step {self.name}: No valid output files found.")
         else:
             # Use the database sync functionality
-            synced_files = datatype.sync(
-                self.component_application, self.types, self.output_requirement, files
-            )
+            with workflow_context(input_file=self.input_file, step_name=self.name):
+                synced_files = datatype.sync(
+                    self.component_application,
+                    self.types,
+                    self.output_requirement,
+                    files,
+                )
 
         return synced_files
 

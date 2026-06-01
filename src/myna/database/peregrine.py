@@ -11,6 +11,7 @@
 from myna.core.db import Database
 from myna.core import metadata
 from myna.core.utils import downsample_to_image, get_synonymous_key, nested_get
+from myna.core.context import get_workflow_input_file
 from myna.core.workflow import load_input
 import matplotlib.pyplot as plt
 import os
@@ -261,7 +262,10 @@ class PeregrineDB(Database):
             component_name = os.path.basename(os.path.dirname(files[0]))
             unique_regions = sorted(set(regions))
             unique_parts = sorted(set(parts))
-            settings = load_input(os.environ["MYNA_INPUT"])
+            input_file = get_workflow_input_file()
+            if input_file is None:
+                raise ValueError("Region sync requires a Myna input file.")
+            settings = load_input(input_file)
             for region in unique_regions:
                 for part in unique_parts:
                     part_dict = nested_get(settings, ["data", "build", "parts"]).get(

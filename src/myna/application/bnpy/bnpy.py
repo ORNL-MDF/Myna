@@ -18,8 +18,10 @@ class Bnpy(MynaApp):
         self.app_type = "bnpy"
         self.sF = 0.5
         self.gamma = 8
-        self.settings = load_input(os.environ["MYNA_INPUT"])
-        self.input_dir = os.path.dirname(os.environ["MYNA_INPUT"])
+        if self.input_file is None:
+            raise ValueError("Bnpy apps require a Myna workflow input file.")
+        self.settings = load_input(self.input_file)
+        self.input_dir = os.path.dirname(self.input_file)
         self.resource_dir = os.path.join(self.input_dir, "myna_resources")
         self.resource_template_dir = os.path.join(
             self.resource_dir, *self.name.split("/")

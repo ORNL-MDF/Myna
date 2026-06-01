@@ -342,16 +342,16 @@ def main():
 
     # Parse command line arguments
     args = parser.parse_args()
-    settings = load_input(os.environ["MYNA_INPUT"])
+    settings = load_input(app.input_file)
     train_model = args.train_model
     overwrite = args.overwrite
 
     # Get expected Myna output files
-    step_name = os.environ["MYNA_STEP_NAME"]
+    step_name = app.step_name
     myna_files = settings["data"]["output_paths"][step_name]
     thermal_step_name = args.thermal
     if thermal_step_name is None:
-        thermal_step_name = os.environ["MYNA_LAST_STEP_NAME"]
+        thermal_step_name = app.last_step_name
     thermal_files = settings["data"]["output_paths"][thermal_step_name]
 
     # Assemble training data and train model
