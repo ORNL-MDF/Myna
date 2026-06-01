@@ -46,17 +46,14 @@ def sync(input_file, step=None):
         step: name of step to sync, syncs all if None"""
 
     steps_to_sync = myna.core.utils.str_to_list(step)
-
-    # Set environmental variable for input file location
-    os.environ["MYNA_INPUT"] = os.path.abspath(input_file)
-    os.environ["MYNA_SYNC_INPUT"] = os.path.abspath(
-        input_file
-    )  # MYNA_SYNC_INPUT will be deprecated in future versions
+    input_file = os.path.abspath(input_file)
 
     # Load the initial input file to get the steps
     initial_settings = load_input(input_file)
 
     # Run through each step
+    last_step_name = ""
+    last_step_class = ""
     for index, step in enumerate(initial_settings["steps"]):
         # Load the input file at each step in case one the previous step has updated the inputs
         settings = load_input(input_file)
@@ -69,17 +66,10 @@ def sync(input_file, step=None):
         step_obj.name = step_name
         step_obj.component_class = component_class_name
         step_obj.component_application = component_app_name
-
-        # Set environmental variable for the step name
-        if index != 0:
-            os.environ["MYNA_LAST_STEP_NAME"] = os.environ["MYNA_STEP_NAME"]
-            os.environ["MYNA_LAST_STEP_CLASS"] = os.environ["MYNA_STEP_CLASS"]
-        else:
-            os.environ["MYNA_LAST_STEP_NAME"] = ""
-            os.environ["MYNA_LAST_STEP_CLASS"] = ""
-        os.environ["MYNA_STEP_NAME"] = step_name
-        os.environ["MYNA_STEP_CLASS"] = component_class_name
-        os.environ["MYNA_STEP_INDEX"] = str(index)
+        step_obj.input_file = input_file
+        step_obj.step_index = index
+        step_obj.last_step_name = last_step_name
+        step_obj.last_step_class = last_step_class
 
         # Apply the settings and execute the component, as needed
         sync_step = True
@@ -93,3 +83,6 @@ def sync(input_file, step=None):
         if sync_step:
             step_obj.apply_settings(step[step_name], settings["data"], settings["myna"])
             step_obj.sync_output_files()
+
+        last_step_name = step_name
+        last_step_class = component_class_name

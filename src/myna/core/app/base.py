@@ -19,6 +19,7 @@ from pathlib import Path
 import docker
 from docker.models.containers import Container
 from myna.core.app._argument_registrar import _ArgumentRegistrar
+from myna.core.context import current_workflow_context
 from myna.core.workflow.load_input import load_input
 from myna.core.utils import is_executable, get_quoted_str
 from myna.core.components import return_step_class
@@ -37,24 +38,44 @@ class MynaApp:
     ENV_APP_PATH = "MYNA_APP_PATH"
     ENV_STEP_NAME = "MYNA_STEP_NAME"
     ENV_LAST_STEP_NAME = "MYNA_LAST_STEP_NAME"
+    ENV_STEP_CLASS = "MYNA_STEP_CLASS"
+    ENV_STEP_INDEX = "MYNA_STEP_INDEX"
+    ENV_LAST_STEP_CLASS = "MYNA_LAST_STEP_CLASS"
 
     def __init__(self):
         # Set the print name as well as the Myna app and class names
         self.class_name: str | None = None
         self.app_type: str | None = None
+        self.step_class: str | None = None
+        self.last_step_class: str | None = None
 
-        # Get the names for the current and previous workflow step
-        self.step_name = os.environ.get(self.ENV_STEP_NAME)
-        self.last_step_name = os.environ.get(self.ENV_LAST_STEP_NAME)
+        # Get explicit workflow context first, falling back to legacy CLI environment
+        # variables for direct script invocation.
+        context = current_workflow_context()
+        if context is not None:
+            self.step_name = context.step_name
+            self.last_step_name = context.last_step_name
+            self.step_class = context.step_class
+            self.last_step_class = context.last_step_class
+            self.step_index = context.step_index
+            self.input_file = context.input_file
+        else:
+            self.step_name = os.environ.get(self.ENV_STEP_NAME)
+            self.last_step_name = os.environ.get(self.ENV_LAST_STEP_NAME)
+            self.step_class = os.environ.get(self.ENV_STEP_CLASS)
+            self.last_step_class = os.environ.get(self.ENV_LAST_STEP_CLASS)
+            self.input_file = os.environ.get(self.ENV_SETTINGS_FILE)
+            self.step_index = _parse_optional_int(os.environ.get(self.ENV_STEP_INDEX))
 
         # Get the input file contents and parse additional step information
-        self.input_file = os.environ.get(self.ENV_SETTINGS_FILE)
         self.settings = {}
         self.step_number = None
         if self.input_file is not None:
             self.settings = load_input(self.input_file)
             step_names = [list(x.keys())[0] for x in self.settings.get("steps", [])]
-            if self.step_name in step_names:
+            if self.step_index is not None:
+                self.step_number = self.step_index
+            elif self.step_name in step_names:
                 self.step_number = step_names.index(self.step_name)
 
         # Set up argparse
@@ -539,3 +560,9 @@ class MynaApp:
             open_resources = procs_in_use <= (self.args.maxproc - self.args.np)
             if not open_resources:
                 time.sleep(poll_interval)
+
+
+def _parse_optional_int(value):
+    if value is None:
+        return None
+    return int(value)
