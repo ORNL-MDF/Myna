@@ -64,7 +64,7 @@ The main user workflows are:
 | `docs/decisions/` | Lightweight architecture decision records | Add records for non-obvious architectural choices |
 | `scripts/group_docs.py` | Generates and groups LazyDocs API documentation | CI runs this before `mkdocs build --strict` |
 | `scripts/check_dev_tools.py` | Checks local development tool availability and writable caches | Run first in new agent or container shells |
-| `scripts/check_docs_harness.py` | Validates required agent-harness docs and links | Runs in pre-commit and CI |
+| `scripts/check_docs_harness.py` | Validates required agent-harness docs, links, and architecture-doc updates for sensitive code changes | Runs in pre-commit and CI |
 | `.pre-commit-config.yaml` | Local quality hooks | Includes Ruff, codespell, license headers, and docs harness check |
 | `.github/workflows/CI.yml` | Package build, default tests, pylint, API docs, MkDocs, and external-app example CI | External-app job runs in a container |
 | `.github/workflows/pre-commit.yml` | Pre-commit CI | Runs hooks on pull requests |
@@ -241,7 +241,7 @@ Common validation commands:
 | External examples | `uv run pytest -m "examples and not parallel"` | Requires external tools and example fixtures |
 | Generate API docs | `uv run scripts/group_docs.py` | Writes ignored `docs/api-docs/` |
 | Build docs | `uv run mkdocs build --strict` | Run after API docs generation for parity with CI |
-| Docs harness | `uv run python scripts/check_docs_harness.py` | Verifies required agent docs and links |
+| Docs harness | `uv run python scripts/check_docs_harness.py` | Verifies required agent docs, links, and architecture-doc updates for sensitive code changes |
 | Pre-commit | `uv run pre-commit run --all-files` | May require network the first time hooks install |
 
 CI behavior:
