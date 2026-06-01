@@ -1,4 +1,5 @@
 title: Architecture Decisions
 nav:
   - index.md
+  - 0001-workflow-context.md
   - 0000-template.md

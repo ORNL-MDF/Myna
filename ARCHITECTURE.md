@@ -2,7 +2,7 @@
 
 ## Status
 
-- Last verified: 2026-06-01 during the documentation-harness update
+- Last verified: 2026-06-01 during the workflow-context update
 - Audience: maintainers, contributors, and coding agents
 - Scope: describes current architecture; does not replace API docs or user docs
 
@@ -44,6 +44,7 @@ The main user workflows are:
 | `uv.lock` | Locked `uv` dependency graph | Commit updates when dependency declarations change |
 | `src/myna/` | Python package source | Runtime code lives here |
 | `src/myna/core/` | Workflow orchestration, components, file abstractions, metadata, app base helpers, utilities | Prefer generic workflow behavior here |
+| `src/myna/core/context.py` | Explicit workflow context shared by orchestration, components, app wrappers, metadata, and sync helpers | Prefer this over workflow-specific environment variables for new shared behavior |
 | `src/myna/core/workflow/` | `config`, `run`, `sync`, `status`, and input loading stages | CLI entrypoint delegates here |
 | `src/myna/core/components/` | Workflow component classes and lookup table | Component string keys are user-facing compatibility surface |
 | `src/myna/core/files/` | Output file classes and validation/sync value extraction | Add new output formats here |
@@ -99,10 +100,15 @@ On import, `src/myna/core/__init__.py` sets:
 - `MYNA_INSTALL_PATH` to the installed `myna` package root;
 - `MYNA_APP_PATH` to the installed `myna/application` directory.
 
-Workflow commands set additional runtime environment variables, including `MYNA_INPUT`,
-`MYNA_CONFIG_INPUT`, `MYNA_RUN_INPUT`, `MYNA_SYNC_INPUT`, `MYNA_STEP_NAME`,
-`MYNA_STEP_CLASS`, and `MYNA_STEP_INDEX`. The `*_INPUT` variables are marked in code as
-future deprecation targets; prefer `MYNA_INPUT` for new shared behavior.
+Workflow run and sync state is carried through `myna.core.context.WorkflowContext`.
+This context includes the active input file, current step, step class, step index, and
+previous-step information. `MynaApp` reads that explicit context first. It still falls
+back to legacy `MYNA_*` environment variables so direct stage-script invocation remains
+compatible.
+
+`myna config` still sets `MYNA_INPUT` and the deprecated `MYNA_CONFIG_INPUT` while it
+extracts metadata. New shared workflow code should prefer `WorkflowContext`,
+`MynaApp` attributes, or `get_workflow_input_file()` over direct `os.environ` reads.
 
 ## Main Concepts and Domain Model
 
@@ -117,8 +123,8 @@ future deprecation targets; prefer `MYNA_INPUT` for new shared behavior.
   `data_requirements`, `input_requirement`, `output_requirement`, and hierarchical
   `types` such as `build`, `build_region`, `part`, `region`, and `layer`.
 - **Application wrapper**: Tool-specific code under `src/myna/application/<app>/<class>/`
-  that may provide `configure.py`, `execute.py`, and `postprocess.py` stages. Wrappers
-  commonly use `myna.core.app.MynaApp`.
+  that may provide `configure.py`, `execute.py`, and `postprocess.py` stage modules.
+  Wrappers commonly use `myna.core.app.MynaApp`.
 - **Database adapter**: A subclass of `myna.core.db.Database` under
   `src/myna/database/` that loads metadata and syncs outputs for a supported data
   source.
@@ -148,7 +154,7 @@ flowchart TD
     Component --> Cases[case directories and myna_data.yaml]
     CLI --> Run[myna run]
     Run --> ComponentRun[Component.run_component]
-    ComponentRun --> AppStages[application configure/execute/postprocess scripts]
+    ComponentRun --> AppStages[application configure/execute/postprocess modules]
     AppStages --> Outputs[component output files]
     CLI --> Sync[myna sync]
     Sync --> FileValidation[file validation]
@@ -160,9 +166,11 @@ the input file, resolves the database adapter with `return_datatype_class`, extr
 component metadata requirements, creates case directories, writes per-case
 `myna_data.yaml`, records expected output paths, and writes the configured input. For
 `run`, Myna reloads the input before each step, applies step settings to a component,
-sets step environment variables, and runs the available app-stage scripts. For `sync`,
-Myna validates component outputs and delegates supported sync behavior to the selected
-database adapter.
+and calls available app-stage modules in-process through `Component.run_component`.
+Stage command-line arguments from the input file are still exposed through `sys.argv`
+while each stage runs, preserving `argparse`-based app wrappers. For `sync`, Myna
+validates component outputs and delegates supported sync behavior to the selected
+database adapter while providing the active input file through `WorkflowContext`.
 
 ## Dependency Boundaries
 
@@ -303,4 +311,4 @@ local executable configuration, and keep machine-specific values out of shared e
 | External application version coverage is mostly documented in prose and CI container behavior | Local users may not know which exact tool version failed | Add per-application troubleshooting notes as failures are reported |
 | API docs are generated but not committed | A fresh checkout needs generation before strict MkDocs parity with CI | Keep `scripts/group_docs.py` documented and run it before docs-build checks |
 | LazyDocs API generation is verified in CI on Python 3.10, not all newer local Python versions | Local docs builds can fail before checking authored docs content | Use a Python 3.10 environment for docs-generation parity with CI |
-| Deprecated environment variables remain in workflow code | New code could depend on names marked for future removal | Prefer `MYNA_INPUT` in new code and track deprecation in release notes when removal is planned |
+| Legacy workflow environment fallbacks remain for direct app-stage invocation | Compatibility fallbacks could tempt new code to reintroduce hidden workflow state | Prefer `WorkflowContext`, `MynaApp` attributes, or `get_workflow_input_file()` in new code |
