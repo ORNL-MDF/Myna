@@ -449,8 +449,7 @@ class MynaApp:
         match = re.search(version_regex, output, flags=re.MULTILINE)
         if match is None:
             raise ValueError(
-                "Could not extract executable version using pattern "
-                f"{version_regex!r}."
+                f"Could not extract executable version using pattern {version_regex!r}."
             )
         version_group = match.groupdict().get("version")
         if version_group is not None:
