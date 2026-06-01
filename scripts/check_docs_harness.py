@@ -133,7 +133,9 @@ def check_pr_template_guidance() -> None:
     template_text = read_required_file(".github/pull_request_template.md")
     for heading in PR_TEMPLATE_REQUIRED_HEADINGS:
         if not has_heading(template_text, heading):
-            fail(f".github/pull_request_template.md is missing required heading: {heading}")
+            fail(
+                f".github/pull_request_template.md is missing required heading: {heading}"
+            )
 
     agents_text = read_required_file(".codex/AGENTS.md")
     required_phrases = [
@@ -165,9 +167,7 @@ def run_git_command(args: list[str]) -> list[str]:
 
 def get_changed_files() -> set[str]:
     changed = set(run_git_command(["diff", "--name-only", "HEAD"]))
-    changed.update(
-        run_git_command(["ls-files", "--others", "--exclude-standard"])
-    )
+    changed.update(run_git_command(["ls-files", "--others", "--exclude-standard"]))
     return changed
 
 
@@ -192,9 +192,7 @@ def check_architecture_docs_updated_for_sensitive_changes() -> None:
         return
 
     docs_changes = sorted(
-        path
-        for path in changed_files
-        if path_matches_any(path, ARCHITECTURE_DOC_PATHS)
+        path for path in changed_files if path_matches_any(path, ARCHITECTURE_DOC_PATHS)
     )
     if docs_changes:
         return
