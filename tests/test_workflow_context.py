@@ -12,10 +12,13 @@ import os
 import sys
 import types
 
+import pytest
+
 from myna.core.app.base import MynaApp
 from myna.core.components.component import Component
 import myna.core.components
 from myna.core.context import current_workflow_context, workflow_context
+from myna.core.files.file import File
 from myna.core.workflow.run import run
 
 
@@ -185,3 +188,60 @@ myna: {}
     ]
     for key in WORKFLOW_ENV_KEYS:
         assert key not in os.environ
+
+
+class MissingOutputFile(File):
+    """Output file type used to exercise run-time validation."""
+
+    def __init__(self, file):
+        super().__init__(file)
+        self.filetype = ".csv"
+
+    def file_is_valid(self):
+        return True
+
+
+def test_component_run_raises_when_execute_does_not_produce_output(
+    monkeypatch, tmp_path
+):
+    _clear_workflow_env(monkeypatch)
+    input_file = tmp_path / "input.yaml"
+    input_file.write_text(
+        "steps: []\ndata:\n  build:\n    name: build\nmyna: {}\n",
+        encoding="utf-8",
+    )
+    module_name = "myna.application.fakeapp.fakeclass.execute"
+    original_import_module = importlib.import_module
+
+    def execute():
+        return None
+
+    fake_module = types.SimpleNamespace(execute=execute)
+
+    def fake_find_spec(name):
+        if name == module_name:
+            return ModuleSpec(name, loader=None, origin="/tmp/execute.py")
+        return None
+
+    def fake_import_module(name):
+        if name == module_name:
+            return fake_module
+        return original_import_module(name)
+
+    monkeypatch.setattr(importlib.util, "find_spec", fake_find_spec)
+    monkeypatch.setattr(importlib, "import_module", fake_import_module)
+
+    component = Component()
+    component.name = "demo"
+    component.component_application = "fakeapp"
+    component.component_class = "fakeclass"
+    component.input_file = os.fspath(input_file)
+    component.data = {"build": {"name": "build"}}
+    component.output_requirement = MissingOutputFile
+    component.output_template = "result.csv"
+
+    with pytest.raises(
+        RuntimeError,
+        match="Only found 0 valid output files out of 1 output files for step demo",
+    ):
+        component.run_component()
