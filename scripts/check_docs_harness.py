@@ -7,6 +7,7 @@ CI, and minimal local development environments.
 from __future__ import annotations
 
 import re
+import subprocess
 import sys
 from pathlib import Path
 
@@ -45,6 +46,21 @@ REQUIRED_HEADINGS = {
         "## Handoff Checklist",
     ],
 }
+
+ARCHITECTURE_SENSITIVE_PATHS = [
+    "src/myna/core/workflow/",
+    "src/myna/core/components/",
+    "src/myna/core/app/",
+    "src/myna/core/context.py",
+    "src/myna/database/",
+    "src/myna/application/readme.md",
+]
+
+ARCHITECTURE_DOC_PATHS = [
+    "ARCHITECTURE.md",
+    "docs/developer_guide.md",
+    "docs/decisions/",
+]
 
 
 def fail(message: str) -> None:
@@ -104,9 +120,73 @@ def check_agents_links() -> None:
             fail(f".codex/AGENTS.md links to missing path: {raw_target}")
 
 
+def run_git_command(args: list[str]) -> list[str]:
+    try:
+        result = subprocess.run(
+            ["git", *args],
+            cwd=REPO_ROOT,
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+    except FileNotFoundError:
+        return []
+
+    if result.returncode != 0:
+        return []
+    return [line.strip() for line in result.stdout.splitlines() if line.strip()]
+
+
+def get_changed_files() -> set[str]:
+    changed = set(run_git_command(["diff", "--name-only", "HEAD"]))
+    changed.update(
+        run_git_command(["ls-files", "--others", "--exclude-standard"])
+    )
+    return changed
+
+
+def path_matches_any(path: str, prefixes_or_paths: list[str]) -> bool:
+    return any(
+        path == candidate.rstrip("/") or path.startswith(candidate)
+        for candidate in prefixes_or_paths
+    )
+
+
+def check_architecture_docs_updated_for_sensitive_changes() -> None:
+    changed_files = get_changed_files()
+    if not changed_files:
+        return
+
+    sensitive_changes = sorted(
+        path
+        for path in changed_files
+        if path_matches_any(path, ARCHITECTURE_SENSITIVE_PATHS)
+    )
+    if not sensitive_changes:
+        return
+
+    docs_changes = sorted(
+        path
+        for path in changed_files
+        if path_matches_any(path, ARCHITECTURE_DOC_PATHS)
+    )
+    if docs_changes:
+        return
+
+    changed_list = "\n".join(f"  - {path}" for path in sensitive_changes)
+    required_list = "\n".join(f"  - {path}" for path in ARCHITECTURE_DOC_PATHS)
+    fail(
+        "architecture-sensitive files changed without architecture documentation "
+        "updates.\nChanged files:\n"
+        f"{changed_list}\nUpdate at least one of:\n{required_list}\n"
+        "If no docs update is needed, state that explicitly in the PR."
+    )
+
+
 def main() -> None:
     check_required_headings()
     check_agents_links()
+    check_architecture_docs_updated_for_sensitive_changes()
     print("docs harness check passed")
 
 

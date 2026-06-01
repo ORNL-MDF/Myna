@@ -47,3 +47,9 @@ Describe the testing strategy for this change and include any relevant details a
 If the change is covered by the CI test suite, state that explicitly.
 If manual testing was performed, describe the testing process and results.
 -->
+
+
+## Checklist
+
+- [ ] Architecture/docs impact considered. Updated `ARCHITECTURE.md`, developer docs,
+      and/or ADRs where needed, or explained why not.
