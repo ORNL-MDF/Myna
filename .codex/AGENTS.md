@@ -155,8 +155,11 @@ Branch names use:
 ```
 
 Examples: `docs/agent-harness`, `fix/database-paths`, `feat(cli): add dry-run flag`.
-Complete `.github/pull_request_template.md` and state behavior impact, risk, and
-testing strategy.
+When asked to draft or open a pull request, first inspect and complete
+`.github/pull_request_template.md`. Preserve the template headings and checklist, and
+state behavior impact, risk, and testing strategy. If the requested PR body is scoped
+to a subset of commits while the branch contains other commits, state that scope
+explicitly in the body.
 
 ## Security and Data Handling
 

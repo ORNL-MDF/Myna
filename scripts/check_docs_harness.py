@@ -62,6 +62,15 @@ ARCHITECTURE_DOC_PATHS = [
     "docs/decisions/",
 ]
 
+PR_TEMPLATE_REQUIRED_HEADINGS = [
+    "## Summary",
+    "## Related issues",
+    "## Details",
+    "## Impact",
+    "## Testing strategy",
+    "## Checklist",
+]
+
 
 def fail(message: str) -> None:
     print(f"docs harness check failed: {message}", file=sys.stderr)
@@ -118,6 +127,23 @@ def check_agents_links() -> None:
             fail(f".codex/AGENTS.md link escapes repository: {raw_target}")
         if not path.exists():
             fail(f".codex/AGENTS.md links to missing path: {raw_target}")
+
+
+def check_pr_template_guidance() -> None:
+    template_text = read_required_file(".github/pull_request_template.md")
+    for heading in PR_TEMPLATE_REQUIRED_HEADINGS:
+        if not has_heading(template_text, heading):
+            fail(f".github/pull_request_template.md is missing required heading: {heading}")
+
+    agents_text = read_required_file(".codex/AGENTS.md")
+    required_phrases = [
+        ".github/pull_request_template.md",
+        "Preserve the template headings and checklist",
+        "state behavior impact, risk, and testing strategy",
+    ]
+    for phrase in required_phrases:
+        if phrase not in agents_text:
+            fail(f".codex/AGENTS.md is missing PR template guidance: {phrase}")
 
 
 def run_git_command(args: list[str]) -> list[str]:
@@ -186,6 +212,7 @@ def check_architecture_docs_updated_for_sensitive_changes() -> None:
 def main() -> None:
     check_required_headings()
     check_agents_links()
+    check_pr_template_guidance()
     check_architecture_docs_updated_for_sensitive_changes()
     print("docs harness check passed")
 
