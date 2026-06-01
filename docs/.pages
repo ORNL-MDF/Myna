@@ -4,4 +4,8 @@ nav:
   - docker.md
   - cli.md
   - developer_guide.md
+  - testing.md
+  - documentation.md
+  - updating_changelog.md
+  - decisions
   - api-docs

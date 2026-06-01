@@ -38,6 +38,8 @@ jobs:
           uv sync --locked --extra dev
       - name: Run pytest (without examples)
         run: uv run --frozen --no-sync pytest
+      - name: Check documentation harness
+        run: uv run --frozen --no-sync python scripts/check_docs_harness.py
       - name: Analyzing code with pylint
         run: uv run --frozen --no-sync pylint $(git ls-files '*.py') --fail-under=7.25
       - name: Building API docs
