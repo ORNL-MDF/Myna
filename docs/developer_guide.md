@@ -144,6 +144,21 @@ such as `self.input_file`, `self.step_name`, `self.last_step_name`, and
 `self.step_index`. Avoid reading `MYNA_*` environment variables directly in new app
 code; those names remain only as a compatibility fallback for direct stage invocation.
 
+Apps that wrap an external executable can query that executable's version with
+`self.get_executable_version()`. Call it after parsing stage arguments so user-provided
+`--exec`, `--env`, and Docker settings are available. For example:
+
+```python
+version = self.get_executable_version(
+    "additiveFoam",
+    version_args=[],
+    version_regex=r"Version: (?P<version>\S+)",
+)
+```
+
+The returned string can then be used to select a template or raise a clear
+compatibility error.
+
 It is likely that your app will require a `template` directory, or a set of input
 files for your model that get copied into every case. If you are using a template
 directory, then the intended functionality is that during `configure.py` the template
