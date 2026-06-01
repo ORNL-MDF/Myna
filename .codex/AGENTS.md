@@ -159,7 +159,9 @@ When asked to draft or open a pull request, first inspect and complete
 `.github/pull_request_template.md`. Preserve the template headings and checklist, and
 state behavior impact, risk, and testing strategy. If the requested PR body is scoped
 to a subset of commits while the branch contains other commits, state that scope
-explicitly in the body.
+explicitly in the body. This applies even when the user asks only for a PR title, PR
+body, or commit/PR text; never draft a free-form PR body when the repository provides
+a pull request template.
 
 ## Security and Data Handling
 

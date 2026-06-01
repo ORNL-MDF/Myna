@@ -142,6 +142,9 @@ def check_pr_template_guidance() -> None:
         ".github/pull_request_template.md",
         "Preserve the template headings and checklist",
         "state behavior impact, risk, and testing strategy",
+        "even when the user asks only for a PR title",
+        "commit/PR text",
+        "never draft a free-form PR body",
     ]
     for phrase in required_phrases:
         if phrase not in agents_text:
