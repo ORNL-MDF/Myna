@@ -52,4 +52,4 @@ If manual testing was performed, describe the testing process and results.
 ## Checklist
 
 - [ ] Architecture/docs impact considered. Updated `ARCHITECTURE.md`, developer docs,
-      and/or ADRs where needed, or explained why not.
+      and/or ADRs where needed.
