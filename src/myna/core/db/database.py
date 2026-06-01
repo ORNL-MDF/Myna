@@ -11,6 +11,7 @@
 import os
 from datetime import datetime
 import yaml
+from myna.core.context import get_workflow_input_file
 from myna.core.workflow import load_input
 from myna.core.utils import strf_datetime
 
@@ -55,7 +56,10 @@ class Database:
             simulation_file_path (str): Path to the simulation file being synced
             segment_key (str): Key identifying the segment in the database"""
         step_name = os.path.basename(os.path.dirname(simulation_file_path))
-        step_list = load_input(os.environ["MYNA_INPUT"])["steps"]
+        input_file = get_workflow_input_file()
+        if input_file is None:
+            raise ValueError("Cannot write sync metadata without a Myna input file.")
+        step_list = load_input(input_file)["steps"]
         step_dict = step_list[
             [list(step.keys())[0] for step in step_list].index(step_name)
         ]

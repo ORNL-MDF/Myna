@@ -495,10 +495,11 @@ class AdditiveFOAMRegionReduced(AdditiveFOAM):
 
         with working_directory(case_dict["case_dir"]):
             # Determine if parallel execution
+            step_index = self.step_index
+            if step_index is None:
+                step_index = self.step_number
             np = nested_get(
-                self.settings["steps"][int(os.environ["MYNA_STEP_INDEX"])][
-                    self.step_name
-                ],
+                self.settings["steps"][step_index][self.step_name],
                 ["execute", "np"],
                 default_value=1,
             )
