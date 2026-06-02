@@ -219,9 +219,9 @@ class CreepTimeseriesRegionDeerApp(DeerApp):
     def get_case_mesh_path(self, case_dir):
         """Return the staged Exodus mesh path for a configured case."""
 
+        output_mesh_base = os.path.splitext(self.output_csv_name)[0]
         configured_outputs = {
-            os.path.basename(path)
-            for path in self.settings["data"]["output_paths"][self.step_name]
+            f"{output_mesh_base}{suffix}" for suffix in (".e", ".exo", ".exoII")
         }
         case_files = [
             os.path.join(case_dir, filename)

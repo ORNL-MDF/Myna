@@ -14,7 +14,7 @@ steps:
       refine-region: 1
     execute:
       batch: True
-      np: 2
+      np: 16
       mpiexec: mpirun
       mpiflags: --bind-to none
 - exaca:
@@ -24,11 +24,12 @@ steps:
     configure:
       cell-size: 2.5
       sub-size: 12.3
-      nd: 250
-      mu: 21
-      std: 3
+      nd: 246
+      mu: 17.2
+      std: 1
     execute:
       batch: True
+      np: 32
 - convert_mesh:
     class: vtk_to_exodus_region
     application: cubit
@@ -36,7 +37,8 @@ steps:
       cubitpath: /home/cloud/Cubit-17.02
       downsample: 4
       mpiexec: /home/cloud/Cubit-17.02/bin/mpiexec
-      np: 2
+      np: 16
+      orientation-segment-gb: 2
 - deer:
     class: creep_timeseries_region
     application: deer
@@ -44,6 +46,10 @@ steps:
     configure:
       loaddir: z
       load: 100
+    execute:
+      docker-image: idaholab/moose-dev:2025.04.22
+      docker-config: docker_config_deer.yaml
+      env: /projects/activate
 data:
   build:
     datatype: Peregrine
@@ -53,6 +59,6 @@ data:
       P5:
         regions:
           r1:
-            layers: [51]
+            layers: [51, 52]
             x: 0.2
             y: 0.021

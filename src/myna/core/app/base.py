@@ -416,7 +416,7 @@ class MynaApp:
         # Launch using subprocess.Popen
         if self.args.docker_image is None:
             if self.args.env is not None:
-                cmd_arg_str = [f". {self.args.env}; " + " ".join(cmd_args)]
+                cmd_arg_str = [f". {self.args.env} && " + " ".join(cmd_args)]
                 process = subprocess.Popen(cmd_arg_str, shell=True, **kwargs)
                 print(f"myna subprocess (PID {process.pid}): {cmd_arg_str}")
                 return process
@@ -427,8 +427,8 @@ class MynaApp:
         # Launch using Docker, overriding any default entrypoint by using bash
         cmd_arg_str = " ".join(cmd_args)
         if self.args.env is not None:
-            cmd_arg_str = f". {self.args.env}; " + cmd_arg_str
-        cmd_arg_str = f"-c '{cmd_arg_str}'"
+            cmd_arg_str = f". {self.args.env} && " + cmd_arg_str
+        cmd_args_docker = ["-lc", cmd_arg_str]
         docker_run_kwargs = self._get_docker_run_kwargs()
         volume_dict = {}
         if "volumes" in kwargs:
@@ -440,7 +440,7 @@ class MynaApp:
         client = docker.from_env()
         process = client.containers.run(
             self.args.docker_image,
-            cmd_arg_str,
+            command=cmd_args_docker,
             entrypoint="bash",
             detach=True,
             **docker_run_kwargs,
