@@ -65,11 +65,14 @@ class Component:
                 if all(valid):
                     print(f"All output files are valid for step {self.name}.")
                 else:
-                    print(
-                        f"WARNING: Only found {sum(valid)} valid output files out of {len(output_files)}"
-                        + f" output files for step {self.name}. Expected output files:"
+                    message = (
+                        f"Only found {sum(valid)} valid output files out of "
+                        f"{len(output_files)} output files for step {self.name}. "
+                        "Expected output files:"
                     )
+                    print(f"ERROR: {message}")
                     [print("\t" + x) for x in output_files]
+                    raise RuntimeError(message)
             else:
                 print(
                     f"No execute command was specified for step {self.name}. The expected output files are:"
