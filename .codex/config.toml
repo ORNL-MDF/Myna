@@ -2,6 +2,3 @@
 
 model = "gpt-5.5"
 personality = "pragmatic"
-model_reasoning_effort = "xhigh"
-plan_mode_reasoning_effort = "xhigh"
-approval_policy = "on-request"
