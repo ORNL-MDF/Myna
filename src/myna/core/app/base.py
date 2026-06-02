@@ -10,6 +10,8 @@
 
 import argparse
 import os
+import re
+import shlex
 import sys
 import time
 import shutil
@@ -341,9 +343,7 @@ class MynaApp:
         """Check if the specified executable exists and raise error if not"""
 
         # Get the name of the executable
-        exe = self.args.exec
-        if exe is None:
-            exe = default
+        exe = self.get_executable(default)
         exe_windows = exe + ".exe"  # Try a Windows exe just in case
 
         # If an executable is found, return
@@ -369,6 +369,155 @@ class MynaApp:
                 f'{self.name} app executable "{shutil.which(exe, mode=os.F_OK)}"'
                 + "does not have execute permissions."
             )
+
+    def get_executable(self, default=None):
+        """Return the configured executable, falling back to ``default``.
+
+        Args:
+            default: executable name to use when ``--exec`` was not specified
+
+        Returns:
+            str: executable path or command name
+        """
+
+        exe = self.args.exec
+        if exe is None:
+            exe = default
+        if exe is None:
+            raise ValueError(
+                f"MynaApp {self.name} requires an executable, but no executable "
+                "was provided and no default was set."
+            )
+        return exe
+
+    def get_executable_version(
+        self,
+        default=None,
+        version_args=("--version",),
+        version_regex=None,
+        timeout=30,
+    ):
+        """Return a version identifier from the configured executable.
+
+        Subclasses can call this method after parsing stage arguments, or override it
+        when an executable requires custom version discovery. ``version_regex`` may
+        contain a named ``version`` group; otherwise the first capture group is used.
+        If no regex is provided, the first non-empty output line is returned.
+
+        Args:
+            default: executable name to use when ``--exec`` was not specified
+            version_args: arguments passed to the executable for version discovery
+            version_regex: optional regular expression used to extract the identifier
+            timeout: maximum time, in seconds, to wait for the executable
+
+        Returns:
+            str: extracted version identifier
+        """
+
+        executable = self.get_executable(default)
+        version_args = [] if version_args is None else list(version_args)
+        cmd_args = [executable, *version_args]
+
+        output, returncode = self._run_executable_version_command(
+            cmd_args,
+            timeout=timeout,
+        )
+        try:
+            return self.extract_executable_version(output, version_regex)
+        except ValueError as exc:
+            if returncode != 0:
+                raise RuntimeError(
+                    f"Could not determine version for {self.name} executable "
+                    f'"{executable}". Version command exited with return code '
+                    f"{returncode}."
+                ) from exc
+            raise
+
+    def extract_executable_version(self, output, version_regex=None):
+        """Extract a version identifier from executable output."""
+
+        output = output.strip()
+        if not output:
+            raise ValueError("Executable version output was empty.")
+
+        if version_regex is None:
+            for line in output.splitlines():
+                line = line.strip()
+                if line:
+                    return line
+
+        match = re.search(version_regex, output, flags=re.MULTILINE)
+        if match is None:
+            raise ValueError(
+                f"Could not extract executable version using pattern {version_regex!r}."
+            )
+        version_group = match.groupdict().get("version")
+        if version_group is not None:
+            return version_group.strip()
+        if match.groups():
+            for group in match.groups():
+                if group is not None:
+                    return group.strip()
+        return match.group(0).strip()
+
+    def _run_executable_version_command(self, cmd_args, timeout=30):
+        """Run an executable version command and return combined output and code."""
+
+        if self.args.docker_image is not None:
+            return self._run_docker_executable_version_command(cmd_args)
+
+        if self.args.env is not None:
+            cmd_arg_str = " ".join(shlex.quote(str(x)) for x in cmd_args)
+            env_arg_str = shlex.quote(str(self.args.env))
+            cmd_args = f". {env_arg_str}; {cmd_arg_str}"
+            completed = subprocess.run(
+                cmd_args,
+                shell=True,
+                check=False,
+                capture_output=True,
+                text=True,
+                timeout=timeout,
+            )
+        else:
+            completed = subprocess.run(
+                [str(x) for x in cmd_args],
+                check=False,
+                capture_output=True,
+                text=True,
+                timeout=timeout,
+            )
+
+        output = "\n".join(x for x in [completed.stdout, completed.stderr] if x)
+        return output, completed.returncode
+
+    def _run_docker_executable_version_command(self, cmd_args):
+        """Run an executable version command inside the configured Docker image."""
+
+        cmd_arg_str = " ".join(shlex.quote(str(x)) for x in cmd_args)
+        if self.args.env is not None:
+            cmd_arg_str = f". {shlex.quote(str(self.args.env))}; {cmd_arg_str}"
+
+        client = docker.from_env()
+        try:
+            output = client.containers.run(
+                self.args.docker_image,
+                ["-c", cmd_arg_str],
+                entrypoint="bash",
+                remove=True,
+                stdout=True,
+                stderr=True,
+            )
+            return output.decode("utf-8", errors="replace"), 0
+        except docker.errors.ContainerError as exc:
+            output = b"".join(
+                x
+                for x in [
+                    getattr(exc, "stdout", None),
+                    getattr(exc, "stderr", None),
+                ]
+                if x
+            )
+            return output.decode("utf-8", errors="replace"), exc.exit_status
 
     def _set_procs(self):
         """Set processor information based on the `maxproc` and `np` inputs. If the
