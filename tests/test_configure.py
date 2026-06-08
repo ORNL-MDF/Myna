@@ -114,3 +114,27 @@ def test_config_writes_relative_runtime_paths_and_absolute_provenance(tmp_path):
             "file_local"
         ]
     )
+
+
+def test_config_expands_layer_range_strings_in_written_input(tmp_path):
+    example = "solidification_part_json"
+    example_path = CASES_DIR / example
+    tmp_dir = tmp_path / example
+    tmp_dir.mkdir()
+
+    source_settings = load_input(example_path / "input.yaml")
+    source_settings["data"]["build"]["parts"]["P5"]["layers"] = "51-52"
+
+    input_file = tmp_dir / "input.yaml"
+    write_input(source_settings, input_file)
+
+    myna.core.workflow.config.config(os.fspath(input_file))
+
+    raw_settings = yaml.safe_load(input_file.read_text(encoding="utf-8"))
+
+    assert raw_settings["data"]["build"]["parts"]["P5"]["layers"] == [51, 52]
+    assert sorted(
+        int(layer)
+        for layer in raw_settings["data"]["build"]["parts"]["P5"]["layer_data"].keys()
+    ) == [51, 52]
+    assert len(raw_settings["data"]["output_paths"]["3dthesis"]) == 2

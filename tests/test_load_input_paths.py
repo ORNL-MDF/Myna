@@ -228,6 +228,43 @@ def test_load_input_only_resolves_data_file_local_paths(tmp_path):
     )
 
 
+def test_load_input_expands_layer_range_strings(tmp_path):
+    input_file = tmp_path / "input.yaml"
+    input_file.write_text(
+        yaml.safe_dump(
+            {
+                "steps": [],
+                "data": {
+                    "build": {
+                        "parts": {
+                            "P1": {
+                                "layers": "1-3, 5",
+                                "regions": {"core": {"layers": ["7-8", 10]}},
+                            }
+                        },
+                        "build_regions": {"BR1": {"layerlist": "[11-12, 14]"}},
+                    }
+                },
+                "myna": {},
+            },
+            sort_keys=False,
+        ),
+        encoding="utf-8",
+    )
+
+    loaded_settings = load_input(input_file)
+
+    assert loaded_settings["data"]["build"]["parts"]["P1"]["layers"] == [1, 2, 3, 5]
+    assert loaded_settings["data"]["build"]["parts"]["P1"]["regions"]["core"][
+        "layers"
+    ] == [7, 8, 10]
+    assert loaded_settings["data"]["build"]["build_regions"]["BR1"]["layerlist"] == [
+        11,
+        12,
+        14,
+    ]
+
+
 def test_write_and_load_input_relativizes_step_docker_config_paths(tmp_path):
     bundle_dir = tmp_path / "bundle"
     docker_config_file = bundle_dir / "docker" / "run.yaml"
