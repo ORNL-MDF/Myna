@@ -12,15 +12,15 @@ tasks.
 
 ## Start Here
 
-- Read [ARCHITECTURE.md](../ARCHITECTURE.md) for system structure, control flow, and
+- Read [ARCHITECTURE.md](ARCHITECTURE.md) for system structure, control flow, and
   dependency boundaries.
-- Read [CONTRIBUTING.md](../CONTRIBUTING.md) for branch, commit, PR title, and PR template
+- Read [CONTRIBUTING.md](CONTRIBUTING.md) for branch, commit, PR title, and PR template
   conventions.
-- Read [docs/developer_guide.md](../docs/developer_guide.md) before adding components,
+- Read [docs/developer_guide.md](docs/developer_guide.md) before adding components,
   metadata, file types, or application wrappers.
-- Read [docs/testing.md](../docs/testing.md) for markers, external-app tests, and CI
+- Read [docs/testing.md](docs/testing.md) for markers, external-app tests, and CI
   expectations.
-- Read [docs/documentation.md](../docs/documentation.md) before changing docs or the agent
+- Read [docs/documentation.md](docs/documentation.md) before changing docs or the agent
   harness.
 - Inspect nearby code and tests before changing a subsystem.
 
@@ -45,7 +45,7 @@ tasks.
 | `scripts/` | Maintenance scripts, including docs generation and harness validation |
 | `.github/workflows/` | CI, pre-commit, and docs deployment workflows |
 
-See [ARCHITECTURE.md](../ARCHITECTURE.md) for the full repository map.
+See [ARCHITECTURE.md](ARCHITECTURE.md) for the full repository map.
 
 ## Environment Setup
 

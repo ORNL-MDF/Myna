@@ -30,7 +30,7 @@ REQUIRED_HEADINGS = {
         "## External Systems and Data",
         "## Known Gaps and Follow-Up Work",
     ],
-    ".codex/AGENTS.md": [
+    "AGENTS.md": [
         "# AGENTS.md",
         "## Project Overview",
         "## Start Here",
@@ -81,10 +81,10 @@ def is_external_link(target: str) -> bool:
 
 
 def check_agents_links() -> None:
-    agents_path = REPO_ROOT / ".codex" / "AGENTS.md"
-    agents_text = read_required_file(".codex/AGENTS.md")
-    if "(../ARCHITECTURE.md)" not in agents_text:
-        fail(".codex/AGENTS.md must link to ../ARCHITECTURE.md")
+    agents_path = REPO_ROOT / "AGENTS.md"
+    agents_text = read_required_file("AGENTS.md")
+    if "(ARCHITECTURE.md)" not in agents_text:
+        fail("AGENTS.md must link to ARCHITECTURE.md")
 
     for raw_target in iter_markdown_links(agents_text):
         target = raw_target.strip()
@@ -99,9 +99,9 @@ def check_agents_links() -> None:
         try:
             path.relative_to(REPO_ROOT)
         except ValueError:
-            fail(f".codex/AGENTS.md link escapes repository: {raw_target}")
+            fail(f"AGENTS.md link escapes repository: {raw_target}")
         if not path.exists():
-            fail(f".codex/AGENTS.md links to missing path: {raw_target}")
+            fail(f"AGENTS.md links to missing path: {raw_target}")
 
 
 def main() -> None:
