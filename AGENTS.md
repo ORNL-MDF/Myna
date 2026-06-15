@@ -110,7 +110,8 @@ were available and the commands actually ran.
 
 When a command cannot run because of missing optional dependencies, missing external
 executables, container restrictions, or network access, report the exact command and
-the reason.
+the reason. Do not replace a missing external-app test with a default pytest run and
+call the external behavior covered. Say what was covered and what remains unverified.
 
 ## Architecture Rules
 
@@ -133,8 +134,9 @@ the reason.
   extension points, or major dependencies.
 - Update user/developer docs when changing commands, examples, installation, optional
   dependencies, or public behavior.
-- Add a decision record under `docs/decisions/` for decisions that are not obvious from
-  code review alone.
+- Include details in your change summary following the [PR template](.github/pull_request_template.md)
+  for decisions that are not obvious from code review alone, such as change intent or broader
+  architectural decisions that may not be readily apparent.
 - Keep this file short; link to deeper docs instead of expanding it.
 - Run `uv run python scripts/check_docs_harness.py` after changing `.codex/AGENTS.md`,
   `ARCHITECTURE.md`, or linked docs.
@@ -171,7 +173,8 @@ testing strategy.
 ## Handoff Checklist
 
 - Relevant tests, lint, docs, or harness checks run.
-- Commands not run are listed with concrete reasons.
+- Commands not run are listed with concrete reasons, such as missing external executable, unavailable
+  optional extra, container dependency, or network restriction.
 - Files changed are summarized.
 - Public behavior changes, compatibility risks, or known gaps are called out.
 - Docs and examples are updated when commands, inputs, outputs, or extension points

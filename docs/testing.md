@@ -94,15 +94,3 @@ uv run --frozen --no-sync mkdocs build --strict
 The external examples CI job runs in `ghcr.io/ornl-mdf/containers/ubuntu:dev`,
 installs all extras, checks external executables, and runs example tests in serial and
 parallel marker groups.
-
-## Reporting Skipped Or Unavailable Checks
-
-When handing off work, include:
-
-- the exact command run;
-- whether it passed or failed;
-- the reason if it could not run, such as missing external executable, unavailable
-  optional extra, container dependency, or network restriction.
-
-Do not replace a missing external-app test with a default pytest run and call the
-external behavior covered. Say what was covered and what remains unverified.
