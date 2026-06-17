@@ -37,6 +37,13 @@ export UV_CACHE_DIR=/tmp/uv-cache
 export PRE_COMMIT_HOME=/tmp/pre-commit-cache
 ```
 
+In PowerShell, use:
+
+```powershell
+$env:UV_CACHE_DIR = "/tmp/uv-cache"
+$env:PRE_COMMIT_HOME = "/tmp/pre-commit-cache"
+```
+
 Run the default validation loop with:
 
 ```bash

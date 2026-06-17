@@ -12,6 +12,7 @@ from pathlib import Path
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
+MAX_AGENTS_LINES = 150
 
 REQUIRED_HEADINGS = {
     "ARCHITECTURE.md": [
@@ -32,19 +33,21 @@ REQUIRED_HEADINGS = {
     ],
     "AGENTS.md": [
         "# AGENTS.md",
-        "## Project Overview",
         "## Start Here",
-        "## Repository Map",
+        "## Route By Task",
         "## Environment Setup",
-        "## Common Commands",
         "## Testing Guidance",
-        "## Architecture Rules",
-        "## Documentation Rules",
-        "## PR and Commit Guidance",
-        "## Security and Data Handling",
         "## Handoff Checklist",
     ],
 }
+
+REQUIRED_AGENTS_LINKS = [
+    "ARCHITECTURE.md",
+    "CONTRIBUTING.md",
+    "docs/developer_guide.md",
+    "docs/testing.md",
+    "docs/documentation.md",
+]
 
 
 def fail(message: str) -> None:
@@ -83,8 +86,9 @@ def is_external_link(target: str) -> bool:
 def check_agents_links() -> None:
     agents_path = REPO_ROOT / "AGENTS.md"
     agents_text = read_required_file("AGENTS.md")
-    if "(ARCHITECTURE.md)" not in agents_text:
-        fail("AGENTS.md must link to ARCHITECTURE.md")
+    for required_link in REQUIRED_AGENTS_LINKS:
+        if f"({required_link})" not in agents_text:
+            fail(f"AGENTS.md must link to {required_link}")
 
     for raw_target in iter_markdown_links(agents_text):
         target = raw_target.strip()
@@ -104,9 +108,20 @@ def check_agents_links() -> None:
             fail(f"AGENTS.md links to missing path: {raw_target}")
 
 
+def check_agents_is_compact() -> None:
+    agents_text = read_required_file("AGENTS.md")
+    line_count = len(agents_text.splitlines())
+    if line_count > MAX_AGENTS_LINES:
+        fail(
+            f"AGENTS.md has {line_count} lines; keep it at or below "
+            f"{MAX_AGENTS_LINES} lines and link to deeper docs for details"
+        )
+
+
 def main() -> None:
     check_required_headings()
     check_agents_links()
+    check_agents_is_compact()
     print("docs harness check passed")
 
 

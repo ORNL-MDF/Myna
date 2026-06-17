@@ -232,7 +232,7 @@ Common validation commands:
 | External examples | `uv run pytest -m "examples and not parallel"` | Requires external tools and example fixtures |
 | Generate API docs | `uv run scripts/group_docs.py` | Writes ignored `docs/api-docs/` |
 | Build docs | `uv run mkdocs build --strict` | Run after API docs generation for parity with CI |
-| Docs harness | `uv run python scripts/check_docs_harness.py` | Verifies required agent docs and links |
+| Docs harness | `uv run python scripts/check_docs_harness.py` | Verifies agent-doc structure, links, and compactness |
 | Pre-commit | `uv run pre-commit run --all-files` | May require network the first time hooks install |
 
 CI behavior:

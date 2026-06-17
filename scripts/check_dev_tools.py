@@ -29,6 +29,12 @@ def print_status(kind: str, message: str) -> None:
     print(f"[{kind}] {message}")
 
 
+def format_env_var_examples(name: str, value: str) -> str:
+    return (
+        f"  POSIX shell: export {name}={value}\n  PowerShell:  $env:{name} = '{value}'"
+    )
+
+
 def find_common_uv_candidates() -> list[Path]:
     home = Path.home()
     candidates = [
@@ -68,12 +74,13 @@ def check_uv_on_path(errors: list[str], warnings: list[str]) -> str | None:
     candidates = find_common_uv_candidates()
     if candidates:
         paths = "\n".join(f"  - {path}" for path in candidates)
-        path_dirs = ":".join(str(path.parent) for path in candidates)
+        path_dirs = os.pathsep.join(str(path.parent) for path in candidates)
         errors.append(
             "uv was found in a common install location, but it is not on PATH:\n"
             f"{paths}\n"
-            "Add the containing directory to PATH, for example:\n"
-            f'  export PATH="{path_dirs}:$PATH"'
+            "Add the containing directory to PATH. For example, prepend:\n"
+            f"  {path_dirs}\n"
+            f"using your shell's PATH syntax."
         )
     else:
         errors.append(
@@ -113,7 +120,7 @@ def check_cache_dir(
     errors.append(
         f"{path} is not writable. Set a writable cache directory before running "
         f"development commands, for example:\n"
-        f"  export {env_var}={fallback_path}"
+        f"{format_env_var_examples(env_var, fallback_path)}"
     )
 
 

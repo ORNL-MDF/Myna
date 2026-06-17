@@ -12,40 +12,21 @@ tasks.
 
 ## Start Here
 
-- Read [ARCHITECTURE.md](ARCHITECTURE.md) for system structure, control flow, and
-  dependency boundaries.
+- Read [ARCHITECTURE.md](ARCHITECTURE.md) for the system map, control flow, extension
+  points, and dependency boundaries.
 - Read [CONTRIBUTING.md](CONTRIBUTING.md) for branch, commit, PR title, and PR template
   conventions.
-- Read [docs/developer_guide.md](docs/developer_guide.md) before adding components,
-  metadata, file types, or application wrappers.
-- Read [docs/testing.md](docs/testing.md) for markers, external-app tests, and CI
-  expectations.
-- Read [docs/documentation.md](docs/documentation.md) before changing docs or the agent
-  harness.
 - Inspect nearby code and tests before changing a subsystem.
 
-## Repository Map
+## Route By Task
 
-| Path | Purpose |
+| Task | Start with |
 | --- | --- |
-| `src/myna/core/` | Generic workflow orchestration, components, metadata, files, app helpers, and utilities |
-| `src/myna/core/workflow/` | `myna config`, `myna run`, `myna sync`, `myna status`, input loading, and Peregrine launch flow |
-| `src/myna/core/components/` | Component classes and user-facing component lookup keys |
-| `src/myna/core/files/` | Output file contracts and validation/sync value extraction |
-| `src/myna/core/metadata/` | Metadata requirement classes and lookup keys |
-| `src/myna/database/` | Database readers/adapters for Peregrine, HDF5, MynaJSON, Pelican, AMBench, and no-database mode |
-| `src/myna/application/` | External application wrappers, stage scripts, and templates |
-| `src/myna/cli/peregrine_launcher/` | Peregrine-oriented launch templates and default workspace |
-| `tests/` | Pytest suite; default config excludes `apps` tests |
-| `examples/cases/` | Runnable workflow cases and per-case dependency matrix |
-| `examples/databases/` | Sample database fixtures for examples/tests |
-| `examples/workspaces/` | Example workspace YAML settings |
-| `examples/utils/` | Standalone Python API examples |
-| `docs/` | MkDocs source pages |
-| `scripts/` | Maintenance scripts, including docs generation and harness validation |
-| `.github/workflows/` | CI, pre-commit, and docs deployment workflows |
-
-See [ARCHITECTURE.md](ARCHITECTURE.md) for the full repository map.
+| Workflow orchestration, component routing, database adapters, app wrappers, metadata, or file contracts | [ARCHITECTURE.md](ARCHITECTURE.md) and nearby code/tests |
+| Adding components, metadata, file types, database readers, or application wrappers | [docs/developer_guide.md](docs/developer_guide.md) |
+| Tests, markers, external-app checks, or CI validation | [docs/testing.md](docs/testing.md) |
+| Documentation, generated API docs, MkDocs navigation, or this harness | [docs/documentation.md](docs/documentation.md) |
+| Contributor workflow, branch names, commits, PR titles, or PR template expectations | [CONTRIBUTING.md](CONTRIBUTING.md) |
 
 ## Environment Setup
 
@@ -63,39 +44,10 @@ uv sync --frozen --extra dev
 python3 scripts/check_dev_tools.py
 ```
 
-If an agent shell has read-only home caches, use writable cache directories before
-running `uv` or `pre-commit`:
-
-```bash
-export UV_CACHE_DIR=/tmp/uv-cache
-export PRE_COMMIT_HOME=/tmp/pre-commit-cache
-```
-
-Install optional Python extras only when needed:
-
-```bash
-uv sync --frozen --extra exaca
-uv sync --frozen --extra bnpy
-uv sync --frozen --extra cubit
-uv sync --frozen --extra deer
-```
-
-If dependency declarations change, run `uv lock` and commit the updated `uv.lock`.
-
-## Common Commands
-
-| Task | Command |
-| --- | --- |
-| Check dev tools | `python3 scripts/check_dev_tools.py` |
-| Format | `uv run ruff format` |
-| Lint | `uv run ruff check` |
-| Run default tests | `uv run pytest` |
-| Run focused test | `uv run pytest tests/test_database.py` |
-| Check external executables | `uv run pytest -m apps tests/test_executables.py` |
-| Generate API docs | `uv run scripts/group_docs.py` |
-| Build docs | `uv run mkdocs build --strict` |
-| Check docs harness | `uv run python scripts/check_docs_harness.py` |
-| Run pre-commit | `uv run pre-commit run --all-files` |
+If the preflight reports PATH or cache problems, follow its suggested fix before
+running `uv`, `pytest`, or `pre-commit`. Install optional Python extras only when a
+task needs them. If dependency declarations change, run `uv lock` and commit the
+updated `uv.lock`.
 
 ## Testing Guidance
 
