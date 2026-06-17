@@ -294,12 +294,6 @@ Never commit credentials, local executable paths, private data, or large generat
 simulation outputs unless they are intentional fixtures. Prefer workspace files for
 local executable configuration, and keep machine-specific values out of shared examples.
 
-## Known Gaps and Follow-Up Work
+## Known Gaps
 
-| Gap | Why it matters | Suggested follow-up |
-| --- | --- | --- |
-| Import-layer boundaries are documented but not mechanically enforced | Cross-layer imports could creep into generic workflow code | Consider a small import-linter only if boundary drift becomes a recurring issue |
-| External application version coverage is mostly documented in prose and CI container behavior | Local users may not know which exact tool version failed | Add per-application troubleshooting notes as failures are reported |
-| API docs are generated but not committed | A fresh checkout needs generation before strict MkDocs parity with CI | Keep `scripts/group_docs.py` documented and run it before docs-build checks |
-| LazyDocs API generation is verified in CI on Python 3.10, not all newer local Python versions | Local docs builds can fail before checking authored docs content | Use a Python 3.10 environment for docs-generation parity with CI |
-| Deprecated environment variables remain in workflow code | New code could depend on names marked for future removal | Prefer `MYNA_INPUT` in new code and track deprecation in release notes when removal is planned |
+Known gaps and issues are tracked on the [Myna GitHub repository](https://github.com/ORNL-MDF/Myna/issues).

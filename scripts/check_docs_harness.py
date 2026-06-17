@@ -29,7 +29,7 @@ REQUIRED_HEADINGS = {
         "## Testing and Validation Architecture",
         "## Documentation Architecture",
         "## External Systems and Data",
-        "## Known Gaps and Follow-Up Work",
+        "## Known Gaps",
     ],
     "AGENTS.md": [
         "# AGENTS.md",
