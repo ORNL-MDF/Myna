@@ -138,7 +138,7 @@ call the external behavior covered. Say what was covered and what remains unveri
   for decisions that are not obvious from code review alone, such as change intent or broader
   architectural decisions that may not be readily apparent.
 - Keep this file short; link to deeper docs instead of expanding it.
-- Run `uv run python scripts/check_docs_harness.py` after changing `.codex/AGENTS.md`,
+- Run `uv run python scripts/check_docs_harness.py` after changing `AGENTS.md`,
   `ARCHITECTURE.md`, or linked docs.
 
 ## PR and Commit Guidance

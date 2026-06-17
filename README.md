@@ -130,7 +130,7 @@ available Peregrine v2023-10 dataset. If you use this data, please cite
 
 See the [guidelines](CONTRIBUTING.md) on how to contribute. Repository architecture is
 summarized in [ARCHITECTURE.md](ARCHITECTURE.md), agent-oriented instructions are in
-[.codex/AGENTS.md](.codex/AGENTS.md), and focused development/testing guidance is in
+[AGENTS.md](AGENTS.md), and focused development/testing guidance is in
 [docs/developer_guide.md](docs/developer_guide.md) and
 [docs/testing.md](docs/testing.md).
 

@@ -13,7 +13,7 @@ API docs, examples, and agent-facing orientation files.
 | --- | --- |
 | `README.md` | User-facing project overview, installation, citation, and high-level usage |
 | `ARCHITECTURE.md` | Repository architecture, boundaries, control flow, and extension points |
-| `.codex/AGENTS.md` | Short entrypoint and checklist for coding agents |
+| `AGENTS.md` | Short entrypoint and checklist for coding agents |
 | `CONTRIBUTING.md` | Contributor workflow, branch names, commit convention, and PR title format |
 | `docs/` | MkDocs source pages for user/developer documentation |
 | `docs/api-docs/` | Generated API documentation, ignored by git |
@@ -53,26 +53,26 @@ uv run mkdocs build --strict
 | Install, CLI usage, or public workflow behavior | `README.md`, `docs/getting_started.md`, and relevant example docs |
 | Component, file, metadata, database, or app extension pattern | `docs/developer_guide.md` and possibly `ARCHITECTURE.md` |
 | Test markers, CI commands, external-app checks | `docs/testing.md` |
-| Docs tooling, navigation, generated API docs, or harness checks | This page and `.codex/AGENTS.md` if agents need to know |
+| Docs tooling, navigation, generated API docs, or harness checks | This page and `AGENTS.md` if agents need to know |
 | Subsystem boundary, control flow, dependency model, or extension point | `ARCHITECTURE.md` |
 | Non-obvious design choice | New record under `docs/decisions/` |
 | User-visible change | `CHANGELOG.md` under `## Unreleased` |
 
 Use root files for repository-wide orientation and MkDocs pages for user/developer
-guides. Avoid duplicating long sections between `README.md`, `.codex/AGENTS.md`, and
+guides. Avoid duplicating long sections between `README.md`, `AGENTS.md`, and
 `ARCHITECTURE.md`.
 
 ## Agent Harness
 
 The documentation harness is intentionally small:
 
-- `.codex/AGENTS.md` is the compact entrypoint.
+- `AGENTS.md` is the compact entrypoint.
 - `ARCHITECTURE.md` is the higher-detail system map.
 - `docs/testing.md` and this page cover validation and maintenance details.
 - `scripts/check_dev_tools.py` verifies that the current shell can run the repository's
   development toolchain.
 - `scripts/check_docs_harness.py` verifies required headings and relative links from
-  `.codex/AGENTS.md`.
+  `AGENTS.md`.
 
 Run the harness check with:
 

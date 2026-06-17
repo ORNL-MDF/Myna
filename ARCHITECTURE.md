@@ -70,8 +70,7 @@ The main user workflows are:
 | `.github/workflows/doc-deployment.yml` | GitHub Pages deployment | Regenerates API docs and deploys MkDocs site on `main` |
 | `CONTRIBUTING.md` | Contribution workflow, commit, PR title, and branch conventions | Follow for PR handoff |
 | `README.md` | User-facing project overview and installation | Keep installation and high-level examples current |
-| `.codex/AGENTS.md` | Agent entrypoint | Keep short; link to deeper docs |
-| `.codex/config.toml` | Local Codex configuration for this repository | Codex-specific runtime configuration |
+| `AGENTS.md` | Agent entrypoint | Keep short; link to deeper docs |
 
 ## Runtime and Packaging Model
 
@@ -254,7 +253,7 @@ Documentation has three audiences:
   `docs/getting_started.md`;
 - developer and extension guidance in `docs/developer_guide.md`, `docs/testing.md`,
   `docs/documentation.md`, and `docs/decisions/`;
-- agent-facing orientation in `.codex/AGENTS.md` and this `ARCHITECTURE.md`.
+- agent-facing orientation in `AGENTS.md` and this `ARCHITECTURE.md`.
 
 The docs site uses MkDocs Material with `awesome-pages`, `awesome-nav`,
 `gh-admonitions`, and `pymdownx.superfences`. Top-level docs navigation is in
@@ -272,7 +271,7 @@ Update docs when behavior changes:
   significant dependency changes;
 - add a decision record under `docs/decisions/` when a design choice will not be obvious
   from code review alone;
-- keep `.codex/AGENTS.md` compact and link outward instead of copying long explanations.
+- keep `AGENTS.md` compact and link outward instead of copying long explanations.
 
 ## External Systems and Data
 
