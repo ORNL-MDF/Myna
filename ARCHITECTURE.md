@@ -60,7 +60,6 @@ The main user workflows are:
 | `examples/utils/` | Standalone Python API examples | Not the same as runnable workflow cases |
 | `docs/` | MkDocs source pages | Navigation controlled by `docs/.pages` |
 | `docs/api-docs/` | Generated API docs from `scripts/group_docs.py` | Ignored by git; regenerate before docs builds |
-| `docs/decisions/` | Lightweight architecture decision records | Add records for non-obvious architectural choices |
 | `scripts/group_docs.py` | Generates and groups LazyDocs API documentation | CI runs this before `mkdocs build --strict` |
 | `scripts/check_dev_tools.py` | Checks local development tool availability and writable caches | Run first in new agent or container shells |
 | `scripts/check_docs_harness.py` | Validates required agent-harness docs and links | Runs in pre-commit and CI |
@@ -199,7 +198,6 @@ tests or a lightweight check should enforce the new rule.
 | New CLI command or mode | `src/myna/core/workflow/` or `src/myna/cli/` | `all.py`, `launch_from_peregrine.py`, `docs/cli.md` | Parser dispatch, tests, docs, launch template if applicable | Focused CLI tests and docs build |
 | New example case | `examples/cases/` | `examples/cases/README.md`, similar case input | `input.yaml`, optional readme/template, dependency matrix row, tests if runnable in CI | `uv run pytest -m examples` only when dependencies exist |
 | New docs page | `docs/` | `docs/.pages`, `docs/documentation.md`, `mkdocs.yml` | Page, navigation, supporting links | `uv run mkdocs build --strict` after generating API docs |
-| New architecture decision | `docs/decisions/` | `docs/decisions/0000-template.md` | Numbered decision record and nav update if needed | Docs harness and docs build |
 
 Preserve lookup keys in `component_class_lookup.py`, `data_class_lookup.py`, and
 `database_types.py` unless a breaking change is intentional and documented.
@@ -252,7 +250,7 @@ Documentation has three audiences:
 - user-facing overview and install guidance in `README.md`, `docs/index.md`, and
   `docs/getting_started.md`;
 - developer and extension guidance in `docs/developer_guide.md`, `docs/testing.md`,
-  `docs/documentation.md`, and `docs/decisions/`;
+  and `docs/documentation.md`;
 - agent-facing orientation in `AGENTS.md` and this `ARCHITECTURE.md`.
 
 The docs site uses MkDocs Material with `awesome-pages`, `awesome-nav`,
@@ -269,8 +267,6 @@ Update docs when behavior changes:
 - update `docs/documentation.md` for docs tooling or harness changes;
 - update `ARCHITECTURE.md` for subsystem boundaries, control flow, extension points, or
   significant dependency changes;
-- add a decision record under `docs/decisions/` when a design choice will not be obvious
-  from code review alone;
 - keep `AGENTS.md` compact and link outward instead of copying long explanations.
 
 ## External Systems and Data

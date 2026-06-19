@@ -17,7 +17,6 @@ API docs, examples, and agent-facing orientation files.
 | `CONTRIBUTING.md` | Contributor workflow, branch names, commit convention, and PR title format |
 | `docs/` | MkDocs source pages for user/developer documentation |
 | `docs/api-docs/` | Generated API documentation, ignored by git |
-| `docs/decisions/` | Lightweight architecture decision records |
 | `examples/README.md` and nested readmes | Example organization and dependency notes |
 | `CHANGELOG.md` | User-visible release and unreleased change history |
 
@@ -55,7 +54,6 @@ uv run mkdocs build --strict
 | Test markers, CI commands, external-app checks | `docs/testing.md` |
 | Docs tooling, navigation, generated API docs, or harness checks | This page and `AGENTS.md` if agents need to know |
 | Subsystem boundary, control flow, dependency model, or extension point | `ARCHITECTURE.md` |
-| Non-obvious design choice | New record under `docs/decisions/` |
 | User-visible change | `CHANGELOG.md` under `## Unreleased` |
 
 Use root files for repository-wide orientation and MkDocs pages for user/developer
@@ -82,19 +80,3 @@ uv run python scripts/check_docs_harness.py
 
 The check runs in pre-commit and main CI. If it fails, follow the error message: it
 should identify the missing file, heading, link target, or size limit.
-
-## Decision Records
-
-Use `docs/decisions/` for decisions that affect future architecture or maintenance and
-are not obvious from code alone. Start from `docs/decisions/0000-template.md`.
-
-Keep records short and concrete:
-
-- status;
-- context;
-- decision;
-- consequences;
-- validation or follow-up.
-
-Do not create decision records for routine implementation details that are already clear
-from a focused code change.
