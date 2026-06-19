@@ -37,3 +37,11 @@ repos:
         name: licenseheaders (tests)
         pass_filenames: false
         args: ["-t", "scripts/bsd-3.tmpl", "--dir", "tests", "--ext", ".py"]
+
+  - repo: local
+    hooks:
+      - id: docs-harness
+        name: docs harness
+        entry: python3 scripts/check_docs_harness.py
+        language: system
+        pass_filenames: false

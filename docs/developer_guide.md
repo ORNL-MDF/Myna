@@ -2,8 +2,60 @@
 title: Myna Developer Guide
 ---
 
-To install developer-related Python packages, follow the instructions in
-the [main project README](https://github.com/ORNL-MDF/Myna/blob/main/README.md).
+This guide focuses on extending Myna. For local validation details, see
+[Testing](testing.md). For documentation maintenance, see
+[Documentation](documentation.md).
+
+## Local development workflow
+
+Check that the current shell can find `uv` and has writable caches expected by the
+repository:
+
+```bash
+python3 scripts/check_dev_tools.py
+```
+
+Install development dependencies from the repository root with:
+
+```bash
+uv sync --frozen --extra dev
+```
+
+Then rerun the preflight to verify that `pytest`, `ruff`, `mkdocs`, and `pre-commit`
+are available through `uv run`:
+
+```bash
+python3 scripts/check_dev_tools.py
+```
+
+Some coding-agent and container shells do not inherit the same `PATH` or writable home
+cache directories as an interactive terminal. If the preflight reports cache errors,
+set writable cache locations before running `uv` or `pre-commit`:
+
+```bash
+export UV_CACHE_DIR=/tmp/uv-cache
+export PRE_COMMIT_HOME=/tmp/pre-commit-cache
+```
+
+In PowerShell, use:
+
+```powershell
+$env:UV_CACHE_DIR = "/tmp/uv-cache"
+$env:PRE_COMMIT_HOME = "/tmp/pre-commit-cache"
+```
+
+Run the default validation loop with:
+
+```bash
+uv run ruff format
+uv run ruff check
+uv run pytest
+```
+
+If you change dependencies, run `uv lock` and commit the updated `uv.lock`. If you
+change documentation, run `uv run python scripts/check_docs_harness.py`; for MkDocs
+pages, generate API docs with `uv run scripts/group_docs.py` and then run
+`uv run mkdocs build --strict`.
 
 ## Developing new workflow components
 

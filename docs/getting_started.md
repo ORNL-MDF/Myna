@@ -40,6 +40,7 @@ For developers, install the optional `dev` extra so that `pytest`, `ruff`,
 
 ```bash
 uv sync --frozen --extra dev
+python3 scripts/check_dev_tools.py
 ```
 
 You can add other optional application dependencies only when you need them:
@@ -62,8 +63,8 @@ using `pytest` are given below.
 # Default tests for aspects of the Myna Python package installation
 uv run pytest
 
-# Include optional tests that check application functionality
-uv run pytest --apps
+# Include optional tests that check external application functionality
+uv run pytest -m apps
 ```
 
 #### Installation of External Dependencies
