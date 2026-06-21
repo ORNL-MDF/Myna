@@ -82,6 +82,7 @@ from .component_solidification import (
 from .component_temperature import (
     ComponentTemperature,
     ComponentTemperaturePart,
+    ComponentTemperatureSurfacePart,
     ComponentTemperaturePartPVD,
 )
 from .component import Component
@@ -118,6 +119,7 @@ __all__ = [
     "ComponentSolidificationRegionReducedSTL",
     "ComponentTemperature",
     "ComponentTemperaturePart",
+    "ComponentTemperatureSurfacePart",
     "ComponentTemperaturePartPVD",
     "Component",
 ]

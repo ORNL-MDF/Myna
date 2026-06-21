@@ -18,6 +18,7 @@ External tools still need to be installed and configured separately.
 | --- | --- | --- | --- |
 | `cluster_solidification` | Peregrine fixture | `bnpy` | 3DThesis |
 | `melt_pool_geometry_part` | Peregrine fixture | core only | 3DThesis |
+| `melt_pool_geometry_part_heat_accumulation` | Peregrine fixture | core only | 3DThesis |
 | `melt_pool_geometry_part_pelican` | Pelican fixture | core only | 3DThesis |
 | `microstructure_region` | Peregrine fixture | `exaca` | AdditiveFOAM, ExaCA |
 | `microstructure_region_slice` | Peregrine fixture | `exaca` | AdditiveFOAM, ExaCA |
