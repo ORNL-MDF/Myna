@@ -8,29 +8,28 @@ functionality).
 
 `myna` expects a specific directory and file structure for each application (app):
 
-- Parent directories are named after the class names defined in
-[../src/myna/components/component_class_lookup.py].
-- Child directory names then correspond to an available app name
-for the parent class
-- Each available app can contain three stages of executables
-that will be called sequentially with the corresponding arguments from
-the myna_run input file:
+- Parent directories are named after available application names.
+- Child directory names correspond to the component class names defined in
+  `src/myna/core/components/component_class_lookup.py`.
+- Each available app can contain three Python stage modules that are imported and
+  called sequentially with the corresponding arguments from the `myna run` input file:
 
   1. configure.py <configure_args>
   2. execute.py <execute_args>
   3. postprocess.py <postprocess_args>
 
-- The expectation is that each configure, execute, and postprocess
-script will use the Python argparse module to parse command line inputs
-- If the model has a case template that it will copy from, then the
-convention is to name that directory "template" (this is
-not strictly necessary)
-- Other files can be included in the app directory for documentation or
-as resources, such as a readme file
+- Each stage module should define a function named for the stage (`configure`,
+  `execute`, or `postprocess`) or a `main()` function.
+- The expectation is that each configure, execute, and postprocess stage will use the
+  Python argparse module to parse command line inputs. `myna` temporarily populates
+  `sys.argv` for the active stage to preserve command-line parsing behavior.
+- Stage code should get workflow state from `MynaApp` attributes rather than directly
+  reading `MYNA_*` environment variables.
+- If the model has a case template that it will copy from, then the convention is to
+  name that directory "template" (this is not strictly necessary).
+- Other files can be included in the app directory for documentation or as resources,
+  such as a readme file.
 
-There is no technical difference between the three stages of executables
-on the backend of `myna`. The `os.system()` call is the same for each stage.
-The split into stages is more for organization of tasks into case setup,
-case execution, and tasks to be completed after a (successful) execution,
-which will be useful if implementing a more robust workflow manager in
-the future.
+There is no technical difference between the three stages on the backend of `myna`.
+The split into stages is for organization of tasks into case setup, case execution,
+and tasks to be completed after a successful execution.

@@ -70,7 +70,9 @@ The documentation harness is intentionally small:
 - `scripts/check_dev_tools.py` verifies that the current shell can run the repository's
   development toolchain.
 - `scripts/check_docs_harness.py` verifies required headings, required `AGENTS.md`
-  links, relative link targets, and the compact size of `AGENTS.md`.
+  links, relative link targets, compact size of `AGENTS.md`, and architecture-doc
+  updates when architecture-sensitive code paths change. It also verifies required PR
+  template guidance and PR template headings.
 
 Run the harness check with:
 

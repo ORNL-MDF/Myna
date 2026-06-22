@@ -119,33 +119,40 @@ input file, just provide an arbitrary name for the application, e.g., "test".
 ## Developing new applications
 
 Once a new component is implemented, you will have to implement a corresponding
-application (app) to use with `myna run`. Applications consist of up to three scripts:
+application (app) to use with `myna run`. Applications consist of up to three stage
+modules:
 
-1. `config.py`: Script that configures the files within each Myna case folder generated
-during `myna config`. At the end of this script, each case folder should be a valid
-case directory for whatever model is being run.
-2. `execute.py`: Script that executes the model for each case.
-3. `postprocess.py`: Script that converts the output of the model into the required
-myna file format for the component. This may be part of execute.py, as well.
+1. `configure.py`: Module that configures the files within each Myna case folder
+generated during `myna config`. At the end of this stage, each case folder should be a
+valid case directory for whatever model is being run.
+2. `execute.py`: Module that executes the model for each case.
+3. `postprocess.py`: Module that converts the output of the model into the required
+myna file format for the component. This may be part of `execute.py`, as well.
 
-These scripts are run sequentially and are mainly separated for clarity of the app
-functionality and for handling runtime issues. *Technically* all functionality can
-be in one script, however, this may get confusing so it is recommended to split
-functions into three scripts. If the model is not Python-based, these scripts can
-simply wrap other scripts as needed. All steps are optional and if one of these
-scripts is not present, it will be ignored.
+These stage modules are imported and called sequentially by `Component.run_component`.
+Each module should define a function named for the stage (`configure`, `execute`, or
+`postprocess`) or a `main()` function. The stages are mainly separated for clarity of
+the app functionality and for handling runtime issues. *Technically* all functionality
+can be in one stage, however, this may get confusing so it is recommended to split
+functions into three stages. If the model is not Python-based, these stages can simply
+wrap other commands as needed. All steps are optional and if one of these modules is
+not present, it will be ignored.
 
 Many of the already implemented apps use the `argparse` library to parse
 user-specified inputs. In the input file, `configure`, `execute`, and
-`postprocess` allow users to pass options to each of the scripts
-for the app. Any parameters that you wish to have accessible to users are
-intended to be adjusted through such options, which are passed to the script via
-command line in the format `--key value` or `--key` for Boolean flags. For Boolean
-flags, the assumed behavior is False if the flag is not passed and True if the flag is
-passed.
+`postprocess` allow users to pass options to each stage for the app. Any parameters
+that you wish to have accessible to users are intended to be adjusted through such
+options, which are exposed to the active stage through `sys.argv` in the format
+`--key value` or `--key` for Boolean flags. For Boolean flags, the assumed behavior is
+False if the flag is not passed and True if the flag is passed.
+
+Applications that derive from `MynaApp` should read workflow state from app attributes
+such as `self.input_file`, `self.step_name`, `self.last_step_name`, and
+`self.step_index`. Avoid reading `MYNA_*` environment variables directly in new app
+code; those names remain only as a compatibility fallback for direct stage invocation.
 
 It is likely that your app will require a `template` directory, or a set of input
 files for your model that get copied into every case. If you are using a template
-directory, then the intended functionality is that during `config.py` the template
+directory, then the intended functionality is that during `configure.py` the template
 folder is copied into each of the case directory *and then updated*. Updating the files
 inside the original template folder should be avoided.
