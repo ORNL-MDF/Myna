@@ -9,7 +9,6 @@
 """Base class for workflow components"""
 
 import importlib
-import importlib.util
 import os
 import sys
 from contextlib import contextmanager
@@ -17,7 +16,7 @@ from pathlib import Path
 from typing import Literal
 import myna
 import myna.database
-from myna.core.context import get_workflow_input_file, workflow_context
+from myna.core.context import get_workflow_input_file, workflow_context, workflow_env
 from myna.core.workflow import load_input
 from myna.core.utils import nested_get, get_quoted_str
 import warnings
@@ -88,11 +87,13 @@ class Component:
                 operation,
             ]
         )
-        try:
-            spec = importlib.util.find_spec(module_name)
-        except ModuleNotFoundError:
-            spec = None
-        if spec is None:
+        script_name = os.path.join(
+            os.environ["MYNA_APP_PATH"],
+            self.component_application,
+            self.component_class,
+            f"{operation}.py",
+        )
+        if not os.path.exists(script_name):
             return False
 
         module = importlib.import_module(module_name)
@@ -106,7 +107,6 @@ class Component:
             )
 
         stage_args = self.cmd_preformat(self.get_step_args_list(operation))
-        script_name = spec.origin or module_name
         cmd = [sys.executable, script_name]
         cmd.extend(stage_args)
         print(f"myna run: {cmd=}")
@@ -118,24 +118,34 @@ class Component:
             step_index=self.step_index,
             last_step_name=self.last_step_name,
             last_step_class=self.last_step_class,
-        ):
-            with self._stage_argv(script_name, stage_args):
-                try:
-                    stage_func()
-                except SystemExit as exc:
-                    if exc.code not in (None, 0):
-                        raise
+        ) as context:
+            with workflow_env(context, operation="run"):
+                with self._stage_process_state(script_name, stage_args):
+                    try:
+                        stage_func()
+                    except SystemExit as exc:
+                        if exc.code not in (None, 0):
+                            raise
         return True
 
     @contextmanager
-    def _stage_argv(self, script_name, args):
+    def _stage_process_state(self, script_name, args):
         previous_argv = sys.argv
+        previous_cwd = os.getcwd()
         sys.argv = [script_name]
         sys.argv.extend(args)
         try:
             yield
         finally:
             sys.argv = previous_argv
+            os.chdir(previous_cwd)
+
+    @contextmanager
+    def _stage_argv(self, script_name, args):
+        """Deprecated helper kept for compatibility with older tests/imports."""
+
+        with self._stage_process_state(script_name, args):
+            yield
 
     def cmd_preformat(self, raw_cmd):
         """Replace placeholder names in command arguments and adds executable argument

@@ -14,6 +14,7 @@ import myna.application.bnpy as myna_bnpy
 import glob
 import matplotlib.pyplot as plt
 from myna.application.bnpy import get_representative_distribution
+from myna.core.utils import working_directory
 from .app import BnpyClusterSolidification
 
 
@@ -51,9 +52,6 @@ def train_voxel_model(myna_files, thermal_files, sF, gamma, input_dir):
             'Myna bnpy app requires "pip install .[bnpy]" optional dependencies!'
         )
 
-    # Store original working directory
-    orig_dir = os.getcwd()
-
     # Create blank dataframe
     df_training = pd.DataFrame({"logG": [], "logV": []})
 
@@ -61,43 +59,42 @@ def train_voxel_model(myna_files, thermal_files, sF, gamma, input_dir):
     for myna_file, thermal_file in zip(myna_files, thermal_files):
         # Go to case directory
         case_dir = os.path.dirname(myna_file)
-        os.chdir(case_dir)
+        with working_directory(case_dir):
+            # Get case myna_data
+            resource_dir = os.path.join(input_dir, "myna_resources")
 
-        # Get case myna_data
-        resource_dir = os.path.join(input_dir, "myna_resources")
+            # Set directory for training data
+            resource_template_dir = os.path.join(resource_dir, "cluster_solidification")
 
-        # Set directory for training data
-        resource_template_dir = os.path.join(resource_dir, "cluster_solidification")
+            # Create symbolic links to all available thermal results
+            thermal_dir = "thermal_data"
+            os.makedirs(thermal_dir, exist_ok=True)
+            copy_path = os.path.join("thermal_data", os.path.basename(thermal_file))
+            if not os.path.exists(copy_path):
+                try:
+                    os.symlink(thermal_file, copy_path)
+                except FileExistsError:
+                    os.remove(copy_path)
+                    os.symlink(thermal_file, copy_path)
+            thermal_file_local = copy_path
 
-        # Create symbolic links to all available thermal results
-        thermal_dir = "thermal_data"
-        os.makedirs(thermal_dir, exist_ok=True)
-        copy_path = os.path.join("thermal_data", os.path.basename(thermal_file))
-        if not os.path.exists(copy_path):
-            try:
-                os.symlink(thermal_file, copy_path)
-            except FileExistsError:
-                os.remove(copy_path)
-                os.symlink(thermal_file, copy_path)
-        thermal_file_local = copy_path
+            # Set up folder structure
+            training_dir = os.path.join(resource_template_dir, "training_voxels")
+            os.makedirs(training_dir, exist_ok=True)
 
-        # Set up folder structure
-        training_dir = os.path.join(resource_template_dir, "training_voxels")
-        os.makedirs(training_dir, exist_ok=True)
+            # Reduce data to only the columns needed for training
+            _, df_case_training = reduce_thermal_file_to_df(thermal_file_local)
 
-        # Reduce data to only the columns needed for training
-        _, df_case_training = reduce_thermal_file_to_df(thermal_file_local)
+            # Get a representative sampling of the case dataset
+            training_data, _ = get_representative_distribution(
+                df_case_training.to_numpy(), bins=20
+            )
+            df_case_training = pd.DataFrame(
+                data=training_data, columns=df_case_training.columns
+            )
 
-        # Get a representative sampling of the case dataset
-        training_data, _ = get_representative_distribution(
-            df_case_training.to_numpy(), bins=20
-        )
-        df_case_training = pd.DataFrame(
-            data=training_data, columns=df_case_training.columns
-        )
-
-        # Concatenate the case data to the training dataset
-        df_training = pd.concat([df_training, df_case_training], ignore_index=True)
+            # Concatenate the case data to the training dataset
+            df_training = pd.concat([df_training, df_case_training], ignore_index=True)
 
     # Get a representative sampling of the training dataset for the current cases
     training_data, _ = get_representative_distribution(df_training.to_numpy(), bins=20)
@@ -192,9 +189,6 @@ def train_voxel_model(myna_files, thermal_files, sF, gamma, input_dir):
         print(f'{info_dict["task_output_path"]=}')
         trained_model_path = info_dict["task_output_path"]
 
-    # Return to original working directory
-    os.chdir(orig_dir)
-
     return trained_model_path
 
 
@@ -214,117 +208,114 @@ def run_clustering(
             'Myna bnpy app requires "pip install .[bnpy]" optional dependencies!'
         )
 
-    # Go to case directory
-    orig_dir = os.getcwd()
-    os.chdir(case_dir)
+    with working_directory(case_dir):
+        # Get case myna_data
+        resource_dir = os.path.join(input_dir, "myna_resources")
 
-    # Get case myna_data
-    resource_dir = os.path.join(input_dir, "myna_resources")
+        # Set directory for training data
+        resource_template_dir = os.path.join(resource_dir, "cluster_solidification")
 
-    # Set directory for training data
-    resource_template_dir = os.path.join(resource_dir, "cluster_solidification")
+        # Create symbolic links to all available thermal results
+        thermal_dir = "thermal_data"
+        os.makedirs(thermal_dir, exist_ok=True)
+        copy_path = os.path.join("thermal_data", os.path.basename(thermal_file))
+        if not os.path.exists(copy_path):
+            try:
+                os.symlink(thermal_file, copy_path)
+            except FileExistsError:
+                os.remove(copy_path)
+                os.symlink(thermal_file, copy_path)
+        thermal_file_local = copy_path
 
-    # Create symbolic links to all available thermal results
-    thermal_dir = "thermal_data"
-    os.makedirs(thermal_dir, exist_ok=True)
-    copy_path = os.path.join("thermal_data", os.path.basename(thermal_file))
-    if not os.path.exists(copy_path):
-        try:
-            os.symlink(thermal_file, copy_path)
-        except FileExistsError:
-            os.remove(copy_path)
-            os.symlink(thermal_file, copy_path)
-    thermal_file_local = copy_path
+        # Set up folder structure for voxel clustering results
+        cluster_dir = os.path.join(case_dir, "cluster_voxels")
+        os.makedirs(cluster_dir, exist_ok=True)
 
-    # Set up folder structure for voxel clustering results
-    cluster_dir = os.path.join(case_dir, "cluster_voxels")
-    os.makedirs(cluster_dir, exist_ok=True)
+        # Convert the thermal dataset to a bnpy dataset for clustering
+        df_output, df_cluster = reduce_thermal_file_to_df(thermal_file_local)
+        dataset_current = bnpy.data.XData.from_dataframe(df_cluster)
 
-    # Convert the thermal dataset to a bnpy dataset for clustering
-    df_output, df_cluster = reduce_thermal_file_to_df(thermal_file_local)
-    dataset_current = bnpy.data.XData.from_dataframe(df_cluster)
+        # Get the latest trained model
+        model_dir = os.path.join(
+            resource_template_dir, f"voxel_model-sF={sF}-gamma={gamma}"
+        )
+        latest_model = sorted(glob.glob(os.path.join(model_dir, "*")), reverse=True)[0]
+        latest_model_iteration = sorted(
+            glob.glob(os.path.join(latest_model, "*")), reverse=True
+        )[0]
+        task_output_path = latest_model_iteration
+        cur_model, lap_val = bnpy.load_model_at_lap(task_output_path, None)
 
-    # Get the latest trained model
-    model_dir = os.path.join(
-        resource_template_dir, f"voxel_model-sF={sF}-gamma={gamma}"
-    )
-    latest_model = sorted(glob.glob(os.path.join(model_dir, "*")), reverse=True)[0]
-    latest_model_iteration = sorted(
-        glob.glob(os.path.join(latest_model, "*")), reverse=True
-    )[0]
-    task_output_path = latest_model_iteration
-    cur_model, lap_val = bnpy.load_model_at_lap(task_output_path, None)
+        # Assign cluster IDs, or overwrite them if specified
+        result_file = os.path.join(cluster_dir, "cluster_ids.csv")
+        if not os.path.exists(result_file) or overwrite:
+            K = cur_model.allocModel.K
 
-    # Assign cluster IDs, or overwrite them if specified
-    result_file = os.path.join(cluster_dir, "cluster_ids.csv")
-    if not os.path.exists(result_file) or overwrite:
-        K = cur_model.allocModel.K
+            # Assign current data to clusters
+            local_params = cur_model.calc_local_params(dataset_current)
+            resp = local_params["resp"]
+            soft_cluster = np.argmax(resp, axis=1)
+            n_digits = cur_model.allocModel.K
+            df_output["id"] = soft_cluster
+            df_output.to_csv(result_file, index=False)
 
-        # Assign current data to clusters
-        local_params = cur_model.calc_local_params(dataset_current)
-        resp = local_params["resp"]
-        soft_cluster = np.argmax(resp, axis=1)
-        n_digits = cur_model.allocModel.K
-        df_output["id"] = soft_cluster
-        df_output.to_csv(result_file, index=False)
+        # If file already exists and should not be overwritten, load cluster IDs
+        else:
+            df_output = pd.read_csv(result_file)
+            n_digits = cur_model.allocModel.K
+            K = n_digits
 
-    # If file already exists and should not be overwritten, load cluster IDs
-    else:
-        df_output = pd.read_csv(result_file)
-        n_digits = cur_model.allocModel.K
-        K = n_digits
+        # Generate plots
+        dpi = 300
+        colors, cmap, _ = myna_bnpy.cluster_colormap(n_digits)
+        suffix = f"sF={sF}-g={gamma}-K={K}"
 
-    # Generate plots
-    dpi = 300
-    colors, cmap, _ = myna_bnpy.cluster_colormap(n_digits)
-    suffix = f"sF={sF}-g={gamma}-K={K}"
+        # GV plot
+        gv_plot_file = os.path.join(cluster_dir, f"cluster_GV-{suffix}.png")
+        if not os.path.exists(gv_plot_file) or overwrite:
+            myna_bnpy.voxel_GV_plot(df_output, colors, cmap, gv_plot_file, dpi=dpi)
 
-    # GV plot
-    gv_plot_file = os.path.join(cluster_dir, f"cluster_GV-{suffix}.png")
-    if not os.path.exists(gv_plot_file) or overwrite:
-        myna_bnpy.voxel_GV_plot(df_output, colors, cmap, gv_plot_file, dpi=dpi)
-
-    # Field histograms
-    fields = ["logG", "logV"]
-    for field in fields:
-        field_value_file = os.path.join(cluster_dir, f"cluster_{field}-{suffix}.png")
-        if not os.path.exists(field_value_file) or overwrite:
-            myna_bnpy.voxel_id_stacked_histogram(
-                df_output,
-                field,
-                colors,
-                field_value_file,
-                dpi=dpi,
-                ids=[x for x in range(K)],
+        # Field histograms
+        fields = ["logG", "logV"]
+        for field in fields:
+            field_value_file = os.path.join(
+                cluster_dir, f"cluster_{field}-{suffix}.png"
             )
+            if not os.path.exists(field_value_file) or overwrite:
+                myna_bnpy.voxel_id_stacked_histogram(
+                    df_output,
+                    field,
+                    colors,
+                    field_value_file,
+                    dpi=dpi,
+                    ids=[x for x in range(K)],
+                )
 
-    # Spatial map of clusters
-    map_plot_file = os.path.join(cluster_dir, f"cluster_map-{suffix}.png")
-    if not os.path.exists(map_plot_file) or overwrite:
-        plt.figure(dpi=dpi)
-        colormap = "tab10"
-        if n_digits > 10:
-            colormap = "tab20"
-        colors, cmap, colorValues = myna_bnpy.cluster_colormap(
-            n_digits, colorspace=colormap
-        )
-        fig, ax = plt.subplots()
-        ax.scatter(
-            df_output["x (m)"] * 1e3,
-            df_output["y (m)"] * 1e3,
-            c=df_output["id"],
-            s=1,
-            marker="s",
-            cmap=cmap,
-        )
-        ax.set_aspect("equal")
-        ax.set_xlabel("X (mm)")
-        ax.set_ylabel("Y (mm)")
-        plt.savefig(map_plot_file, dpi=dpi)
-        plt.close()
+        # Spatial map of clusters
+        map_plot_file = os.path.join(cluster_dir, f"cluster_map-{suffix}.png")
+        if not os.path.exists(map_plot_file) or overwrite:
+            plt.figure(dpi=dpi)
+            colormap = "tab10"
+            if n_digits > 10:
+                colormap = "tab20"
+            colors, cmap, colorValues = myna_bnpy.cluster_colormap(
+                n_digits, colorspace=colormap
+            )
+            fig, ax = plt.subplots()
+            ax.scatter(
+                df_output["x (m)"] * 1e3,
+                df_output["y (m)"] * 1e3,
+                c=df_output["id"],
+                s=1,
+                marker="s",
+                cmap=cmap,
+            )
+            ax.set_aspect("equal")
+            ax.set_xlabel("X (mm)")
+            ax.set_ylabel("Y (mm)")
+            plt.savefig(map_plot_file, dpi=dpi)
+            plt.close()
 
-    # Return to original working directory and return result file path
-    os.chdir(orig_dir)
     return result_file
 
 

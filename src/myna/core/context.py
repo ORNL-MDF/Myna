@@ -17,6 +17,8 @@ import os
 
 
 WORKFLOW_ENV_INPUT_FILE = "MYNA_INPUT"
+WORKFLOW_ENV_RUN_INPUT = "MYNA_RUN_INPUT"
+WORKFLOW_ENV_SYNC_INPUT = "MYNA_SYNC_INPUT"
 WORKFLOW_ENV_STEP_NAME = "MYNA_STEP_NAME"
 WORKFLOW_ENV_STEP_CLASS = "MYNA_STEP_CLASS"
 WORKFLOW_ENV_STEP_INDEX = "MYNA_STEP_INDEX"
@@ -120,6 +122,57 @@ def get_workflow_input_file(default: str | None = None) -> str | None:
     if context is not None and context.input_file is not None:
         return context.input_file
     return default
+
+
+@contextmanager
+def workflow_env(
+    context: WorkflowContext | None = None, *, operation: str | None = None
+):
+    """Temporarily expose workflow state through legacy environment variables."""
+
+    if context is None:
+        context = get_workflow_context()
+
+    updates = {
+        WORKFLOW_ENV_INPUT_FILE: None if context is None else context.input_file,
+        WORKFLOW_ENV_STEP_NAME: None if context is None else context.step_name,
+        WORKFLOW_ENV_STEP_CLASS: None if context is None else context.step_class,
+        WORKFLOW_ENV_STEP_INDEX: (
+            None
+            if context is None or context.step_index is None
+            else str(context.step_index)
+        ),
+        WORKFLOW_ENV_LAST_STEP_NAME: None
+        if context is None
+        else context.last_step_name,
+        WORKFLOW_ENV_LAST_STEP_CLASS: (
+            None if context is None else context.last_step_class
+        ),
+    }
+    if operation == "run":
+        updates[WORKFLOW_ENV_RUN_INPUT] = (
+            None if context is None else context.input_file
+        )
+    elif operation == "sync":
+        updates[WORKFLOW_ENV_SYNC_INPUT] = (
+            None if context is None else context.input_file
+        )
+
+    previous_values = {key: os.environ.get(key) for key in updates}
+    previous_presence = {key: key in os.environ for key in updates}
+    try:
+        for key, value in updates.items():
+            if value is None:
+                os.environ.pop(key, None)
+            else:
+                os.environ[key] = value
+        yield context
+    finally:
+        for key in updates:
+            if previous_presence[key]:
+                os.environ[key] = previous_values[key]
+            else:
+                os.environ.pop(key, None)
 
 
 def _parent_value(parent: WorkflowContext | None, field: str):

@@ -7,11 +7,11 @@
 # License: 3-clause BSD, see https://opensource.org/licenses/BSD-3-Clause.
 #
 import importlib
-from importlib.machinery import ModuleSpec
 import os
 import sys
 import types
 
+import pytest
 from myna.core.app.base import MynaApp
 from myna.core.components.component import Component
 import myna.core.components
@@ -189,26 +189,33 @@ def test_component_runs_stage_with_context_without_env(monkeypatch, tmp_path):
     module_name = "myna.application.fakeapp.fakeclass.configure"
     captured = {}
     original_import_module = importlib.import_module
+    monkeypatch.setenv("MYNA_APP_PATH", "/tmp/myna-apps")
 
     def configure():
         context = current_workflow_context()
         captured["context"] = context
         captured["argv"] = list(sys.argv)
-        captured["env_step"] = os.environ.get("MYNA_STEP_NAME")
+        captured["env"] = {
+            "input": os.environ.get("MYNA_INPUT"),
+            "run_input": os.environ.get("MYNA_RUN_INPUT"),
+            "step": os.environ.get("MYNA_STEP_NAME"),
+            "step_class": os.environ.get("MYNA_STEP_CLASS"),
+            "step_index": os.environ.get("MYNA_STEP_INDEX"),
+            "last_step": os.environ.get("MYNA_LAST_STEP_NAME"),
+        }
 
     fake_module = types.SimpleNamespace(configure=configure)
-
-    def fake_find_spec(name):
-        if name == module_name:
-            return ModuleSpec(name, loader=None, origin="/tmp/configure.py")
-        return None
 
     def fake_import_module(name):
         if name == module_name:
             return fake_module
         return original_import_module(name)
 
-    monkeypatch.setattr(importlib.util, "find_spec", fake_find_spec)
+    monkeypatch.setattr(
+        os.path,
+        "exists",
+        lambda path: path == "/tmp/myna-apps/fakeapp/fakeclass/configure.py",
+    )
     monkeypatch.setattr(importlib, "import_module", fake_import_module)
 
     component = Component()
@@ -229,9 +236,22 @@ def test_component_runs_stage_with_context_without_env(monkeypatch, tmp_path):
     assert captured["context"].step_class == "fakeclass"
     assert captured["context"].step_index == 1
     assert captured["context"].last_step_name == "previous"
-    assert captured["argv"] == ["/tmp/configure.py", "--example", "value"]
-    assert captured["env_step"] is None
+    assert captured["argv"] == [
+        "/tmp/myna-apps/fakeapp/fakeclass/configure.py",
+        "--example",
+        "value",
+    ]
+    assert captured["env"] == {
+        "input": os.fspath(input_file),
+        "run_input": os.fspath(input_file),
+        "step": "demo",
+        "step_class": "fakeclass",
+        "step_index": "1",
+        "last_step": "previous",
+    }
     assert sys.argv == previous_argv
+    for key in WORKFLOW_ENV_KEYS:
+        assert key not in os.environ
 
 
 def test_run_passes_workflow_context_without_setting_env(monkeypatch, tmp_path):
@@ -296,3 +316,105 @@ myna: {}
     ]
     for key in WORKFLOW_ENV_KEYS:
         assert key not in os.environ
+
+
+def test_component_restores_cwd_after_stage_failure(monkeypatch, tmp_path):
+    _clear_workflow_env(monkeypatch)
+    monkeypatch.setenv("MYNA_APP_PATH", "/tmp/myna-apps")
+    input_file = tmp_path / "input.yaml"
+    input_file.write_text(
+        "steps: []\ndata:\n  build:\n    name: build\n", encoding="utf-8"
+    )
+    stage_dir = tmp_path / "stage-dir"
+    stage_dir.mkdir()
+    module_name = "myna.application.fakeapp.fakeclass.execute"
+    original_import_module = importlib.import_module
+    captured = {}
+
+    def execute():
+        os.chdir(stage_dir)
+        captured["cwd_during_stage"] = os.getcwd()
+        captured["env_step"] = os.environ.get("MYNA_STEP_NAME")
+        raise RuntimeError("boom")
+
+    fake_module = types.SimpleNamespace(execute=execute)
+
+    def fake_import_module(name):
+        if name == module_name:
+            return fake_module
+        return original_import_module(name)
+
+    monkeypatch.setattr(
+        os.path,
+        "exists",
+        lambda path: path == "/tmp/myna-apps/fakeapp/fakeclass/execute.py",
+    )
+    monkeypatch.setattr(importlib, "import_module", fake_import_module)
+
+    component = Component()
+    component.name = "demo"
+    component.component_application = "fakeapp"
+    component.component_class = "fakeclass"
+    component.input_file = os.fspath(input_file)
+    component.step_index = 2
+    component.last_step_name = "previous"
+    component.execute_dict = {"overwrite": True}
+    component.data = {"build": {"name": "build"}}
+
+    previous_cwd = os.getcwd()
+    previous_argv = list(sys.argv)
+    with pytest.raises(RuntimeError, match="boom"):
+        component._run_stage("execute")
+
+    assert captured["cwd_during_stage"] == os.fspath(stage_dir)
+    assert captured["env_step"] == "demo"
+    assert os.getcwd() == previous_cwd
+    assert sys.argv == previous_argv
+    for key in WORKFLOW_ENV_KEYS:
+        assert key not in os.environ
+
+
+def test_component_stage_missing_skips_without_import(monkeypatch):
+    _clear_workflow_env(monkeypatch)
+    monkeypatch.setenv("MYNA_APP_PATH", "/tmp/myna-apps")
+    import_called = False
+
+    def fake_import_module(name):
+        nonlocal import_called
+        import_called = True
+        return importlib.import_module(name)
+
+    monkeypatch.setattr(os.path, "exists", lambda path: False)
+    monkeypatch.setattr(importlib, "import_module", fake_import_module)
+
+    component = Component()
+    component.component_application = "fakeapp"
+    component.component_class = "fakeclass"
+
+    assert component._run_stage("configure") is False
+    assert import_called is False
+
+
+def test_component_stage_import_error_is_not_treated_as_missing(monkeypatch):
+    _clear_workflow_env(monkeypatch)
+    monkeypatch.setenv("MYNA_APP_PATH", "/tmp/myna-apps")
+    module_name = "myna.application.fakeapp.fakeclass.configure"
+
+    def fake_import_module(name):
+        if name == module_name:
+            raise ModuleNotFoundError("No module named 'vtk'")
+        return importlib.import_module(name)
+
+    monkeypatch.setattr(
+        os.path,
+        "exists",
+        lambda path: path == "/tmp/myna-apps/fakeapp/fakeclass/configure.py",
+    )
+    monkeypatch.setattr(importlib, "import_module", fake_import_module)
+
+    component = Component()
+    component.component_application = "fakeapp"
+    component.component_class = "fakeclass"
+
+    with pytest.raises(ModuleNotFoundError, match="vtk"):
+        component._run_stage("configure")

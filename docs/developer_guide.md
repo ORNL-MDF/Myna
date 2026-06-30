@@ -149,7 +149,12 @@ False if the flag is not passed and True if the flag is passed.
 Applications that derive from `MynaApp` should read workflow state from app attributes
 such as `self.input_file`, `self.step_name`, `self.last_step_name`, and
 `self.step_index`. Avoid reading `MYNA_*` environment variables directly in new app
-code; those names remain only as a compatibility fallback for direct stage invocation.
+code; those names are only populated temporarily while a stage is running for
+compatibility with existing wrappers and direct stage invocation.
+
+Because stage modules are imported and executed in-process, they should restore any
+global process state they modify, especially the current working directory. Prefer
+`myna.core.utils.working_directory()` over bare `os.chdir()` calls.
 
 It is likely that your app will require a `template` directory, or a set of input
 files for your model that get copied into every case. If you are using a template

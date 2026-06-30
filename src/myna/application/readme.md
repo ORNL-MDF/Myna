@@ -24,7 +24,10 @@ functionality).
   Python argparse module to parse command line inputs. `myna` temporarily populates
   `sys.argv` for the active stage to preserve command-line parsing behavior.
 - Stage code should get workflow state from `MynaApp` attributes rather than directly
-  reading `MYNA_*` environment variables.
+  reading `MYNA_*` environment variables. Those env vars are exposed only during the
+  active stage call for compatibility.
+- Stage code should restore process-global state it changes. Prefer
+  `myna.core.utils.working_directory()` over bare `os.chdir()` calls.
 - If the model has a case template that it will copy from, then the convention is to
   name that directory "template" (this is not strictly necessary).
 - Other files can be included in the app directory for documentation or as resources,

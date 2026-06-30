@@ -13,6 +13,7 @@ import polars as pl
 import numpy as np
 import matplotlib.pyplot as plt
 import myna.application.bnpy as myna_bnpy
+from myna.core.utils import working_directory
 from .app import BnpyClusterSupervoxel
 from myna.application.bnpy import (
     add_cluster_colormap_colorbar,
@@ -101,9 +102,6 @@ def train_supervoxel_model(
             'Myna bnpy app requires "pip install .[bnpy]" optional dependencies!'
         )
 
-    # Store original working directory
-    orig_dir = os.getcwd()
-
     # Create blank dataframe
     col_names = [f"c_{x}" for x in range(app.n_voxel_clusters)]
     schema = {}
@@ -116,30 +114,29 @@ def train_supervoxel_model(
     for myna_file, myna_voxel_file in zip(myna_files, myna_voxel_files):
         # Get case myna_data
         case_dir = os.path.dirname(myna_file)
-        os.chdir(case_dir)
+        with working_directory(case_dir):
+            # Create symbolic links to all available clustering results
+            voxel_dir = "voxel_data"
+            os.makedirs(voxel_dir, exist_ok=True)
+            copy_path = os.path.join(voxel_dir, os.path.basename(myna_voxel_file))
+            if not os.path.exists(copy_path):
+                os.symlink(myna_voxel_file, copy_path)
 
-        # Create symbolic links to all available clustering results
-        voxel_dir = "voxel_data"
-        os.makedirs(voxel_dir, exist_ok=True)
-        copy_path = os.path.join(voxel_dir, os.path.basename(myna_voxel_file))
-        if not os.path.exists(copy_path):
-            os.symlink(myna_voxel_file, copy_path)
+            # Set output file
+            composition_file = os.path.join(case_dir, comp_file_name)
 
-        # Set output file
-        composition_file = os.path.join(case_dir, comp_file_name)
+            # Load voxel information
+            df_composition = reduce_voxel_file_to_supervoxel_df(
+                myna_voxel_file,
+                app,
+                write_csv=True,
+                output_file=composition_file,
+            )
+            composition_files.append(composition_file)
 
-        # Load voxel information
-        df_composition = reduce_voxel_file_to_supervoxel_df(
-            myna_voxel_file,
-            app,
-            write_csv=True,
-            output_file=composition_file,
-        )
-        composition_files.append(composition_file)
-
-        # Remove spatial information for training
-        df_case_training = df_composition.drop(["x (m)", "y (m)"])
-        df_training = df_training.vstack(df_case_training)
+            # Remove spatial information for training
+            df_case_training = df_composition.drop(["x (m)", "y (m)"])
+            df_training = df_training.vstack(df_case_training)
 
     # Check for other preexitsting training data to include
     suffix_training = "training.csv"
@@ -227,8 +224,6 @@ def train_supervoxel_model(
         print(f'{info_dict["task_output_path"]=}')
         trained_model_path = info_dict["task_output_path"]
 
-    # Return to original working directory and return result file path
-    os.chdir(orig_dir)
     return trained_model_path, composition_files
 
 
@@ -255,9 +250,6 @@ def run(
         raise ImportError(
             'Myna bnpy app requires "pip install .[bnpy]" optional dependencies!'
         )
-
-    # Store original working directory
-    orig_dir = os.getcwd()
 
     # Create bnpy dataset for clustering
     df = pl.read_csv(composition_file)
@@ -335,7 +327,6 @@ def run(
             export_name=composition_file.replace(".csv", ".png"),
         )
 
-    os.chdir(orig_dir)
     return
 
 
