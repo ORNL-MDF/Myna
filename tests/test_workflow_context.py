@@ -15,7 +15,13 @@ import types
 from myna.core.app.base import MynaApp
 from myna.core.components.component import Component
 import myna.core.components
-from myna.core.context import current_workflow_context, workflow_context
+from myna.core.context import (
+    WorkflowContext,
+    current_workflow_context,
+    get_workflow_context,
+    get_workflow_input_file,
+    workflow_context,
+)
 from myna.core.workflow.run import run
 
 
@@ -60,6 +66,111 @@ myna: {}
         last_step_name="previous",
     ):
         app = MynaApp()
+
+    assert app.input_file == os.fspath(input_file)
+    assert app.step_name == "demo"
+    assert app.step_class == "demo_class"
+    assert app.step_number == 0
+    assert app.last_step_name == "previous"
+
+
+def test_get_workflow_context_prefers_explicit_context_over_env(monkeypatch, tmp_path):
+    _clear_workflow_env(monkeypatch)
+    input_file = tmp_path / "input.yaml"
+    input_file.write_text("steps: []\n", encoding="utf-8")
+    monkeypatch.setenv("MYNA_INPUT", "wrong-input.yaml")
+    monkeypatch.setenv("MYNA_STEP_NAME", "wrong-step")
+
+    with workflow_context(
+        input_file=os.fspath(input_file),
+        step_name="demo",
+        step_class="demo_class",
+        step_index=7,
+        last_step_name="previous",
+        last_step_class="previous_class",
+    ):
+        context = get_workflow_context()
+
+    assert context == WorkflowContext(
+        input_file=os.fspath(input_file),
+        step_name="demo",
+        step_class="demo_class",
+        step_index=7,
+        last_step_name="previous",
+        last_step_class="previous_class",
+    )
+
+
+def test_get_workflow_context_falls_back_to_legacy_env(monkeypatch):
+    _clear_workflow_env(monkeypatch)
+    monkeypatch.setenv("MYNA_INPUT", "/tmp/input.yaml")
+    monkeypatch.setenv("MYNA_STEP_NAME", "demo")
+    monkeypatch.setenv("MYNA_STEP_CLASS", "demo_class")
+    monkeypatch.setenv("MYNA_STEP_INDEX", "3")
+    monkeypatch.setenv("MYNA_LAST_STEP_NAME", "previous")
+    monkeypatch.setenv("MYNA_LAST_STEP_CLASS", "previous_class")
+
+    assert get_workflow_context() == WorkflowContext(
+        input_file="/tmp/input.yaml",
+        step_name="demo",
+        step_class="demo_class",
+        step_index=3,
+        last_step_name="previous",
+        last_step_class="previous_class",
+    )
+
+
+def test_get_workflow_context_returns_none_without_state(monkeypatch):
+    _clear_workflow_env(monkeypatch)
+
+    assert get_workflow_context() is None
+
+
+def test_get_workflow_input_file_uses_shared_context_resolution(monkeypatch, tmp_path):
+    _clear_workflow_env(monkeypatch)
+    input_file = tmp_path / "input.yaml"
+    input_file.write_text("steps: []\n", encoding="utf-8")
+
+    assert get_workflow_input_file(default="fallback.yaml") == "fallback.yaml"
+
+    monkeypatch.setenv("MYNA_INPUT", os.fspath(input_file))
+    assert get_workflow_input_file() == os.fspath(input_file)
+
+
+def test_get_workflow_context_invalid_step_index_raises_value_error(monkeypatch):
+    _clear_workflow_env(monkeypatch)
+    monkeypatch.setenv("MYNA_STEP_INDEX", "not-an-int")
+
+    try:
+        get_workflow_context()
+    except ValueError:
+        pass
+    else:
+        raise AssertionError("Expected invalid MYNA_STEP_INDEX to raise ValueError")
+
+
+def test_myna_app_reads_legacy_workflow_env(monkeypatch, tmp_path):
+    _clear_workflow_env(monkeypatch)
+    monkeypatch.setattr(sys, "argv", ["test"])
+    input_file = tmp_path / "input.yaml"
+    input_file.write_text(
+        """
+steps:
+- demo:
+    class: demo_class
+    application: demo_app
+data: {}
+myna: {}
+""",
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("MYNA_INPUT", os.fspath(input_file))
+    monkeypatch.setenv("MYNA_STEP_NAME", "demo")
+    monkeypatch.setenv("MYNA_STEP_CLASS", "demo_class")
+    monkeypatch.setenv("MYNA_STEP_INDEX", "0")
+    monkeypatch.setenv("MYNA_LAST_STEP_NAME", "previous")
+
+    app = MynaApp()
 
     assert app.input_file == os.fspath(input_file)
     assert app.step_name == "demo"

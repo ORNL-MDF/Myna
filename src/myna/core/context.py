@@ -16,6 +16,14 @@ from dataclasses import dataclass
 import os
 
 
+WORKFLOW_ENV_INPUT_FILE = "MYNA_INPUT"
+WORKFLOW_ENV_STEP_NAME = "MYNA_STEP_NAME"
+WORKFLOW_ENV_STEP_CLASS = "MYNA_STEP_CLASS"
+WORKFLOW_ENV_STEP_INDEX = "MYNA_STEP_INDEX"
+WORKFLOW_ENV_LAST_STEP_NAME = "MYNA_LAST_STEP_NAME"
+WORKFLOW_ENV_LAST_STEP_CLASS = "MYNA_LAST_STEP_CLASS"
+
+
 @dataclass(frozen=True)
 class WorkflowContext:
     """Explicit workflow state for an active Myna operation."""
@@ -37,6 +45,26 @@ def current_workflow_context() -> WorkflowContext | None:
     """Return the active workflow context, if one has been set."""
 
     return _CURRENT_WORKFLOW_CONTEXT.get()
+
+
+def get_workflow_context() -> WorkflowContext | None:
+    """Return explicit workflow context or derive it from legacy env vars."""
+
+    context = current_workflow_context()
+    if context is not None:
+        return context
+
+    env_context = WorkflowContext(
+        input_file=os.environ.get(WORKFLOW_ENV_INPUT_FILE),
+        step_name=os.environ.get(WORKFLOW_ENV_STEP_NAME),
+        step_class=os.environ.get(WORKFLOW_ENV_STEP_CLASS),
+        step_index=_parse_optional_int(os.environ.get(WORKFLOW_ENV_STEP_INDEX)),
+        last_step_name=os.environ.get(WORKFLOW_ENV_LAST_STEP_NAME),
+        last_step_class=os.environ.get(WORKFLOW_ENV_LAST_STEP_CLASS),
+    )
+    if env_context == WorkflowContext():
+        return None
+    return env_context
 
 
 @contextmanager
@@ -88,13 +116,19 @@ def workflow_context(
 def get_workflow_input_file(default: str | None = None) -> str | None:
     """Return the active workflow input file, falling back to legacy env state."""
 
-    context = current_workflow_context()
+    context = get_workflow_context()
     if context is not None and context.input_file is not None:
         return context.input_file
-    return os.environ.get("MYNA_INPUT", default)
+    return default
 
 
 def _parent_value(parent: WorkflowContext | None, field: str):
     if parent is None:
         return None
     return getattr(parent, field)
+
+
+def _parse_optional_int(value: str | None) -> int | None:
+    if value is None:
+        return None
+    return int(value)

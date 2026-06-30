@@ -52,6 +52,7 @@ from .load_input import (
 from myna.core.context import (
     WorkflowContext,
     current_workflow_context,
+    get_workflow_context,
     get_workflow_input_file,
     workflow_context,
 )
@@ -68,6 +69,7 @@ __all__ = [
     "write_input",
     "WorkflowContext",
     "current_workflow_context",
+    "get_workflow_context",
     "get_workflow_input_file",
     "workflow_context",
     "format_class_string_to_list",

@@ -90,9 +90,10 @@ On import, `src/myna/core/__init__.py` sets:
 
 Workflow run and sync state is carried through `myna.core.context.WorkflowContext`.
 This context includes the active input file, current step, step class, step index, and
-previous-step information. `MynaApp` reads that explicit context first. It still falls
-back to legacy `MYNA_*` environment variables so direct stage-script invocation remains
-compatible.
+previous-step information. `myna.core.context` resolves that explicit context first and
+still falls back to legacy `MYNA_*` environment variables so direct stage-script
+invocation remains compatible. `MynaApp` consumes that shared context resolution rather
+than reading workflow env vars directly.
 
 `myna config` still sets `MYNA_INPUT` and the deprecated `MYNA_CONFIG_INPUT` while it
 extracts metadata. New shared workflow code should prefer `WorkflowContext`,
