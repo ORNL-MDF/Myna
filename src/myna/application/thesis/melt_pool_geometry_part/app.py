@@ -56,21 +56,6 @@ class ThesisMeltPoolGeometryPart(Thesis):
         elapsed_time = 0.0
         total_segments = 0
         for index, pair in enumerate(index_pairs):
-            segment_dir = Path(case_dir) / f"path_segment_{index:03}"
-            os.makedirs(segment_dir, exist_ok=True)
-            for case_file in configured_case_files:
-                shutil.copy(case_file, segment_dir / Path(case_file).name)
-
-            segment_scanfile = segment_dir / "Path.txt"
-            df_segment = df[0 : pair[1] + 1]
-            df_segment.write_csv(segment_scanfile, separator="\t")
-
-            # Write temporary path file for getting elapsed time of the segment to calculate
-            # the write times for the melt pool geometry:
-            # - Ignore wait times at beginning and end of the scan segment
-            # - Distribute `nout` proportionally by segment row count
-            # - If last segment, ensure that any missing segments due to int() rounding
-            #   are included
             with tempfile.NamedTemporaryFile() as fp:
                 df_segment_only = df[pair[0] : pair[1] + 1]
                 df_segment_only.write_csv(fp.name, separator="\t")
@@ -93,6 +78,17 @@ class ThesisMeltPoolGeometryPart(Thesis):
                     fraction_segments,
                 )
             elapsed_time += segment_time
+            if len(segment_times) == 0:
+                continue
+
+            segment_dir = Path(case_dir) / f"path_segment_{index:03}"
+            os.makedirs(segment_dir, exist_ok=True)
+            for case_file in configured_case_files:
+                shutil.copy(case_file, segment_dir / Path(case_file).name)
+
+            segment_scanfile = segment_dir / "Path.txt"
+            df_segment = df[0 : pair[1] + 1]
+            df_segment.write_csv(segment_scanfile, separator="\t")
 
             mode_file = segment_dir / "Mode.txt"
             adjust_parameter(

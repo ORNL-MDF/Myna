@@ -354,6 +354,61 @@ def test_melt_pool_geometry_configure_creates_segment_cases(monkeypatch, tmp_pat
     )
 
 
+def test_melt_pool_geometry_configure_skips_segments_without_snapshot_times(
+    monkeypatch, tmp_path
+):
+    monkeypatch.setattr(context_module, "_LEGACY_ENV_FALLBACK_WARNED", False)
+    _configure_workflow_env(monkeypatch, tmp_path, "melt_pool_geometry_part")
+    monkeypatch.setenv("MYNA_INSTALL_PATH", str(tmp_path / "install"))
+    _patch_material_information(monkeypatch)
+
+    scanfile = tmp_path / "scan.txt"
+    _write_scanfile(scanfile)
+    template_dir = tmp_path / "template"
+    _write_template(template_dir)
+
+    case_dir = tmp_path / "case"
+    _write_case_metadata(case_dir, _build_part_case_payload(scanfile))
+
+    class FakeScanpath:
+        def __init__(self, _path, _part, _layer):
+            self.file_local = str(scanfile)
+
+        def get_constant_z_slice_indices(self):
+            return (
+                [(0, 0), (1, 1), (2, 2), (3, 3)],
+                pl.DataFrame(
+                    {
+                        "X(mm)": [0.0, 1.0, 2.0, 3.0],
+                        "Y(mm)": [0.0, 0.0, 1.0, 1.0],
+                        "Mode": [1, 0, 0, 0],
+                        "Pmod": [0, 1, 1, 1],
+                        "tParam": [0.0, 0.002, 0.002, 0.002],
+                    }
+                ),
+            )
+
+    class FakeThesisPath:
+        def loadData(self, _file):
+            return None
+
+        def get_all_scan_stats(self):
+            return (10.0, 0.0, 1.0, 1.0)
+
+    monkeypatch.setattr(melt_pool_app_module, "Scanpath", FakeScanpath)
+    monkeypatch.setattr(melt_pool_app_module, "ThesisPath", FakeThesisPath)
+
+    with pytest.warns(DeprecationWarning, match="Myna 2.0"):
+        app = ThesisMeltPoolGeometryPart()
+    app.args = _build_args(template_dir, nout=2)
+    app.configure_case(str(case_dir))
+
+    assert not (case_dir / "path_segment_000").exists()
+    assert not (case_dir / "path_segment_001").exists()
+    assert not (case_dir / "path_segment_002").exists()
+    assert (case_dir / "path_segment_003").is_dir()
+
+
 def test_temperature_execute_exports_snapshot_schema(monkeypatch, tmp_path):
     monkeypatch.setattr(context_module, "_LEGACY_ENV_FALLBACK_WARNED", False)
     output_path = tmp_path / "temperature.csv"
