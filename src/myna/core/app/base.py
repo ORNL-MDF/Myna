@@ -182,7 +182,13 @@ class MynaApp:
         """Set the path to the template directory based on the path to the app directory"""
         if self.args.template is None:
             return Path(self.path) / "template"
-        return Path(self.args.template)
+        template_path = Path(self.args.template)
+        if template_path.is_absolute():
+            return template_path
+        if self.input_file is not None:
+            input_dir = Path(self.input_file).resolve(strict=False).parent
+            return input_dir / template_path
+        return template_path
 
     @property
     def component(self):

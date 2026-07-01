@@ -216,6 +216,36 @@ myna: {}
     assert app.last_step_name == "previous"
 
 
+def test_myna_app_template_resolves_relative_to_workflow_input(monkeypatch, tmp_path):
+    _clear_workflow_env(monkeypatch)
+    monkeypatch.setattr(sys, "argv", ["test"])
+    input_dir = tmp_path / "workflow"
+    input_dir.mkdir()
+    input_file = input_dir / "input.yaml"
+    input_file.write_text(
+        """
+steps:
+- demo:
+    class: demo_class
+    application: demo_app
+data: {}
+myna: {}
+""",
+        encoding="utf-8",
+    )
+
+    with workflow_context(
+        input_file=os.fspath(input_file),
+        step_name="demo",
+        step_class="demo_class",
+        step_index=0,
+    ):
+        app = MynaApp()
+
+    app.args.template = "./template"
+    assert app.template == input_dir / "template"
+
+
 def test_component_runs_stage_with_context_without_env(monkeypatch, tmp_path):
     _clear_workflow_env(monkeypatch)
     input_file = tmp_path / "input.yaml"
