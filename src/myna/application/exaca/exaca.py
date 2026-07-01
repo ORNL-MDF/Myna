@@ -11,6 +11,7 @@ import os
 import shutil
 
 import numpy as np
+import polars as pl
 
 from myna.core.app.base import MynaApp
 from myna.core.utils import nested_set
@@ -104,6 +105,46 @@ class ExaCA(MynaApp):
         nested_set(input_settings, ["Substrate", "MeanSize"], self.args.sub_size)
         return input_settings
 
+    def _sanitize_temperature_files(self, case_dir, solid_files):
+        """Convert Myna reduced-solidification CSVs into ExaCA's bare-header schema."""
+        expected_columns = ("x", "y", "z", "tm", "ts", "cr")
+        sanitized_files = []
+        for index, solid_file in enumerate(solid_files):
+            df = pl.read_csv(solid_file)
+            if set(expected_columns).issubset(df.columns):
+                sanitized_files.append(solid_file)
+                continue
+
+            rename_map = {}
+            for column in expected_columns:
+                unit_name = (
+                    f"{column} (m)"
+                    if column in ("x", "y", "z")
+                    else (f"{column} (s)" if column in ("tm", "ts") else "cr (k/s)")
+                )
+                if unit_name in df.columns:
+                    rename_map[unit_name] = column
+            if rename_map:
+                df = df.rename(rename_map)
+
+            cast_exprs = [
+                pl.col(column).cast(pl.Float64, strict=False).alias(column)
+                for column in expected_columns
+                if column in df.columns
+            ]
+            if cast_exprs:
+                df = df.with_columns(cast_exprs)
+            if not set(expected_columns).issubset(df.columns):
+                sanitized_files.append(solid_file)
+                continue
+            df = df.drop_nulls(list(expected_columns))
+            df = df.select(list(expected_columns))
+
+            case_file = os.path.join(case_dir, f"exaca_input_{index:03}.csv")
+            df.write_csv(case_file)
+            sanitized_files.append(case_file)
+        return sanitized_files
+
     def _replace_run_script_placeholders(self, run_script, replacements):
         """Replace template placeholders in a case run script."""
         with open(run_script, "r", encoding="utf-8") as f:
@@ -141,6 +182,7 @@ class ExaCA(MynaApp):
     def setup_exaca_case(self, case_dir, solid_files, layer_thickness):
         """Copy a template and populate shared ExaCA inputs for a case directory."""
         self.copy_template_to_case(case_dir)
+        solid_files = self._sanitize_temperature_files(case_dir, solid_files)
 
         myna_settings = load_input(os.path.join(case_dir, "myna_data.yaml"))
         input_file = os.path.join(case_dir, "inputs.json")

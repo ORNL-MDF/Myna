@@ -8,6 +8,7 @@
 #
 import json
 import os
+from pathlib import Path
 from types import SimpleNamespace
 
 import pandas as pd
@@ -232,6 +233,49 @@ def test_region_setup_case_populates_inputs_run_script_and_analysis(
     assert input_settings["TemperatureData"]["TemperatureFiles"] == [str(solid_file)]
     assert input_settings["Domain"]["LayerOffset"] == 20.0
     assert "BIN=" in run_script and "EXEC=ExaCA" in run_script
+    assert analysis_settings["Regions"]["XY"]["zBounds"] == [16, 16]
+    assert analysis_settings["Regions"]["XZ"]["yBounds"] == [4, 4]
+    assert analysis_settings["Regions"]["YZ"]["xBounds"] == [2, 2]
+    assert input_settings["TemperatureData"]["TemperatureFiles"] == [str(solid_file)]
+
+
+def test_region_setup_case_accepts_unit_bearing_temperature_headers(
+    monkeypatch, tmp_path
+):
+    monkeypatch.setattr(context_module, "_LEGACY_ENV_FALLBACK_WARNED", False)
+    _configure_minimal_app_env(monkeypatch, tmp_path)
+    _create_material_root(monkeypatch, tmp_path)
+    exe_path, _ = _create_exaca_install(tmp_path)
+    solid_file = tmp_path / "solid.csv"
+    solid_file.write_text(
+        "x (m),y (m),z (m),tm (s),ts (s),cr (k/s)\n"
+        "0.0,0.0,0.0,0.0,0.0,0.0\n"
+        "x,y,z,tm,ts,cr\n"
+        "0.00001,0.00002,0.00003,0.0,0.0,0.0\n",
+        encoding="utf-8",
+    )
+
+    template_dir = tmp_path / "template"
+    _write_template(template_dir, include_analysis=True)
+    case_dir = tmp_path / "case"
+    _write_case_metadata(case_dir)
+
+    with pytest.warns(DeprecationWarning, match="Myna 2.0"):
+        app = ExaCAMicrostructureRegion()
+    app.args = _build_app_args(template_dir, exe_path)
+    app.setup_case(str(case_dir), [str(solid_file)], 50.0)
+
+    input_settings = json.loads((case_dir / "inputs.json").read_text(encoding="utf-8"))
+    analysis_settings = json.loads(
+        (case_dir / "analysis.json").read_text(encoding="utf-8")
+    )
+    sanitized_file = input_settings["TemperatureData"]["TemperatureFiles"][0]
+    sanitized_headers = (
+        Path(sanitized_file).read_text(encoding="utf-8").splitlines()[0].split(",")
+    )
+    assert Path(sanitized_file).is_file()
+    assert Path(sanitized_file).parent == case_dir
+    assert sanitized_headers == ["x", "y", "z", "tm", "ts", "cr"]
     assert analysis_settings["Regions"]["XY"]["zBounds"] == [16, 16]
     assert analysis_settings["Regions"]["XZ"]["yBounds"] == [4, 4]
     assert analysis_settings["Regions"]["YZ"]["xBounds"] == [2, 2]
