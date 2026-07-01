@@ -178,8 +178,20 @@ def run_git_command(args: list[str]) -> list[str]:
     return [line.strip() for line in result.stdout.splitlines() if line.strip()]
 
 
+def get_comparison_base() -> str | None:
+    for ref in ["origin/main", "main"]:
+        merge_base = run_git_command(["merge-base", "HEAD", ref])
+        if merge_base:
+            return merge_base[0]
+    return None
+
+
 def get_changed_files() -> set[str]:
-    changed = set(run_git_command(["diff", "--name-only", "HEAD"]))
+    merge_base = get_comparison_base()
+    if merge_base is not None:
+        changed = set(run_git_command(["diff", "--name-only", f"{merge_base}..HEAD"]))
+    else:
+        changed = set(run_git_command(["diff", "--name-only", "HEAD"]))
     changed.update(run_git_command(["ls-files", "--others", "--exclude-standard"]))
     return changed
 

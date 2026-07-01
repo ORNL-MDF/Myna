@@ -150,7 +150,8 @@ Applications that derive from `MynaApp` should read workflow state from app attr
 such as `self.input_file`, `self.step_name`, `self.last_step_name`, and
 `self.step_index`. Avoid reading `MYNA_*` environment variables directly in new app
 code; those names are only populated temporarily while a stage is running for
-compatibility with existing wrappers and direct stage invocation.
+compatibility with existing wrappers and direct stage invocation in Myna 1.x. That
+env-var fallback is deprecated and will be removed in Myna 2.0.
 
 Because stage modules are imported and executed in-process, they should restore any
 global process state they modify, especially the current working directory. Prefer

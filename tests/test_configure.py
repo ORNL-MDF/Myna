@@ -10,8 +10,10 @@ import argparse
 import sys
 import os
 import shutil
+import warnings
 
 import myna
+import myna.core.context as context_module
 
 from .example_paths import CASES_DIR
 
@@ -42,6 +44,7 @@ def run_configure(example):
 
 
 def test_configure():
+    context_module._LEGACY_ENV_FALLBACK_WARNED = False
     examples = [
         "cluster_solidification",
         "melt_pool_geometry_part",
@@ -62,5 +65,12 @@ def test_configure():
         "vtk_to_exodus_region",
     ]
 
-    for example in examples:
-        run_configure(example)
+    with warnings.catch_warnings(record=True) as record:
+        warnings.simplefilter("always")
+        for example in examples:
+            run_configure(example)
+
+    unexpected = [
+        warning for warning in record if warning.category is not DeprecationWarning
+    ]
+    assert unexpected == []

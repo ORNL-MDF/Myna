@@ -11,12 +11,14 @@ import os
 from types import SimpleNamespace
 
 import pandas as pd
+import pytest
 
 from myna.application.exaca.microstructure_region import ExaCAMicrostructureRegion
 from myna.application.exaca.microstructure_region_slice import (
     ExaCAMicrostructureRegionSlice,
 )
 import myna.application.exaca.microstructure_region_slice.app as slice_app_module
+import myna.core.context as context_module
 
 
 def _write_settings(tmp_path, step_output_paths, last_step_output_paths):
@@ -160,6 +162,7 @@ def _build_app_args(template_dir, exe_path):
 def test_region_and_slice_configure_match_outputs_to_region_inputs(
     monkeypatch, tmp_path
 ):
+    monkeypatch.setattr(context_module, "_LEGACY_ENV_FALLBACK_WARNED", False)
     step_output_paths = [
         str(tmp_path / "build-1" / "part-a" / "region-1" / "micro.vtk"),
         str(tmp_path / "build-1" / "part-a" / "region-2" / "micro.vtk"),
@@ -177,7 +180,9 @@ def test_region_and_slice_configure_match_outputs_to_region_inputs(
         captured.append((case_dir, solid_files, layer_thickness))
 
     for app_cls in (ExaCAMicrostructureRegion, ExaCAMicrostructureRegionSlice):
-        app = app_cls()
+        monkeypatch.setattr(context_module, "_LEGACY_ENV_FALLBACK_WARNED", False)
+        with pytest.warns(DeprecationWarning, match="Myna 2.0"):
+            app = app_cls()
         captured.clear()
         monkeypatch.setattr(app, "parse_configure_arguments", lambda: None)
         monkeypatch.setattr(app, "setup_case", capture_setup)
@@ -199,6 +204,7 @@ def test_region_and_slice_configure_match_outputs_to_region_inputs(
 def test_region_setup_case_populates_inputs_run_script_and_analysis(
     monkeypatch, tmp_path
 ):
+    monkeypatch.setattr(context_module, "_LEGACY_ENV_FALLBACK_WARNED", False)
     _configure_minimal_app_env(monkeypatch, tmp_path)
     material_file = _create_material_root(monkeypatch, tmp_path)
     exe_path, orientation_file = _create_exaca_install(tmp_path)
@@ -210,7 +216,8 @@ def test_region_setup_case_populates_inputs_run_script_and_analysis(
     case_dir = tmp_path / "case"
     _write_case_metadata(case_dir)
 
-    app = ExaCAMicrostructureRegion()
+    with pytest.warns(DeprecationWarning, match="Myna 2.0"):
+        app = ExaCAMicrostructureRegion()
     app.args = _build_app_args(template_dir, exe_path)
     app.setup_case(str(case_dir), [str(solid_file)], 50.0)
 
@@ -231,6 +238,7 @@ def test_region_setup_case_populates_inputs_run_script_and_analysis(
 
 
 def test_slice_setup_case_uses_shared_setup_without_analysis(monkeypatch, tmp_path):
+    monkeypatch.setattr(context_module, "_LEGACY_ENV_FALLBACK_WARNED", False)
     _configure_minimal_app_env(monkeypatch, tmp_path)
     material_file = _create_material_root(monkeypatch, tmp_path)
     exe_path, orientation_file = _create_exaca_install(tmp_path)
@@ -242,7 +250,8 @@ def test_slice_setup_case_uses_shared_setup_without_analysis(monkeypatch, tmp_pa
     case_dir = tmp_path / "case"
     _write_case_metadata(case_dir)
 
-    app = ExaCAMicrostructureRegionSlice()
+    with pytest.warns(DeprecationWarning, match="Myna 2.0"):
+        app = ExaCAMicrostructureRegionSlice()
     app.args = _build_app_args(template_dir, exe_path)
     app.setup_case(str(case_dir), [str(solid_file)], 50.0)
 
@@ -253,13 +262,15 @@ def test_slice_setup_case_uses_shared_setup_without_analysis(monkeypatch, tmp_pa
 
 
 def test_region_execute_moves_exaca_vtk_to_workflow_output(monkeypatch, tmp_path):
+    monkeypatch.setattr(context_module, "_LEGACY_ENV_FALLBACK_WARNED", False)
     _configure_minimal_app_env(monkeypatch, tmp_path)
     case_dir = tmp_path / "case"
     case_dir.mkdir()
     workflow_output = tmp_path / "result.vtk"
     raw_output = case_dir / "exaca.vtk"
 
-    app = ExaCAMicrostructureRegion()
+    with pytest.warns(DeprecationWarning, match="Myna 2.0"):
+        app = ExaCAMicrostructureRegion()
     app.args = SimpleNamespace(overwrite=False, batch=False)
     monkeypatch.setattr(app, "parse_execute_arguments", lambda: None)
     monkeypatch.setattr(app, "get_step_output_paths", lambda: [str(workflow_output)])
@@ -285,6 +296,7 @@ def test_region_execute_moves_exaca_vtk_to_workflow_output(monkeypatch, tmp_path
 
 
 def test_slice_execute_writes_csv_statistics_from_raw_vtk(monkeypatch, tmp_path):
+    monkeypatch.setattr(context_module, "_LEGACY_ENV_FALLBACK_WARNED", False)
     _configure_minimal_app_env(monkeypatch, tmp_path)
     case_dir = tmp_path / "case"
     case_dir.mkdir()
@@ -311,7 +323,8 @@ def test_slice_execute_writes_csv_statistics_from_raw_vtk(monkeypatch, tmp_path)
         }
     )
 
-    app = ExaCAMicrostructureRegionSlice()
+    with pytest.warns(DeprecationWarning, match="Myna 2.0"):
+        app = ExaCAMicrostructureRegionSlice()
     app.args = SimpleNamespace(overwrite=False, batch=False)
     monkeypatch.setattr(app, "parse_execute_arguments", lambda: None)
     monkeypatch.setattr(app, "get_step_output_paths", lambda: [str(workflow_output)])
@@ -348,6 +361,7 @@ def test_slice_execute_writes_csv_statistics_from_raw_vtk(monkeypatch, tmp_path)
 
 
 def test_slice_postprocess_colors_raw_exaca_vtk(monkeypatch, tmp_path):
+    monkeypatch.setattr(context_module, "_LEGACY_ENV_FALLBACK_WARNED", False)
     _configure_minimal_app_env(monkeypatch, tmp_path)
     case_dir = tmp_path / "case"
     case_dir.mkdir()
@@ -364,7 +378,8 @@ def test_slice_postprocess_colors_raw_exaca_vtk(monkeypatch, tmp_path):
     )
 
     calls = {}
-    app = ExaCAMicrostructureRegionSlice()
+    with pytest.warns(DeprecationWarning, match="Myna 2.0"):
+        app = ExaCAMicrostructureRegionSlice()
     monkeypatch.setattr(app, "parse_postprocess_arguments", lambda: None)
     monkeypatch.setattr(app, "get_step_output_paths", lambda: [str(workflow_output)])
     monkeypatch.setattr(

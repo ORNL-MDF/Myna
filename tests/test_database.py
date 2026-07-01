@@ -8,9 +8,11 @@
 #
 import os
 import shutil
+import warnings
 
 import myna
 import myna.database
+import myna.core.context as context_module
 
 from .example_paths import CASES_DIR, DATABASES_DIR
 
@@ -57,6 +59,7 @@ def test_database_Peregrine():
 def test_database_pelican(tmp_path):
     """Test if the Pelican database class is working for the expected metadata types"""
 
+    context_module._LEGACY_ENV_FALLBACK_WARNED = False
     database_copy = tmp_path / "Pelican"
     shutil.copytree(DATABASES_DIR / "Pelican", database_copy)
 
@@ -75,4 +78,10 @@ def test_database_pelican(tmp_path):
         os.environ["MYNA_INPUT"] = os.fspath(
             CASES_DIR / "solidification_part_pelican" / "input.yaml"
         )
-        assert db.load(metadata_type, part="P0", layer=0) is not None
+        with warnings.catch_warnings(record=True) as record:
+            warnings.simplefilter("always")
+            assert db.load(metadata_type, part="P0", layer=0) is not None
+        unexpected = [
+            warning for warning in record if warning.category is not DeprecationWarning
+        ]
+        assert unexpected == []

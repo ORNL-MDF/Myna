@@ -14,6 +14,7 @@ from contextlib import contextmanager
 from contextvars import ContextVar
 from dataclasses import dataclass
 import os
+import warnings
 
 
 WORKFLOW_ENV_INPUT_FILE = "MYNA_INPUT"
@@ -41,6 +42,7 @@ class WorkflowContext:
 _CURRENT_WORKFLOW_CONTEXT: ContextVar[WorkflowContext | None] = ContextVar(
     "myna_current_workflow_context", default=None
 )
+_LEGACY_ENV_FALLBACK_WARNED = False
 
 
 def current_workflow_context() -> WorkflowContext | None:
@@ -56,6 +58,11 @@ def get_workflow_context() -> WorkflowContext | None:
     if context is not None:
         return context
 
+    if not _has_legacy_workflow_env():
+        return None
+
+    _warn_legacy_env_fallback()
+
     env_context = WorkflowContext(
         input_file=os.environ.get(WORKFLOW_ENV_INPUT_FILE),
         step_name=os.environ.get(WORKFLOW_ENV_STEP_NAME),
@@ -64,8 +71,6 @@ def get_workflow_context() -> WorkflowContext | None:
         last_step_name=os.environ.get(WORKFLOW_ENV_LAST_STEP_NAME),
         last_step_class=os.environ.get(WORKFLOW_ENV_LAST_STEP_CLASS),
     )
-    if env_context == WorkflowContext():
-        return None
     return env_context
 
 
@@ -179,6 +184,36 @@ def _parent_value(parent: WorkflowContext | None, field: str):
     if parent is None:
         return None
     return getattr(parent, field)
+
+
+def _has_legacy_workflow_env() -> bool:
+    keys = [
+        WORKFLOW_ENV_INPUT_FILE,
+        WORKFLOW_ENV_RUN_INPUT,
+        WORKFLOW_ENV_SYNC_INPUT,
+        WORKFLOW_ENV_STEP_NAME,
+        WORKFLOW_ENV_STEP_CLASS,
+        WORKFLOW_ENV_STEP_INDEX,
+        WORKFLOW_ENV_LAST_STEP_NAME,
+        WORKFLOW_ENV_LAST_STEP_CLASS,
+    ]
+    return any(key in os.environ for key in keys)
+
+
+def _warn_legacy_env_fallback() -> None:
+    global _LEGACY_ENV_FALLBACK_WARNED
+
+    if _LEGACY_ENV_FALLBACK_WARNED:
+        return
+
+    warnings.warn(
+        "Workflow state derived from legacy MYNA_* environment variables is "
+        "deprecated and will be removed in Myna 2.0. Use explicit workflow "
+        "context or MynaApp workflow attributes instead.",
+        DeprecationWarning,
+        stacklevel=3,
+    )
+    _LEGACY_ENV_FALLBACK_WARNED = True
 
 
 def _parse_optional_int(value: str | None) -> int | None:

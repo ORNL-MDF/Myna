@@ -8,11 +8,13 @@
 #
 """Base class for workflow components"""
 
+import inspect
 import importlib
 import os
+from pathlib import Path
+import subprocess
 import sys
 from contextlib import contextmanager
-from pathlib import Path
 from typing import Literal
 import myna
 import myna.database
@@ -96,16 +98,6 @@ class Component:
         if not os.path.exists(script_name):
             return False
 
-        module = importlib.import_module(module_name)
-        stage_func = getattr(module, operation, None)
-        if stage_func is None:
-            stage_func = getattr(module, "main", None)
-        if stage_func is None:
-            raise AttributeError(
-                f"Application stage module '{module_name}' does not define "
-                f"'{operation}()' or 'main()'."
-            )
-
         stage_args = self.cmd_preformat(self.get_step_args_list(operation))
         cmd = [sys.executable, script_name]
         cmd.extend(stage_args)
@@ -120,13 +112,60 @@ class Component:
             last_step_class=self.last_step_class,
         ) as context:
             with workflow_env(context, operation="run"):
-                with self._stage_process_state(script_name, stage_args):
-                    try:
-                        stage_func()
-                    except SystemExit as exc:
-                        if exc.code not in (None, 0):
-                            raise
+                if self._should_run_stage_in_process(script_name):
+                    self._run_stage_in_process(
+                        module_name, operation, script_name, stage_args
+                    )
+                else:
+                    self._run_stage_subprocess(cmd)
         return True
+
+    def _run_stage_in_process(self, module_name, operation, script_name, stage_args):
+        module = importlib.import_module(module_name)
+        try:
+            module_file = inspect.getsourcefile(module)
+        except TypeError:
+            module_file = None
+        module_file = module_file or getattr(module, "__file__", None)
+        if module_file is not None and not self._same_stage_path(
+            module_file, script_name
+        ):
+            cmd = [sys.executable, script_name]
+            cmd.extend(stage_args)
+            self._run_stage_subprocess(cmd)
+            return
+
+        stage_func = getattr(module, operation, None)
+        if stage_func is None:
+            stage_func = getattr(module, "main", None)
+        if stage_func is None:
+            raise AttributeError(
+                f"Application stage module '{module_name}' does not define "
+                f"'{operation}()' or 'main()'."
+            )
+
+        with self._stage_process_state(script_name, stage_args):
+            try:
+                stage_func()
+            except SystemExit as exc:
+                if exc.code not in (None, 0):
+                    raise
+
+    def _run_stage_subprocess(self, cmd):
+        subprocess.run(cmd, check=True)
+
+    def _should_run_stage_in_process(self, script_name):
+        installed_script = os.path.join(
+            os.environ["MYNA_INSTALL_PATH"],
+            "application",
+            self.component_application,
+            self.component_class,
+            f"{Path(script_name).stem}.py",
+        )
+        return self._same_stage_path(script_name, installed_script)
+
+    def _same_stage_path(self, left, right):
+        return Path(left).resolve(strict=False) == Path(right).resolve(strict=False)
 
     @contextmanager
     def _stage_process_state(self, script_name, args):
@@ -498,13 +537,21 @@ class Component:
             print(f"- step {self.name}: No valid output files found.")
         else:
             # Use the database sync functionality
-            with workflow_context(input_file=self.input_file, step_name=self.name):
-                synced_files = datatype.sync(
-                    self.component_application,
-                    self.types,
-                    self.output_requirement,
-                    files,
-                )
+            with workflow_context(
+                input_file=self.input_file,
+                step_name=self.name,
+                step_class=self.component_class,
+                step_index=self.step_index,
+                last_step_name=self.last_step_name,
+                last_step_class=self.last_step_class,
+            ) as context:
+                with workflow_env(context, operation="sync"):
+                    synced_files = datatype.sync(
+                        self.component_application,
+                        self.types,
+                        self.output_requirement,
+                        files,
+                    )
 
         return synced_files
 
