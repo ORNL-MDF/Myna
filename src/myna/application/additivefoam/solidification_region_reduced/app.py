@@ -520,20 +520,33 @@ class AdditiveFOAMRegionReduced(AdditiveFOAM):
                     # Check data exists
                     datafiles = sorted(glob.glob(f"{case_dict['case_dir']}/ExaCA/*"))
                     if len(datafiles) > 0:
-                        # Header
-                        process = self.start_subprocess(
-                            ["echo", "x (m),y (m),z (m),tm (s),ts (s),cr (k/s)"],
-                            stdout=mf,
-                            stderr=f,
-                        )
-                        self.wait_for_process_success(process)
-                        # Data
-                        process = self.start_subprocess(
-                            ["cat", *datafiles],
-                            stdout=mf,
-                            stderr=f,
-                        )
-                        self.wait_for_process_success(process)
+                        # Write header
+                        header = "x (m),y (m),z (m),tm (s),ts (s),cr (k/s)\n"
+                        mf.write(header)
+
+                        # Write data, removing header if found
+                        for datafile in datafiles:
+                            with open(datafile, mode="r", encoding="utf-8") as src:
+                                first_line = src.readline()
+
+                                if not first_line:
+                                    continue
+
+                                # Check if line is header, write if not
+                                first_field = first_line.split(",", 1)[0].strip()
+                                is_header = False
+                                try:
+                                    float(first_field)
+                                except ValueError:
+                                    is_header = True
+                                except ValueError:
+                                    pass
+                                if not is_header:
+                                    mf.write(first_line)
+
+                                # Write the rest of the file
+                                # (shutil.copyfileobj starts from current position)
+                                shutil.copyfileobj(src, mf)
 
             # Clean up parallel case files
             if parallel:

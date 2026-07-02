@@ -12,6 +12,7 @@ from pathlib import Path
 from types import SimpleNamespace
 
 import pandas as pd
+import numpy as np
 import pytest
 
 from myna.application.exaca.microstructure_region import ExaCAMicrostructureRegion
@@ -72,7 +73,10 @@ def _create_exaca_install(tmp_path):
     install_dir = tmp_path / "install"
     exe_path = install_dir / "bin" / "ExaCA"
     exe_path.parent.mkdir(parents=True)
-    exe_path.write_text("#!/bin/sh\n", encoding="utf-8")
+    exe_path.write_text(
+        '#!/bin/sh\nprintf "%s\\n" "ExaCA version: 2.0.0"\nexit 1\n',
+        encoding="utf-8",
+    )
     exe_path.chmod(0o755)
 
     orientation_file = install_dir / "share" / "ExaCA" / "GrainOrientationVectors.csv"
@@ -157,6 +161,8 @@ def _build_app_args(template_dir, exe_path):
         np=4,
         overwrite=False,
         batch=False,
+        docker_image=None,
+        env=None,
     )
 
 
@@ -303,6 +309,55 @@ def test_slice_setup_case_uses_shared_setup_without_analysis(monkeypatch, tmp_pa
     assert input_settings["MaterialFileName"] == str(material_file)
     assert input_settings["GrainOrientationFile"] == str(orientation_file)
     assert not (case_dir / "analysis.json").exists()
+
+
+@pytest.mark.parametrize(
+    ("app_cls", "include_analysis"),
+    [
+        (ExaCAMicrostructureRegion, True),
+        (ExaCAMicrostructureRegionSlice, False),
+    ],
+)
+def test_setup_case_converts_deprecated_substrate_settings_for_exaca_21(
+    monkeypatch, tmp_path, app_cls, include_analysis
+):
+    _configure_minimal_app_env(monkeypatch, tmp_path)
+    _create_material_root(monkeypatch, tmp_path)
+    exe_path, _ = _create_exaca_install(tmp_path)
+    solid_file = tmp_path / "solid.csv"
+    solid_file.write_text("x,y\n0.0,0.0\n", encoding="utf-8")
+
+    template_dir = tmp_path / "template"
+    _write_template(template_dir, include_analysis=include_analysis)
+    template_input = template_dir / "inputs.json"
+    template_settings = json.loads(template_input.read_text(encoding="utf-8"))
+    template_settings["Substrate"]["PowderDensity"] = 7.8
+    template_input.write_text(json.dumps(template_settings), encoding="utf-8")
+    case_dir = tmp_path / "case"
+    _write_case_metadata(case_dir)
+
+    app = app_cls()
+    app.args = _build_app_args(template_dir, exe_path)
+    monkeypatch.setattr(app, "get_executable_version", lambda: "2.1.0-dev")
+    app.setup_case(str(case_dir), [str(solid_file)], 50.0)
+
+    substrate = json.loads((case_dir / "inputs.json").read_text(encoding="utf-8"))[
+        "Substrate"
+    ]
+    assert substrate == {
+        "MeanBaseplateGrainSize": 12.3,
+        "MeanPowderGrainSize": 1 / np.power(7.8, 1 / 3),
+    }
+
+
+def test_convert_case_input_preserves_pre_21_substrate_settings(monkeypatch, tmp_path):
+    app = ExaCAMicrostructureRegion()
+    monkeypatch.setattr(app, "get_executable_version", lambda: "2.0.9")
+    input_settings = {"Substrate": {"MeanSize": 12.3, "PowderDensity": 7.8}}
+
+    converted = app.convert_case_input_for_exaca_version(str(tmp_path), input_settings)
+
+    assert converted == input_settings
 
 
 def test_region_execute_moves_exaca_vtk_to_workflow_output(monkeypatch, tmp_path):

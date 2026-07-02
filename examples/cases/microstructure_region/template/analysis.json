@@ -1,0 +1,28 @@
+{
+    "Regions": {
+        "XY": {
+            "units": "Cells",
+            "zBounds": [360,360],
+            "printStats": ["GrainTypeFractions"],
+            "printPerGrainStats": ["Size","IPFZ-RGB"],
+            "printPoleFigureData": true,
+            "printInversePoleFigureData": true
+        },
+        "XZ": {
+            "units": "Cells",
+            "yBounds": [200,200],
+            "printStats": ["GrainTypeFractions"],
+            "printPerGrainStats": ["Size","IPFZ-RGB"],
+            "printPoleFigureData": true,
+            "printInversePoleFigureData": true
+        },
+        "YZ": {
+            "units": "Cells",
+            "xBounds": [200,200],
+            "printStats": ["GrainTypeFractions"],
+            "printPerGrainStats": ["Size","IPFZ-RGB"],
+            "printPoleFigureData": true,
+            "printInversePoleFigureData": true
+        }
+    }
+}

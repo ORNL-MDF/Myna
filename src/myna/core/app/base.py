@@ -10,6 +10,7 @@
 
 import argparse
 import os
+import re
 import sys
 import time
 import shutil
@@ -367,6 +368,95 @@ class MynaApp:
                 f'{self.name} app executable "{shutil.which(exe, mode=os.F_OK)}"'
                 + "does not have execute permissions."
             )
+
+    def get_executable(self, default=None):
+        """Return the configured executable, falling back to ``default``."""
+        executable = self.args.exec
+        if executable is None:
+            executable = default
+        if executable is None:
+            raise ValueError(
+                f"MynaApp {self.name} requires an executable, but no executable "
+                "was provided and no default was set."
+            )
+        return executable
+
+    def get_executable_version(
+        self,
+        default=None,
+        version_args=("--version",),
+        version_regex=None,
+        timeout=30,
+    ):
+        """Return a version identifier from the configured executable.
+
+        ``version_regex`` may contain a named ``version`` group; otherwise the
+        first capture group is returned.  The executable output is inspected even
+        when the version command exits unsuccessfully, because some applications
+        print their banner before reporting a missing required input.
+        """
+        executable = self.get_executable(default)
+        version_args = [] if version_args is None else list(version_args)
+        output, returncode = self._run_executable_version_command(
+            [executable, *version_args], timeout=timeout
+        )
+        try:
+            return self.extract_executable_version(output, version_regex)
+        except ValueError as exc:
+            if returncode != 0:
+                raise RuntimeError(
+                    f"Could not determine version for {self.name} executable "
+                    f'"{executable}". Version command exited with return code '
+                    f"{returncode}."
+                ) from exc
+            raise
+
+    @staticmethod
+    def extract_executable_version(output, version_regex=None):
+        """Extract a version identifier from executable output."""
+        output = output.strip()
+        if not output:
+            raise ValueError("Executable version output was empty.")
+        if version_regex is None:
+            return next(line.strip() for line in output.splitlines() if line.strip())
+
+        match = re.search(version_regex, output, flags=re.MULTILINE)
+        if match is None:
+            raise ValueError(
+                f"Could not extract executable version using pattern {version_regex!r}."
+            )
+        version = match.groupdict().get("version")
+        if version is not None:
+            return version.strip()
+        if match.groups():
+            return next(group.strip() for group in match.groups() if group is not None)
+        return match.group(0).strip()
+
+    def _run_executable_version_command(self, cmd_args, timeout=30):
+        """Run a version command and return its combined output and exit code.
+
+        Process launch is delegated to :meth:`start_subprocess` so version checks
+        honor the application's configured environment and Docker image in the
+        same way as normal execution.
+        """
+        process = self.start_subprocess(
+            [str(arg) for arg in cmd_args],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+        if isinstance(process, Container):
+            result = process.wait(timeout=timeout)
+            output = process.logs(stdout=True, stderr=True)
+            return output.decode("utf-8", errors="replace"), result["StatusCode"]
+
+        try:
+            stdout, stderr = process.communicate(timeout=timeout)
+        except subprocess.TimeoutExpired:
+            process.kill()
+            process.communicate()
+            raise
+        output = b"\n".join(stream for stream in (stdout, stderr) if stream)
+        return output.decode("utf-8", errors="replace"), process.returncode
 
     def _set_procs(self):
         """Set processor information based on the `maxproc` and `np` inputs. If the

@@ -8,6 +8,7 @@
 #
 import json
 import os
+import re
 import shutil
 
 import numpy as np
@@ -68,6 +69,65 @@ class ExaCA(MynaApp):
     def parse_postprocess_arguments(self):
         self.parse_shared_arguments()
         self.parse_known_args()
+
+    def get_executable_version(self, timeout=30):
+        """Return the ExaCA version reported by its executable banner.
+
+        ExaCA prints its version when invoked without an input file, then exits
+        unsuccessfully because that input is required.  The base helper preserves
+        that output for version extraction.
+        """
+        return super().get_executable_version(
+            default="ExaCA",
+            version_args=None,
+            version_regex=r"^ExaCA version:\s*(?P<version>\S+)",
+            timeout=timeout,
+        )
+
+    @staticmethod
+    def _uses_exaca_21_input_schema(version):
+        """Return whether an ExaCA version uses the 2.1 input schema."""
+        match = re.match(r"^(\d+)\.(\d+)", version)
+        if match is None:
+            raise ValueError(
+                f"Could not compare unrecognized ExaCA version {version!r}."
+            )
+        return tuple(int(value) for value in match.groups()) >= (2, 1)
+
+    def convert_case_input_for_exaca_version(self, case_dir, input_settings):
+        """Update deprecated substrate settings for the installed ExaCA version.
+
+        ExaCA 2.1 renamed ``MeanSize`` and ``PowderDensity``.  A canonical setting
+        already present in a custom template takes precedence over its deprecated
+        counterpart.
+        """
+        version = self.get_executable_version()
+        if not self._uses_exaca_21_input_schema(version):
+            return input_settings
+
+        substrate = input_settings.get("Substrate")
+        if substrate is None:
+            return input_settings
+        # Direct replacement
+        for deprecated, replacement in {
+            "MeanSize": "MeanBaseplateGrainSize",
+        }.items():
+            if deprecated in substrate:
+                substrate.setdefault(replacement, substrate[deprecated])
+                del substrate[deprecated]
+        # Derived replacement: density -> size
+        for deprecated, replacement in {
+            "PowderDensity": "MeanPowderGrainSize",
+        }.items():
+            if deprecated in substrate:
+                substrate.setdefault(
+                    replacement, 1 / np.power(substrate[deprecated], 1 / 3)
+                )
+                del substrate[deprecated]
+
+        with open(os.path.join(case_dir, "inputs.json"), "w", encoding="utf-8") as f:
+            json.dump(input_settings, f, indent=2)
+        return input_settings
 
     def _get_material_file(self, myna_settings):
         """Resolve the ExaCA material definition file for the current build."""

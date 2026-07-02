@@ -22,6 +22,9 @@ class ExaCAMicrostructureRegion(ExaCA):
     def setup_case(self, case_dir, solid_files, layer_thickness):
         """Configure a valid ExaCA case directory for the current region."""
         input_settings = self.setup_exaca_case(case_dir, solid_files, layer_thickness)
+        input_settings = self.convert_case_input_for_exaca_version(
+            case_dir, input_settings
+        )
         self._configure_case_analysis(case_dir, input_settings)
 
     def _configure_case_analysis(self, case_dir, input_settings):

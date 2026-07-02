@@ -162,3 +162,11 @@ files for your model that get copied into every case. If you are using a templat
 directory, then the intended functionality is that during `configure.py` the template
 folder is copied into each of the case directory *and then updated*. Updating the files
 inside the original template folder should be avoided.
+
+## Versioning applications
+
+There is base `MynaApp` functionality to extract a version number from process output
+given a regex pattern to match. This can be used to have branching behavior in a Myna
+application based on the version of the executable that is being used. Adding in branching
+logic instead of updating the logic to handle only the most recent version of a code
+is generally preferable for backwards compatibility.
