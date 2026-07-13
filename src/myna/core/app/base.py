@@ -10,6 +10,7 @@
 
 import argparse
 import os
+import re
 import sys
 import time
 import shutil
@@ -19,6 +20,7 @@ from pathlib import Path
 import docker
 from docker.models.containers import Container
 from myna.core.app._argument_registrar import _ArgumentRegistrar
+from myna.core.context import get_workflow_context
 from myna.core.workflow.load_input import load_input
 from myna.core.utils import is_executable, get_quoted_str
 from myna.core.components import return_step_class
@@ -32,29 +34,41 @@ class MynaApp:
     using the MynaApp functionality where possible for consistent behavior across apps.
     """
 
-    # Define ENV class variables that have relevant workflow information
-    ENV_SETTINGS_FILE = "MYNA_INPUT"
     ENV_APP_PATH = "MYNA_APP_PATH"
-    ENV_STEP_NAME = "MYNA_STEP_NAME"
-    ENV_LAST_STEP_NAME = "MYNA_LAST_STEP_NAME"
 
     def __init__(self):
         # Set the print name as well as the Myna app and class names
         self.class_name: str | None = None
         self.app_type: str | None = None
+        self.step_class: str | None = None
+        self.last_step_class: str | None = None
 
-        # Get the names for the current and previous workflow step
-        self.step_name = os.environ.get(self.ENV_STEP_NAME)
-        self.last_step_name = os.environ.get(self.ENV_LAST_STEP_NAME)
+        # Get workflow context, setting to None if context is not found
+        context = get_workflow_context()
+        if context is not None:
+            self.step_name = context.step_name
+            self.last_step_name = context.last_step_name
+            self.step_class = context.step_class
+            self.last_step_class = context.last_step_class
+            self.step_index = context.step_index
+            self.input_file = context.input_file
+        else:
+            self.step_name = None
+            self.last_step_name = None
+            self.step_class = None
+            self.last_step_class = None
+            self.input_file = None
+            self.step_index = None
 
         # Get the input file contents and parse additional step information
-        self.input_file = os.environ.get(self.ENV_SETTINGS_FILE)
         self.settings = {}
         self.step_number = None
         if self.input_file is not None:
             self.settings = load_input(self.input_file)
             step_names = [list(x.keys())[0] for x in self.settings.get("steps", [])]
-            if self.step_name in step_names:
+            if self.step_index is not None:
+                self.step_number = self.step_index
+            elif self.step_name in step_names:
                 self.step_number = step_names.index(self.step_name)
 
         # Set up argparse
@@ -169,7 +183,13 @@ class MynaApp:
         """Set the path to the template directory based on the path to the app directory"""
         if self.args.template is None:
             return Path(self.path) / "template"
-        return Path(self.args.template)
+        template_path = Path(self.args.template)
+        if template_path.is_absolute():
+            return template_path
+        if self.input_file is not None:
+            input_dir = Path(self.input_file).resolve(strict=False).parent
+            return input_dir / template_path
+        return template_path
 
     @property
     def component(self):
@@ -348,6 +368,95 @@ class MynaApp:
                 f'{self.name} app executable "{shutil.which(exe, mode=os.F_OK)}"'
                 + "does not have execute permissions."
             )
+
+    def get_executable(self, default=None):
+        """Return the configured executable, falling back to ``default``."""
+        executable = self.args.exec
+        if executable is None:
+            executable = default
+        if executable is None:
+            raise ValueError(
+                f"MynaApp {self.name} requires an executable, but no executable "
+                "was provided and no default was set."
+            )
+        return executable
+
+    def get_executable_version(
+        self,
+        default=None,
+        version_args=("--version",),
+        version_regex=None,
+        timeout=30,
+    ):
+        """Return a version identifier from the configured executable.
+
+        ``version_regex`` may contain a named ``version`` group; otherwise the
+        first capture group is returned.  The executable output is inspected even
+        when the version command exits unsuccessfully, because some applications
+        print their banner before reporting a missing required input.
+        """
+        executable = self.get_executable(default)
+        version_args = [] if version_args is None else list(version_args)
+        output, returncode = self._run_executable_version_command(
+            [executable, *version_args], timeout=timeout
+        )
+        try:
+            return self.extract_executable_version(output, version_regex)
+        except ValueError as exc:
+            if returncode != 0:
+                raise RuntimeError(
+                    f"Could not determine version for {self.name} executable "
+                    f'"{executable}". Version command exited with return code '
+                    f"{returncode}."
+                ) from exc
+            raise
+
+    @staticmethod
+    def extract_executable_version(output, version_regex=None):
+        """Extract a version identifier from executable output."""
+        output = output.strip()
+        if not output:
+            raise ValueError("Executable version output was empty.")
+        if version_regex is None:
+            return next(line.strip() for line in output.splitlines() if line.strip())
+
+        match = re.search(version_regex, output, flags=re.MULTILINE)
+        if match is None:
+            raise ValueError(
+                f"Could not extract executable version using pattern {version_regex!r}."
+            )
+        version = match.groupdict().get("version")
+        if version is not None:
+            return version.strip()
+        if match.groups():
+            return next(group.strip() for group in match.groups() if group is not None)
+        return match.group(0).strip()
+
+    def _run_executable_version_command(self, cmd_args, timeout=30):
+        """Run a version command and return its combined output and exit code.
+
+        Process launch is delegated to :meth:`start_subprocess` so version checks
+        honor the application's configured environment and Docker image in the
+        same way as normal execution.
+        """
+        process = self.start_subprocess(
+            [str(arg) for arg in cmd_args],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+        if isinstance(process, Container):
+            result = process.wait(timeout=timeout)
+            output = process.logs(stdout=True, stderr=True)
+            return output.decode("utf-8", errors="replace"), result["StatusCode"]
+
+        try:
+            stdout, stderr = process.communicate(timeout=timeout)
+        except subprocess.TimeoutExpired:
+            process.kill()
+            process.communicate()
+            raise
+        output = b"\n".join(stream for stream in (stdout, stderr) if stream)
+        return output.decode("utf-8", errors="replace"), process.returncode
 
     def _set_procs(self):
         """Set processor information based on the `maxproc` and `np` inputs. If the

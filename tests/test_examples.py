@@ -22,7 +22,6 @@ processor. Additional markers should be specified to indicate test complexity:
 #
 # License: 3-clause BSD, see https://opensource.org/licenses/BSD-3-Clause.
 #
-import os
 import shutil
 import pytest
 from myna.core.utils import working_directory
@@ -44,8 +43,7 @@ def run_example_test(example_name):
     # The `tmp` directories need to be in `examples/cases/` to find the database files.
     example_dir = get_example_dir(example_name)
     tmp_dir = example_dir.parent / f"{example_dir.name}_tmp"
-    os.makedirs(tmp_dir)
-    shutil.copyfile(example_dir / "input.yaml", tmp_dir / "input.yaml")
+    shutil.copytree(example_dir, tmp_dir)
 
     # Run and clean the example
     try:

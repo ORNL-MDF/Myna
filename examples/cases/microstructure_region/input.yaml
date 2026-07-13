@@ -8,7 +8,7 @@ steps:
       ry: 0.48e-3
       rz: 0.16e-3
       pad-xy: 0.48e-3
-      pad-z: 0.08e-3
+      pad-z: 0.48e-3
       pad-sub: 0.64e-3
       refine-layer: 1
       refine-region: 2
@@ -30,6 +30,7 @@ steps:
       nd: 250
       mu: 21
       std: 3
+      template: ./template
     execute:
       np: 2
 data:

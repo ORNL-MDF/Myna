@@ -109,8 +109,11 @@ Branch names use:
 ```
 
 Examples: `docs/agent-harness`, `fix/database-paths`, `feat(cli): add dry-run flag`.
-Complete `.github/pull_request_template.md` and state behavior impact, risk, and
-testing strategy.
+When asked to draft or open a pull request, first inspect and complete
+`.github/pull_request_template.md`. Preserve the template headings and checklist, and
+state behavior impact, risk, and testing strategy. If the requested PR body is scoped
+to a subset of commits while the branch contains other commits, state that scope
+explicitly in the body.
 
 ## Security and Data Handling
 
@@ -131,3 +134,7 @@ testing strategy.
 - Public behavior changes, compatibility risks, or known gaps are called out.
 - Docs and examples are updated when commands, inputs, outputs, or extension points
   change.
+- If code changes touch `src/myna/core/workflow/`, `src/myna/core/components/`,
+  `src/myna/core/app/`, `src/myna/core/context.py`, `src/myna/database/`, CLI behavior,
+  app extension patterns, or subsystem boundaries, update `ARCHITECTURE.md` and
+  relevant developer docs, or state why no docs update was needed.

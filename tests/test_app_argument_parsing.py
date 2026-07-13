@@ -7,6 +7,7 @@
 # License: 3-clause BSD, see https://opensource.org/licenses/BSD-3-Clause.
 #
 import sys
+import stat
 
 import pytest
 
@@ -21,6 +22,11 @@ from myna.core.app.base import MynaApp
 
 def _count_option_actions(parser, option_string):
     return sum(option_string in action.option_strings for action in parser._actions)
+
+
+def _write_shell_executable(path, body):
+    path.write_text(f"#!/bin/sh\n{body}", encoding="utf-8")
+    path.chmod(path.stat().st_mode | stat.S_IXUSR)
 
 
 def test_register_argument_skips_duplicate_option_registration(monkeypatch):
@@ -240,6 +246,21 @@ def test_exaca_stage_parsers_set_default_executable(monkeypatch, stage_call):
 
     if "execute" in stage_call:
         assert app.args.exec == "ExaCA"
+
+
+def test_exaca_get_executable_version_reads_banner_before_missing_input_error(
+    monkeypatch, tmp_path
+):
+    executable = tmp_path / "ExaCA"
+    _write_shell_executable(
+        executable,
+        'printf "%s\\n" "ExaCA version: 2.1.0-dev"\n'
+        'printf "%s\\n" "Error: Must provide path to input file" >&2\n'
+        "exit 1\n",
+    )
+    monkeypatch.setattr(sys, "argv", ["test", "--exec", str(executable)])
+
+    assert ExaCA().get_executable_version() == "2.1.0-dev"
 
 
 @pytest.mark.parametrize(

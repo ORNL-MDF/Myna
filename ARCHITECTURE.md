@@ -2,7 +2,7 @@
 
 ## Status
 
-- Last verified: 2026-06-01 during the documentation-harness update
+- Last verified: 2026-06-01 during the workflow-context update
 - Audience: maintainers, contributors, and coding agents
 - Scope: describes current architecture; does not replace API docs or user docs
 
@@ -44,6 +44,7 @@ The main user workflows are:
 | `uv.lock` | Locked `uv` dependency graph | Commit updates when dependency declarations change |
 | `src/myna/` | Python package source | Runtime code lives here |
 | `src/myna/core/` | Workflow orchestration, components, file abstractions, metadata, app base helpers, utilities | Prefer generic workflow behavior here |
+| `src/myna/core/context.py` | Explicit workflow context shared by orchestration, components, app wrappers, metadata, and sync helpers | Prefer this over workflow-specific environment variables for new shared behavior |
 | `src/myna/core/workflow/` | `config`, `run`, `sync`, `status`, and input loading stages | CLI entrypoint delegates here |
 | `src/myna/core/components/` | Workflow component classes and lookup table | Component string keys are user-facing compatibility surface |
 | `src/myna/core/files/` | Output file classes and validation/sync value extraction | Add new output formats here |
@@ -62,7 +63,7 @@ The main user workflows are:
 | `docs/api-docs/` | Generated API docs from `scripts/group_docs.py` | Ignored by git; regenerate before docs builds |
 | `scripts/group_docs.py` | Generates and groups LazyDocs API documentation | CI runs this before `mkdocs build --strict` |
 | `scripts/check_dev_tools.py` | Checks local development tool availability and writable caches | Run first in new agent or container shells |
-| `scripts/check_docs_harness.py` | Validates required agent-harness docs and links | Runs in pre-commit and CI |
+| `scripts/check_docs_harness.py` | Validates required agent-harness docs, links, and architecture-doc updates for sensitive code changes | Runs in pre-commit and CI |
 | `.pre-commit-config.yaml` | Local quality hooks | Includes Ruff, codespell, license headers, and docs harness check |
 | `.github/workflows/CI.yml` | Package build, default tests, pylint, API docs, MkDocs, and external-app example CI | External-app job runs in a container |
 | `.github/workflows/pre-commit.yml` | Pre-commit CI | Runs hooks on pull requests |
@@ -87,11 +88,17 @@ On import, `src/myna/core/__init__.py` sets:
 - `MYNA_INSTALL_PATH` to the installed `myna` package root;
 - `MYNA_APP_PATH` to the installed `myna/application` directory.
 
-Workflow commands set additional runtime environment variables, including `MYNA_INPUT`,
-`MYNA_CONFIG_INPUT`, `MYNA_RUN_INPUT`, `MYNA_SYNC_INPUT`, `MYNA_STEP_NAME`,
-`MYNA_STEP_CLASS`, and `MYNA_STEP_INDEX`. Usage of runtime environment variables
-is planned to be deprecated--the `*_INPUT` variables are marked in code as
-future deprecation targets. Prefer using `MynaApp` class parameters for new features.
+Workflow run and sync state is carried through `myna.core.context.WorkflowContext`.
+This context includes the active input file, current step, step class, step index, and
+previous-step information. `myna.core.context` resolves that explicit context first and
+still falls back to legacy `MYNA_*` environment variables so direct stage-script
+invocation remains compatible in Myna 1.x. That env-var fallback is deprecated and
+scheduled for removal in Myna 2.0. `MynaApp` consumes that shared context resolution
+rather than reading workflow env vars directly.
+
+`myna config` still sets `MYNA_INPUT` and the deprecated `MYNA_CONFIG_INPUT` while it
+extracts metadata. New shared workflow code should prefer `WorkflowContext`,
+`MynaApp` attributes, or `get_workflow_input_file()` over direct `os.environ` reads.
 
 ## Main Concepts and Domain Model
 
@@ -107,8 +114,8 @@ future deprecation targets. Prefer using `MynaApp` class parameters for new feat
   `data_requirements`, `input_requirement`, `output_requirement`, and hierarchical
   `types` such as `build`, `build_region`, `part`, `region`, and `layer`.
 - **Application wrapper**: Tool-specific code under `src/myna/application/<app>/<class>/`
-  that may provide `configure.py`, `execute.py`, and `postprocess.py` stages. Wrappers
-  commonly use `myna.core.app.MynaApp`.
+  that may provide `configure.py`, `execute.py`, and `postprocess.py` stage modules.
+  Wrappers commonly use `myna.core.app.MynaApp`.
 - **Database adapter**: A subclass of `myna.core.db.Database` under
   `src/myna/database/` that loads metadata and syncs outputs for a supported data
   source.
@@ -138,7 +145,7 @@ flowchart TD
     Component --> Cases[case directories and myna_data.yaml]
     CLI --> Run[myna run]
     Run --> ComponentRun[Component.run_component]
-    ComponentRun --> AppStages[application configure/execute/postprocess scripts]
+    ComponentRun --> AppStages[application configure/execute/postprocess modules]
     AppStages --> Outputs[component output files]
     CLI --> Sync[myna sync]
     Sync --> FileValidation[file validation]
@@ -150,9 +157,11 @@ the input file, resolves the database adapter with `return_datatype_class`, extr
 component metadata requirements, creates case directories, writes per-case
 `myna_data.yaml`, records expected output paths, and writes the configured input. For
 `run`, Myna reloads the input before each step, applies step settings to a component,
-sets step environment variables, and runs the available app-stage scripts. For `sync`,
-Myna validates component outputs and delegates supported sync behavior to the selected
-database adapter.
+and calls available app-stage modules in-process through `Component.run_component`.
+Stage command-line arguments from the input file are still exposed through `sys.argv`
+while each stage runs, preserving `argparse`-based app wrappers. For `sync`, Myna
+validates component outputs and delegates supported sync behavior to the selected
+database adapter while providing the active input file through `WorkflowContext`.
 
 ## Dependency Boundaries
 
@@ -222,7 +231,7 @@ Common validation commands:
 | External examples | `uv run pytest -m "examples and not parallel"` | Requires external tools and example fixtures |
 | Generate API docs | `uv run scripts/group_docs.py` | Writes ignored `docs/api-docs/` |
 | Build docs | `uv run mkdocs build --strict` | Run after API docs generation for parity with CI |
-| Docs harness | `uv run python scripts/check_docs_harness.py` | Verifies agent-doc structure, links, and compactness |
+| Docs harness | `uv run python scripts/check_docs_harness.py` | Verifies required agent docs, links, and architecture-doc updates for sensitive code changes |
 | Pre-commit | `uv run pre-commit run --all-files` | May require network the first time hooks install |
 
 CI behavior:

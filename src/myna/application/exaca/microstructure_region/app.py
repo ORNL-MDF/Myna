@@ -22,6 +22,9 @@ class ExaCAMicrostructureRegion(ExaCA):
     def setup_case(self, case_dir, solid_files, layer_thickness):
         """Configure a valid ExaCA case directory for the current region."""
         input_settings = self.setup_exaca_case(case_dir, solid_files, layer_thickness)
+        input_settings = self.convert_case_input_for_exaca_version(
+            case_dir, input_settings
+        )
         self._configure_case_analysis(case_dir, input_settings)
 
     def _configure_case_analysis(self, case_dir, input_settings):
@@ -35,6 +38,7 @@ class ExaCAMicrostructureRegion(ExaCA):
         )
         if df.is_empty():
             return
+        df = self._normalize_temperature_columns(df)
         xmin, xmax = [df["x"].min(), df["x"].max()]
         ymin, ymax = [df["y"].min(), df["y"].max()]
         spacing = nested_get(input_settings, ["Domain", "CellSize"])
@@ -60,6 +64,28 @@ class ExaCAMicrostructureRegion(ExaCA):
 
         with open(analysis_file, "w", encoding="utf-8") as f:
             json.dump(analysis_settings, f, indent=2)
+
+    def _normalize_temperature_columns(self, df):
+        """Support both legacy bare coordinates and unit-bearing Myna CSV headers."""
+        rename_map = {}
+        for axis in ("x", "y", "z"):
+            if axis in df.columns:
+                continue
+            unit_name = f"{axis} (m)"
+            if unit_name in df.columns:
+                rename_map[unit_name] = axis
+        if rename_map:
+            df = df.rename(rename_map)
+        cast_columns = [axis for axis in ("x", "y", "z") if axis in df.columns]
+        if cast_columns:
+            df = df.with_columns(
+                [
+                    pl.col(axis).cast(pl.Float64, strict=False).alias(axis)
+                    for axis in cast_columns
+                ]
+            )
+            df = df.drop_nulls(cast_columns)
+        return df
 
     def _get_region_case_setup_data(self):
         """Return region case directories paired with their solidification inputs."""

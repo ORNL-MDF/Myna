@@ -33,6 +33,7 @@ def component(tmp_path, monkeypatch):
 
     component = Component()
     component.name = "demo-step"
+    component.input_file = str(input_file)
     component.data = {"build": {"name": "build-1"}}
     component.output_requirement = DummyOutputFile
     return component

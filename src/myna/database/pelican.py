@@ -18,6 +18,7 @@ import polars as pl
 from polars.datatypes import Float64
 from myna.core import metadata
 from myna.core.db import Database
+from myna.core.context import get_workflow_input_file
 from myna.core.utils import nested_get, nested_set
 
 
@@ -104,7 +105,9 @@ class Pelican(Database):
             layer: (str) "layer" corresponding to the time_segment for the part in
                 the Myna input file
         """
-        input_file = os.environ["MYNA_INPUT"]
+        input_file = get_workflow_input_file()
+        if input_file is None:
+            raise ValueError("Pelican segment details require a Myna input file.")
         with open(input_file, "r", encoding="utf-8") as f:
             input_dict = yaml.safe_load(f)
         segment = nested_get(
