@@ -84,6 +84,14 @@ def test_solidification_part_pelican():
 
 @pytest.mark.apps
 @pytest.mark.examples
+@pytest.mark.skipif(shutil.which("condor") is None, reason="condor is not on PATH")
+def test_solidification_part_condor():
+    """Check the Condor layer-wise solidification example."""
+    run_example_test("solidification_part_condor")
+
+
+@pytest.mark.apps
+@pytest.mark.examples
 def test_melt_pool_geometry_part_pelican():
     """This checks the melt_pool_geometry_part_pelican example. Estimated runtime ~15-30s."""
     run_example_test("melt_pool_geometry_part_pelican")

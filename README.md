@@ -93,6 +93,7 @@ External, non-Python dependencies are required depending on which applications y
 intend to use:
 
 - [3DThesis](https://github.com/ORNL-MDF/3DThesis), commit 646d461 or later
+- Condor, for Condor heat-transfer workflows
 - [AdditiveFOAM](https://github.com/ORNL/AdditiveFOAM), version 1.0
 - [ExaCA](https://github.com/LLNL/ExaCA), version 1.3 or later
 

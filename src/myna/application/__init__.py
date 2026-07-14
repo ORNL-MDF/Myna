@@ -12,6 +12,7 @@
 from . import adamantine
 from . import additivefoam
 from . import bnpy
+from . import condor
 from . import cubit
 from . import deer
 from . import exaca
@@ -23,6 +24,7 @@ __all__ = [
     "adamantine",
     "additivefoam",
     "bnpy",
+    "condor",
     "cubit",
     "deer",
     "exaca",

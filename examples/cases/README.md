@@ -25,6 +25,7 @@ External tools still need to be installed and configured separately.
 | `rve_part_center` | Peregrine fixture | core only | AdditiveFOAM |
 | `solidification_build_region` | Peregrine fixture | core only | 3DThesis |
 | `solidification_part` | Peregrine fixture | core only | 3DThesis |
+| `solidification_part_condor` | Peregrine fixture | core only | Condor |
 | `solidification_part_hdf5` | PeregrineHDF5 fixture | core only | 3DThesis |
 | `solidification_part_json` | MynaJSON fixture | core only | 3DThesis |
 | `solidification_part_pelican` | Pelican fixture | core only | 3DThesis |

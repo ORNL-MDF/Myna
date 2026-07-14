@@ -124,6 +124,7 @@ Suggested scopes:
 - `bnpy`
 - `cubit`
 - `adamantine`
+- `condor`
 - `peregrine`
 - `tests`
 - `docs`

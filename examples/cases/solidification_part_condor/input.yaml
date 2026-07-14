@@ -1,0 +1,19 @@
+steps:
+- condor:
+    class: solidification_part
+    application: condor
+    executable: condor
+    configure:
+      res: 12.5e-6
+      overwrite: true
+    execute:
+      np: 1
+      overwrite: true
+data:
+  build:
+    datatype: Peregrine
+    name: myna_output
+    path: ../../databases
+    parts:
+      P5:
+        layers: [51]

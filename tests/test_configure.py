@@ -55,6 +55,7 @@ def test_configure():
         "rve_part_center",
         "solidification_build_region",
         "solidification_part",
+        "solidification_part_condor",
         "solidification_part_hdf5",
         "solidification_part_json",
         "solidification_part_pelican",

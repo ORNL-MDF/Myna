@@ -12,6 +12,7 @@ import stat
 import pytest
 
 from myna.application.cubit.cubit import CubitApp
+from myna.application.condor import Condor
 from myna.application.deer.deer import DeerApp
 from myna.application.exaca.exaca import ExaCA
 from myna.application.openfoam.mesh_part_vtk.app import OpenFOAMMeshPartVTK
@@ -205,6 +206,26 @@ def test_thesis_stage_parsers_set_default_executable(monkeypatch, stage_call):
     getattr(app, stage_call)()
 
     assert app.args.exec == "3DThesis"
+
+
+@pytest.mark.parametrize(
+    "stage_calls",
+    [
+        ("parse_execute_arguments", "parse_configure_arguments"),
+        ("parse_configure_arguments", "parse_execute_arguments"),
+        ("parse_execute_arguments", "parse_execute_arguments"),
+    ],
+)
+def test_condor_stage_parsers_are_idempotent(monkeypatch, stage_calls):
+    monkeypatch.setattr(sys, "argv", ["test"])
+    app = Condor(validate_executable=False)
+
+    for stage_call in stage_calls:
+        getattr(app, stage_call)()
+
+    assert _count_option_actions(app.parser, "--res") == 1
+    assert app.args.res == pytest.approx(12.5e-6)
+    assert app.args.exec == "condor"
 
 
 @pytest.mark.parametrize(

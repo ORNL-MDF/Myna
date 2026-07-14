@@ -56,7 +56,8 @@ uv run pytest -m apps tests/test_executables.py
 ```
 
 These tests currently check for tools such as ExaCA, OpenFOAM/AdditiveFOAM, and
-3DThesis on the current `PATH` or active environment.
+3DThesis on the current `PATH` or active environment. The Condor example test runs
+when `condor` is available on `PATH` and otherwise reports an explicit skip.
 
 Example-case tests live in `tests/test_examples.py`. They copy runnable examples to
 temporary case directories under `examples/cases/`, run `myna config`, run `myna run`,

@@ -1,0 +1,28 @@
+{
+    "Interface": {
+        "settings": {
+            "timestep": 0.0001,
+            "tracking": "surface"
+        },
+        "output": {
+            "frequency": 0,
+            "temperature": false
+        },
+        "hooks": {
+            "solidification": {
+                "params": {
+                    "dT_err": 0.001,
+                    "max_iter": 10
+                },
+                "outputs": {
+                    "tSol": false,
+                    "G": true,
+                    "G_vector": false,
+                    "G_unit_vector": false,
+                    "V": true,
+                    "dTdt": false
+                }
+            }
+        }
+    }
+}

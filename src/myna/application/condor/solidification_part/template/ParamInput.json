@@ -1,0 +1,9 @@
+{
+    "name": "thermal_condor",
+    "mode": "Mode.json",
+    "material": "Material.json",
+    "beam": "Beam.json",
+    "path": "Path.txt",
+    "domain": "Domain.json",
+    "settings": "Settings.json"
+}

@@ -1,0 +1,21 @@
+{
+    "output": {
+        "dim": "2D",
+        "format": ".csv",
+        "noOutput": false
+    },
+    "meltpool": {
+        "radius_check": 0.00025
+    },
+    "quadrature": {
+        "cutoff_peak": 1e-09,
+        "cutoff_t0tl": 0.01
+    },
+    "compute": {
+        "prefetch_threads": 1
+    },
+    "mpi": {
+        "domain_overlap": false,
+        "print": 1
+    }
+}

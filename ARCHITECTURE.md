@@ -2,7 +2,7 @@
 
 ## Status
 
-- Last verified: 2026-06-01 during the workflow-context update
+- Last verified: 2026-07-14 during the Condor application integration
 - Audience: maintainers, contributors, and coding agents
 - Scope: describes current architecture; does not replace API docs or user docs
 
@@ -280,6 +280,7 @@ Required for the Python package:
 Optional or workflow-specific:
 
 - 3DThesis, commit `646d461` or later, for Thesis application examples;
+- Condor for Condor heat-transfer application workflows;
 - AdditiveFOAM version `1.0` or later and OpenFOAM 10 for AdditiveFOAM/OpenFOAM
   application workflows;
 - ExaCA version `1.3` or later for ExaCA workflows;
