@@ -11,6 +11,7 @@
 import os
 import shutil
 import subprocess
+from pathlib import Path
 import yaml
 import mistlib as mist
 import pandas as pd
@@ -34,6 +35,48 @@ class AdditiveFOAM(MynaApp):
         )
         if self.args.exec is None:
             self.args.exec = "additiveFoam"
+
+    def parse_configure_arguments(self):
+        """Register arguments used by the AdditiveFOAM configure stage."""
+        self.register_argument(
+            "--custom-heatsourcedict",
+            default=None,
+            type=str,
+            help="(str) path to a custom heatSourceDict file to copy into each case"
+            + " before beam size and material-property updates",
+        )
+        self.parse_known_args()
+
+    def resolve_custom_heatsourcedict_path(self):
+        """Resolve the configured custom heatSourceDict path, if one was provided."""
+        custom_path = self.args.custom_heatsourcedict
+        if custom_path is None:
+            return None
+
+        path = Path(custom_path)
+        if path.is_absolute():
+            return path
+        if self.input_file is not None:
+            input_dir = Path(self.input_file).resolve(strict=False).parent
+            return input_dir / path
+        return path.resolve(strict=False)
+
+    def overwrite_heat_source_dict(self, case_dir):
+        """Overwrite the case heatSourceDict with a user-provided file, if configured."""
+        custom_path = self.resolve_custom_heatsourcedict_path()
+        if custom_path is None:
+            return
+        if not custom_path.exists():
+            raise FileNotFoundError(
+                "Custom heatSourceDict file does not exist: " + f"{custom_path}"
+            )
+
+        target_path = Path(case_dir) / "constant" / "heatSourceDict"
+        shutil.copyfile(custom_path, target_path)
+
+    def has_custom_heat_source_dict(self):
+        """Return True when a custom heatSourceDict path was configured."""
+        return self.resolve_custom_heatsourcedict_path() is not None
 
     def has_matching_template_mesh_dict(self, mesh_path, mesh_dict):
         """Checks if there is a usable mesh dictionary in the case directory
@@ -78,27 +121,28 @@ class AdditiveFOAM(MynaApp):
             transport_file=transport_filepath, thermo_file=thermo_filepath
         )
 
-        # Update the base material laser absorption for the heat source
-        absorption = mat.get_property("laser_absorption", None, None)
-        absorption_model = (
-            subprocess.check_output(
-                "foamDictionary -entry beam/absorptionModel -value "
-                + f"{case_dir}/constant/heatSourceDict",
-                shell=True,
+        # Preserve calibrated absorption values from a custom heat source file.
+        if not self.has_custom_heat_source_dict():
+            absorption = mat.get_property("laser_absorption", None, None)
+            absorption_model = (
+                subprocess.check_output(
+                    "foamDictionary -entry beam/absorptionModel -value "
+                    + f"{case_dir}/constant/heatSourceDict",
+                    shell=True,
+                )
+                .decode("utf-8")
+                .strip()
             )
-            .decode("utf-8")
-            .strip()
-        )
-        update_parameter(
-            f"{case_dir}/constant/heatSourceDict",
-            f"beam/{absorption_model}Coeffs/eta0",
-            absorption,
-        )
-        update_parameter(
-            f"{case_dir}/constant/heatSourceDict",
-            f"beam/{absorption_model}Coeffs/etaMin",
-            absorption,
-        )
+            update_parameter(
+                f"{case_dir}/constant/heatSourceDict",
+                f"beam/{absorption_model}Coeffs/eta0",
+                absorption,
+            )
+            update_parameter(
+                f"{case_dir}/constant/heatSourceDict",
+                f"beam/{absorption_model}Coeffs/etaMin",
+                absorption,
+            )
 
         # Update the isotherm in the ExaCA function dictionary if it exists
         exaca_dict = f"{case_dir}/system/ExaCA"

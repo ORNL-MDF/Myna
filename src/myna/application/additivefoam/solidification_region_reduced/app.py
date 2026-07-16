@@ -33,6 +33,8 @@ class AdditiveFOAMRegionReduced(AdditiveFOAM):
 
     def parse_configure_arguments(self):
         """Check for arguments relevant to the configure step and update app settings"""
+        super().parse_configure_arguments()
+
         # Parse app-specific arguments
         self.register_argument(
             "--exaca-mesh",
@@ -328,6 +330,7 @@ class AdditiveFOAMRegionReduced(AdditiveFOAM):
         new_scan_path_file = os.path.join(case_dict["case_dir"], "constant", path_name)
         convert_peregrine_scanpath(myna_scanfile, new_scan_path_file, power)
 
+        self.overwrite_heat_source_dict(case_dict["case_dir"])
         self.update_beam_spot_size(case_dict["part"], case_dict["case_dir"])
         self.update_material_properties(case_dict["case_dir"])
         self.update_region_start_and_end_times(

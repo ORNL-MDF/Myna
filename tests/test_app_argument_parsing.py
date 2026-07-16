@@ -14,6 +14,10 @@ import pytest
 from myna.application.cubit.cubit import CubitApp
 from myna.application.condor import Condor
 from myna.application.deer.deer import DeerApp
+from myna.application.additivefoam import AdditiveFOAM
+from myna.application.additivefoam.solidification_region_reduced_stl import (
+    AdditiveFOAMRegionReducedSTL,
+)
 from myna.application.exaca.exaca import ExaCA
 from myna.application.openfoam.mesh_part_vtk.app import OpenFOAMMeshPartVTK
 from myna.application.rve.rve import RVE
@@ -331,3 +335,16 @@ def test_openfoam_mesh_part_vtk_execute_parser_is_idempotent(monkeypatch):
     assert _count_option_actions(app.parser, "--scale") == 1
     assert _count_option_actions(app.parser, "--coarse") == 1
     assert _count_option_actions(app.parser, "--refine") == 1
+
+
+def test_additivefoam_region_reduced_stl_configure_parser_is_idempotent(monkeypatch):
+    monkeypatch.setattr(sys, "argv", ["test"])
+    monkeypatch.setattr(AdditiveFOAM, "validate_executable", lambda self, default: None)
+    app = AdditiveFOAMRegionReducedSTL()
+
+    app.parse_configure_arguments()
+    app.parse_configure_arguments()
+
+    assert _count_option_actions(app.parser, "--custom-heatsourcedict") == 1
+    assert _count_option_actions(app.parser, "--exaca-mesh") == 1
+    assert _count_option_actions(app.parser, "--scale") == 1
