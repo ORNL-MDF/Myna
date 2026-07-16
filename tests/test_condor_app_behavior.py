@@ -104,8 +104,8 @@ def test_configure_case_writes_condor_inputs(monkeypatch, tmp_path):
 
     material = json.loads((case_dir / "Material.json").read_text(encoding="utf-8"))
     constants = material["constants"]
-    assert constants["T_init"] == 450.0
-    assert constants["T_liq"] == 1709
+    assert constants["T_0"] == 450.0
+    assert constants["T_L"] == 1709
     assert constants["k"] == pytest.approx(32.35741)
     assert constants["c"] == pytest.approx(582.1959)
     assert constants["p"] == 7955

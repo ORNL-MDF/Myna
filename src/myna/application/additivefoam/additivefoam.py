@@ -49,7 +49,10 @@ class AdditiveFOAM(MynaApp):
 
     def resolve_custom_heatsourcedict_path(self):
         """Resolve the configured custom heatSourceDict path, if one was provided."""
-        custom_path = self.args.custom_heatsourcedict
+        try:
+            custom_path = self.args.custom_heatsourcedict
+        except AttributeError:
+            return None
         if custom_path is None:
             return None
 

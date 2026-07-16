@@ -42,6 +42,7 @@ def test_region_reduced_custom_heatsourcedict_overwrites_template_before_updates
     )
     monkeypatch.setattr(AdditiveFOAM, "validate_executable", lambda self, default: None)
     app = AdditiveFOAMRegionReduced()
+    app.parse_configure_arguments()
     app.settings = {
         "data": {
             "build": {
@@ -134,6 +135,7 @@ def test_update_material_properties_preserves_custom_heat_source_absorption(
     )
     monkeypatch.setattr(AdditiveFOAM, "validate_executable", lambda self, default: None)
     app = AdditiveFOAM()
+    app.parse_configure_arguments()
     app.settings = {"data": {"build": {"build_data": {"material": {"value": "IN625"}}}}}
 
     writes = []
