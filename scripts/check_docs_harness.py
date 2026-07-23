@@ -6,6 +6,8 @@ CI, and minimal local development environments.
 
 from __future__ import annotations
 
+import json
+import os
 import re
 import subprocess
 import sys
@@ -63,6 +65,20 @@ ARCHITECTURE_DOC_PATHS = [
     "ARCHITECTURE.md",
     "docs/developer_guide.md",
 ]
+
+NO_ARCH_DOCS_MARKER = "Architecture/docs: no update needed -"
+NO_ARCH_DOCS_ENV_VAR = "MYNA_DOCS_HARNESS_NO_ARCH_DOCS_REASON"
+PLACEHOLDER_REASONS = {
+    "",
+    "...",
+    "<reason>",
+    "n/a",
+    "na",
+    "none",
+    "reason",
+    "tbd",
+    "todo",
+}
 
 PR_TEMPLATE_REQUIRED_HEADINGS = [
     "## Summary",
@@ -203,6 +219,51 @@ def path_matches_any(path: str, prefixes_or_paths: list[str]) -> bool:
     )
 
 
+def strip_html_comments(text: str) -> str:
+    return re.sub(r"<!--.*?-->", "", text, flags=re.DOTALL)
+
+
+def has_concrete_no_arch_docs_reason(reason: str) -> bool:
+    normalized = reason.strip().lower()
+    return normalized not in PLACEHOLDER_REASONS
+
+
+def pr_body_no_arch_docs_reason(pr_body: str) -> str | None:
+    body_without_comments = strip_html_comments(pr_body)
+    marker_pattern = rf"^{re.escape(NO_ARCH_DOCS_MARKER)}\s*(.+?)\s*$"
+    match = re.search(marker_pattern, body_without_comments, flags=re.MULTILINE)
+    if match is None:
+        return None
+    reason = match.group(1).strip()
+    if has_concrete_no_arch_docs_reason(reason):
+        return reason
+    return None
+
+
+def get_github_pr_body() -> str:
+    event_path = os.environ.get("GITHUB_EVENT_PATH")
+    if not event_path:
+        return ""
+    path = Path(event_path)
+    if not path.exists():
+        return ""
+    try:
+        event = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return ""
+    body = event.get("pull_request", {}).get("body", "")
+    if isinstance(body, str):
+        return body
+    return ""
+
+
+def no_arch_docs_reason() -> str | None:
+    env_reason = os.environ.get(NO_ARCH_DOCS_ENV_VAR, "")
+    if has_concrete_no_arch_docs_reason(env_reason):
+        return env_reason.strip()
+    return pr_body_no_arch_docs_reason(get_github_pr_body())
+
+
 def check_architecture_docs_updated_for_sensitive_changes() -> None:
     changed_files = get_changed_files()
     if not changed_files:
@@ -222,13 +283,18 @@ def check_architecture_docs_updated_for_sensitive_changes() -> None:
     if docs_changes:
         return
 
+    if no_arch_docs_reason() is not None:
+        return
+
     changed_list = "\n".join(f"  - {path}" for path in sensitive_changes)
     required_list = "\n".join(f"  - {path}" for path in ARCHITECTURE_DOC_PATHS)
     fail(
         "architecture-sensitive files changed without architecture documentation "
         "updates.\nChanged files:\n"
         f"{changed_list}\nUpdate at least one of:\n{required_list}\n"
-        "If no docs update is needed, state that explicitly in the PR."
+        f"If no docs update is needed, add `{NO_ARCH_DOCS_MARKER} <reason>` "
+        "to the PR body or set "
+        f"`{NO_ARCH_DOCS_ENV_VAR}=<reason>` for local/pre-commit runs."
     )
 
 

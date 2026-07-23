@@ -137,4 +137,7 @@ explicitly in the body.
 - If code changes touch `src/myna/core/workflow/`, `src/myna/core/components/`,
   `src/myna/core/app/`, `src/myna/core/context.py`, `src/myna/database/`, CLI behavior,
   app extension patterns, or subsystem boundaries, update `ARCHITECTURE.md` and
-  relevant developer docs, or state why no docs update was needed.
+  relevant developer docs. Additional of new component classes may touch these sensitive
+  areas of the code base but follow existing patterns and interfaces--in this case
+  set `MYNA_DOCS_HARNESS_NO_ARCH_DOCS_REASON` when running local tests and include
+  `Architecture/docs: no update needed - <reason>` in PR body text.

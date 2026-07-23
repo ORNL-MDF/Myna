@@ -116,6 +116,31 @@ regardless of if there is an existing application. This will allow you to test t
 correct metadata is being supplied to the case directories. When composing your
 input file, just provide an arbitrary name for the application, e.g., "test".
 
+### Documentation impact for component types
+
+Adding a new component class or component type under `src/myna/core/components/` uses
+an expected Myna extension point, but it still touches an architecture-sensitive path.
+The docs harness cannot infer from the diff whether a component change only extends
+existing behavior or changes subsystem boundaries, control flow, or public extension
+patterns.
+
+If the change introduces a new public component pattern, component type, workflow
+behavior, command, input shape, or extension point, update this guide and possibly
+`ARCHITECTURE.md`. If the change only adds a concrete component using the existing
+extension pattern, local docs harness and pre-commit checks may fail unless you provide
+an explicit no-docs-needed rationale:
+
+```bash
+MYNA_DOCS_HARNESS_NO_ARCH_DOCS_REASON="extends an existing component extension point without changing architecture boundaries" \
+  uv run python scripts/check_docs_harness.py
+```
+
+For PR CI, include the same decision in the PR body outside HTML comments:
+
+```text
+Architecture/docs: no update needed - extends an existing component extension point without changing architecture boundaries.
+```
+
 ## Developing new applications
 
 Once a new component is implemented, you will have to implement a corresponding

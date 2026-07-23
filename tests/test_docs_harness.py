@@ -9,6 +9,7 @@
 from __future__ import annotations
 
 import importlib.util
+import json
 from pathlib import Path
 
 import pytest
@@ -55,6 +56,8 @@ def test_get_changed_files_falls_back_to_dirty_worktree(monkeypatch):
 
 
 def test_architecture_docs_required_for_sensitive_branch_changes(monkeypatch, capsys):
+    monkeypatch.delenv(DOCS_HARNESS.NO_ARCH_DOCS_ENV_VAR, raising=False)
+    monkeypatch.delenv("GITHUB_EVENT_PATH", raising=False)
     monkeypatch.setattr(
         DOCS_HARNESS,
         "get_changed_files",
@@ -71,6 +74,101 @@ def test_architecture_docs_check_passes_when_docs_are_updated(monkeypatch):
         DOCS_HARNESS,
         "get_changed_files",
         lambda: {"src/myna/core/context.py", "ARCHITECTURE.md"},
+    )
+
+    DOCS_HARNESS.check_architecture_docs_updated_for_sensitive_changes()
+
+
+def test_architecture_docs_check_passes_with_pr_body_reason(monkeypatch, tmp_path):
+    event_path = tmp_path / "event.json"
+    event_path.write_text(
+        json.dumps(
+            {
+                "pull_request": {
+                    "body": (
+                        "## Impact\n"
+                        "Architecture/docs: no update needed - extends an existing "
+                        "component hook without changing boundaries."
+                    )
+                }
+            }
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("GITHUB_EVENT_PATH", str(event_path))
+    monkeypatch.delenv(DOCS_HARNESS.NO_ARCH_DOCS_ENV_VAR, raising=False)
+    monkeypatch.setattr(
+        DOCS_HARNESS,
+        "get_changed_files",
+        lambda: {"src/myna/core/context.py"},
+    )
+
+    DOCS_HARNESS.check_architecture_docs_updated_for_sensitive_changes()
+
+
+def test_architecture_docs_check_ignores_commented_pr_body_marker(
+    monkeypatch, tmp_path, capsys
+):
+    event_path = tmp_path / "event.json"
+    event_path.write_text(
+        json.dumps(
+            {
+                "pull_request": {
+                    "body": (
+                        "<!-- Architecture/docs: no update needed - describe "
+                        "why here. -->"
+                    )
+                }
+            }
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("GITHUB_EVENT_PATH", str(event_path))
+    monkeypatch.delenv(DOCS_HARNESS.NO_ARCH_DOCS_ENV_VAR, raising=False)
+    monkeypatch.setattr(
+        DOCS_HARNESS,
+        "get_changed_files",
+        lambda: {"src/myna/core/context.py"},
+    )
+
+    with pytest.raises(SystemExit):
+        DOCS_HARNESS.check_architecture_docs_updated_for_sensitive_changes()
+    assert "architecture-sensitive files changed" in capsys.readouterr().err
+
+
+def test_architecture_docs_check_rejects_placeholder_pr_body_reason(
+    monkeypatch, tmp_path, capsys
+):
+    event_path = tmp_path / "event.json"
+    event_path.write_text(
+        json.dumps(
+            {"pull_request": {"body": "Architecture/docs: no update needed - <reason>"}}
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("GITHUB_EVENT_PATH", str(event_path))
+    monkeypatch.delenv(DOCS_HARNESS.NO_ARCH_DOCS_ENV_VAR, raising=False)
+    monkeypatch.setattr(
+        DOCS_HARNESS,
+        "get_changed_files",
+        lambda: {"src/myna/core/context.py"},
+    )
+
+    with pytest.raises(SystemExit):
+        DOCS_HARNESS.check_architecture_docs_updated_for_sensitive_changes()
+    assert "architecture-sensitive files changed" in capsys.readouterr().err
+
+
+def test_architecture_docs_check_passes_with_local_env_reason(monkeypatch):
+    monkeypatch.setenv(
+        DOCS_HARNESS.NO_ARCH_DOCS_ENV_VAR,
+        "extends an existing database adapter extension point",
+    )
+    monkeypatch.delenv("GITHUB_EVENT_PATH", raising=False)
+    monkeypatch.setattr(
+        DOCS_HARNESS,
+        "get_changed_files",
+        lambda: {"src/myna/core/context.py"},
     )
 
     DOCS_HARNESS.check_architecture_docs_updated_for_sensitive_changes()
