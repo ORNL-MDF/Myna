@@ -13,7 +13,8 @@ import pandas as pd
 import polars as pl
 import pytest
 
-from myna.application.thesis import read_parameter
+from myna.application.thesis import read_parameter, update_domain_resolution
+from myna.application.thesis.depth_map_part import ThesisDepthMapPart
 from myna.application.thesis.melt_pool_geometry_part import ThesisMeltPoolGeometryPart
 from myna.application.thesis.solidification_build_region import (
     ThesisSolidificationBuildRegion,
@@ -66,7 +67,7 @@ def _write_template(template_dir):
     template_dir.mkdir(parents=True)
     template_files = {
         "Beam.txt": "\tWidth_X\t0\n\tWidth_Y\t0\n\tPower\t0\n\tEfficiency\t0\n",
-        "Domain.txt": "\tRes\t0\n",
+        "Domain.txt": "X\n{\n\tRes\t0\n}\nY\n{\n\tRes\t0\n}\nZ\n{\n\tRes\t0\n}\n",
         "Material.txt": "\tT_0\t0\n",
         "Mode.txt": "\tTimes\tunset\n",
         "Output.txt": "\tOutput\t0\n",
@@ -96,6 +97,40 @@ def _write_case_metadata(case_dir, payload):
         json.dumps(payload),
         encoding="utf-8",
     )
+
+
+def test_update_domain_resolution_changes_one_mesh_direction(tmp_path):
+    domain_file = tmp_path / "Domain.txt"
+    domain_file.write_text(
+        "X\n{\n\tRes\t10e-6\n}\nY\n{\n\tRes\t20e-6\n}\nZ\n{\n\tRes\t30e-6\n}\n",
+        encoding="utf-8",
+    )
+
+    update_domain_resolution(domain_file, "Y", 40e-6)
+
+    assert read_parameter(str(domain_file), "Res") == ["10e-6", "4e-05", "30e-6"]
+
+
+def test_update_domain_resolution_rejects_invalid_direction(tmp_path):
+    domain_file = tmp_path / "Domain.txt"
+    domain_file.write_text(
+        "X\n{\n\tRes\t10e-6\n}\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ValueError, match="Expected X, Y, or Z"):
+        update_domain_resolution(domain_file, "A", 40e-6)
+
+
+def test_update_domain_resolution_requires_res_entry_in_direction_block(tmp_path):
+    domain_file = tmp_path / "Domain.txt"
+    domain_file.write_text(
+        "X\n{\n\tOffset\t0\n}\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ValueError, match="Could not find a Res entry"):
+        update_domain_resolution(domain_file, "X", 40e-6)
 
 
 def _build_part_case_payload(scanfile):
@@ -226,7 +261,11 @@ def test_temperature_and_solidification_part_setup_share_case_configuration(
         ) == scanfile.read_text(encoding="utf-8")
         assert read_parameter(str(case_dir / "Beam.txt"), "Power") == ["200.0"]
         assert read_parameter(str(case_dir / "Material.txt"), "T_0") == ["450.0"]
-        assert read_parameter(str(case_dir / "Domain.txt"), "Res") == ["1.25e-05"]
+        assert read_parameter(str(case_dir / "Domain.txt"), "Res") == [
+            "1.25e-05",
+            "1.25e-05",
+            "1.25e-05",
+        ]
 
     temperature_times = read_parameter(str(temperature_case / "Mode.txt"), "Times")[0]
     solidification_times = read_parameter(
@@ -272,7 +311,11 @@ def test_solidification_build_region_configure_creates_ordered_paths_and_beams(
     assert df_path_1.row(0, named=True)["tParam"] == 0.0
     assert df_path_2.row(0, named=True)["tParam"] > 0.0
     assert read_parameter(str(case_dir / "Material.txt"), "T_0") == ["425.0"]
-    assert read_parameter(str(case_dir / "Domain.txt"), "Res") == ["1.25e-05"]
+    assert read_parameter(str(case_dir / "Domain.txt"), "Res") == [
+        "1.25e-05",
+        "1.25e-05",
+        "1.25e-05",
+    ]
 
 
 def test_melt_pool_geometry_configure_creates_segment_cases(monkeypatch, tmp_path):
@@ -407,6 +450,113 @@ def test_melt_pool_geometry_configure_skips_segments_without_snapshot_times(
     assert not (case_dir / "path_segment_001").exists()
     assert not (case_dir / "path_segment_002").exists()
     assert (case_dir / "path_segment_003").is_dir()
+
+
+def test_depth_map_configure_uses_standard_part_case(monkeypatch, tmp_path):
+    monkeypatch.setattr(context_module, "_LEGACY_ENV_FALLBACK_WARNED", False)
+    _configure_workflow_env(monkeypatch, tmp_path, "depth_map_part")
+    monkeypatch.setenv("MYNA_INSTALL_PATH", str(tmp_path / "install"))
+    _patch_material_information(monkeypatch)
+
+    scanfile = tmp_path / "scan.txt"
+    _write_scanfile(scanfile)
+    template_dir = tmp_path / "template"
+    _write_template(template_dir)
+
+    case_dir = tmp_path / "case"
+    _write_case_metadata(case_dir, _build_part_case_payload(scanfile))
+
+    with pytest.warns(DeprecationWarning, match="Myna 2.0"):
+        app = ThesisDepthMapPart()
+    app.args = _build_args(template_dir, nout=5)
+    app.configure_case(str(case_dir))
+
+    assert (case_dir / "Path.txt").read_text(encoding="utf-8") == scanfile.read_text(
+        encoding="utf-8"
+    )
+    assert read_parameter(str(case_dir / "Beam.txt"), "Power") == ["200.0"]
+    assert read_parameter(str(case_dir / "Material.txt"), "T_0") == ["450.0"]
+    assert read_parameter(str(case_dir / "Domain.txt"), "Res") == [
+        "1.25e-05",
+        "1.25e-05",
+        "1e-05",
+    ]
+    assert read_parameter(str(case_dir / "Beam.txt"), "Efficiency") == ["0.35"]
+
+
+def test_depth_map_execute_exports_max_z_depth(monkeypatch, tmp_path):
+    monkeypatch.setattr(context_module, "_LEGACY_ENV_FALLBACK_WARNED", False)
+    case_dir = tmp_path / "case"
+    output_path = case_dir / "depth-map.csv"
+    _configure_workflow_env(
+        monkeypatch,
+        tmp_path,
+        "depth_map_part",
+        [str(output_path)],
+    )
+
+    data_dir = case_dir / "Data"
+    data_dir.mkdir(parents=True)
+    (case_dir / "ParamInput.txt").write_text(
+        "\tName\tthermal_3dthesis\n", encoding="utf-8"
+    )
+    (data_dir / "thermal_3dthesis.Solidification.Final.0.csv").write_text(
+        "x,y,z,depth\n0,1,1,2\n0,1,2,3\n",
+        encoding="utf-8",
+    )
+    (data_dir / "thermal_3dthesis.Solidification.Final.1.csv").write_text(
+        "x,y,z,depth\n4,5,3,6\n4,5,1,7\n",
+        encoding="utf-8",
+    )
+
+    with pytest.warns(DeprecationWarning, match="Myna 2.0"):
+        app = ThesisDepthMapPart()
+    app.args = _build_args(tmp_path / "unused")
+    monkeypatch.setattr(app, "parse_execute_arguments", lambda: None)
+    monkeypatch.setattr(app, "run_case", lambda proc_list: proc_list)
+
+    app.execute()
+
+    written = pd.read_csv(output_path)
+    assert list(written.columns) == ["x (m)", "y (m)", "depth (m)"]
+    assert written.to_dict(orient="records") == [
+        {"x (m)": 0.0, "y (m)": 1.0, "depth (m)": 3.0},
+        {"x (m)": 4.0, "y (m)": 5.0, "depth (m)": 6.0},
+    ]
+
+
+def test_depth_map_run_case_only_reuses_final_outputs(monkeypatch, tmp_path):
+    case_dir = tmp_path / "case"
+    data_dir = case_dir / "Data"
+    data_dir.mkdir(parents=True)
+    (case_dir / "ParamInput.txt").write_text(
+        "\tName\tthermal_3dthesis\n", encoding="utf-8"
+    )
+    (case_dir / "Settings.txt").write_text("\tMaxThreads\t1\n", encoding="utf-8")
+    (data_dir / "unrelated.csv").write_text("x\n1\n", encoding="utf-8")
+
+    app = object.__new__(ThesisDepthMapPart)
+    app.output_suffix = ".Solidification"
+    app.input_dir = str(case_dir)
+    app.args = SimpleNamespace(np=1, overwrite=False)
+    started = []
+    monkeypatch.setattr(
+        app,
+        "run_thesis_case",
+        lambda case_directory, proc_list: started.append(case_directory) or proc_list,
+    )
+
+    app.run_case([])
+
+    assert started == [str(case_dir.resolve())]
+
+    started.clear()
+    (data_dir / "thermal_3dthesis.Solidification.Final.0.csv").write_text(
+        "x,y,z,depth\n0,1,2,3\n", encoding="utf-8"
+    )
+    app.run_case([])
+
+    assert started == []
 
 
 def test_temperature_execute_exports_snapshot_schema(monkeypatch, tmp_path):

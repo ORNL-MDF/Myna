@@ -13,6 +13,7 @@ from .parse import (
     adjust_parameter,
     read_parameter,
     copy_simulation_result,
+    update_domain_resolution,
 )
 from .thesis import Thesis
 
@@ -24,4 +25,5 @@ __all__ = [
     "read_parameter",
     "copy_simulation_result",
     "Thesis",
+    "update_domain_resolution",
 ]

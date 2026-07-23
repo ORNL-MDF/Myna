@@ -47,6 +47,7 @@ def test_configure():
     context_module._LEGACY_ENV_FALLBACK_WARNED = False
     examples = [
         "cluster_solidification",
+        "depth_map_part",
         "melt_pool_geometry_part",
         "melt_pool_geometry_part_pelican",
         "microstructure_region",
