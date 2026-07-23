@@ -20,6 +20,9 @@ from myna.application.exaca.exaca import ExaCA
 from myna.application.openfoam.mesh_part_vtk.app import OpenFOAMMeshPartVTK
 from myna.application.rve.rve import RVE
 from myna.application.thesis.thesis import Thesis
+from myna.application.thesis.temperature_surface_part import (
+    ThesisTemperatureSurfacePart,
+)
 from myna.core.app.base import MynaApp
 
 
@@ -311,6 +314,51 @@ def test_thesis_stage_parsers_are_idempotent(monkeypatch, stage_calls):
 def test_thesis_stage_parsers_set_default_executable(monkeypatch, stage_call):
     monkeypatch.setattr(sys, "argv", ["test"])
     app = Thesis(validate_executable=False)
+
+    getattr(app, stage_call)()
+
+    assert app.args.exec == "3DThesis"
+
+
+@pytest.mark.parametrize(
+    "stage_calls",
+    [
+        ("parse_execute_arguments", "parse_configure_arguments"),
+        ("parse_configure_arguments", "parse_execute_arguments"),
+        ("parse_execute_arguments", "parse_execute_arguments"),
+    ],
+)
+def test_temperature_surface_part_stage_parsers_are_idempotent(
+    monkeypatch, stage_calls
+):
+    monkeypatch.setattr(sys, "argv", ["test"])
+    app = ThesisTemperatureSurfacePart()
+    app._validate_thesis_executable = False
+
+    for stage_call in stage_calls:
+        getattr(app, stage_call)()
+
+    assert _count_option_actions(app.parser, "--res") == 1
+    assert _count_option_actions(app.parser, "--wait") == 1
+    assert _count_option_actions(app.parser, "--use-prior-layer-average") == 1
+    assert app.args.res == pytest.approx(100e-6)
+    assert app.args.wait == pytest.approx(0.0)
+    assert app.args.use_prior_layer_average is False
+
+
+@pytest.mark.parametrize(
+    "stage_call",
+    [
+        "parse_configure_arguments",
+        "parse_execute_arguments",
+    ],
+)
+def test_temperature_surface_part_stage_parsers_set_default_executable(
+    monkeypatch, stage_call
+):
+    monkeypatch.setattr(sys, "argv", ["test"])
+    app = ThesisTemperatureSurfacePart()
+    app._validate_thesis_executable = False
 
     getattr(app, stage_call)()
 
