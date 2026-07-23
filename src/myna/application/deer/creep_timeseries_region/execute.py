@@ -15,7 +15,6 @@ def execute():
     """Run all deer/creep_timeseries_region case directories"""
     # Create app instance, check executable, and run all cases
     app = CreepTimeseriesRegionDeerApp()
-    app.validate_executable(default="deer-opt")
     app.execute()
 
 

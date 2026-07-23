@@ -44,6 +44,10 @@ steps:
     configure:
       loaddir: z
       load: 100
+    execute:
+      docker-image: idaholab/moose-dev:2025.04.22
+      docker-config: docker_config_deer.yaml
+      env: /projects/activate
 data:
   build:
     datatype: Peregrine
