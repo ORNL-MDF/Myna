@@ -265,6 +265,43 @@ def test_load_input_expands_layer_range_strings(tmp_path):
     ]
 
 
+def test_write_and_load_input_relativizes_step_docker_config_paths(tmp_path):
+    bundle_dir = tmp_path / "bundle"
+    docker_config_file = bundle_dir / "docker" / "run.yaml"
+    input_file = bundle_dir / "input.yaml"
+
+    docker_config_file.parent.mkdir(parents=True, exist_ok=True)
+    docker_config_file.write_text("remove: true\n", encoding="utf-8")
+
+    write_input(
+        {
+            "steps": [
+                {
+                    "demo": {
+                        "class": "fake_component",
+                        "application": "fake_app",
+                        "execute": {"docker-config": str(docker_config_file)},
+                    }
+                }
+            ],
+            "data": {},
+            "myna": {},
+        },
+        input_file,
+        relative_paths=True,
+    )
+
+    raw_settings = yaml.safe_load(input_file.read_text(encoding="utf-8"))
+    assert raw_settings["steps"][0]["demo"]["execute"]["docker-config"] == os.path.join(
+        "docker", "run.yaml"
+    )
+
+    loaded_settings = load_input(input_file)
+    assert loaded_settings["steps"][0]["demo"]["execute"]["docker-config"] == str(
+        docker_config_file.resolve()
+    )
+
+
 def test_write_input_anchors_case_file_local_paths_to_case_directory(tmp_path):
     bundle_dir = tmp_path / "bundle"
     case_dir = bundle_dir / "myna_output" / "P1" / "0" / "demo"

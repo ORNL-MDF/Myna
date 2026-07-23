@@ -275,6 +275,28 @@ def _transform_build_path(
         build_settings["path"] = transform(build_settings["path"], base_dir)
 
 
+def _transform_step_runtime_paths(
+    settings: dict[str, Any], transform: PathTransform, base_dir: Path
+) -> None:
+    """Apply a transform to step-scoped runtime path arguments."""
+
+    for step in settings.get("steps", []):
+        if not isinstance(step, dict):
+            continue
+        for step_settings in step.values():
+            if not isinstance(step_settings, dict):
+                continue
+            for operation in ("configure", "execute", "postprocess"):
+                operation_settings = step_settings.get(operation, {})
+                if not isinstance(operation_settings, dict):
+                    continue
+                for key in ("docker-config", "docker_config"):
+                    if key in operation_settings:
+                        operation_settings[key] = transform(
+                            operation_settings[key], base_dir
+                        )
+
+
 def resolve_input_paths(settings: dict[str, Any], filename: str) -> dict[str, Any]:
     """Resolve runtime and build paths relative to the loaded input file."""
 
@@ -283,6 +305,7 @@ def resolve_input_paths(settings: dict[str, Any], filename: str) -> dict[str, An
     _transform_output_paths(settings, _resolve_path, base_dir)
     _transform_workspace(settings, _resolve_path, base_dir)
     _transform_data_file_local_paths(settings, _resolve_path, base_dir)
+    _transform_step_runtime_paths(settings, _resolve_path, base_dir)
     return settings
 
 
@@ -293,6 +316,7 @@ def relativize_runtime_paths(settings: dict[str, Any], filename: str) -> dict[st
     _transform_output_paths(settings, _relativize_path, base_dir)
     _transform_workspace(settings, _relativize_path, base_dir)
     _transform_data_file_local_paths(settings, _relativize_path, base_dir)
+    _transform_step_runtime_paths(settings, _relativize_path, base_dir)
     return settings
 
 
