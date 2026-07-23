@@ -11,6 +11,7 @@
 import os
 import glob
 import copy
+import math
 import shutil
 import json
 import subprocess
@@ -65,6 +66,14 @@ class CubitVtkToExodusApp(CubitApp):
             type=str,
             help="(str) name of input file in ExaCA Myna workflow step template"
             + "generated the VTK file",
+        )
+        self.register_argument(
+            "--orientation-segment-gb",
+            default=None,
+            type=float,
+            help="Optional target size in GB per orientation-mapping subregion. "
+            + "If provided, Euler angle data are mapped and written in serial "
+            + "segments sized from the generated Exodus filesize.",
         )
         super().parse_execute_arguments()
 
@@ -182,13 +191,11 @@ class CubitVtkToExodusApp(CubitApp):
 
                 # Append grain ID array and Euler angles to Exodus file
                 with Dataset(exodus_prefix + ".e", "r+") as exodus_object:
-                    # Get ID array data to write
                     elem_block_ids = exodus_object.variables["eb_prop1"][:]
                     elem_orig_ids = np.array(
                         [new_id_dict[key] for key in elem_block_ids]
                     )
 
-                    # Get Euler angle data to write
                     # > [! note]
                     # > This is the section of the application that makes
                     # > the application ExaCA-specific. Another method of passing
@@ -201,26 +208,78 @@ class CubitVtkToExodusApp(CubitApp):
                         exaca_inputs = json.load(f)
                     ref_id_file = exaca_inputs["GrainOrientationFile"]
                     df_ref_ids = load_grain_ids(ref_id_file)
-                    elem_ref_ids = grain_id_to_reference_id(
-                        elem_orig_ids, len(df_ref_ids)
+                    self.write_exodus_block_data(
+                        exodus_object,
+                        elem_orig_ids,
+                        df_ref_ids,
+                        os.path.join(case_directory, exodus_prefix + ".e"),
                     )
-                    df_elems = df_ref_ids.loc[elem_ref_ids]
 
-                    # Create new variables in Exodus file
-                    block_data_dict = {
-                        "id_array": elem_orig_ids,
-                        "euler_bunge_zxz_phi1": df_elems["phi1"].to_numpy(),
-                        "euler_bunge_zxz_Phi": df_elems["Phi"].to_numpy(),
-                        "euler_bunge_zxz_phi2": df_elems["phi2"].to_numpy(),
-                    }
-                    for block_data_name, block_data_value in block_data_dict.items():
-                        if block_data_name not in exodus_object.variables:
-                            block_data = exodus_object.createVariable(
-                                block_data_name, block_data_value.dtype, ("num_el_blk",)
-                            )
+    def get_orientation_chunk_size(self, exodus_file, num_blocks):
+        """Get the number of blocks to map per serial orientation segment."""
 
-                            # Write data to the new variable
-                            block_data[:] = block_data_value
+        segment_size_gb = self.args.orientation_segment_gb
+        if segment_size_gb is None:
+            return None
+        if segment_size_gb <= 0:
+            raise ValueError("--orientation-segment-gb must be greater than zero")
+        if num_blocks <= 0:
+            return None
+
+        file_size_gb = os.path.getsize(exodus_file) / (1024.0**3)
+        num_segments = max(1, math.ceil(file_size_gb / segment_size_gb))
+        return max(1, math.ceil(num_blocks / num_segments))
+
+    @staticmethod
+    def ensure_exodus_variable(exodus_object, variable_name, dtype):
+        """Ensure an Exodus variable exists and return it."""
+
+        if variable_name not in exodus_object.variables:
+            return exodus_object.createVariable(variable_name, dtype, ("num_el_blk",))
+        return exodus_object.variables[variable_name]
+
+    def write_exodus_block_data(
+        self, exodus_object, elem_orig_ids, df_ref_ids, exodus_file
+    ):
+        """Write original grain ids and Euler-angle block data to the Exodus file."""
+
+        phi1_ref = df_ref_ids["phi1"].to_numpy()
+        Phi_ref = df_ref_ids["Phi"].to_numpy()
+        phi2_ref = df_ref_ids["phi2"].to_numpy()
+        num_blocks = len(elem_orig_ids)
+        chunk_size = self.get_orientation_chunk_size(exodus_file, num_blocks)
+
+        id_array = self.ensure_exodus_variable(
+            exodus_object, "id_array", elem_orig_ids.dtype
+        )
+        phi1_array = self.ensure_exodus_variable(
+            exodus_object, "euler_bunge_zxz_phi1", phi1_ref.dtype
+        )
+        Phi_array = self.ensure_exodus_variable(
+            exodus_object, "euler_bunge_zxz_Phi", Phi_ref.dtype
+        )
+        phi2_array = self.ensure_exodus_variable(
+            exodus_object, "euler_bunge_zxz_phi2", phi2_ref.dtype
+        )
+
+        if chunk_size is None:
+            elem_ref_ids = grain_id_to_reference_id(elem_orig_ids, len(df_ref_ids))
+            id_array[:] = elem_orig_ids
+            phi1_array[:] = phi1_ref[elem_ref_ids]
+            Phi_array[:] = Phi_ref[elem_ref_ids]
+            phi2_array[:] = phi2_ref[elem_ref_ids]
+            return
+
+        for start in range(0, num_blocks, chunk_size):
+            stop = min(num_blocks, start + chunk_size)
+            elem_orig_ids_chunk = elem_orig_ids[start:stop]
+            elem_ref_ids_chunk = grain_id_to_reference_id(
+                elem_orig_ids_chunk, len(df_ref_ids)
+            )
+            id_array[start:stop] = elem_orig_ids_chunk
+            phi1_array[start:stop] = phi1_ref[elem_ref_ids_chunk]
+            Phi_array[start:stop] = Phi_ref[elem_ref_ids_chunk]
+            phi2_array[start:stop] = phi2_ref[elem_ref_ids_chunk]
 
     def mesh_all_cases(self):
         """Generate Exodus mesh files for all cases in the Myna workflow step"""
