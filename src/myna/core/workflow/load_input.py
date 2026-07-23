@@ -6,9 +6,18 @@
 #
 # License: 3-clause BSD, see https://opensource.org/licenses/BSD-3-Clause.
 #
+import copy
 import os
 import json
+import re
+from collections.abc import Callable
+from pathlib import Path, PurePath
+from typing import Any
 import yaml
+
+
+PathTransform = Callable[[str, Path], str]
+_LAYER_TOKEN_PATTERN = re.compile(r"^(\d+)(?:\s*-\s*(\d+))?$")
 
 
 def validate_required_input_keys(settings):
@@ -25,6 +34,112 @@ def validate_required_input_keys(settings):
     for key in ["steps", "data", "myna"]:
         if settings.get(key) is None:
             settings[key] = {}
+
+    return settings
+
+
+def _expand_layer_entry(entry: Any, field_name: str) -> list[int]:
+    """Expand a layer entry into a concrete list of integer layer numbers."""
+
+    if isinstance(entry, int) and not isinstance(entry, bool):
+        return [int(entry)]
+
+    if isinstance(entry, str):
+        stripped = entry.strip()
+        if stripped == "":
+            return []
+        if stripped.startswith("[") and stripped.endswith("]"):
+            stripped = stripped[1:-1].strip()
+            if stripped == "":
+                return []
+
+        layers = []
+        for token in stripped.split(","):
+            token = token.strip()
+            if token == "":
+                raise ValueError(
+                    f'Invalid layer specification for "{field_name}": {entry}'
+                )
+            match = _LAYER_TOKEN_PATTERN.fullmatch(token)
+            if match is None:
+                raise ValueError(
+                    f'Invalid layer specification for "{field_name}": {entry}'
+                )
+
+            start = int(match.group(1))
+            end = match.group(2)
+            if end is None:
+                layers.append(start)
+                continue
+
+            end = int(end)
+            if end < start:
+                raise ValueError(
+                    f'Layer ranges must be ascending for "{field_name}": {entry}'
+                )
+            layers.extend(range(start, end + 1))
+        return layers
+
+    if isinstance(entry, list):
+        layers = []
+        for item in entry:
+            layers.extend(_expand_layer_entry(item, field_name))
+        return layers
+
+    raise ValueError(f'Invalid layer specification for "{field_name}": {entry}')
+
+
+def _normalize_build_layer_lists(build_settings: dict[str, Any], prefix: str) -> None:
+    """Expand layer shorthand syntax inside build-scoped settings."""
+
+    parts = build_settings.get("parts", {})
+    if isinstance(parts, dict):
+        for part_name, part_settings in parts.items():
+            if not isinstance(part_settings, dict):
+                continue
+
+            if "layers" in part_settings:
+                field_name = f"{prefix}.parts.{part_name}.layers"
+                part_settings["layers"] = _expand_layer_entry(
+                    part_settings["layers"], field_name
+                )
+
+            regions = part_settings.get("regions", {})
+            if not isinstance(regions, dict):
+                continue
+            for region_name, region_settings in regions.items():
+                if not isinstance(region_settings, dict):
+                    continue
+                if "layers" in region_settings:
+                    field_name = (
+                        f"{prefix}.parts.{part_name}.regions.{region_name}.layers"
+                    )
+                    region_settings["layers"] = _expand_layer_entry(
+                        region_settings["layers"], field_name
+                    )
+
+    build_regions = build_settings.get("build_regions", {})
+    if isinstance(build_regions, dict):
+        for build_region_name, build_region_settings in build_regions.items():
+            if not isinstance(build_region_settings, dict):
+                continue
+            if "layerlist" in build_region_settings:
+                field_name = f"{prefix}.build_regions.{build_region_name}.layerlist"
+                build_region_settings["layerlist"] = _expand_layer_entry(
+                    build_region_settings["layerlist"], field_name
+                )
+
+
+def normalize_input_layer_lists(settings: dict[str, Any]) -> dict[str, Any]:
+    """Expand layer range shorthand in Myna build settings."""
+
+    data_build_settings = settings.get("data", {}).get("build")
+    if isinstance(data_build_settings, dict):
+        _normalize_build_layer_lists(data_build_settings, "data.build")
+
+    case_build_settings = settings.get("build")
+    if isinstance(case_build_settings, dict):
+        _normalize_build_layer_lists(case_build_settings, "build")
 
     return settings
 
@@ -60,6 +175,127 @@ def is_json_type(filetype):
     return filetype in (".json", ".myna-workspace-json")
 
 
+def _resolve_path(path_value: str, base_dir: Path) -> str:
+    """Resolve a path string relative to a file's parent directory."""
+
+    if not isinstance(path_value, str) or path_value == "":
+        return path_value
+
+    path = Path(path_value).expanduser()
+    if path.is_absolute():
+        return str(path.resolve(strict=False))
+    return str((base_dir / path).resolve(strict=False))
+
+
+def _relativize_path(path_value: str, base_dir: Path) -> str:
+    """Relativize a path string against a file's parent directory."""
+
+    if not isinstance(path_value, str) or path_value == "":
+        return path_value
+
+    path = Path(path_value).expanduser()
+    if not path.is_absolute():
+        return path_value
+    resolved_path = path.resolve(strict=False)
+    if not _shares_path_anchor(resolved_path, base_dir):
+        return str(resolved_path)
+    return os.path.relpath(resolved_path, start=base_dir)
+
+
+def _shares_path_anchor(path: PurePath, base_dir: PurePath) -> bool:
+    """Whether two absolute paths can be safely relativized against each other."""
+
+    if not path.is_absolute() or not base_dir.is_absolute():
+        return True
+    return path.anchor.casefold() == base_dir.anchor.casefold()
+
+
+def _walk_file_local_paths(
+    value: Any, transform: PathTransform, base_dir: Path
+) -> None:
+    """Apply a transform to every `file_local` entry in a settings structure."""
+
+    if isinstance(value, dict):
+        for key, child in value.items():
+            if key == "file_local":
+                value[key] = transform(child, base_dir)
+            else:
+                _walk_file_local_paths(child, transform, base_dir)
+    elif isinstance(value, list):
+        for child in value:
+            _walk_file_local_paths(child, transform, base_dir)
+
+
+def _transform_data_file_local_paths(
+    settings: dict[str, Any], transform: PathTransform, base_dir: Path
+) -> None:
+    """Apply a transform to data-scoped `file_local` entries."""
+
+    data_settings = settings.get("data", {})
+    if isinstance(data_settings, dict) and data_settings:
+        _walk_file_local_paths(data_settings, transform, base_dir)
+        return
+
+    # Case-local `myna_data.yaml` files store the build payload at the top level.
+    build_settings = settings.get("build", {})
+    if isinstance(build_settings, dict) and build_settings:
+        _walk_file_local_paths(build_settings, transform, base_dir)
+
+
+def _transform_output_paths(
+    settings: dict[str, Any], transform: PathTransform, base_dir: Path
+) -> None:
+    """Apply a transform to configured workflow output paths."""
+
+    output_paths = settings.get("data", {}).get("output_paths", {})
+    if isinstance(output_paths, dict):
+        for step_name, paths in output_paths.items():
+            if isinstance(paths, list):
+                output_paths[step_name] = [transform(path, base_dir) for path in paths]
+
+
+def _transform_workspace(
+    settings: dict[str, Any], transform: PathTransform, base_dir: Path
+) -> None:
+    """Apply a transform to the optional workspace path."""
+
+    myna_settings = settings.get("myna", {})
+    if isinstance(myna_settings, dict) and "workspace" in myna_settings:
+        myna_settings["workspace"] = transform(myna_settings["workspace"], base_dir)
+
+
+def _transform_build_path(
+    settings: dict[str, Any], transform: PathTransform, base_dir: Path
+) -> None:
+    """Apply a transform to the configured build path."""
+
+    data_settings = settings.get("data", {})
+    build_settings = data_settings.get("build", {})
+    if isinstance(build_settings, dict) and "path" in build_settings:
+        build_settings["path"] = transform(build_settings["path"], base_dir)
+
+
+def resolve_input_paths(settings: dict[str, Any], filename: str) -> dict[str, Any]:
+    """Resolve runtime and build paths relative to the loaded input file."""
+
+    base_dir = Path(filename).expanduser().resolve(strict=False).parent
+    _transform_build_path(settings, _resolve_path, base_dir)
+    _transform_output_paths(settings, _resolve_path, base_dir)
+    _transform_workspace(settings, _resolve_path, base_dir)
+    _transform_data_file_local_paths(settings, _resolve_path, base_dir)
+    return settings
+
+
+def relativize_runtime_paths(settings: dict[str, Any], filename: str) -> dict[str, Any]:
+    """Relativize runtime-local paths against the written file location."""
+
+    base_dir = Path(filename).expanduser().resolve(strict=False).parent
+    _transform_output_paths(settings, _relativize_path, base_dir)
+    _transform_workspace(settings, _relativize_path, base_dir)
+    _transform_data_file_local_paths(settings, _relativize_path, base_dir)
+    return settings
+
+
 def load_input(filename):
     """Load input file into dictionary
 
@@ -76,19 +312,24 @@ def load_input(filename):
             settings = yaml.safe_load(f)
         else:
             settings = json.load(f)
-        return validate_required_input_keys(settings)
+        settings = validate_required_input_keys(settings)
+        settings = normalize_input_layer_lists(settings)
+        return resolve_input_paths(settings, filename)
 
 
-def write_input(settings, filename):
+def write_input(settings, filename, relative_paths=False):
     """Write Myna input dictionary to file
 
     Args:
         settings: (dict) Myna input dictionary
         filename: (str) path to file to write
+        relative_paths: (bool) write runtime-local paths relative to the file location
     """
 
     # Ensure that required input keys exist
-    settings = validate_required_input_keys(settings)
+    settings = validate_required_input_keys(copy.deepcopy(settings))
+    if relative_paths:
+        settings = relativize_runtime_paths(settings, filename)
 
     # Write the Myna input dictionary to a file
     with open(filename, "w", encoding="utf-8") as f:
