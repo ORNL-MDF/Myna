@@ -21,24 +21,18 @@ from myna.application.thesis import (
 class ThesisTemperaturePart(Thesis):
     """3DThesis temperature simulation at part-layer scale."""
 
+    supports_part_layer_initial_temperature = True
+
     def __init__(self):
         super().__init__()
         self.class_name = "temperature_part"
 
     def configure_case(self, case_dir, myna_input="myna_data.yaml"):
         settings = self._load_case_settings(case_dir, myna_input=myna_input)
-
-        part = list(settings["build"]["parts"].keys())[0]
-        layer = list(settings["build"]["parts"][part]["layer_data"].keys())[0]
-        case_scanfile = self._configure_standard_part_case(
+        _, _, case_scanfile = self._configure_standard_part_layer_case(
             case_dir,
-            settings["build"]["parts"][part]["layer_data"][layer]["scanpath"][
-                "file_local"
-            ],
-            settings["build"]["parts"][part]["laser_power"]["value"],
-            settings["build"]["parts"][part]["spot_size"]["value"],
-            settings["build"]["parts"][part]["spot_size"]["unit"],
             settings,
+            apply_initial_temperature=True,
         )
 
         mode_file = os.path.join(case_dir, "Mode.txt")
