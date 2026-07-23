@@ -9,7 +9,6 @@
 import math
 import glob
 import os
-import re
 import shutil
 import subprocess
 
@@ -18,7 +17,7 @@ import pandas as pd
 
 from myna.application.thesis.parse import adjust_parameter, read_parameter
 from myna.core.app.base import MynaApp
-from myna.core.utils import working_directory
+from myna.core.utils import normalize_layer_identifier, working_directory
 from myna.core.workflow.load_input import load_input
 
 _UNSET = object()
@@ -244,23 +243,6 @@ class Thesis(MynaApp):
         self.input_file = os.path.join(self.input_dir, self.input_filename)
         self.material_dir = os.path.join(self.input_dir, self.material_filename)
 
-    def _normalize_layer_identifier(self, layer):
-        """Normalize a case layer identifier into an integer layer number."""
-        if isinstance(layer, int):
-            return int(layer)
-        if isinstance(layer, float) and layer.is_integer():
-            return int(layer)
-        layer_str = str(layer)
-        try:
-            return int(layer_str)
-        except ValueError:
-            matches = re.findall(r"\d+", layer_str)
-            if len(matches) == 1:
-                return int(matches[0])
-        raise ValueError(
-            f"{self.name}: Could not parse a numeric layer identifier from {layer!r}"
-        )
-
     def _get_case_part_layer_settings(self, settings):
         """Return the single configured part/layer payload for a case."""
         try:
@@ -280,7 +262,7 @@ class Thesis(MynaApp):
     def _get_case_part_and_layer_index(self, settings):
         """Return the normalized `(part, layer)` key for one case directory."""
         part, layer = self._get_case_part_and_layer(settings)
-        return part, self._normalize_layer_identifier(layer)
+        return part, normalize_layer_identifier(layer)
 
     def _get_average_temperature(self, output_file):
         """Compute the average temperature from a prior-layer output file."""

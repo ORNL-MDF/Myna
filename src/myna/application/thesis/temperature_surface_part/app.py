@@ -22,6 +22,12 @@ from myna.application.thesis import (
     adjust_parameter,
     read_parameter,
 )
+from myna.core.utils import (
+    build_part_layer_records,
+    build_part_layer_dependency_index,
+    format_part_layer_key,
+    load_part_layer_interface_index,
+)
 
 
 class ThesisTemperatureSurfacePart(Thesis):
@@ -157,27 +163,6 @@ class ThesisTemperatureSurfacePart(Thesis):
         adjust_parameter(material_file, "T_0", temperature)
         return temperature
 
-    def _build_case_records(self, myna_files):
-        """Group output cases by part and sort them by layer."""
-        records_by_part = {}
-        for mynafile in myna_files:
-            case_dir = os.path.dirname(mynafile)
-            settings = self._load_case_settings(case_dir)
-            part, layer = self._get_case_part_and_layer(settings)
-            preheat = settings["build"]["build_data"]["preheat"]["value"]
-            record = {
-                "part": part,
-                "layer": self._normalize_layer_identifier(layer),
-                "case_dir": case_dir,
-                "myna_file": mynafile,
-                "preheat": preheat,
-            }
-            # Carry-over initialization is only allowed within a single part.
-            records_by_part.setdefault(part, []).append(record)
-        for records in records_by_part.values():
-            records.sort(key=lambda record: record["layer"])
-        return records_by_part
-
     def _process_is_running(self, process):
         """Return whether a subprocess or container is still running."""
         if isinstance(process, subprocess.Popen):
@@ -194,18 +179,18 @@ class ThesisTemperatureSurfacePart(Thesis):
         completed_any = False
         while True:
             # Materialize finished outputs here so later layers can consume them.
-            completed_parts = []
-            for part, active_case in active_cases.items():
+            completed_case_keys = []
+            for case_key, active_case in active_cases.items():
                 if not self._process_is_running(active_case["process"]):
                     self.wait_for_process_success(active_case["process"])
                     self._write_myna_output_from_pattern(
                         active_case["result_file_pattern"], active_case["myna_file"]
                     )
-                    completed_outputs[part] = active_case["myna_file"]
-                    completed_parts.append(part)
+                    completed_outputs[case_key] = active_case["myna_file"]
+                    completed_case_keys.append(case_key)
                     completed_any = True
-            for part in completed_parts:
-                del active_cases[part]
+            for case_key in completed_case_keys:
+                del active_cases[case_key]
             if completed_any or not block_until_one:
                 return completed_any
             time.sleep(1)
@@ -227,7 +212,11 @@ class ThesisTemperatureSurfacePart(Thesis):
 
     def _execute_dependent_cases(self, myna_files):
         """Execute cases in layer order when prior-layer averaging is enabled."""
-        pending_cases = self._build_case_records(myna_files)
+        pending_cases = build_part_layer_records(
+            myna_files,
+            self._load_case_settings,
+            error_prefix=self.name,
+        )
         active_cases = {}
         completed_outputs = {}
         proc_list = []
@@ -279,12 +268,104 @@ class ThesisTemperatureSurfacePart(Thesis):
                     block_until_one=bool(active_cases) and not launched_case,
                 )
 
+    def _execute_part_interface_dependent_cases(self, myna_files, interface_index=None):
+        """Execute cases using optional cross-part previous-layer mappings."""
+        records_by_part = build_part_layer_records(
+            myna_files,
+            self._load_case_settings,
+            error_prefix=self.name,
+        )
+        dependency_index, record_index = build_part_layer_dependency_index(
+            records_by_part,
+            interface_index=(
+                load_part_layer_interface_index(self.settings, error_prefix=self.name)
+                if interface_index is None
+                else interface_index
+            ),
+            error_prefix=self.name,
+        )
+        pending_cases = dict(record_index)
+        active_cases = {}
+        completed_outputs = {}
+        proc_list = []
+
+        while pending_cases or active_cases:
+            launched_case = False
+            for case_key in list(pending_cases):
+                previous_key = dependency_index.get(case_key)
+                if previous_key is not None:
+                    if previous_key in active_cases:
+                        continue
+                    previous_output = completed_outputs.get(previous_key)
+                    if previous_output is None:
+                        continue
+                else:
+                    previous_output = None
+
+                record = pending_cases.pop(case_key)
+                self.set_case(record["case_dir"], record["case_dir"])
+                self._set_initial_temperature(
+                    record["case_dir"],
+                    record["preheat"],
+                    previous_output,
+                )
+
+                proc_count = len(proc_list)
+                result_file_pattern, proc_list = self.run_case(proc_list)
+                if self.args.batch and len(proc_list) > proc_count:
+                    active_cases[case_key] = {
+                        "process": proc_list[-1],
+                        "result_file_pattern": result_file_pattern,
+                        "myna_file": record["myna_file"],
+                    }
+                else:
+                    self._write_myna_output_from_pattern(
+                        result_file_pattern, record["myna_file"]
+                    )
+                    completed_outputs[case_key] = record["myna_file"]
+                launched_case = True
+
+            if pending_cases and not launched_case and not active_cases:
+                blocked_cases = ", ".join(
+                    (
+                        f"{format_part_layer_key(case_key)} -> "
+                        f"{format_part_layer_key(dependency_index[case_key])}"
+                    )
+                    for case_key in pending_cases
+                    if dependency_index.get(case_key) is not None
+                )
+                if blocked_cases == "":
+                    blocked_cases = ", ".join(
+                        format_part_layer_key(case_key) for case_key in pending_cases
+                    )
+                raise ValueError(
+                    f"{self.name}: Could not resolve serial heat accumulation "
+                    f"dependencies for the configured interface mappings. Remaining "
+                    f"blocked cases: {blocked_cases}."
+                )
+
+            if self.args.batch:
+                self._collect_completed_cases(
+                    active_cases,
+                    completed_outputs,
+                    block_until_one=bool(active_cases) and not launched_case,
+                )
+
     def execute(self):
         """Execute the workflow using independent or dependent scheduling."""
         self.parse_execute_arguments()
         myna_files = self.get_step_output_paths()
 
         if self.args.use_prior_layer_average:
-            self._execute_dependent_cases(myna_files)
+            interface_index = load_part_layer_interface_index(
+                self.settings,
+                error_prefix=self.name,
+            )
+            if interface_index:
+                self._execute_part_interface_dependent_cases(
+                    myna_files, interface_index=interface_index
+                )
+            else:
+                self._execute_dependent_cases(myna_files)
         else:
             self._execute_independent_cases(myna_files)
