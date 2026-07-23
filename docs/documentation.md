@@ -70,11 +70,15 @@ The documentation harness is intentionally small:
 - `scripts/check_dev_tools.py` verifies that the current shell can run the repository's
   development toolchain.
 - `scripts/check_docs_harness.py` verifies required headings, required `AGENTS.md`
-  links, relative link targets, compact size of `AGENTS.md`, and architecture-doc
-  updates when architecture-sensitive code paths change. It also verifies required PR
-  template guidance and PR template headings. These checks enforce repository design
-  decisions: the required documentation headers and related harness policies are
-  not optional formatting preferences.
+  links, relative link targets, compact size of `AGENTS.md`, and documentation impact
+  handling when architecture-sensitive code paths change. Sensitive code changes pass
+  when architecture or developer docs are updated, or when the PR body includes
+  `Architecture/docs: no update needed - <reason>` with a concrete rationale. Local
+  pre-commit runs can use `MYNA_DOCS_HARNESS_NO_ARCH_DOCS_REASON=<reason>` for the
+  same intentional no-docs-needed case. It also verifies required PR template guidance
+  and PR template headings. These checks enforce repository design decisions: the
+  required documentation headers and related harness policies are not optional
+  formatting preferences.
 
 Run the harness check with:
 

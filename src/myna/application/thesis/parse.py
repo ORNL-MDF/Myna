@@ -82,3 +82,44 @@ def copy_simulation_result(
     shutil.copy(result_file, new_file)
 
     return new_file
+
+
+def update_domain_resolution(domain_file, direction, value):
+    """Update the mesh resolution for one direction in a Thesis Domain file."""
+    direction = direction.upper()
+    if direction not in {"X", "Y", "Z"}:
+        raise ValueError(
+            f"Unsupported Thesis Domain direction '{direction}'. Expected X, Y, or Z."
+        )
+
+    file_lines = load_file_lines(domain_file)
+    direction_line = None
+    for ind, line in enumerate(file_lines):
+        if line.strip() == direction:
+            direction_line = ind
+            break
+
+    if direction_line is None:
+        raise ValueError(
+            f"Could not find Thesis Domain direction '{direction}' in {domain_file}."
+        )
+
+    in_block = False
+    for ind in range(direction_line + 1, len(file_lines)):
+        line = file_lines[ind].strip()
+        if line == "{":
+            in_block = True
+            continue
+        if in_block and line == "}":
+            break
+        if in_block and line.startswith("Res"):
+            file_lines[ind] = f"\tRes\t{value}"
+            with open(domain_file, "w", encoding="utf-8") as f:
+                f.write("\n".join(file_lines))
+                f.truncate()
+            return
+
+    raise ValueError(
+        f"Could not find a Res entry for Thesis Domain direction '{direction}' "
+        f"in {domain_file}."
+    )

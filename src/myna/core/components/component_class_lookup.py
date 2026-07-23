@@ -45,6 +45,7 @@ def return_step_class(step_name, verbose=True):
         "mesh_part": comp.ComponentPartMesh(),
         "mesh_part_vtk": comp.ComponentPartMeshVTK(),
         "melt_pool_geometry_part": comp.ComponentMeltPoolGeometryPart(),
+        "depth_map_part": comp.ComponentDepthMapPart(),
         "vtk_to_exodus_part": comp.ComponentVTKToExodusMeshPart(),
         "vtk_to_exodus_region": comp.ComponentVTKToExodusMeshRegion(),
         "creep_timeseries": comp.ComponentCreepTimeSeries(),

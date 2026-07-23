@@ -14,7 +14,7 @@ Available subclasses:
 """
 
 from .component import Component
-from myna.core.files import FileMeltPoolGeometry
+from myna.core.files import FileMeltPoolGeometry, FileDepthMap
 
 ##################
 # Base Component #
@@ -39,6 +39,24 @@ class ComponentMeltPoolGeometry(Component):
         self.output_requirement = FileMeltPoolGeometry
 
 
+class ComponentDepthMap(Component):
+    """Build-wise Component that outputs the domain melt pool depth"""
+
+    def __init__(self):
+        super().__init__()
+        self.data_requirements.extend(
+            [
+                "spot_size",
+                "laser_power",
+                "preheat",
+                "material",
+                "scanpath",
+                "layer_thickness",
+            ]
+        )
+        self.output_requirement = FileDepthMap
+
+
 ########################################
 # Part-wise and region-wise Components #
 ########################################
@@ -51,4 +69,14 @@ class ComponentMeltPoolGeometryPart(ComponentMeltPoolGeometry):
 
     def __init__(self):
         ComponentMeltPoolGeometry.__init__(self)
+        self.types.extend(["part", "layer"])
+
+
+class ComponentDepthMapPart(ComponentDepthMap):
+    """Layer-wise Component that outputs the melt pool depth
+    for a part in the format of the class `FileDepthMap`
+    """
+
+    def __init__(self):
+        super().__init__()
         self.types.extend(["part", "layer"])

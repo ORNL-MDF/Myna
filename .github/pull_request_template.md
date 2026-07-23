@@ -32,6 +32,9 @@ Describe the impact of this change on the project. Consider functionality, workf
 If the change is intended to have no impact on behavior, state that explicitly.
 If this change is a performance improvement, include any measured impact here or in the Testing strategy details.
 Describe the overall risk level of these changes (High / Medium / Low) and the rationale for that assessment.
+If architecture-sensitive paths changed only to extend expected extension points and
+no architecture or developer-doc update is needed, include a line like:
+Architecture/docs: no update needed - this extends an existing component hook without changing boundaries.
 -->
 
 

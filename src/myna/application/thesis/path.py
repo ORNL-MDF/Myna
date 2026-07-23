@@ -71,7 +71,7 @@ class Path:
             self.setSize()
             self.setEnd()
         else:
-            self.data = pd.read_csv(file, sep="\s+")
+            self.data = pd.read_csv(file, sep=r"\s+")
             self.setSize()
             self.data["time"] = 0.0
 
