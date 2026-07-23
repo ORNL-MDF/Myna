@@ -52,6 +52,7 @@ def test_configure():
         "cluster_solidification",
         "depth_map_part",
         "melt_pool_geometry_part",
+        "melt_pool_geometry_part_heat_accumulation",
         "melt_pool_geometry_part_pelican",
         "microstructure_region",
         "microstructure_region_slice",

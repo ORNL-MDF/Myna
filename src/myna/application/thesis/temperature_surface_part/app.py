@@ -13,8 +13,8 @@ import os
 import subprocess
 import time
 
-from docker.models.containers import Container
 import pandas as pd
+from docker.models.containers import Container
 
 from myna.application.thesis import (
     Thesis,
@@ -46,10 +46,6 @@ class ThesisTemperatureSurfacePart(Thesis):
             help="(float) wait time after the scan path ends before sampling",
         )
 
-    def parse_configure_arguments(self):
-        """Register and parse configure-stage arguments."""
-        super().parse_configure_arguments()
-
     def parse_execute_arguments(self):
         """Register and parse execute-stage arguments."""
         self.register_argument(
@@ -62,12 +58,6 @@ class ThesisTemperatureSurfacePart(Thesis):
         )
         super().parse_execute_arguments()
 
-    def _get_case_part_and_layer(self, settings):
-        """Return the single part/layer pair configured for a case directory."""
-        part = list(settings["build"]["parts"].keys())[0]
-        layer = list(settings["build"]["parts"][part]["layer_data"].keys())[0]
-        return part, layer
-
     def _configure_case_snapshot_time(self, case_scanfile, case_dir):
         """Set the single snapshot time to scan completion plus wait time."""
         thesis_scanpath = ThesisPath()
@@ -79,15 +69,8 @@ class ThesisTemperatureSurfacePart(Thesis):
     def configure_case(self, case_dir, myna_input="myna_data.yaml"):
         """Configure one top-surface temperature case directory."""
         settings = self._load_case_settings(case_dir, myna_input=myna_input)
-        part, layer = self._get_case_part_and_layer(settings)
-        case_scanfile = self._configure_standard_part_case(
+        _, _, case_scanfile = self._configure_standard_part_layer_case(
             case_dir,
-            settings["build"]["parts"][part]["layer_data"][layer]["scanpath"][
-                "file_local"
-            ],
-            settings["build"]["parts"][part]["laser_power"]["value"],
-            settings["build"]["parts"][part]["spot_size"]["value"],
-            settings["build"]["parts"][part]["spot_size"]["unit"],
             settings,
         )
         self._configure_case_snapshot_time(case_scanfile, case_dir)
@@ -154,13 +137,6 @@ class ThesisTemperatureSurfacePart(Thesis):
         snapshot_file = self._resolve_snapshot_file(result_file_pattern)
         self._write_myna_output(snapshot_file, mynafile)
 
-    def _get_average_temperature(self, output_file):
-        """Compute the average temperature from a previous layer output file."""
-        df = pd.read_csv(output_file)
-        # Accept both Myna-formatted and raw Thesis-style temperature headers.
-        temperature_column = "T (K)" if "T (K)" in df.columns else "T"
-        return float(df[temperature_column].mean())
-
     def _set_initial_temperature(self, case_dir, preheat, previous_output=None):
         """Set `T_0` from the previous layer average or the preheat value."""
         material_file = os.path.join(case_dir, "Material.txt")
@@ -191,7 +167,7 @@ class ThesisTemperatureSurfacePart(Thesis):
             preheat = settings["build"]["build_data"]["preheat"]["value"]
             record = {
                 "part": part,
-                "layer": int(layer),
+                "layer": self._normalize_layer_identifier(layer),
                 "case_dir": case_dir,
                 "myna_file": mynafile,
                 "preheat": preheat,
