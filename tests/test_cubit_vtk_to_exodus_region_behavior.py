@@ -342,7 +342,7 @@ def test_generate_material_id_file_merges_small_disconnected_grain_regions(
     np.testing.assert_array_equal(spn_ids, np.ones(16, dtype=np.int32))
 
 
-def test_build_sculpt_command_sets_explicit_spn_xyz_order(monkeypatch):
+def test_build_sculpt_command_sets_spn_xyz_order(monkeypatch):
     monkeypatch.setattr(CubitApp, "_validate_cubit_executables", lambda self: None)
     app = CubitVtkToExodusApp()
     app.exe_psculpt = "psculpt"
@@ -376,18 +376,6 @@ def test_build_sculpt_command_sets_explicit_spn_xyz_order(monkeypatch):
         4,
         "-z",
         5,
-        "--xmin",
-        "9.0",
-        "--ymin",
-        "-6.0",
-        "--zmin",
-        "99.0",
-        "--xmax",
-        "15.0",
-        "--ymax",
-        "2.0",
-        "--zmax",
-        "109.0",
         "-S",
         "2",
         "-CS",
