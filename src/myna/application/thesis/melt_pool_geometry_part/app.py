@@ -27,6 +27,8 @@ from myna.application.thesis import (
 class ThesisMeltPoolGeometryPart(Thesis):
     """3DThesis melt pool geometry simulation at part-layer scale."""
 
+    supports_part_layer_initial_temperature = True
+
     def __init__(self):
         super().__init__()
         self.class_name = "melt_pool_geometry_part"
@@ -34,18 +36,15 @@ class ThesisMeltPoolGeometryPart(Thesis):
     def configure_case(self, case_dir, myna_input="myna_data.yaml"):
         settings = self._load_case_settings(case_dir, myna_input=myna_input)
 
-        part = list(settings["build"]["parts"].keys())[0]
-        layer = list(settings["build"]["parts"][part]["layer_data"].keys())[0]
+        part, layer = self._get_case_part_and_layer(settings)
 
         scan_obj = Scanpath(None, part, layer)
         myna_scanfile = scan_obj.file_local
-        self._configure_standard_part_case(
+        self._configure_standard_part_layer_case(
             case_dir,
-            myna_scanfile,
-            settings["build"]["parts"][part]["laser_power"]["value"],
-            settings["build"]["parts"][part]["spot_size"]["value"],
-            settings["build"]["parts"][part]["spot_size"]["unit"],
             settings,
+            scanfile=myna_scanfile,
+            apply_initial_temperature=True,
         )
 
         index_pairs, df = scan_obj.get_constant_z_slice_indices()

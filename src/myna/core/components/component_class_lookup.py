@@ -34,6 +34,7 @@ def return_step_class(step_name, verbose=True):
         "solidification_part_stl": comp.ComponentSolidificationPartSTL(),
         "solidification_region_stl": comp.ComponentSolidificationRegionSTL(),
         "temperature_part": comp.ComponentTemperaturePart(),
+        "temperature_surface_part": comp.ComponentTemperatureSurfacePart(),
         "temperature_part_pvd": comp.ComponentTemperaturePartPVD(),
         "cluster_solidification": comp.ComponentClusterSolidification(),
         "cluster_supervoxel": comp.ComponentClusterSupervoxel(),
