@@ -13,6 +13,11 @@ from myna.application.thesis.temperature_surface_part import (
 )
 
 
-if __name__ == "__main__":
+def execute():
+    """Execute all case directories."""
     app = ThesisTemperatureSurfacePart()
     app.execute()
+
+
+if __name__ == "__main__":
+    execute()
