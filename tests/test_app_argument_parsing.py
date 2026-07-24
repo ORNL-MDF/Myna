@@ -206,14 +206,17 @@ def test_start_subprocess_loads_docker_run_kwargs_from_config(monkeypatch, tmp_p
     )
 
     app = MynaApp()
-    app.start_subprocess(["echo", "hello"], volumes={"/override": {"bind": "/work"}})
+    app.start_subprocess(["echo", "hello"], volumes={"/addition": {"bind": "/work"}})
 
     assert captured["image"] == "example:latest"
     assert captured["command"] == ["-lc", "echo hello"]
     assert captured["kwargs"]["entrypoint"] == "bash"
     assert captured["kwargs"]["detach"] is True
     assert captured["kwargs"]["remove"] is True
-    assert captured["kwargs"]["volumes"] == {"/override": {"bind": "/work"}}
+    assert captured["kwargs"]["volumes"] == {
+        "/host": {"bind": "/data"},
+        "/addition": {"bind": "/work"},
+    }
 
 
 def test_start_subprocess_rejects_non_mapping_docker_config(monkeypatch, tmp_path):
