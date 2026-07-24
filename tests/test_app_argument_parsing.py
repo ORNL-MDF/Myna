@@ -15,6 +15,7 @@ import pytest
 import yaml
 
 from myna.application.cubit.cubit import CubitApp
+from myna.application.cubit.vtk_to_exodus_region.app import CubitVtkToExodusApp
 from myna.application.deer.deer import DeerApp
 from myna.application.exaca.exaca import ExaCA
 from myna.application.openfoam.mesh_part_vtk.app import OpenFOAMMeshPartVTK
@@ -284,6 +285,32 @@ def test_cubit_stage_parsers_are_idempotent(monkeypatch, stage_calls):
 
     assert _count_option_actions(app.parser, "--cubitpath") == 1
     assert app.args.cubitpath is None
+
+
+@pytest.mark.parametrize(
+    "stage_calls",
+    [
+        ("parse_execute_arguments", "parse_configure_arguments"),
+        ("parse_configure_arguments", "parse_execute_arguments"),
+        ("parse_execute_arguments", "parse_execute_arguments"),
+    ],
+)
+def test_cubit_vtk_to_exodus_stage_parsers_are_idempotent(monkeypatch, stage_calls):
+    monkeypatch.setattr(sys, "argv", ["test"])
+    monkeypatch.setattr(CubitApp, "_validate_cubit_executables", lambda self: None)
+    app = CubitVtkToExodusApp()
+
+    for stage_call in stage_calls:
+        getattr(app, stage_call)()
+
+    assert _count_option_actions(app.parser, "--spn-xyz-order") == 1
+    assert _count_option_actions(app.parser, "--orientation-segment-gb") == 1
+    assert _count_option_actions(app.parser, "--centroid-bbox-size") == 1
+    assert _count_option_actions(app.parser, "--min-grain-voxel-count") == 1
+    assert app.args.spn_xyz_order == 5
+    assert app.args.orientation_segment_gb is None
+    assert app.args.centroid_bbox_size is None
+    assert app.args.min_grain_voxel_count == 10
 
 
 @pytest.mark.parametrize(
