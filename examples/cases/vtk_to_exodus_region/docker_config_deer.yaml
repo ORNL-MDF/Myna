@@ -1,0 +1,3 @@
+volumes:
+  moose_projects:
+    bind: /projects
