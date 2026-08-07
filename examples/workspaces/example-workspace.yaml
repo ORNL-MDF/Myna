@@ -5,6 +5,14 @@ thesis:
          res: 25e-6
       execute:
          batch: True
+   temperature_surface_part:
+      executable: 3DThesis
+      configure:
+         res: 100e-6
+         wait: 10.0
+      execute:
+         batch: True
+         use-prior-layer-average: True
    solidification_build_region:
       executable: 3DThesis
       configure:
