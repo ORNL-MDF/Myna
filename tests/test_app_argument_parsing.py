@@ -241,6 +241,36 @@ def test_start_subprocess_rejects_non_mapping_docker_config(monkeypatch, tmp_pat
         app.start_subprocess(["echo", "hello"])
 
 
+@pytest.mark.parametrize("reserved_key", ["image", "command", "entrypoint", "detach"])
+def test_start_subprocess_rejects_reserved_docker_config_keys(
+    monkeypatch, tmp_path, reserved_key
+):
+    docker_config_file = tmp_path / "docker-run.yaml"
+    docker_config_file.write_text(
+        yaml.safe_dump({reserved_key: "reserved"}),
+        encoding="utf-8",
+    )
+
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "test",
+            "--docker-image",
+            "example:latest",
+            "--docker-config",
+            str(docker_config_file),
+        ],
+    )
+
+    app = MynaApp()
+
+    with pytest.raises(
+        ValueError, match=f"reserved docker run kwargs .*{reserved_key}"
+    ):
+        app.start_subprocess(["echo", "hello"])
+
+
 @pytest.mark.parametrize(
     "stage_calls",
     [

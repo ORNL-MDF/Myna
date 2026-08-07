@@ -28,6 +28,9 @@ from myna.core.utils import is_executable, get_quoted_str
 from myna.core.components import return_step_class
 
 
+_RESERVED_DOCKER_CONFIG_KEYS = frozenset({"image", "command", "entrypoint", "detach"})
+
+
 class MynaApp:
     """Myna application base class with functionality that could be used generally by
     any application.
@@ -587,6 +590,14 @@ class MynaApp:
             raise TypeError(
                 "Docker config file must define a mapping of docker run kwargs: "
                 f"{docker_config_path}"
+            )
+
+        reserved_keys = _RESERVED_DOCKER_CONFIG_KEYS.intersection(docker_run_kwargs)
+        if reserved_keys:
+            reserved = ", ".join(sorted(reserved_keys))
+            raise ValueError(
+                "Docker config file may not define reserved docker run kwargs "
+                f"({reserved}): {docker_config_path}"
             )
         return docker_run_kwargs
 
