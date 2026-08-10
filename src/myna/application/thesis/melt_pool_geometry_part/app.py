@@ -33,6 +33,10 @@ class ThesisMeltPoolGeometryPart(Thesis):
         super().__init__()
         self.class_name = "melt_pool_geometry_part"
 
+    def default_z_resolution(self):
+        """Use an isotropic mesh unless the user overrides Z."""
+        return self.args.res
+
     def configure_case(self, case_dir, myna_input="myna_data.yaml"):
         settings = self._load_case_settings(case_dir, myna_input=myna_input)
 

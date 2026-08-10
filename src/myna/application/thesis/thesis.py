@@ -6,8 +6,8 @@
 #
 # License: 3-clause BSD, see https://opensource.org/licenses/BSD-3-Clause.
 #
-import math
 import glob
+import math
 import os
 import shutil
 import subprocess
@@ -15,7 +15,11 @@ import subprocess
 import mistlib as mist
 import pandas as pd
 
-from myna.application.thesis.parse import adjust_parameter, read_parameter
+from myna.application.thesis.parse import (
+    adjust_parameter,
+    read_parameter,
+    update_domain_resolution,
+)
 from myna.core.app.base import MynaApp
 from myna.core.utils import normalize_layer_identifier, working_directory
 from myna.core.workflow.load_input import load_input
@@ -114,7 +118,20 @@ class Thesis(MynaApp):
             temperature = initial_temperature
         adjust_parameter(os.path.join(case_dir, "Material.txt"), "T_0", temperature)
         adjust_parameter(os.path.join(case_dir, "Domain.txt"), "Res", self.args.res)
+        z_res = self._get_case_z_resolution()
+        if z_res is not None:
+            update_domain_resolution(os.path.join(case_dir, "Domain.txt"), "Z", z_res)
         return mist_mat
+
+    def default_z_resolution(self):
+        """Return the app-specific default Z resolution, if any."""
+        return None
+
+    def _get_case_z_resolution(self):
+        """Resolve the configured Z resolution override for a Thesis case."""
+        if self.args.z_res is not None:
+            return self.args.z_res
+        return self.default_z_resolution()
 
     def _configure_standard_part_case(
         self,
@@ -194,7 +211,13 @@ class Thesis(MynaApp):
             "--res",
             default=12.5e-6,
             type=float,
-            help="(float) resolution to use for simulations in meters",
+            help="(float) XY resolution to use for simulations in meters",
+        )
+        self.register_argument(
+            "--z-res",
+            default=None,
+            type=float,
+            help="(float) optional Z resolution to use for simulations in meters",
         )
         self.register_argument(
             "--nout",

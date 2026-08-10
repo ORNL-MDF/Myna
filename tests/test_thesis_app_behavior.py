@@ -214,11 +214,12 @@ def _build_region_case_payload(scanfile_a, scanfile_b):
     }
 
 
-def _build_args(template_dir, *, overwrite=False, nout=4, batch=False):
+def _build_args(template_dir, *, overwrite=False, nout=4, batch=False, z_res=None):
     return SimpleNamespace(
         template=str(template_dir),
         overwrite=overwrite,
         res=12.5e-6,
+        z_res=z_res,
         nout=nout,
         np=3,
         batch=batch,
@@ -627,6 +628,11 @@ def test_melt_pool_geometry_configure_creates_segment_cases(monkeypatch, tmp_pat
     assert segment_1.is_dir()
     assert (segment_0 / "Path.txt").exists()
     assert (segment_1 / "Path.txt").exists()
+    assert read_parameter(str(case_dir / "Domain.txt"), "Res") == [
+        "1.25e-05",
+        "1.25e-05",
+        "1.25e-05",
+    ]
     assert (
         len(
             [
@@ -772,6 +778,39 @@ def test_melt_pool_geometry_segments_inherit_resolved_initial_temperature(
     ) == pytest.approx(610.0)
 
 
+def test_melt_pool_geometry_configure_uses_optional_z_resolution(monkeypatch, tmp_path):
+    _configure_workflow_env(monkeypatch, tmp_path, "melt_pool_geometry_part")
+    monkeypatch.setenv("MYNA_INSTALL_PATH", str(tmp_path / "install"))
+    _patch_material_information(monkeypatch)
+
+    scanfile = tmp_path / "scan.txt"
+    _write_scanfile(scanfile)
+    template_dir = tmp_path / "template"
+    _write_template(template_dir)
+
+    case_dir = tmp_path / "case"
+    _write_case_metadata(case_dir, _build_part_case_payload(scanfile))
+
+    class FakeScanpath:
+        def __init__(self, _path, _part, _layer):
+            self.file_local = str(scanfile)
+
+        def get_constant_z_slice_indices(self):
+            return ([], pl.DataFrame())
+
+    monkeypatch.setattr(melt_pool_app_module, "Scanpath", FakeScanpath)
+
+    app = ThesisMeltPoolGeometryPart()
+    app.args = _build_args(template_dir, z_res=8.0e-6)
+    app.configure_case(str(case_dir))
+
+    assert read_parameter(str(case_dir / "Domain.txt"), "Res") == [
+        "1.25e-05",
+        "1.25e-05",
+        "8e-06",
+    ]
+
+
 def test_depth_map_configure_uses_standard_part_case(monkeypatch, tmp_path):
     monkeypatch.setattr(context_module, "_LEGACY_ENV_FALLBACK_WARNED", False)
     _configure_workflow_env(monkeypatch, tmp_path, "depth_map_part")
@@ -802,6 +841,30 @@ def test_depth_map_configure_uses_standard_part_case(monkeypatch, tmp_path):
         "1e-05",
     ]
     assert read_parameter(str(case_dir / "Beam.txt"), "Efficiency") == ["0.35"]
+
+
+def test_depth_map_configure_uses_optional_z_resolution(monkeypatch, tmp_path):
+    _configure_workflow_env(monkeypatch, tmp_path, "depth_map_part")
+    monkeypatch.setenv("MYNA_INSTALL_PATH", str(tmp_path / "install"))
+    _patch_material_information(monkeypatch)
+
+    scanfile = tmp_path / "scan.txt"
+    _write_scanfile(scanfile)
+    template_dir = tmp_path / "template"
+    _write_template(template_dir)
+
+    case_dir = tmp_path / "case"
+    _write_case_metadata(case_dir, _build_part_case_payload(scanfile))
+
+    app = ThesisDepthMapPart()
+    app.args = _build_args(template_dir, z_res=7.5e-6)
+    app.configure_case(str(case_dir))
+
+    assert read_parameter(str(case_dir / "Domain.txt"), "Res") == [
+        "1.25e-05",
+        "1.25e-05",
+        "7.5e-06",
+    ]
 
 
 def test_depth_map_execute_exports_max_z_depth(monkeypatch, tmp_path):

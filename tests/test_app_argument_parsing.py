@@ -359,8 +359,10 @@ def test_thesis_stage_parsers_are_idempotent(monkeypatch, stage_calls):
         getattr(app, stage_call)()
 
     assert _count_option_actions(app.parser, "--res") == 1
+    assert _count_option_actions(app.parser, "--z-res") == 1
     assert _count_option_actions(app.parser, "--nout") == 1
     assert app.args.res == pytest.approx(12.5e-6)
+    assert app.args.z_res is None
     assert app.args.nout == 1000
 
 

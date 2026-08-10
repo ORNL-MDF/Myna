@@ -10,10 +10,9 @@
 
 import glob
 import os
-from pathlib import Path
 
 import polars as pl
-from myna.application.thesis import Thesis, read_parameter, update_domain_resolution
+from myna.application.thesis import Thesis, read_parameter
 
 
 class ThesisDepthMapPart(Thesis):
@@ -22,6 +21,10 @@ class ThesisDepthMapPart(Thesis):
     def __init__(self):
         super().__init__(output_suffix=".Solidification")
         self.class_name = "depth_map_part"
+
+    def default_z_resolution(self):
+        """Default to a fine Z resolution for depth-map simulations, because the purpose is to resolve the depth."""
+        return 10e-6
 
     def configure_case(self, case_dir, myna_input="myna_data.yaml"):
         """Configure a valid 3DThesis case from per-case Myna data."""
@@ -38,12 +41,6 @@ class ThesisDepthMapPart(Thesis):
             settings["build"]["parts"][part]["spot_size"]["value"],
             settings["build"]["parts"][part]["spot_size"]["unit"],
             settings,
-        )
-
-        # Assumption: For the depth mapping, we want to ensure that the z-direction is well-resolved,
-        # regardless of the XY grid size
-        update_domain_resolution(
-            domain_file=Path(case_dir, "Domain.txt"), direction="Z", value=10e-6
         )
 
     def configure(self):

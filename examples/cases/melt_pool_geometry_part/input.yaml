@@ -5,6 +5,7 @@ steps:
     executable: 3DThesis
     configure:
       res: 25.0e-6
+      z-res: 25.0e-6
     execute:
       np: 2
       batch: True
