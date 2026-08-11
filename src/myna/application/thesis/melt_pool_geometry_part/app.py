@@ -31,6 +31,7 @@ class ThesisMeltPoolGeometryPart(Thesis):
     """3DThesis melt pool geometry simulation at part-layer scale."""
 
     supports_part_layer_initial_temperature = True
+    MINIMUM_THESIS_VERSION = "4.0.0"
     SNAPSHOT_SAMPLING_MODE = "snapshots"
     XY_GRID_SAMPLING_MODE = "xy-grid"
 
@@ -67,6 +68,13 @@ class ThesisMeltPoolGeometryPart(Thesis):
     def _sampling_mode(self):
         """Return the configured melt-pool sampling mode."""
         return getattr(self.args, "sampling_mode", self.SNAPSHOT_SAMPLING_MODE)
+
+    def require_supported_3dthesis_version(self):
+        """Require the 3DThesis version needed by this app."""
+        return self.require_minimum_3dthesis_version(
+            self.MINIMUM_THESIS_VERSION,
+            feature_name=self.name,
+        )
 
     def _configure_mode_files(self, case_dir, *, sampling_mode, times=None):
         """Update copied template control files for the selected sampling mode."""
@@ -224,6 +232,7 @@ class ThesisMeltPoolGeometryPart(Thesis):
 
     def execute(self):
         self.parse_execute_arguments()
+        self.require_supported_3dthesis_version()
         myna_files = self.get_step_output_paths()
 
         segment_case_dirs = []

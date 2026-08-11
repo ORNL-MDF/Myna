@@ -253,6 +253,30 @@ class Thesis(MynaApp):
         if self.args.exec is None:
             self.args.exec = "3DThesis"
 
+    def get_executable_version(
+        self,
+        default="3DThesis",
+        version_args=("--version",),
+        version_regex=r"(?im)\b3DThesis(?:\s+version)?[:\s]+(?P<version>\S+)",
+        timeout=30,
+    ):
+        """Return the 3DThesis version reported by its executable banner."""
+        return super().get_executable_version(
+            default=default,
+            version_args=version_args,
+            version_regex=version_regex,
+            timeout=timeout,
+        )
+
+    def require_minimum_3dthesis_version(self, minimum_version, *, feature_name=None):
+        """Require a minimum 3DThesis version for a Thesis workflow feature."""
+        return self.require_executable_version_at_least(
+            minimum_version,
+            feature_name=feature_name,
+            default="3DThesis",
+            version_regex=r"(?im)\b3DThesis(?:\s+version)?[:\s]+(?P<version>\S+)",
+        )
+
     def parse_configure_arguments(self):
         if self.supports_part_layer_initial_temperature:
             self.parse_part_layer_initial_temperature_arguments()

@@ -537,6 +537,37 @@ def test_exaca_get_executable_version_reads_banner_before_missing_input_error(
     assert ExaCA().get_executable_version() == "2.1.0-dev"
 
 
+def test_melt_pool_geometry_version_check_rejects_old_versions(monkeypatch):
+    monkeypatch.setattr(sys, "argv", ["test"])
+    app = ThesisMeltPoolGeometryPart()
+    monkeypatch.setattr(
+        app,
+        "get_executable_version",
+        lambda *args, **kwargs: "3.9.9",
+    )
+
+    with pytest.raises(
+        RuntimeError,
+        match="thesis/melt_pool_geometry_part requires 3DThesis version 4.0.0 or later, but found 3.9.9",
+    ):
+        app.require_supported_3dthesis_version()
+
+
+@pytest.mark.parametrize("version", ["4.0.0", "4.0.1", "4.1.0"])
+def test_melt_pool_geometry_version_check_accepts_supported_versions(
+    monkeypatch, version
+):
+    monkeypatch.setattr(sys, "argv", ["test"])
+    app = ThesisMeltPoolGeometryPart()
+    monkeypatch.setattr(
+        app,
+        "get_executable_version",
+        lambda *args, **kwargs: version,
+    )
+
+    assert app.require_supported_3dthesis_version() == version
+
+
 @pytest.mark.parametrize(
     "stage_calls",
     [

@@ -24,6 +24,7 @@ from .part_layer import (
     build_part_layer_record_index,
     build_part_layer_dependency_index,
 )
+from .version import parse_version_tuple, version_at_least
 
 __all__ = [
     "str_to_list",
@@ -45,4 +46,6 @@ __all__ = [
     "build_part_layer_records",
     "build_part_layer_record_index",
     "build_part_layer_dependency_index",
+    "parse_version_tuple",
+    "version_at_least",
 ]

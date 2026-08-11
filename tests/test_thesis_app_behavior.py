@@ -976,6 +976,7 @@ def test_melt_pool_geometry_execute_exports_xy_grid_schema(monkeypatch, tmp_path
     app = ThesisMeltPoolGeometryPart()
     app.args = _build_args(tmp_path / "unused", sampling_mode="xy-grid")
     monkeypatch.setattr(app, "parse_execute_arguments", lambda: None)
+    monkeypatch.setattr(app, "require_supported_3dthesis_version", lambda: "4.0.0")
     monkeypatch.setattr(app, "get_step_output_paths", lambda: [str(output_path)])
     monkeypatch.setattr(app, "get_case_dirs", lambda output_paths=None: [str(case_dir)])
     monkeypatch.setattr(
