@@ -205,6 +205,9 @@ follows semver ordering for the numeric core. Suffixes such as `-dev` or other b
 packaging-specific trailing labels are intentionally ignored for version-specific checks
 performed through `myna.core.utils.parse_version_tuple()` and
 `myna.core.utils.version_at_least()`.
+If a wrapper enforces an app-specific minimum executable version, document that minimum
+in the corresponding user-facing example or app documentation so workflow authors can
+see the requirement before runtime.
 
 If an executable does not expose a clean banner version and an app must recover a version
 from embedded binary strings, prefer normalizing the discovered token to the comparable

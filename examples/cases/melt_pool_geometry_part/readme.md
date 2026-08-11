@@ -2,6 +2,7 @@
 
 This example uses the `thesis/melt_pool_geometry_part` app. It supports two
 3DThesis sampling modes through `steps:3dthesis:configure:sampling-mode`.
+This app requires 3DThesis version `4.0.0` or later for both sampling modes.
 
 - `snapshots`
   - Default behavior.
