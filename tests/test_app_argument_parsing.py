@@ -417,6 +417,28 @@ def test_thesis_part_layer_configure_parsers_register_initial_temperature_argume
 @pytest.mark.parametrize(
     "stage_calls",
     [
+        ("parse_configure_arguments", "parse_execute_arguments"),
+        ("parse_execute_arguments", "parse_configure_arguments"),
+        ("parse_configure_arguments", "parse_configure_arguments"),
+    ],
+)
+def test_melt_pool_geometry_stage_parsers_register_sampling_mode(
+    monkeypatch, stage_calls
+):
+    monkeypatch.setattr(sys, "argv", ["test"])
+    app = ThesisMeltPoolGeometryPart()
+    app._validate_thesis_executable = False
+
+    for stage_call in stage_calls:
+        getattr(app, stage_call)()
+
+    assert _count_option_actions(app.parser, "--sampling-mode") == 1
+    assert app.args.sampling_mode == "snapshots"
+
+
+@pytest.mark.parametrize(
+    "stage_calls",
+    [
         ("parse_execute_arguments", "parse_configure_arguments"),
         ("parse_configure_arguments", "parse_execute_arguments"),
         ("parse_execute_arguments", "parse_execute_arguments"),

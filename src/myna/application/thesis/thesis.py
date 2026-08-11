@@ -129,8 +129,9 @@ class Thesis(MynaApp):
 
     def _get_case_z_resolution(self):
         """Resolve the configured Z resolution override for a Thesis case."""
-        if self.args.z_res is not None:
-            return self.args.z_res
+        z_res = getattr(self.args, "z_res", None)
+        if z_res is not None:
+            return z_res
         return self.default_z_resolution()
 
     def _configure_standard_part_case(

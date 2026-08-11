@@ -13,7 +13,14 @@ import pandas as pd
 import polars as pl
 import pytest
 
-from myna.application.thesis import read_parameter, update_domain_resolution
+from myna.application.thesis import (
+    find_named_block,
+    read_parameter,
+    remove_block_keyword,
+    replace_first_nonempty_line,
+    set_block_keyword,
+    update_domain_resolution,
+)
 from myna.application.thesis.depth_map_part import ThesisDepthMapPart
 from myna.application.thesis.melt_pool_geometry_part import ThesisMeltPoolGeometryPart
 from myna.application.thesis.solidification_build_region import (
@@ -21,6 +28,9 @@ from myna.application.thesis.solidification_build_region import (
 )
 from myna.application.thesis.solidification_part import ThesisSolidificationPart
 from myna.application.thesis.temperature_part import ThesisTemperaturePart
+from myna.application.thesis.temperature_surface_part import (
+    ThesisTemperatureSurfacePart,
+)
 import myna.application.thesis.melt_pool_geometry_part.app as melt_pool_app_module
 import myna.application.thesis.thesis as thesis_module
 import myna.core.context as context_module
@@ -91,8 +101,14 @@ def _write_template(template_dir):
         "Beam.txt": "\tWidth_X\t0\n\tWidth_Y\t0\n\tPower\t0\n\tEfficiency\t0\n",
         "Domain.txt": "X\n{\n\tRes\t0\n}\nY\n{\n\tRes\t0\n}\nZ\n{\n\tRes\t0\n}\n",
         "Material.txt": "\tT_0\t0\n",
-        "Mode.txt": "\tTimes\tunset\n",
-        "Output.txt": "\tOutput\t0\n",
+        "Mode.txt": "Snapshots\n{\n\tTimes\tunset\n\tTracking\tGeometry\n}\n",
+        "Output.txt": (
+            "Grid\n{\n\tx\t1\n\ty\t1\n\tz\t1\n}\n"
+            "Temperature\n{\n\tT\t1\n\tT_hist\t0\n}\n"
+            "Solidification\n{\n\ttSol\t0\n\tG\t0\n\tGx\t0\n\tGy\t0\n\tGz\t0\n"
+            "\tV\t0\n\tdTdt\t0\n\teqFrac\t0\n\tRDF\t0\n\tnumMelt\t0\n}\n"
+            "Solidification+\n{\n\tH\t0\n\tHx\t0\n\tHy\t0\n\tHz\t0\n}\n"
+        ),
         "ParamInput.txt": "\tName\tthermal_3dthesis\n",
         "Path.txt": "X(mm)\tY(mm)\tMode\tPmod\ttParam\n",
         "Settings.txt": "\tMaxThreads\t1\n",
@@ -155,6 +171,45 @@ def test_update_domain_resolution_requires_res_entry_in_direction_block(tmp_path
         update_domain_resolution(domain_file, "X", 40e-6)
 
 
+def test_get_case_z_resolution_tolerates_apps_without_z_res_argument():
+    app = ThesisTemperatureSurfacePart()
+    app.args = SimpleNamespace(res=100e-6, wait=0.0)
+
+    assert app._get_case_z_resolution() is None
+
+
+def test_find_named_block_and_set_block_keyword_update_existing_value(tmp_path):
+    mode_file = tmp_path / "Mode.txt"
+    mode_file.write_text(
+        "Snapshots\n{\n\tTimes\tunset\n\tTracking\tGeometry\n}\n",
+        encoding="utf-8",
+    )
+
+    _, start_index, end_index = find_named_block(mode_file, "Snapshots")
+    assert (start_index, end_index) == (2, 4)
+
+    set_block_keyword(mode_file, "Snapshots", "Tracking", "Surface")
+
+    assert "\tTracking\tSurface" in mode_file.read_text(encoding="utf-8")
+
+
+def test_replace_first_nonempty_line_and_remove_block_keyword(tmp_path):
+    output_file = tmp_path / "Output.txt"
+    output_file.write_text(
+        "\nSnapshots\n{\n\tTimes\t0\n\tTracking\tGeometry\n\tTimestep\t1e-4\n}\n",
+        encoding="utf-8",
+    )
+
+    replace_first_nonempty_line(output_file, "Solidification")
+    remove_block_keyword(output_file, "Solidification", "Timestep")
+    set_block_keyword(output_file, "Solidification", "Times", "1.5")
+
+    contents = output_file.read_text(encoding="utf-8")
+    assert contents.splitlines()[1] == "Solidification"
+    assert "\tTimestep\t1e-4" not in contents
+    assert "\tTimes\t1.5" in contents
+
+
 def _build_part_case_payload(scanfile, *, part="part-a", layer="layer-1"):
     return {
         "build": {
@@ -214,7 +269,15 @@ def _build_region_case_payload(scanfile_a, scanfile_b):
     }
 
 
-def _build_args(template_dir, *, overwrite=False, nout=4, batch=False, z_res=None):
+def _build_args(
+    template_dir,
+    *,
+    overwrite=False,
+    nout=4,
+    batch=False,
+    z_res=None,
+    sampling_mode="snapshots",
+):
     return SimpleNamespace(
         template=str(template_dir),
         overwrite=overwrite,
@@ -226,6 +289,7 @@ def _build_args(template_dir, *, overwrite=False, nout=4, batch=False, z_res=Non
         exec="3DThesis",
         initial_temperature_file=None,
         auto_initial_temperature=True,
+        sampling_mode=sampling_mode,
     )
 
 
@@ -808,6 +872,146 @@ def test_melt_pool_geometry_configure_uses_optional_z_resolution(monkeypatch, tm
         "1.25e-05",
         "1.25e-05",
         "8e-06",
+    ]
+
+
+def test_melt_pool_geometry_configure_supports_xy_grid_sampling(monkeypatch, tmp_path):
+    _configure_workflow_env(monkeypatch, tmp_path, "melt_pool_geometry_part")
+    monkeypatch.setenv("MYNA_INSTALL_PATH", str(tmp_path / "install"))
+    _patch_material_information(monkeypatch)
+
+    scanfile = tmp_path / "scan.txt"
+    _write_scanfile(scanfile)
+    template_dir = tmp_path / "template"
+    _write_template(template_dir)
+    (template_dir / "Mode.txt").write_text(
+        "Snapshots\n{\n\tTimes\tunset\n\tTracking\tGeometry\n\tCustomMode\t9\n}\n",
+        encoding="utf-8",
+    )
+    (template_dir / "Output.txt").write_text(
+        "Grid\n{\n\tx\t1\n\ty\t1\n\tz\t1\n}\n"
+        "Temperature\n{\n\tT\t1\n\tT_hist\t0\n}\n"
+        "Solidification\n{\n\ttSol\t0\n\tG\t0\n\tCustomSolid\t7\n}\n"
+        "Solidification+\n{\n\tH\t0\n}\n",
+        encoding="utf-8",
+    )
+
+    case_dir = tmp_path / "case"
+    _write_case_metadata(case_dir, _build_part_case_payload(scanfile))
+
+    class FakeScanpath:
+        def __init__(self, _path, _part, _layer):
+            self.file_local = str(scanfile)
+
+        def get_constant_z_slice_indices(self):
+            return (
+                [(0, 1), (2, 3)],
+                pl.DataFrame(
+                    {
+                        "X(mm)": [0.0, 1.0, 2.0, 3.0],
+                        "Y(mm)": [0.0, 0.0, 1.0, 1.0],
+                        "Mode": [1, 0, 0, 0],
+                        "Pmod": [0, 1, 1, 1],
+                        "tParam": [0.0, 0.002, 0.002, 0.002],
+                    }
+                ),
+            )
+
+    monkeypatch.setattr(melt_pool_app_module, "Scanpath", FakeScanpath)
+
+    app = ThesisMeltPoolGeometryPart()
+    app.args = _build_args(template_dir, sampling_mode="xy-grid")
+    app.configure_case(str(case_dir))
+
+    segment_0 = case_dir / "path_segment_000"
+    segment_1 = case_dir / "path_segment_001"
+    assert segment_0.is_dir()
+    assert segment_1.is_dir()
+    assert segment_0.joinpath("Path.txt").exists()
+    assert segment_1.joinpath("Path.txt").exists()
+    assert (
+        segment_0.joinpath("Mode.txt")
+        .read_text(encoding="utf-8")
+        .startswith("Solidification")
+    )
+    output_text = segment_0.joinpath("Output.txt").read_text(encoding="utf-8")
+    assert "\ttSol\t1" in output_text
+    assert "\tMP_Stats\t1" in output_text
+    assert "\tT\t0" in output_text
+    assert "\tCustomMode\t9" in segment_0.joinpath("Mode.txt").read_text(
+        encoding="utf-8"
+    )
+    assert "\tCustomSolid\t7" in output_text
+    assert "\tTimes\t" not in segment_0.joinpath("Mode.txt").read_text(encoding="utf-8")
+
+
+def test_melt_pool_geometry_execute_exports_xy_grid_schema(monkeypatch, tmp_path):
+    monkeypatch.setattr(context_module, "_LEGACY_ENV_FALLBACK_WARNED", False)
+    output_path = tmp_path / "melt-pool-grid.csv"
+    _configure_workflow_env(
+        monkeypatch,
+        tmp_path,
+        "melt_pool_geometry_part",
+        [str(output_path)],
+    )
+
+    case_dir = tmp_path / "case"
+    segment_dir = case_dir / "path_segment_000"
+    data_dir = segment_dir / "Data"
+    data_dir.mkdir(parents=True)
+    (segment_dir / "Mode.txt").write_text(
+        "Solidification\n{\n\tTracking\tSurface\n\tTimestep\t1e-4\n}\n",
+        encoding="utf-8",
+    )
+    (segment_dir / "ParamInput.txt").write_text(
+        "\tName\tthermal_3dthesis\n", encoding="utf-8"
+    )
+    (data_dir / "thermal_3dthesis.Solidification.Final.csv").write_text(
+        "x,y,z,tSol,MP_width,MP_length,MP_depth\n"
+        "0.2,0.4,0.0,1.5,0.01,0.02,0.03\n"
+        "0.1,0.3,0.0,1.0,0.04,0.05,0.06\n",
+        encoding="utf-8",
+    )
+
+    app = ThesisMeltPoolGeometryPart()
+    app.args = _build_args(tmp_path / "unused", sampling_mode="xy-grid")
+    monkeypatch.setattr(app, "parse_execute_arguments", lambda: None)
+    monkeypatch.setattr(app, "get_step_output_paths", lambda: [str(output_path)])
+    monkeypatch.setattr(app, "get_case_dirs", lambda output_paths=None: [str(case_dir)])
+    monkeypatch.setattr(
+        app,
+        "run_case",
+        lambda proc_list, check_for_existing_results=True: [None, proc_list],
+    )
+
+    app.execute()
+
+    written = pd.read_csv(output_path)
+    assert list(written.columns) == [
+        "x (m)",
+        "y (m)",
+        "time (s)",
+        "length (m)",
+        "width (m)",
+        "depth (m)",
+    ]
+    assert written.to_dict(orient="records") == [
+        {
+            "x (m)": 0.1,
+            "y (m)": 0.3,
+            "time (s)": 1.0,
+            "length (m)": 0.05,
+            "width (m)": 0.04,
+            "depth (m)": 0.06,
+        },
+        {
+            "x (m)": 0.2,
+            "y (m)": 0.4,
+            "time (s)": 1.5,
+            "length (m)": 0.02,
+            "width (m)": 0.01,
+            "depth (m)": 0.03,
+        },
     ]
 
 

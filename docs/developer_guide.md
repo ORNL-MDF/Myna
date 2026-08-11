@@ -186,7 +186,10 @@ It is likely that your app will require a `template` directory, or a set of inpu
 files for your model that get copied into every case. If you are using a template
 directory, then the intended functionality is that during `configure.py` the template
 folder is copied into each of the case directory *and then updated*. Updating the files
-inside the original template folder should be avoided.
+inside the original template folder should be avoided. When users can point an app at
+a custom template directory, prefer targeted updates to the copied files for the
+parameters that the app explicitly owns rather than regenerating whole template files;
+that preserves user-provided settings that are outside the app's declared interface.
 
 ## Versioning applications
 

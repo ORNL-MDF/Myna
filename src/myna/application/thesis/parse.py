@@ -8,6 +8,7 @@
 #
 import shutil
 import os
+from pathlib import Path
 
 
 def load_file_lines(filepath, newline="\n"):
@@ -123,3 +124,72 @@ def update_domain_resolution(domain_file, direction, value):
         f"Could not find a Res entry for Thesis Domain direction '{direction}' "
         f"in {domain_file}."
     )
+
+
+def write_file_lines(filepath, file_lines, newline="\n"):
+    """Write newline-stripped lines back to a file."""
+    Path(filepath).write_text(newline.join(file_lines) + newline, encoding="utf-8")
+
+
+def replace_first_nonempty_line(filepath, new_value):
+    """Replace the first non-empty line in a Thesis text input file."""
+    file_lines = load_file_lines(filepath)
+    for index, line in enumerate(file_lines):
+        if line.strip():
+            file_lines[index] = new_value
+            write_file_lines(filepath, file_lines)
+            return
+    raise ValueError(f"Could not find a non-empty line in {filepath}")
+
+
+def find_named_block(filepath, block_name):
+    """Return the content bounds for a simple named Thesis block."""
+    file_lines = load_file_lines(filepath)
+    for index, line in enumerate(file_lines):
+        if line.strip() != block_name:
+            continue
+        brace_index = None
+        for candidate in range(index + 1, len(file_lines)):
+            stripped = file_lines[candidate].strip()
+            if not stripped:
+                continue
+            if stripped == "{":
+                brace_index = candidate
+                break
+            raise ValueError(f"Expected '{{' after block {block_name} in {filepath}.")
+        if brace_index is None:
+            break
+        for end_index in range(brace_index + 1, len(file_lines)):
+            if file_lines[end_index].strip() == "}":
+                return file_lines, brace_index + 1, end_index
+    raise ValueError(f"Could not find block {block_name} in {filepath}.")
+
+
+def set_block_keyword(filepath, block_name, keyword, value):
+    """Update or append one keyword within a simple Thesis block."""
+    file_lines, start_index, end_index = find_named_block(filepath, block_name)
+    updated_line = f"\t{keyword}\t{value}"
+    for index in range(start_index, end_index):
+        tokens = file_lines[index].strip().split()
+        if tokens and tokens[0] == keyword:
+            file_lines[index] = updated_line
+            write_file_lines(filepath, file_lines)
+            return
+    file_lines.insert(end_index, updated_line)
+    write_file_lines(filepath, file_lines)
+
+
+def remove_block_keyword(filepath, block_name, keyword):
+    """Remove one keyword from a simple Thesis block when it exists."""
+    file_lines, start_index, end_index = find_named_block(filepath, block_name)
+    filtered_lines = []
+    removed = False
+    for index, line in enumerate(file_lines):
+        if start_index <= index < end_index:
+            tokens = line.strip().split()
+            if tokens and tokens[0] == keyword:
+                removed = True
+                continue
+        filtered_lines.append(line)
+    if removed:
+        write_file_lines(filepath, filtered_lines)

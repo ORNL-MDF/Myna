@@ -9,10 +9,15 @@
 from .path import Path
 from .parse import (
     load_file_lines,
+    write_file_lines,
     find_keyword_line_indices,
+    find_named_block,
     adjust_parameter,
     read_parameter,
     copy_simulation_result,
+    replace_first_nonempty_line,
+    set_block_keyword,
+    remove_block_keyword,
     update_domain_resolution,
 )
 from .thesis import Thesis
@@ -20,10 +25,15 @@ from .thesis import Thesis
 __all__ = [
     "Path",
     "load_file_lines",
+    "write_file_lines",
     "find_keyword_line_indices",
+    "find_named_block",
     "adjust_parameter",
     "read_parameter",
     "copy_simulation_result",
+    "replace_first_nonempty_line",
+    "set_block_keyword",
+    "remove_block_keyword",
     "Thesis",
     "update_domain_resolution",
 ]
