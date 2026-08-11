@@ -198,3 +198,16 @@ given a regex pattern to match. This can be used to have branching behavior in a
 application based on the version of the executable that is being used. Adding in branching
 logic instead of updating the logic to handle only the most recent version of a code
 is generally preferable for backwards compatibility.
+
+When app wrappers gate behavior on executable versions, Myna compares versions using the
+numeric `major.minor.patch` components parsed from the discovered version string. This
+follows semver ordering for the numeric core. Suffixes such as `-dev` or other build- or
+packaging-specific trailing labels are intentionally ignored for version-specific checks
+performed through `myna.core.utils.parse_version_tuple()` and
+`myna.core.utils.version_at_least()`.
+
+If an executable does not expose a clean banner version and an app must recover a version
+from embedded binary strings, prefer normalizing the discovered token to the comparable
+numeric semver core before using it in app-level minimum-version checks. This keeps app
+decisions stable across packaging differences that may preserve the numeric release while
+altering or truncating suffix text.

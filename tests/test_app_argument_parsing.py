@@ -537,6 +537,98 @@ def test_exaca_get_executable_version_reads_banner_before_missing_input_error(
     assert ExaCA().get_executable_version() == "2.1.0-dev"
 
 
+def test_thesis_get_executable_version_falls_back_to_embedded_binary_strings(
+    monkeypatch, tmp_path
+):
+    executable = tmp_path / "3DThesis"
+    _write_shell_executable(
+        executable,
+        'printf "%s\\n" "Input file argument required" >&2\n'
+        "exit 1\n"
+        "# Version:\n"
+        "# 4.1.0-dev\n"
+        "# Commit hash:\n"
+        "# 2de7fc6d8cfa5de78b111df97b1a4d9156a8cf60\n",
+    )
+    monkeypatch.setattr(sys, "argv", ["test", "--exec", str(executable)])
+
+    assert Thesis(validate_executable=False).get_executable_version() == "4.1.0"
+
+
+def test_thesis_get_executable_version_reports_missing_embedded_version(
+    monkeypatch, tmp_path
+):
+    executable = tmp_path / "3DThesis"
+    _write_shell_executable(
+        executable,
+        'printf "%s\\n" "Input file argument required" >&2\nexit 1\n',
+    )
+    monkeypatch.setattr(sys, "argv", ["test", "--exec", str(executable)])
+
+    with pytest.raises(
+        RuntimeError,
+        match="Banner detection failed and no embedded version string was found",
+    ):
+        Thesis(validate_executable=False).get_executable_version()
+
+
+def test_thesis_get_executable_version_reads_embedded_strings_in_docker(
+    monkeypatch,
+):
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "test",
+            "--exec",
+            "/container/bin/3DThesis",
+            "--docker-image",
+            "thesis:latest",
+        ],
+    )
+    app = Thesis(validate_executable=False)
+    calls = []
+
+    def fake_run(cmd_args, timeout=30):
+        calls.append(cmd_args)
+        if cmd_args == ["/container/bin/3DThesis", "--version"]:
+            return "Input file argument required\n", 1
+        if cmd_args == [
+            "sh",
+            "-lc",
+            "resolved=$(command -v /container/bin/3DThesis 2>/dev/null || true); "
+            'if [ -z "$resolved" ]; then resolved=/container/bin/3DThesis; fi; '
+            'if [ ! -r "$resolved" ]; then echo "Executable not readable: $resolved" >&2; '
+            'exit 2; fi; strings -a "$resolved"',
+        ]:
+            return (
+                "Version:\n4.1.0-dev\nCommit hash:\n2de7fc6d8cfa5de78b111df97b1a4d9156a8cf60\n",
+                0,
+            )
+        raise AssertionError(f"Unexpected command: {cmd_args}")
+
+    monkeypatch.setattr(app, "_run_executable_version_command", fake_run)
+
+    assert app.get_executable_version() == "4.1.0"
+    assert calls == [
+        ["/container/bin/3DThesis", "--version"],
+        [
+            "sh",
+            "-lc",
+            "resolved=$(command -v /container/bin/3DThesis 2>/dev/null || true); "
+            'if [ -z "$resolved" ]; then resolved=/container/bin/3DThesis; fi; '
+            'if [ ! -r "$resolved" ]; then echo "Executable not readable: $resolved" >&2; '
+            'exit 2; fi; strings -a "$resolved"',
+        ],
+    ]
+
+
+def test_thesis_extract_version_from_binary_strings_normalizes_semver_core():
+    printable_strings = ["noise", "4.1.0-deH", "GLIBCXX_3.4.32"]
+
+    assert Thesis._extract_version_from_binary_strings(printable_strings) == "4.1.0"
+
+
 def test_melt_pool_geometry_version_check_rejects_old_versions(monkeypatch):
     monkeypatch.setattr(sys, "argv", ["test"])
     app = ThesisMeltPoolGeometryPart()

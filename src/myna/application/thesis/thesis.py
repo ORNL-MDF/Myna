@@ -9,6 +9,8 @@
 import glob
 import math
 import os
+import re
+import shlex
 import shutil
 import subprocess
 
@@ -25,6 +27,14 @@ from myna.core.utils import normalize_layer_identifier, working_directory
 from myna.core.workflow.load_input import load_input
 
 _UNSET = object()
+_THESIS_VERSION_REGEX = r"(?im)\b3DThesis(?:\s+version)?[:\s]+(?P<version>\S+)"
+_THESIS_BINARY_VERSION_REGEX = re.compile(
+    r"\b\d+\.\d+\.\d+(?:[-+._][A-Za-z0-9][A-Za-z0-9._-]*)?\b"
+)
+_THESIS_BINARY_LEADING_VERSION_REGEX = re.compile(
+    r"^(?P<version>\d+\.\d+\.\d+(?:[-+._][A-Za-z0-9][A-Za-z0-9._-]*)?)\b"
+)
+_THESIS_NUMERIC_CORE_REGEX = re.compile(r"^(?P<version>\d+\.\d+\.\d+)\b")
 
 
 class Thesis(MynaApp):
@@ -257,16 +267,20 @@ class Thesis(MynaApp):
         self,
         default="3DThesis",
         version_args=("--version",),
-        version_regex=r"(?im)\b3DThesis(?:\s+version)?[:\s]+(?P<version>\S+)",
+        version_regex=_THESIS_VERSION_REGEX,
         timeout=30,
     ):
-        """Return the 3DThesis version reported by its executable banner."""
-        return super().get_executable_version(
-            default=default,
-            version_args=version_args,
-            version_regex=version_regex,
-            timeout=timeout,
-        )
+        """Return the 3DThesis version from its banner or embedded binary strings."""
+        try:
+            return super().get_executable_version(
+                default=default,
+                version_args=version_args,
+                version_regex=version_regex,
+                timeout=timeout,
+            )
+        except (RuntimeError, ValueError):
+            executable = self.get_executable(default)
+            return self._get_binary_embedded_version(executable, timeout=timeout)
 
     def require_minimum_3dthesis_version(self, minimum_version, *, feature_name=None):
         """Require a minimum 3DThesis version for a Thesis workflow feature."""
@@ -274,8 +288,114 @@ class Thesis(MynaApp):
             minimum_version,
             feature_name=feature_name,
             default="3DThesis",
-            version_regex=r"(?im)\b3DThesis(?:\s+version)?[:\s]+(?P<version>\S+)",
+            version_regex=_THESIS_VERSION_REGEX,
         )
+
+    def _get_binary_embedded_version(self, executable, timeout=30):
+        """Read the embedded 3DThesis version from the executable file contents."""
+        printable_strings = self._read_binary_printable_strings(
+            executable, timeout=timeout
+        )
+        version = Thesis._extract_version_from_binary_strings(printable_strings)
+        if version is None:
+            raise RuntimeError(
+                f"Could not determine version for {Thesis.__name__} executable "
+                f'"{executable}". Banner detection failed and no embedded version '
+                "string was found in the executable."
+            )
+        return version
+
+    def _read_binary_printable_strings(self, executable, timeout=30):
+        """Return printable strings extracted from a Thesis executable."""
+        try:
+            return self._read_binary_printable_strings_via_subprocess(
+                executable, timeout=timeout
+            )
+        except RuntimeError:
+            if self.args.docker_image is not None:
+                raise
+
+        executable_path = shutil.which(executable, mode=os.F_OK) or executable
+        if not os.path.isfile(executable_path):
+            raise RuntimeError(
+                f'Could not determine 3DThesis version because executable "{executable}" '
+                "could not be read from disk."
+            )
+        try:
+            with open(executable_path, "rb") as executable_file:
+                data = executable_file.read()
+        except OSError as exc:
+            raise RuntimeError(
+                f'Could not determine 3DThesis version because executable "{executable}" '
+                "could not be read from disk."
+            ) from exc
+
+        return [
+            match.decode("ascii", errors="ignore").strip()
+            for match in re.findall(rb"[ -~]{4,}", data)
+        ]
+
+    def _read_binary_printable_strings_via_subprocess(self, executable, timeout=30):
+        """Extract printable strings from a subprocess-visible executable path."""
+        shell_command = (
+            f"resolved=$(command -v {shlex.quote(executable)} 2>/dev/null || true); "
+            f'if [ -z "$resolved" ]; then resolved={shlex.quote(executable)}; fi; '
+            'if [ ! -r "$resolved" ]; then '
+            'echo "Executable not readable: $resolved" >&2; '
+            "exit 2; "
+            "fi; "
+            'strings -a "$resolved"'
+        )
+        output, returncode = self._run_executable_version_command(
+            ["sh", "-lc", shell_command], timeout=timeout
+        )
+        if returncode != 0:
+            location = (
+                "inside the configured Docker container"
+                if self.args.docker_image is not None
+                else "through the configured execution environment"
+            )
+            raise RuntimeError(
+                f'Could not determine 3DThesis version because executable "{executable}" '
+                f"could not be inspected {location}."
+            )
+        return [line.strip() for line in output.splitlines() if line.strip()]
+
+    @staticmethod
+    def _extract_version_from_binary_strings(printable_strings):
+        """Extract a Thesis version from printable strings found in an executable."""
+        for index, string in enumerate(printable_strings):
+            if string.rstrip() == "Version:":
+                for candidate in printable_strings[index + 1 : index + 5]:
+                    match = _THESIS_BINARY_VERSION_REGEX.search(candidate)
+                    if match is not None:
+                        return Thesis._normalize_embedded_binary_version(match.group(0))
+
+        leading_version_candidates = {
+            Thesis._normalize_embedded_binary_version(match.group("version"))
+            for string in printable_strings
+            for match in [_THESIS_BINARY_LEADING_VERSION_REGEX.search(string)]
+            if match is not None
+        }
+        if len(leading_version_candidates) == 1:
+            return leading_version_candidates.pop()
+
+        version_candidates = {
+            Thesis._normalize_embedded_binary_version(match.group(0))
+            for string in printable_strings
+            for match in _THESIS_BINARY_VERSION_REGEX.finditer(string)
+        }
+        if len(version_candidates) == 1:
+            return version_candidates.pop()
+        return None
+
+    @staticmethod
+    def _normalize_embedded_binary_version(version):
+        """Return the comparable semver core from a binary-derived version token."""
+        match = _THESIS_NUMERIC_CORE_REGEX.search(version)
+        if match is None:
+            return version
+        return match.group("version")
 
     def parse_configure_arguments(self):
         if self.supports_part_layer_initial_temperature:
