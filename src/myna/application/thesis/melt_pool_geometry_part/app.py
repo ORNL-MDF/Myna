@@ -21,8 +21,8 @@ from myna.application.thesis import (
     Thesis,
     Path as ThesisPath,
     remove_block_keyword,
+    replace_block_header,
     read_parameter,
-    replace_first_nonempty_line,
     set_block_keyword,
 )
 
@@ -82,7 +82,11 @@ class ThesisMeltPoolGeometryPart(Thesis):
         output_file = Path(case_dir) / "Output.txt"
 
         if sampling_mode == self.XY_GRID_SAMPLING_MODE:
-            replace_first_nonempty_line(mode_file, "Solidification")
+            replace_block_header(
+                mode_file,
+                ("Snapshots", "Solidification"),
+                "Solidification",
+            )
             set_block_keyword(mode_file, "Solidification", "Tracking", "Surface")
             set_block_keyword(mode_file, "Solidification", "Timestep", "1e-4")
             remove_block_keyword(mode_file, "Solidification", "Times")
@@ -91,7 +95,11 @@ class ThesisMeltPoolGeometryPart(Thesis):
             set_block_keyword(output_file, "Solidification", "tSol", "1")
             set_block_keyword(output_file, "Solidification", "MP_Stats", "1")
         else:
-            replace_first_nonempty_line(mode_file, "Snapshots")
+            replace_block_header(
+                mode_file,
+                ("Snapshots", "Solidification"),
+                "Snapshots",
+            )
             times_value = "0" if times is None else ",".join(str(x) for x in times)
             set_block_keyword(mode_file, "Snapshots", "Times", times_value)
             set_block_keyword(mode_file, "Snapshots", "Tracking", "Geometry")
@@ -109,8 +117,12 @@ class ThesisMeltPoolGeometryPart(Thesis):
         for line in mode_file.read_text(encoding="utf-8").splitlines():
             stripped = line.strip()
             if stripped:
+                if stripped.startswith("#"):
+                    continue
                 if stripped == "Solidification":
                     return self.XY_GRID_SAMPLING_MODE
+                if stripped == "Snapshots":
+                    return self.SNAPSHOT_SAMPLING_MODE
                 break
         return self.SNAPSHOT_SAMPLING_MODE
 

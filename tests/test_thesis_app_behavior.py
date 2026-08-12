@@ -17,9 +17,11 @@ from myna.application.thesis import (
     find_named_block,
     read_parameter,
     remove_block_keyword,
+    replace_block_header,
     replace_first_nonempty_line,
     set_block_keyword,
     update_domain_resolution,
+    write_file_lines,
 )
 from myna.application.thesis.depth_map_part import ThesisDepthMapPart
 from myna.application.thesis.melt_pool_geometry_part import ThesisMeltPoolGeometryPart
@@ -208,6 +210,33 @@ def test_replace_first_nonempty_line_and_remove_block_keyword(tmp_path):
     assert contents.splitlines()[1] == "Solidification"
     assert "\tTimestep\t1e-4" not in contents
     assert "\tTimes\t1.5" in contents
+
+
+def test_write_file_lines_round_trip_preserves_line_endings_without_growth(tmp_path):
+    mode_file = tmp_path / "Mode.txt"
+    mode_file.write_bytes(
+        b"Snapshots\r\n{\r\n\tTimes\t0\r\n\tTracking\tGeometry\r\n}\r\n"
+    )
+
+    original = mode_file.read_bytes()
+    for _ in range(3):
+        write_file_lines(mode_file, find_named_block(mode_file, "Snapshots")[0])
+
+    assert mode_file.read_bytes() == original
+
+
+def test_replace_block_header_preserves_comment_preamble(tmp_path):
+    mode_file = tmp_path / "Mode.txt"
+    mode_file.write_text(
+        "# keep this preamble\n\nSnapshots\n{\n\tTimes\t0\n\tTracking\tGeometry\n}\n",
+        encoding="utf-8",
+    )
+
+    replace_block_header(mode_file, ("Snapshots", "Solidification"), "Solidification")
+
+    contents = mode_file.read_text(encoding="utf-8").splitlines()
+    assert contents[0] == "# keep this preamble"
+    assert contents[2] == "Solidification"
 
 
 def _build_part_case_payload(scanfile, *, part="part-a", layer="layer-1"):
@@ -945,6 +974,43 @@ def test_melt_pool_geometry_configure_supports_xy_grid_sampling(monkeypatch, tmp
     assert "\tTimes\t" not in segment_0.joinpath("Mode.txt").read_text(encoding="utf-8")
 
 
+def test_melt_pool_geometry_configure_preserves_mode_file_preamble(
+    monkeypatch, tmp_path
+):
+    _configure_workflow_env(monkeypatch, tmp_path, "melt_pool_geometry_part")
+    monkeypatch.setenv("MYNA_INSTALL_PATH", str(tmp_path / "install"))
+    _patch_material_information(monkeypatch)
+
+    scanfile = tmp_path / "scan.txt"
+    _write_scanfile(scanfile)
+    template_dir = tmp_path / "template"
+    _write_template(template_dir)
+    (template_dir / "Mode.txt").write_text(
+        "# keep this preamble\n\nSnapshots\n{\n\tTimes\tunset\n\tTracking\tGeometry\n}\n",
+        encoding="utf-8",
+    )
+
+    case_dir = tmp_path / "case"
+    _write_case_metadata(case_dir, _build_part_case_payload(scanfile))
+
+    class FakeScanpath:
+        def __init__(self, _path, _part, _layer):
+            self.file_local = str(scanfile)
+
+        def get_constant_z_slice_indices(self):
+            return ([(0, 1)], pl.DataFrame())
+
+    monkeypatch.setattr(melt_pool_app_module, "Scanpath", FakeScanpath)
+
+    app = ThesisMeltPoolGeometryPart()
+    app.args = _build_args(template_dir, sampling_mode="xy-grid")
+    app.configure_case(str(case_dir))
+
+    contents = (case_dir / "Mode.txt").read_text(encoding="utf-8").splitlines()
+    assert contents[0] == "# keep this preamble"
+    assert contents[2] == "Solidification"
+
+
 def test_melt_pool_geometry_execute_exports_xy_grid_schema(monkeypatch, tmp_path):
     monkeypatch.setattr(context_module, "_LEGACY_ENV_FALLBACK_WARNED", False)
     output_path = tmp_path / "melt-pool-grid.csv"
@@ -1014,6 +1080,19 @@ def test_melt_pool_geometry_execute_exports_xy_grid_schema(monkeypatch, tmp_path
             "depth (m)": 0.03,
         },
     ]
+
+
+def test_melt_pool_geometry_segment_sampling_mode_ignores_comment_preamble(tmp_path):
+    segment_dir = tmp_path / "path_segment_000"
+    segment_dir.mkdir()
+    (segment_dir / "Mode.txt").write_text(
+        "# keep this preamble\n\nSolidification\n{\n\tTracking\tSurface\n\tTimestep\t1e-4\n}\n",
+        encoding="utf-8",
+    )
+
+    app = ThesisMeltPoolGeometryPart()
+
+    assert app._segment_sampling_mode(segment_dir) == app.XY_GRID_SAMPLING_MODE
 
 
 def test_depth_map_configure_uses_standard_part_case(monkeypatch, tmp_path):

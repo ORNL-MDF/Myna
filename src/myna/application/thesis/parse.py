@@ -11,11 +11,31 @@ import os
 from pathlib import Path
 
 
+def _read_file_text(filepath):
+    with open(filepath, "r", encoding="utf-8", newline="") as f:
+        return f.read()
+
+
+def _detect_newline(file_contents, newline="\n"):
+    if "\r\n" in file_contents:
+        return "\r\n"
+    if "\n" in file_contents:
+        return "\n"
+    if "\r" in file_contents:
+        return "\r"
+    return newline
+
+
+def _read_file_lines_and_format(filepath, newline="\n"):
+    file_contents = _read_file_text(filepath)
+    detected_newline = _detect_newline(file_contents, newline=newline)
+    file_lines = file_contents.splitlines()
+    has_trailing_newline = file_contents.endswith(("\r\n", "\n", "\r"))
+    return file_lines, detected_newline, has_trailing_newline
+
+
 def load_file_lines(filepath, newline="\n"):
-    with open(filepath, "r+") as f:
-        # Read file
-        file_contents = f.read()
-        file_lines = file_contents.split(newline)
+    file_lines, _, _ = _read_file_lines_and_format(filepath, newline=newline)
 
     return file_lines
 
@@ -52,10 +72,7 @@ def adjust_parameter(filepath, keyword, value):
         file_lines[i] = updated_line
 
     # Write file out
-    with open(filepath, "w") as f:
-        file_contents = "\n".join(file_lines)
-        f.write(file_contents)
-        f.truncate()
+    write_file_lines(filepath, file_lines)
 
 
 def read_parameter(filepath, keyword):
@@ -115,9 +132,7 @@ def update_domain_resolution(domain_file, direction, value):
             break
         if in_block and line.startswith("Res"):
             file_lines[ind] = f"\tRes\t{value}"
-            with open(domain_file, "w", encoding="utf-8") as f:
-                f.write("\n".join(file_lines))
-                f.truncate()
+            write_file_lines(domain_file, file_lines)
             return
 
     raise ValueError(
@@ -126,9 +141,26 @@ def update_domain_resolution(domain_file, direction, value):
     )
 
 
-def write_file_lines(filepath, file_lines, newline="\n"):
+def write_file_lines(filepath, file_lines, newline=None, trailing_newline=None):
     """Write newline-stripped lines back to a file."""
-    Path(filepath).write_text(newline.join(file_lines) + newline, encoding="utf-8")
+    path = Path(filepath)
+    if newline is None or trailing_newline is None:
+        existing_newline = "\n"
+        existing_trailing_newline = True
+        if path.exists():
+            _, existing_newline, existing_trailing_newline = (
+                _read_file_lines_and_format(filepath)
+            )
+        if newline is None:
+            newline = existing_newline
+        if trailing_newline is None:
+            trailing_newline = existing_trailing_newline
+
+    file_contents = newline.join(file_lines)
+    if trailing_newline and file_lines:
+        file_contents += newline
+    with open(filepath, "w", encoding="utf-8", newline="") as f:
+        f.write(file_contents)
 
 
 def replace_first_nonempty_line(filepath, new_value):
@@ -142,9 +174,22 @@ def replace_first_nonempty_line(filepath, new_value):
     raise ValueError(f"Could not find a non-empty line in {filepath}")
 
 
-def find_named_block(filepath, block_name):
-    """Return the content bounds for a simple named Thesis block."""
+def replace_block_header(filepath, block_names, new_value):
+    """Replace the first matching Thesis block header without touching preambles."""
+    block_names = {block_name.strip() for block_name in block_names}
     file_lines = load_file_lines(filepath)
+    for index, line in enumerate(file_lines):
+        if line.strip() in block_names:
+            file_lines[index] = new_value
+            write_file_lines(filepath, file_lines)
+            return
+    raise ValueError(
+        f"Could not find any Thesis block header {sorted(block_names)} in {filepath}"
+    )
+
+
+def _find_named_block_bounds(file_lines, block_name, filepath):
+    """Return the content bounds for a simple named Thesis block."""
     for index, line in enumerate(file_lines):
         if line.strip() != block_name:
             continue
@@ -163,6 +208,12 @@ def find_named_block(filepath, block_name):
             if file_lines[end_index].strip() == "}":
                 return file_lines, brace_index + 1, end_index
     raise ValueError(f"Could not find block {block_name} in {filepath}.")
+
+
+def find_named_block(filepath, block_name):
+    """Return the content bounds for a simple named Thesis block."""
+    file_lines = load_file_lines(filepath)
+    return _find_named_block_bounds(file_lines, block_name, filepath)
 
 
 def set_block_keyword(filepath, block_name, keyword, value):
