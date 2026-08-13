@@ -32,6 +32,7 @@ thesis:
     configure:
       nout: 1000
       res: 20e-6
+      z-res: 20e-6
     executable: 3DThesis
     execute:
       batch: true

@@ -5,6 +5,7 @@ steps:
     executable: 3DThesis
     configure:
       res: 100.0e-6
+      z-res: 100.0e-6
       template: ./template
       nout: 50
     execute:

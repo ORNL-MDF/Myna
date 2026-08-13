@@ -4,6 +4,7 @@ steps:
     application: thesis
     configure:
       res: 250.0e-6
+      z-res: 10.0e-6
     execute:
       np: 1
 data:

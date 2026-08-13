@@ -178,6 +178,9 @@ Current intended boundaries:
   segmentation type, and output sync.
 - `src/myna/application/` owns external-tool wrappers, templates, executable handling,
   and postprocessing needed to satisfy component file contracts.
+- App-level executable version gates should compare the numeric semver core of discovered
+  version strings; packaging suffixes such as `-dev` may be preserved for display but are
+  intentionally ignored for minimum-version decisions through shared version utilities.
 - `src/myna/cli/` contains launch templates and CLI-specific support; general workflow
   behavior belongs under `src/myna/core/workflow/`.
 - `tests/` contains test-only helpers. Do not import from `tests/` in runtime modules.

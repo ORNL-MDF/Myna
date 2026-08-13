@@ -24,7 +24,7 @@ import yaml
 from myna.core.app._argument_registrar import _ArgumentRegistrar
 from myna.core.context import get_workflow_context
 from myna.core.workflow.load_input import load_input
-from myna.core.utils import is_executable, get_quoted_str
+from myna.core.utils import is_executable, get_quoted_str, version_at_least
 from myna.core.components import return_step_class
 
 
@@ -443,6 +443,35 @@ class MynaApp:
         if match.groups():
             return next(group.strip() for group in match.groups() if group is not None)
         return match.group(0).strip()
+
+    def require_executable_version_at_least(
+        self,
+        minimum_version,
+        *,
+        feature_name=None,
+        default=None,
+        version_args=("--version",),
+        version_regex=None,
+        timeout=30,
+    ):
+        """Require the configured executable version to meet a minimum value."""
+        current_version = self.get_executable_version(
+            default=default,
+            version_args=version_args,
+            version_regex=version_regex,
+            timeout=timeout,
+        )
+        if not version_at_least(current_version, minimum_version):
+            requirement = (
+                f"{feature_name} requires"
+                if feature_name is not None
+                else f"{self.name} requires"
+            )
+            raise RuntimeError(
+                f"{requirement} {self.get_executable(default)} version "
+                f"{minimum_version} or later, but found {current_version}."
+            )
+        return current_version
 
     def _run_executable_version_command(self, cmd_args, timeout=30):
         """Run a version command and return its combined output and exit code.

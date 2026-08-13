@@ -23,6 +23,7 @@ thesis:
       executable: 3DThesis
       configure:
          res: 25e-6
+         z-res: 10e-6
       execute:
          batch: True
 exaca:
