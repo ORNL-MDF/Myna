@@ -152,9 +152,10 @@ class ThesisMeltPoolGeometryPart(Thesis):
         self.register_argument(
             "--mp-stats-interp",
             action="store_true",
-            help="(flag) for `xy-grid` sampling mode, request interpolated "
-            "melt-pool statistics by writing `MP_Stats=0` and "
-            "`MP_Stats_Interp=1` in `Output.txt`",
+            help="(flag) for `xy-grid` sampling mode. NOTE: This is experimental"
+            "and requires https://github.com/ORNL-MDF/3DThesis/pull/40."
+            "Request interpolated melt-pool statistics by writing `MP_Stats=0` and "
+            "`MP_Stats_Interp=1` in `Output.txt`.",
         )
         super().parse_configure_arguments()
 
