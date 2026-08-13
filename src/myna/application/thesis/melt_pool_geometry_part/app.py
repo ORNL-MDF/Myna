@@ -69,6 +69,10 @@ class ThesisMeltPoolGeometryPart(Thesis):
         """Return the configured melt-pool sampling mode."""
         return getattr(self.args, "sampling_mode", self.SNAPSHOT_SAMPLING_MODE)
 
+    def _use_interpolated_mp_stats(self):
+        """Return whether xy-grid output should request interpolated melt-pool stats."""
+        return bool(getattr(self.args, "mp_stats_interp", False))
+
     def require_supported_3dthesis_version(self):
         """Require the 3DThesis version needed by this app."""
         return self.require_minimum_3dthesis_version(
@@ -93,7 +97,16 @@ class ThesisMeltPoolGeometryPart(Thesis):
 
             set_block_keyword(output_file, "Temperature", "T", "0")
             set_block_keyword(output_file, "Solidification", "tSol", "1")
-            set_block_keyword(output_file, "Solidification", "MP_Stats", "1")
+            if self._use_interpolated_mp_stats():
+                set_block_keyword(output_file, "Solidification", "MP_Stats", "0")
+                set_block_keyword(output_file, "Solidification", "MP_Stats_Interp", "1")
+            else:
+                set_block_keyword(output_file, "Solidification", "MP_Stats", "1")
+                remove_block_keyword(
+                    output_file,
+                    "Solidification",
+                    "MP_Stats_Interp",
+                )
         else:
             replace_block_header(
                 mode_file,
@@ -108,6 +121,7 @@ class ThesisMeltPoolGeometryPart(Thesis):
             set_block_keyword(output_file, "Temperature", "T", "1")
             set_block_keyword(output_file, "Solidification", "tSol", "0")
             remove_block_keyword(output_file, "Solidification", "MP_Stats")
+            remove_block_keyword(output_file, "Solidification", "MP_Stats_Interp")
 
     def _segment_sampling_mode(self, segment_dir):
         """Infer the configured melt-pool sampling mode from a segment Mode file."""
@@ -135,6 +149,13 @@ class ThesisMeltPoolGeometryPart(Thesis):
             "tracking or `xy-grid` for solidification outputs at each XY grid "
             "location",
         )
+        self.register_argument(
+            "--mp-stats-interp",
+            action="store_true",
+            help="(flag) for `xy-grid` sampling mode, request interpolated "
+            "melt-pool statistics by writing `MP_Stats=0` and "
+            "`MP_Stats_Interp=1` in `Output.txt`",
+        )
         super().parse_configure_arguments()
 
     def parse_execute_arguments(self):
@@ -144,6 +165,12 @@ class ThesisMeltPoolGeometryPart(Thesis):
             type=self._normalize_sampling_mode,
             help="(str) melt-pool sampling mode: `snapshots` or `xy-grid`; "
             "execute primarily infers the mode from each configured case",
+        )
+        self.register_argument(
+            "--mp-stats-interp",
+            action="store_true",
+            help="(flag) retained for stage parser compatibility; configured "
+            "`xy-grid` cases already encode the selected melt-pool statistics mode",
         )
         super().parse_execute_arguments()
 

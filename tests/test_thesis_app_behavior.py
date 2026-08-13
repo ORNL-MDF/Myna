@@ -306,6 +306,7 @@ def _build_args(
     batch=False,
     z_res=None,
     sampling_mode="snapshots",
+    mp_stats_interp=False,
 ):
     return SimpleNamespace(
         template=str(template_dir),
@@ -319,6 +320,7 @@ def _build_args(
         initial_temperature_file=None,
         auto_initial_temperature=True,
         sampling_mode=sampling_mode,
+        mp_stats_interp=mp_stats_interp,
     )
 
 
@@ -966,12 +968,63 @@ def test_melt_pool_geometry_configure_supports_xy_grid_sampling(monkeypatch, tmp
     output_text = segment_0.joinpath("Output.txt").read_text(encoding="utf-8")
     assert "\ttSol\t1" in output_text
     assert "\tMP_Stats\t1" in output_text
+    assert "\tMP_Stats_Interp\t" not in output_text
     assert "\tT\t0" in output_text
     assert "\tCustomMode\t9" in segment_0.joinpath("Mode.txt").read_text(
         encoding="utf-8"
     )
     assert "\tCustomSolid\t7" in output_text
     assert "\tTimes\t" not in segment_0.joinpath("Mode.txt").read_text(encoding="utf-8")
+
+
+def test_melt_pool_geometry_configure_xy_grid_with_interpolated_mp_stats(
+    monkeypatch, tmp_path
+):
+    _configure_workflow_env(monkeypatch, tmp_path, "melt_pool_geometry_part")
+    monkeypatch.setenv("MYNA_INSTALL_PATH", str(tmp_path / "install"))
+    _patch_material_information(monkeypatch)
+
+    scanfile = tmp_path / "scan.txt"
+    _write_scanfile(scanfile)
+    template_dir = tmp_path / "template"
+    _write_template(template_dir)
+
+    case_dir = tmp_path / "case"
+    _write_case_metadata(case_dir, _build_part_case_payload(scanfile))
+
+    class FakeScanpath:
+        def __init__(self, _path, _part, _layer):
+            self.file_local = str(scanfile)
+
+        def get_constant_z_slice_indices(self):
+            return (
+                [(0, 1)],
+                pl.DataFrame(
+                    {
+                        "X(mm)": [0.0, 1.0],
+                        "Y(mm)": [0.0, 0.0],
+                        "Mode": [1, 0],
+                        "Pmod": [0, 1],
+                        "tParam": [0.0, 0.002],
+                    }
+                ),
+            )
+
+    monkeypatch.setattr(melt_pool_app_module, "Scanpath", FakeScanpath)
+
+    app = ThesisMeltPoolGeometryPart()
+    app.args = _build_args(
+        template_dir,
+        sampling_mode="xy-grid",
+        mp_stats_interp=True,
+    )
+    app.configure_case(str(case_dir))
+
+    output_text = (case_dir / "path_segment_000" / "Output.txt").read_text(
+        encoding="utf-8"
+    )
+    assert "\tMP_Stats\t0" in output_text
+    assert "\tMP_Stats_Interp\t1" in output_text
 
 
 def test_melt_pool_geometry_configure_preserves_mode_file_preamble(

@@ -14,6 +14,9 @@ This app requires 3DThesis version `4.0.0` or later for both sampling modes.
 - `xy-grid`
   - Writes `Mode.txt` with the 3DThesis `Solidification` mode and enables
     melt-pool statistics in `Output.txt`.
+  - Optional configure flag `steps:3dthesis:configure:mp-stats-interp: true`
+    switches the 3DThesis output request to `MP_Stats=0` and
+    `MP_Stats_Interp=1`.
   - Produces melt-pool geometry and solidification time at each evaluated grid
     location, which is spatially dense but usually requires more simulation work.
   - The exported Myna CSV columns are the same:

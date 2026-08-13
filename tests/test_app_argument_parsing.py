@@ -433,7 +433,9 @@ def test_melt_pool_geometry_stage_parsers_register_sampling_mode(
         getattr(app, stage_call)()
 
     assert _count_option_actions(app.parser, "--sampling-mode") == 1
+    assert _count_option_actions(app.parser, "--mp-stats-interp") == 1
     assert app.args.sampling_mode == "snapshots"
+    assert app.args.mp_stats_interp is False
 
 
 @pytest.mark.parametrize(
