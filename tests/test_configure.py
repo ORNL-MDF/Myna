@@ -14,6 +14,7 @@ import warnings
 
 import myna
 import myna.core.context as context_module
+import pytest
 import yaml
 
 from myna.core.workflow.load_input import load_input, write_input
@@ -149,3 +150,100 @@ def test_config_expands_layer_range_strings_in_written_input(tmp_path):
         for layer in raw_settings["data"]["build"]["parts"]["P5"]["layer_data"].keys()
     ) == [51, 52]
     assert len(raw_settings["data"]["output_paths"]["3dthesis"]) == 2
+
+
+def test_config_missing_part_layer_fails_without_ignore_flag(tmp_path):
+    example_path = CASES_DIR / "solidification_part_json"
+    tmp_dir = tmp_path / "solidification_part_json"
+    tmp_dir.mkdir()
+
+    source_settings = load_input(example_path / "input.yaml")
+    source_settings["data"]["build"]["parts"]["P5"]["layers"] = [51, 999]
+
+    input_file = tmp_dir / "input.yaml"
+    write_input(source_settings, input_file)
+
+    with pytest.raises(KeyError):
+        myna.core.workflow.config.config(os.fspath(input_file))
+
+
+def test_config_ignore_missing_part_layers_skips_missing_cases(tmp_path):
+    example_path = CASES_DIR / "solidification_part_json"
+    tmp_dir = tmp_path / "solidification_part_json"
+    tmp_dir.mkdir()
+
+    source_settings = load_input(example_path / "input.yaml")
+    source_settings["myna"]["ignore_missing_layers"] = True
+    source_settings["data"]["build"]["parts"]["P5"]["layers"] = [51, 999]
+
+    input_file = tmp_dir / "input.yaml"
+    write_input(source_settings, input_file)
+
+    myna.core.workflow.config.config(os.fspath(input_file))
+
+    raw_settings = yaml.safe_load(input_file.read_text(encoding="utf-8"))
+
+    assert raw_settings["myna"]["ignore_missing_layers"] is True
+    assert raw_settings["data"]["build"]["parts"]["P5"]["layers"] == [51]
+    assert sorted(
+        int(layer)
+        for layer in raw_settings["data"]["build"]["parts"]["P5"]["layer_data"].keys()
+    ) == [51]
+    assert len(raw_settings["data"]["output_paths"]["3dthesis"]) == 1
+    assert "/999/" not in raw_settings["data"]["output_paths"]["3dthesis"][0]
+
+
+def test_config_ignore_missing_build_region_layers_skips_missing_cases(tmp_path):
+    example_path = CASES_DIR / "solidification_build_region"
+    tmp_dir = tmp_path / "solidification_build_region"
+    tmp_dir.mkdir()
+
+    source_settings = load_input(example_path / "input.yaml")
+    source_settings["steps"] = [source_settings["steps"][0]]
+    source_settings["myna"]["ignore_missing_layers"] = True
+    source_settings["data"]["build"]["build_regions"] = {
+        "test_1": {"partlist": ["P5"], "layerlist": [51, 999]}
+    }
+    source_settings["data"]["build"]["parts"] = {"P5": {"layers": [51]}}
+
+    input_file = tmp_dir / "input.yaml"
+    write_input(source_settings, input_file)
+
+    myna.core.workflow.config.config(os.fspath(input_file))
+
+    raw_settings = yaml.safe_load(input_file.read_text(encoding="utf-8"))
+
+    assert raw_settings["data"]["build"]["build_regions"]["test_1"]["layerlist"] == [51]
+    assert sorted(
+        int(layer)
+        for layer in raw_settings["data"]["build"]["build_regions"]["test_1"]["parts"][
+            "P5"
+        ]["layer_data"].keys()
+    ) == [51]
+    assert len(raw_settings["data"]["output_paths"]["3dthesis"]) == 1
+
+
+def test_config_ignore_missing_layers_still_fails_for_region_steps(tmp_path):
+    example_path = CASES_DIR / "solidification_part_json"
+    tmp_dir = tmp_path / "solidification_region_json"
+    tmp_dir.mkdir()
+
+    source_settings = load_input(example_path / "input.yaml")
+    source_settings["myna"]["ignore_missing_layers"] = True
+    source_settings["steps"] = [
+        {
+            "additivefoam": {
+                "class": "solidification_region_reduced",
+                "application": "additivefoam",
+            }
+        }
+    ]
+    source_settings["data"]["build"]["parts"] = {
+        "P5": {"regions": {"r1": {"layers": [51, 999], "x": 0.2, "y": 0.021}}}
+    }
+
+    input_file = tmp_dir / "input.yaml"
+    write_input(source_settings, input_file)
+
+    with pytest.raises(KeyError):
+        myna.core.workflow.config.config(os.fspath(input_file))
