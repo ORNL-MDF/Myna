@@ -21,6 +21,73 @@ import getpass
 from git import Repo, InvalidGitRepositoryError
 
 
+def _should_ignore_missing_layers(settings):
+    """Whether configure should skip missing layer metadata when possible."""
+
+    return bool(nested_get(settings, ["myna", "ignore_missing_layers"], False))
+
+
+def _can_skip_missing_layers(step_obj, settings):
+    """Whether the active step allows missing layers to be skipped."""
+
+    return (
+        _should_ignore_missing_layers(settings)
+        and "layer" in step_obj.types
+        and "region" not in step_obj.types
+    )
+
+
+def _is_missing_layer_error(error):
+    """Whether an error indicates missing layer-scoped metadata."""
+
+    return isinstance(error, (FileNotFoundError, LookupError, IndexError, TypeError))
+
+
+def _remove_missing_part_layer(settings, part, layer):
+    """Remove a missing layer from part-scoped configured data."""
+
+    layer_value = int(layer)
+    layer_key = str(layer)
+    part_settings = nested_get(settings, ["data", "build", "parts", part], {})
+    part_settings["layers"] = [
+        int(x)
+        for x in nested_get(part_settings, ["layers"], [])
+        if int(x) != layer_value
+    ]
+    nested_get(part_settings, ["layer_data"], {}).pop(layer_key, None)
+
+
+def _remove_missing_build_region_layer(settings, build_region, layer):
+    """Remove a missing layer from build-region configured data."""
+
+    layer_value = int(layer)
+    layer_key = str(layer)
+    build_region_settings = nested_get(
+        settings, ["data", "build", "build_regions", build_region], {}
+    )
+    build_region_settings["layerlist"] = [
+        int(x)
+        for x in nested_get(build_region_settings, ["layerlist"], [])
+        if int(x) != layer_value
+    ]
+    for part in nested_get(build_region_settings, ["partlist"], []):
+        nested_get(build_region_settings, ["parts", part, "layer_data"], {}).pop(
+            layer_key, None
+        )
+
+
+def _warn_for_skipped_layers(step_name, skipped_layers):
+    """Print a concise warning for layers skipped during configure."""
+
+    if not skipped_layers:
+        return
+
+    print(f'Warning: Step "{step_name}" skipped missing layer metadata for:')
+    for scope_name in sorted(skipped_layers):
+        layers = ", ".join(str(x) for x in sorted(skipped_layers[scope_name]))
+        print(f"  - {scope_name}: {layers}")
+
+
 # Parser comes from the top-level command parsing
 def parse(parser):
     """Main function for configuring a myna case from the command line"""
@@ -217,6 +284,7 @@ def config(input_file, output_file=None, show_avail=False, overwrite=False):
             pass
 
         # Get the data requirements associated with that class
+        skipped_layers = {}
         for data_req in step_obj.data_requirements:
             # For each data requirements, lookup the corresponding data object
             data_class_name = metadata.return_data_class_name(data_req)
@@ -340,9 +408,27 @@ def config(input_file, output_file=None, show_avail=False, overwrite=False):
                                     layer,
                                     data_req,
                                 ]
-                                set_layerfile_entry(
-                                    datatype, part, layer, settings, nested_layerkeys
-                                )
+                                try:
+                                    set_layerfile_entry(
+                                        datatype,
+                                        part,
+                                        layer,
+                                        settings,
+                                        nested_layerkeys,
+                                    )
+                                except Exception as error:  # pragma: no cover - re-raise path covered below
+                                    if not (
+                                        _can_skip_missing_layers(step_obj, settings)
+                                        and _is_missing_layer_error(error)
+                                    ):
+                                        raise
+                                    skipped_layers.setdefault(build_region, set()).add(
+                                        int(layer)
+                                    )
+                                    _remove_missing_build_region_layer(
+                                        settings, build_region, layer
+                                    )
+                                    break
                 else:
                     parts = nested_get(settings, ["data", "build", "parts"], {})
                     for part in parts.keys():
@@ -359,9 +445,18 @@ def config(input_file, output_file=None, show_avail=False, overwrite=False):
                                 layer,
                                 data_req,
                             ]
-                            set_layerfile_entry(
-                                datatype, part, layer, settings, nested_keys
-                            )
+                            try:
+                                set_layerfile_entry(
+                                    datatype, part, layer, settings, nested_keys
+                                )
+                            except Exception as error:  # pragma: no cover - re-raise path covered below
+                                if not (
+                                    _can_skip_missing_layers(step_obj, settings)
+                                    and _is_missing_layer_error(error)
+                                ):
+                                    raise
+                                skipped_layers.setdefault(part, set()).add(int(layer))
+                                _remove_missing_part_layer(settings, part, layer)
 
                         # Check for layers in region dictionary
                         regions = nested_get(parts, [part, "regions"], {})
@@ -385,6 +480,8 @@ def config(input_file, output_file=None, show_avail=False, overwrite=False):
                                 set_layerfile_entry(
                                     datatype, part, layer, settings, nested_keys
                                 )
+
+        _warn_for_skipped_layers(step_name, skipped_layers)
 
         # Save data to step object
         step_obj.apply_settings(

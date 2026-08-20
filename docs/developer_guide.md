@@ -116,6 +116,20 @@ regardless of if there is an existing application. This will allow you to test t
 correct metadata is being supplied to the case directories. When composing your
 input file, just provide an arbitrary name for the application, e.g., "test".
 
+For workflows that request explicit layer lists, `myna config` normally fails when a
+requested layer cannot be loaded from the database. Users can opt into best-effort
+configuration for independent layer-wise cases with:
+
+```yaml
+myna:
+  ignore_missing_layers: true
+```
+
+That flag only applies to configure-time `LayerFile` metadata for workflows whose
+cases are independent by layer, such as part-layer or build-region-layer steps.
+Region-layer steps still fail when any requested layer is missing because those cases
+depend on the complete requested layer set.
+
 ### Documentation impact for component types
 
 Adding a new component class or component type under `src/myna/core/components/` uses

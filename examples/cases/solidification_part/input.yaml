@@ -13,6 +13,7 @@ data:
     path: ../../databases
     parts:
       P5:
-        layers: [51]
+        layers: [51,200]
 myna:
   workspace: ../../workspaces/example-workspace.yaml
+  ignore_missing_layers: true
