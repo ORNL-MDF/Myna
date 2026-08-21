@@ -31,6 +31,7 @@ class PeregrineHDF5(PeregrineDB):
     synonyms = {
         "laser_power": [
             "parts/process_parameters/laser_power",
+            "parts/process_parameters/laser_beam_power",
             "parts/process_parameters/power",
             "parts/process_parameters/bulk_laser_power",
         ],
@@ -131,11 +132,11 @@ class PeregrineHDF5(PeregrineDB):
             # in some files. Assume that if the spot size is greater than 10
             # that it is stored in microns (not millimeters) and correct accordingly.
             if value > 10:
-                value = value * 1e-3
                 warn_msg = (
                     f"Large spot size detected ({value} mm),"
                     + f" assuming conversion um to mm (--> {value * 1e-3} mm)"
                 )
+                value = value * 1e-3
                 warnings.warn(warn_msg)
 
             return value
