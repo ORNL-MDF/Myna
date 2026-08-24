@@ -370,8 +370,11 @@ class ThesisMeltPoolGeometryPart(Thesis):
                         thesis_schema = {
                             k: myna_schema[v] for k, v in thesis_to_myna_mapping.items()
                         }
-                        df = pl.read_csv(segment_file, columns=list(thesis_schema))
-                        df = df.cast(thesis_schema)
+                        df = pl.read_csv(
+                            segment_file,
+                            columns=list(thesis_schema),
+                            schema_overrides=thesis_schema,
+                        )
                         df = df.rename(thesis_to_myna_mapping)
                         df = df.select(list(myna_schema))
                         df_all_segments = pl.concat([df_all_segments, df])
