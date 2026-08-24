@@ -13,6 +13,7 @@ import glob
 import os
 import shutil
 import tempfile
+from collections import OrderedDict
 from pathlib import Path
 import numpy as np
 import polars as pl
@@ -139,6 +140,37 @@ class ThesisMeltPoolGeometryPart(Thesis):
                     return self.SNAPSHOT_SAMPLING_MODE
                 break
         return self.SNAPSHOT_SAMPLING_MODE
+
+    @staticmethod
+    def _xy_grid_thesis_to_myna_mapping(segment_file):
+        """Map 3DThesis xy-grid output columns to the Myna melt-pool schema."""
+        with open(segment_file, encoding="utf-8") as fp:
+            header = fp.readline().strip().split(",")
+        available_columns = set(header)
+        candidate_columns = OrderedDict(
+            [
+                ("time (s)", ["tSol"]),
+                ("length (m)", ["MP_length", "MP_length_interp"]),
+                ("width (m)", ["MP_width", "MP_width_interp"]),
+                ("depth (m)", ["MP_depth", "MP_depth_interp"]),
+                ("x (m)", ["x"]),
+                ("y (m)", ["y"]),
+            ]
+        )
+        thesis_to_myna_mapping = {}
+        for myna_name, candidates in candidate_columns.items():
+            thesis_name = next(
+                (column for column in candidates if column in available_columns),
+                None,
+            )
+            if thesis_name is None:
+                missing_columns = ", ".join(candidates)
+                raise ValueError(
+                    f"Missing expected 3DThesis xy-grid column for {myna_name}: "
+                    f"{missing_columns}"
+                )
+            thesis_to_myna_mapping[thesis_name] = myna_name
+        return thesis_to_myna_mapping
 
     def parse_configure_arguments(self):
         self.register_argument(
@@ -313,14 +345,6 @@ class ThesisMeltPoolGeometryPart(Thesis):
                             f"{output_name}.Solidification.Final*.csv",
                         )
                         segment_files = sorted(glob.glob(result_pattern))
-                        thesis_to_myna_mapping = {
-                            "tSol": "time (s)",
-                            "MP_length": "length (m)",
-                            "MP_width": "width (m)",
-                            "MP_depth": "depth (m)",
-                            "x": "x (m)",
-                            "y": "y (m)",
-                        }
                     else:
                         snapshot_data_file = os.path.join(
                             segment_dir, "Data", "snapshot_data.csv"
@@ -338,10 +362,14 @@ class ThesisMeltPoolGeometryPart(Thesis):
                             "Beam X": "x (m)",
                             "Beam Y": "y (m)",
                         }
-                    thesis_schema = {
-                        k: myna_schema[v] for k, v in thesis_to_myna_mapping.items()
-                    }
                     for segment_file in segment_files:
+                        if sampling_mode == self.XY_GRID_SAMPLING_MODE:
+                            thesis_to_myna_mapping = (
+                                self._xy_grid_thesis_to_myna_mapping(segment_file)
+                            )
+                        thesis_schema = {
+                            k: myna_schema[v] for k, v in thesis_to_myna_mapping.items()
+                        }
                         df = pl.read_csv(segment_file, columns=list(thesis_schema))
                         df = df.cast(thesis_schema)
                         df = df.rename(thesis_to_myna_mapping)
