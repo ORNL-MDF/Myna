@@ -20,6 +20,7 @@ The main user workflows are:
 - run `myna config` to extract required metadata and create case directories;
 - run `myna run` to execute configured application stages;
 - run `myna sync` to push supported outputs back to a database;
+- run `myna remote` to configure and execute an interactive workflow through SSH;
 - use `myna launch_peregrine` for Peregrine-oriented workflow launch inputs;
 - import `myna` from Python for utility workflows, as shown under `examples/utils/`.
 
@@ -133,6 +134,10 @@ extracts metadata. New shared workflow code should prefer `WorkflowContext`,
 - **Configure/run/sync stages**: The primary CLI flow. `config` extracts and writes
   required inputs, `run` delegates to app stages, and `sync` sends valid outputs through
   database adapter sync logic.
+- **Remote execution**: An opt-in `myna remote` flow driven by `myna.compute`. It uses
+  the user's SSH configuration and SCP to stage a configured local-data workflow or
+  serialize a remote-data input to an interactive remote Myna installation. Batch
+  schedulers are intentionally outside this workflow boundary.
 
 ## Control Flow
 
