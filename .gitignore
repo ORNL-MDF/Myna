@@ -19,6 +19,8 @@ build
 myna_resources/
 demo_build/
 myna_output/
+myna_remote/
+.myna/remote/
 examples/databases/Peregrine/registered
 examples/databases/Peregrine/simulation
 examples/databases/PeregrineHDF5/simulation

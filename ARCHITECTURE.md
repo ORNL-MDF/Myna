@@ -136,8 +136,11 @@ extracts metadata. New shared workflow code should prefer `WorkflowContext`,
   database adapter sync logic.
 - **Remote execution**: An opt-in `myna remote` flow driven by `myna.compute`. It uses
   the user's SSH configuration and SCP to stage a configured local-data workflow or
-  serialize a remote-data input to an interactive remote Myna installation. Batch
-  schedulers are intentionally outside this workflow boundary.
+  serialize a remote-data input to an interactive remote Myna installation. Remote
+  workers are detached and tracked by UUID-backed local and remote status documents.
+  Completed bundles are recovered into isolated local UUID snapshots. UUIDs are
+  consistent between the local and remote files. It is assumed that the remote
+  compute is interactive--batch schedulers are intentionally excluded from this workflow.
 
 ## Control Flow
 
