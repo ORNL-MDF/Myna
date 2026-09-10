@@ -49,6 +49,7 @@ myna remote update --tracker .myna/remote/<uuid>.json
 ```
 
 The `myna remote check` tool only reports remote job status: `running`, `succeeded`, or `failed`.
+If no unfinished remote job is associated with the input, it reports that state and exits successfully.
 The `myna remote update` retrieves a successful archive into `myna_remote/<uuid>/`
 beside the input and prints the configured input snapshot path. The original input,
 resources, and output tree are not overwritten by subsequent runs, because

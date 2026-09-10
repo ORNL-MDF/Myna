@@ -15,12 +15,15 @@ build
 # VS Code
 *.code-workspace
 
-# typical output folder names
+# MacOS Finder metadata
+.DS_Store
+
+# `myna config` and `myna run` typical artifacts
 myna_resources/
-demo_build/
 myna_output/
-myna_remote/
-.myna/remote/
+demo_build/
+
+# database artifacts
 examples/databases/Peregrine/registered
 examples/databases/Peregrine/simulation
 examples/databases/PeregrineHDF5/simulation
@@ -29,8 +32,15 @@ examples/databases/Pelican/myna_scanpaths
 examples/databases/Pelican/registered_timeseries
 *.parquet
 
+# `myna remote` artifacts
+.myna/
+myna_remote/
+myna_remote_bundle/
+myna_remote_bundle.zip
+
 # other typical case file names
 *configured.yaml
+ic.yaml
 log.*
 *.log
 logs/

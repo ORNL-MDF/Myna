@@ -135,6 +135,19 @@ def test_concurrent_launches_preserve_source_and_use_distinct_result_directories
     assert input_file.read_text(encoding="utf-8") == source_before
 
 
+@pytest.mark.parametrize("action", (remote_module.check, remote_module.update))
+def test_no_unfinished_remote_jobs_is_reported_without_failure(
+    tmp_path, capsys, action
+):
+    input_file = tmp_path / "input.yaml"
+
+    assert action(input_file) is None
+    assert (
+        capsys.readouterr().out
+        == "No unfinished remote jobs are associated with this input.\n"
+    )
+
+
 def test_update_publishes_isolated_result_snapshot_and_cleans_remote(
     tmp_path, monkeypatch
 ):
@@ -184,6 +197,20 @@ def test_extract_bundle_rejects_path_traversal(tmp_path):
         archive.writestr("../outside.txt", "unsafe")
     with pytest.raises(ValueError, match="unsafe path"):
         remote_module._extract_bundle(bundle, tmp_path / "target")
+
+
+def test_write_bundle_handles_resolved_path_aliases(tmp_path):
+    root = tmp_path / "root"
+    root.mkdir()
+    (root / "input.yaml").write_text("steps: []\n", encoding="utf-8")
+    alias = tmp_path / "root-alias"
+    alias.symlink_to(root, target_is_directory=True)
+    bundle = tmp_path / "bundle.zip"
+
+    remote_module._write_bundle(bundle, {alias / "input.yaml"}, root)
+
+    with zipfile.ZipFile(bundle) as archive:
+        assert archive.namelist() == ["input.yaml"]
 
 
 def test_main_dispatches_remote_command(monkeypatch):

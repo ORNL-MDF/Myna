@@ -210,10 +210,12 @@ def _archive_root(paths):
 
 
 def _write_bundle(bundle_path, paths, root):
+    root = root.resolve()
     with zipfile.ZipFile(bundle_path, "w", zipfile.ZIP_DEFLATED) as bundle:
         written = set()
         for path in sorted(paths):
             for candidate in path.rglob("*") if path.is_dir() else (path,):
+                candidate = candidate.resolve()
                 if candidate.is_file() and candidate not in written:
                     bundle.write(candidate, candidate.relative_to(root))
                     written.add(candidate)
@@ -442,7 +444,13 @@ def launch(input_file, step=None, wait=False):
 
 
 def check(input_file="input.yaml", tracker_file=None):
-    tracker_path, tracker = _load_tracker(input_file, tracker_file)
+    try:
+        tracker_path, tracker = _load_tracker(input_file, tracker_file)
+    except FileNotFoundError:
+        if tracker_file:
+            raise
+        print("No unfinished remote jobs are associated with this input.")
+        return None
     try:
         result = _ssh(
             tracker["host"],
@@ -499,7 +507,13 @@ def _publish_results(tracker_path, tracker):
 
 
 def update(input_file="input.yaml", tracker_file=None):
-    tracker_path, tracker = _load_tracker(input_file, tracker_file)
+    try:
+        tracker_path, tracker = _load_tracker(input_file, tracker_file)
+    except FileNotFoundError:
+        if tracker_file:
+            raise
+        print("No unfinished remote jobs are associated with this input.")
+        return None
     if tracker.get("retrieved"):
         print(f"Remote Myna results already retrieved: {tracker['result_dir']}")
         return tracker
