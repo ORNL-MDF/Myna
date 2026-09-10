@@ -16,6 +16,7 @@ myna:
     host: cloud
     workdir: /home/cloud/myna-workspace
     command: /home/cloud/venv/bin/myna
+    workspace: /home/cloud/myna-workspace/apps.yaml  # optional remote-only workspace
     data_location: local  # `local` or `remote`
     download: all         # optional: `all` (default) or `outputs`
 ```
@@ -23,16 +24,40 @@ myna:
 `host` is an SSH host alias such as one defined in `~/.ssh/config`. `command` must be
 the absolute path to the remote virtual environment's `myna` executable; Myna uses its
 sibling Python executable and the standard-library `zipfile` module for transfer
-archives. Every run receives a unique directory below `workdir`.
+archives. Every run receives a unique UUID-named directory below `workdir`.
+
+`myna.compute.workspace` is an optional absolute path to a workspace on the remote
+host. It is used only by the remote worker, so the local host need not have that file.
+For `data_location: local`, the regular `myna.workspace` and input file options are used;
+for `data_location: remote`, the remote workspace file and input file options must be
+remote-valid. In both cases, workspace values are defaults: values supplied in the input
+file for a workflow step override workspace values, such as the step `executable` and
+operation arguments.
 
 With `data_location: local`, Myna configures locally, transfers a portable configured
 bundle, runs remotely, then returns the configured bundle and results. With
 `data_location: remote`, Myna sends the input as JSON to the remote installation, which
 performs both configuration and execution; all build, workspace, and runtime paths in
-that input must be valid on the remote host. `download: outputs` retrieves only declared
-`data.output_paths` and retains the remote run directory. The default `download: all`
-retrieves the complete bundle and removes the remote directory only after successful
-download and extraction. Failed runs always retain it and print its location.
+that input must be valid on the remote host. Every launch starts a detached worker and
+prints a local tracker path. Use `--wait` to wait for completion and retrieve results
+in one command, or use the tracker later:
+
+```bash
+myna remote --input input.yaml
+myna remote check --tracker .myna/remote/<uuid>.json
+myna remote update --tracker .myna/remote/<uuid>.json
+```
+
+The `myna remote check` tool only reports remote job status: `running`, `succeeded`, or `failed`.
+The `myna remote update` retrieves a successful archive into `myna_remote/<uuid>/`
+beside the input and prints the configured input snapshot path. The original input,
+resources, and output tree are not overwritten by subsequent runs, because
+each launch is configured from its own snapshot. Omitting `--tracker` uses the newest
+unfinished tracker for `--input` (default `input.yaml`).
+
+`download: outputs` retains the remote run directory. The default `download: all`
+removes it only after successful local extraction. Failed runs retain the remote
+directory and print the remote worker log paths.
 
 ## Peregrine CLI
 
