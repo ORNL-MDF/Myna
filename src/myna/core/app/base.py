@@ -351,6 +351,11 @@ class MynaApp:
     def validate_executable(self, default):
         """Check if the specified executable exists and raise error if not"""
 
+        # The executable runs inside the Docker container, not on the host, so a
+        # missing host executable is expected and not an error in this case.
+        if self.args.docker_image is not None:
+            return
+
         # Get the name of the executable
         exe = self.args.exec
         if exe is None:
