@@ -14,7 +14,6 @@ import pytest
 from vtk import vtkImageData
 from vtkmodules.util.numpy_support import numpy_to_vtk
 
-from myna.application.cubit.cubit import CubitApp
 from myna.application.cubit.vtk_to_exodus_region.app import CubitVtkToExodusApp
 
 
@@ -86,9 +85,8 @@ def make_vtk_image_data(dimensions, grain_ids, field_name="GrainID"):
     ],
 )
 def test_write_exodus_block_data_supports_single_step_and_segmented_mapping(
-    monkeypatch, tmp_path, segment_size_gb, file_size_gb
+    tmp_path, segment_size_gb, file_size_gb
 ):
-    monkeypatch.setattr(CubitApp, "_validate_cubit_executables", lambda self: None)
     app = CubitVtkToExodusApp()
     app.args = SimpleNamespace(orientation_segment_gb=segment_size_gb)
 
@@ -127,10 +125,7 @@ def test_write_exodus_block_data_supports_single_step_and_segmented_mapping(
     )
 
 
-def test_get_orientation_chunk_size_rejects_non_positive_segment_size(
-    monkeypatch,
-):
-    monkeypatch.setattr(CubitApp, "_validate_cubit_executables", lambda self: None)
+def test_get_orientation_chunk_size_rejects_non_positive_segment_size():
     app = CubitVtkToExodusApp()
     app.args = SimpleNamespace(orientation_segment_gb=0.0)
 
@@ -138,8 +133,7 @@ def test_get_orientation_chunk_size_rejects_non_positive_segment_size(
         app.get_orientation_chunk_size("/tmp/unused.e", 10)
 
 
-def test_merge_small_grain_regions_rejects_non_positive_threshold(monkeypatch):
-    monkeypatch.setattr(CubitApp, "_validate_cubit_executables", lambda self: None)
+def test_merge_small_grain_regions_rejects_non_positive_threshold():
     app = CubitVtkToExodusApp()
     app.args = SimpleNamespace(field="GrainID", min_grain_voxel_count=0)
     vtk_data = make_vtk_image_data((1, 1, 1), np.array([1], dtype=np.int32))
@@ -148,8 +142,7 @@ def test_merge_small_grain_regions_rejects_non_positive_threshold(monkeypatch):
         app.merge_small_grain_regions(vtk_data)
 
 
-def test_merge_small_grain_regions_merges_secondary_disconnected_region(monkeypatch):
-    monkeypatch.setattr(CubitApp, "_validate_cubit_executables", lambda self: None)
+def test_merge_small_grain_regions_merges_secondary_disconnected_region():
     app = CubitVtkToExodusApp()
     app.args = SimpleNamespace(field="GrainID", min_grain_voxel_count=1)
     vtk_data = make_vtk_image_data(
@@ -197,8 +190,7 @@ def test_get_replacement_grain_id_prefers_most_shared_faces_then_lowest_id():
     assert replacement_gid == 5
 
 
-def test_get_centroid_bbox_size_supports_scalar_and_xyz(monkeypatch):
-    monkeypatch.setattr(CubitApp, "_validate_cubit_executables", lambda self: None)
+def test_get_centroid_bbox_size_supports_scalar_and_xyz():
     app = CubitVtkToExodusApp()
 
     app.args = SimpleNamespace(centroid_bbox_size=[2.5])
@@ -209,8 +201,7 @@ def test_get_centroid_bbox_size_supports_scalar_and_xyz(monkeypatch):
 
 
 @pytest.mark.parametrize("bbox_size", ([1.0, 2.0], [1.0, -2.0, 3.0]))
-def test_get_centroid_bbox_size_rejects_invalid_values(monkeypatch, bbox_size):
-    monkeypatch.setattr(CubitApp, "_validate_cubit_executables", lambda self: None)
+def test_get_centroid_bbox_size_rejects_invalid_values(bbox_size):
     app = CubitVtkToExodusApp()
     app.args = SimpleNamespace(centroid_bbox_size=bbox_size)
 
@@ -218,8 +209,7 @@ def test_get_centroid_bbox_size_rejects_invalid_values(monkeypatch, bbox_size):
         app.get_centroid_bbox_size()
 
 
-def test_get_centroid_clip_voi_centers_and_clamps(monkeypatch):
-    monkeypatch.setattr(CubitApp, "_validate_cubit_executables", lambda self: None)
+def test_get_centroid_clip_voi_centers_and_clamps():
     app = CubitVtkToExodusApp()
     app.args = SimpleNamespace(centroid_bbox_size=[4.0, 6.0, 8.0])
     vtk_data = FakeStructuredImage(
@@ -236,7 +226,6 @@ def test_get_centroid_clip_voi_centers_and_clamps(monkeypatch):
 
 
 def test_prepare_vtk_input_file_reuses_cached_clip(monkeypatch, tmp_path):
-    monkeypatch.setattr(CubitApp, "_validate_cubit_executables", lambda self: None)
     app = CubitVtkToExodusApp()
     app.args = SimpleNamespace(centroid_bbox_size=[5.0], overwrite=False)
 
@@ -261,7 +250,6 @@ def test_prepare_vtk_input_file_reuses_cached_clip(monkeypatch, tmp_path):
 
 
 def test_prepare_vtk_input_file_writes_clip_when_needed(monkeypatch, tmp_path):
-    monkeypatch.setattr(CubitApp, "_validate_cubit_executables", lambda self: None)
     app = CubitVtkToExodusApp()
     app.args = SimpleNamespace(centroid_bbox_size=[5.0], overwrite=False)
 
@@ -282,8 +270,7 @@ def test_prepare_vtk_input_file_writes_clip_when_needed(monkeypatch, tmp_path):
     assert write_calls == [("microstructure.vtk", str(case_dir / "centroid_clip.vti"))]
 
 
-def test_get_overlay_grid_bounds_aligns_cells_to_vtk_sample_points(monkeypatch):
-    monkeypatch.setattr(CubitApp, "_validate_cubit_executables", lambda self: None)
+def test_get_overlay_grid_bounds_aligns_cells_to_vtk_sample_points():
     app = CubitVtkToExodusApp()
     vtk_data = FakeStructuredImage(
         bounds=(10.0, 14.0, -5.0, 1.0, 100.0, 108.0),
@@ -300,9 +287,8 @@ def test_get_overlay_grid_bounds_aligns_cells_to_vtk_sample_points(monkeypatch):
 
 
 def test_generate_material_id_file_merges_small_disconnected_grain_regions(
-    monkeypatch, tmp_path
+    tmp_path,
 ):
-    monkeypatch.setattr(CubitApp, "_validate_cubit_executables", lambda self: None)
     app = CubitVtkToExodusApp()
     app.args = SimpleNamespace(
         field="GrainID",
@@ -342,8 +328,7 @@ def test_generate_material_id_file_merges_small_disconnected_grain_regions(
     np.testing.assert_array_equal(spn_ids, np.ones(16, dtype=np.int32))
 
 
-def test_build_sculpt_command_sets_spn_xyz_order(monkeypatch):
-    monkeypatch.setattr(CubitApp, "_validate_cubit_executables", lambda self: None)
+def test_build_sculpt_command_sets_spn_xyz_order():
     app = CubitVtkToExodusApp()
     app.exe_psculpt = "psculpt"
     vtk_data = FakeStructuredImage(
@@ -383,8 +368,7 @@ def test_build_sculpt_command_sets_spn_xyz_order(monkeypatch):
     ]
 
 
-def test_format_sculpt_float_avoids_scientific_notation(monkeypatch):
-    monkeypatch.setattr(CubitApp, "_validate_cubit_executables", lambda self: None)
+def test_format_sculpt_float_avoids_scientific_notation():
     app = CubitVtkToExodusApp()
 
     assert app.format_sculpt_float(1.2e-6) == "0.0000012"
