@@ -36,3 +36,9 @@ use the Myna Docker container hosted at
    directory with `cp -r /opt/myna/examples ./myna_examples`. To run examples,
    follow the instructions at
    [Getting Started: Using Myna](https://ornl-mdf.github.io/myna-docs/getting_started#using-myna).
+
+When an application stage uses `docker-image`, Myna runs the container as the UID of
+the user who launched `myna`. This keeps files written to bind-mounted directories
+owned by the host user. To use a different container user, specify Docker's `user`
+run option in that stage's YAML or JSON `docker-config` file, for example
+`user: "1000:1000"`.
