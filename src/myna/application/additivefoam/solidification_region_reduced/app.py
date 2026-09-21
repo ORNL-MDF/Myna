@@ -113,7 +113,6 @@ class AdditiveFOAMRegionReduced(AdditiveFOAM):
 
     def execute(self):
         """Execute all cases for the application."""
-        self.validate_executable("additiveFoam")
         mynafiles = self.settings["data"]["output_paths"][self.step_name]
         processes = []
         for mynafile in mynafiles:
