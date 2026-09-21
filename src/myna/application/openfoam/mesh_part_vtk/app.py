@@ -58,9 +58,15 @@ class OpenFOAMMeshPartVTK(MynaApp):
         part_key = [x for x in parts.keys()][0]
         stl_path = parts[part_key]["stl"]["file_local"]
 
-        working_stl_path = mesh.preprocess_stl(case_dir, stl_path, scale_factor)
+        working_stl_path = mesh.preprocess_stl(
+            case_dir, stl_path, scale_factor, app=self
+        )
         bb_dict = mesh.create_stl_cube_mesh(
-            case_dir, working_stl_path, [coarse_res, coarse_res, coarse_res], 1e-4
+            case_dir,
+            working_stl_path,
+            [coarse_res, coarse_res, coarse_res],
+            1e-4,
+            app=self,
         )
         mesh.extract_stl_features(
             case_dir, working_stl_path, refinement_level, bb_dict["origin"]
