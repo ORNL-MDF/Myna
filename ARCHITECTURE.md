@@ -183,6 +183,9 @@ Current intended boundaries:
   segmentation type, and output sync.
 - `src/myna/application/` owns external-tool wrappers, templates, executable handling,
   and postprocessing needed to satisfy component file contracts.
+- `MynaApp` Docker launches run as the UID of the process that starts Myna by default,
+  so bind-mounted outputs remain host-writable; a stage's Docker configuration can
+  explicitly override that user.
 - App-level executable version gates should compare the numeric semver core of discovered
   version strings; packaging suffixes such as `-dev` may be preserved for display but are
   intentionally ignored for minimum-version decisions through shared version utilities.

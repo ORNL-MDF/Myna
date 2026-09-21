@@ -570,7 +570,11 @@ class MynaApp:
         if self.args.env is not None:
             cmd_arg_str = f". {self.args.env} && " + cmd_arg_str
         cmd_args_docker = ["-lc", cmd_arg_str]
-        docker_run_kwargs = self._get_docker_run_kwargs()
+        # Match the user who started Myna so files written through bind mounts remain
+        # writable on the host. A docker config can intentionally select another
+        # container user.
+        docker_run_kwargs = {"user": str(os.getuid())}
+        docker_run_kwargs.update(self._get_docker_run_kwargs())
         volume_dict = {}
         if "volumes" in kwargs:
             volume_dict.update(kwargs["volumes"])
