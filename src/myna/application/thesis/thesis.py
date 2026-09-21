@@ -47,11 +47,9 @@ class Thesis(MynaApp):
         material_filename="Material.txt",
         output_dir=None,
         output_suffix="",
-        validate_executable=True,
     ):
         super().__init__()
         self.app_type = "thesis"
-        self._validate_thesis_executable = validate_executable
 
         # Set case directories and input files
         self.input_filename = input_filename
@@ -258,8 +256,6 @@ class Thesis(MynaApp):
     def _parse_thesis_stage_arguments(self):
         self.parse_shared_arguments()
         self.parse_known_args()
-        if self._validate_thesis_executable:
-            super().validate_executable("3DThesis")
         if self.args.exec is None:
             self.args.exec = "3DThesis"
 
