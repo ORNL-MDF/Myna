@@ -58,7 +58,10 @@ class AdditiveFOAMRegionReducedSTL(AdditiveFOAMRegionReduced):
         if not self.can_use_existing_stl_mesh_resource(case_dict):
             # Preprocess the STL
             working_stl_path = openfoam.mesh.preprocess_stl(
-                case_dict["resource_template_dir"], case_dict["stl"], self.args.scale
+                case_dict["resource_template_dir"],
+                case_dict["stl"],
+                self.args.scale,
+                app=self,
             )
 
             # Generate background mesh
@@ -67,6 +70,7 @@ class AdditiveFOAMRegionReducedSTL(AdditiveFOAMRegionReduced):
                 working_stl_path,
                 [self.args.coarse, self.args.coarse, self.args.coarse],
                 1.0e-08,
+                app=self,
             )
 
             # Cut background mesh on STL features using snappyHexMeshDict from template
@@ -127,7 +131,9 @@ class AdditiveFOAMRegionReducedSTL(AdditiveFOAMRegionReduced):
             "layer_thickness"
         ]["value"]
         height = float(layer_thickness) * float(case_dict["layer"])
-        openfoam.mesh.slice_part_mesh(case_dict["resource_template_dir"], height)
+        openfoam.mesh.slice_part_mesh(
+            case_dict["resource_template_dir"], height, app=self
+        )
 
         # Refine the layer mesh
         self.refine_layer_mesh(case_dict)
