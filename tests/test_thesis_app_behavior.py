@@ -1135,6 +1135,79 @@ def test_melt_pool_geometry_execute_exports_xy_grid_schema(monkeypatch, tmp_path
     ]
 
 
+def test_melt_pool_geometry_execute_exports_interpolated_xy_grid_schema(
+    monkeypatch, tmp_path
+):
+    monkeypatch.setattr(context_module, "_LEGACY_ENV_FALLBACK_WARNED", False)
+    output_path = tmp_path / "melt-pool-grid-interp.csv"
+    _configure_workflow_env(
+        monkeypatch,
+        tmp_path,
+        "melt_pool_geometry_part",
+        [str(output_path)],
+    )
+
+    case_dir = tmp_path / "case"
+    segment_dir = case_dir / "path_segment_000"
+    data_dir = segment_dir / "Data"
+    data_dir.mkdir(parents=True)
+    (segment_dir / "Mode.txt").write_text(
+        "Solidification\n{\n\tTracking\tSurface\n\tTimestep\t1e-4\n}\n",
+        encoding="utf-8",
+    )
+    (segment_dir / "ParamInput.txt").write_text(
+        "\tName\tthermal_3dthesis\n", encoding="utf-8"
+    )
+    (data_dir / "thermal_3dthesis.Solidification.Final.csv").write_text(
+        "x,y,z,tSol,MP_width_interp,MP_length_interp,MP_depth_interp\n"
+        "0.2,0.4,0.0,1.5,0.01,0.02,0.03\n"
+        "0.1,0.3,0.0,1.0,0.04,0.05,0.06\n",
+        encoding="utf-8",
+    )
+
+    app = ThesisMeltPoolGeometryPart()
+    app.args = _build_args(tmp_path / "unused", sampling_mode="xy-grid")
+    monkeypatch.setattr(app, "parse_execute_arguments", lambda: None)
+    monkeypatch.setattr(app, "require_supported_3dthesis_version", lambda: "4.0.0")
+    monkeypatch.setattr(app, "get_step_output_paths", lambda: [str(output_path)])
+    monkeypatch.setattr(app, "get_case_dirs", lambda output_paths=None: [str(case_dir)])
+    monkeypatch.setattr(
+        app,
+        "run_case",
+        lambda proc_list, check_for_existing_results=True: [None, proc_list],
+    )
+
+    app.execute()
+
+    written = pd.read_csv(output_path)
+    assert list(written.columns) == [
+        "x (m)",
+        "y (m)",
+        "time (s)",
+        "length (m)",
+        "width (m)",
+        "depth (m)",
+    ]
+    assert written.to_dict(orient="records") == [
+        {
+            "x (m)": 0.1,
+            "y (m)": 0.3,
+            "time (s)": 1.0,
+            "length (m)": 0.05,
+            "width (m)": 0.04,
+            "depth (m)": 0.06,
+        },
+        {
+            "x (m)": 0.2,
+            "y (m)": 0.4,
+            "time (s)": 1.5,
+            "length (m)": 0.02,
+            "width (m)": 0.01,
+            "depth (m)": 0.03,
+        },
+    ]
+
+
 def test_melt_pool_geometry_segment_sampling_mode_ignores_comment_preamble(tmp_path):
     segment_dir = tmp_path / "path_segment_000"
     segment_dir.mkdir()
