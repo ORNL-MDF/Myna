@@ -6,18 +6,9 @@
 #
 # License: 3-clause BSD, see https://opensource.org/licenses/BSD-3-Clause.
 #
-"""external simulation application module for Myna workflow framework"""
+"""External simulation application module for the Myna workflow framework."""
 
-# Submodules
-from . import adamantine
-from . import additivefoam
-from . import bnpy
-from . import cubit
-from . import deer
-from . import exaca
-from . import openfoam
-from . import rve
-from . import thesis
+from importlib import import_module
 
 __all__ = [
     "adamantine",
@@ -30,3 +21,13 @@ __all__ = [
     "rve",
     "thesis",
 ]
+
+
+def __getattr__(name):
+    """Lazily import application backends."""
+
+    if name in __all__:
+        module = import_module(f"{__name__}.{name}")
+        globals()[name] = module
+        return module
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

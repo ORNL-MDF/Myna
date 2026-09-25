@@ -31,7 +31,7 @@ class CubitApp(MynaApp):
             help="Path to the root Cubit install directory",
         )
 
-    def _validate_cubit_executables(self):
+    def _set_cubit_executable_paths(self):
         """Check that Cubit executables are accessible for the parsed options."""
 
         # Check that all needed executables are accessible. This overrides the
@@ -42,24 +42,13 @@ class CubitApp(MynaApp):
             path_prefix = os.path.join(self.args.cubitpath, "bin")
         self.exe_psculpt = os.path.join(path_prefix, "psculpt")
         self.exe_epu = os.path.join(path_prefix, "epu")
-        original_executable_arg = self.args.exec
-        for executable in [self.exe_psculpt, self.exe_epu]:
-            self.args.exec = executable
-            self.validate_executable(executable)
-        # Set original value back to exec commented out since it is ignored
-        if original_executable_arg is not None:
-            self.args.exec = (
-                f"# (ignored by {self.name} app) " + original_executable_arg
-            )
-        else:
-            self.args.exec = original_executable_arg
 
     def parse_configure_arguments(self):
         self.parse_shared_arguments()
         self.parse_known_args()
-        self._validate_cubit_executables()
+        self._set_cubit_executable_paths()
 
     def parse_execute_arguments(self):
         self.parse_shared_arguments()
         self.parse_known_args()
-        self._validate_cubit_executables()
+        self._set_cubit_executable_paths()

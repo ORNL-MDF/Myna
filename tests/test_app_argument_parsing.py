@@ -7,6 +7,7 @@
 # License: 3-clause BSD, see https://opensource.org/licenses/BSD-3-Clause.
 #
 import json
+import os
 from types import SimpleNamespace
 import sys
 import stat
@@ -216,14 +217,49 @@ def test_start_subprocess_loads_docker_run_kwargs_from_config(monkeypatch, tmp_p
     app.start_subprocess(["echo", "hello"], volumes={"/addition": {"bind": "/work"}})
 
     assert captured["image"] == "example:latest"
-    assert captured["command"] == ["-lc", "echo hello"]
-    assert captured["kwargs"]["entrypoint"] == "bash"
+    assert captured["command"] == ["bash", "-lc", "echo hello"]
+    assert "entrypoint" not in captured["kwargs"]
     assert captured["kwargs"]["detach"] is True
+    assert captured["kwargs"]["user"] == str(os.getuid())
     assert captured["kwargs"]["remove"] is True
     assert captured["kwargs"]["volumes"] == {
         "/host": {"bind": "/data"},
         "/addition": {"bind": "/work"},
     }
+
+
+def test_start_subprocess_docker_config_overrides_default_user(monkeypatch, tmp_path):
+    docker_config_file = tmp_path / "docker-run.yaml"
+    docker_config_file.write_text("user: '1234:5678'\n", encoding="utf-8")
+
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "test",
+            "--docker-image",
+            "example:latest",
+            "--docker-config",
+            str(docker_config_file),
+        ],
+    )
+
+    captured = {}
+
+    class FakeContainers:
+        def run(self, image, command, **kwargs):
+            captured["kwargs"] = kwargs
+            return SimpleNamespace(name="fake-container")
+
+    monkeypatch.setattr(
+        "myna.core.app.base.docker.from_env",
+        lambda: SimpleNamespace(containers=FakeContainers()),
+    )
+
+    app = MynaApp()
+    app.start_subprocess(["echo", "hello"])
+
+    assert captured["kwargs"]["user"] == "1234:5678"
 
 
 def test_start_subprocess_rejects_non_mapping_docker_config(monkeypatch, tmp_path):
@@ -248,7 +284,43 @@ def test_start_subprocess_rejects_non_mapping_docker_config(monkeypatch, tmp_pat
         app.start_subprocess(["echo", "hello"])
 
 
-@pytest.mark.parametrize("reserved_key", ["image", "command", "entrypoint", "detach"])
+def test_start_subprocess_docker_config_sets_custom_entrypoint(monkeypatch, tmp_path):
+    docker_config_file = tmp_path / "docker-run.yaml"
+    docker_config_file.write_text("entrypoint: /custom-entrypoint\n", encoding="utf-8")
+
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "test",
+            "--docker-image",
+            "example:latest",
+            "--docker-config",
+            str(docker_config_file),
+        ],
+    )
+
+    captured = {}
+
+    class FakeContainers:
+        def run(self, image, command, **kwargs):
+            captured["command"] = command
+            captured["kwargs"] = kwargs
+            return SimpleNamespace(name="fake-container")
+
+    monkeypatch.setattr(
+        "myna.core.app.base.docker.from_env",
+        lambda: SimpleNamespace(containers=FakeContainers()),
+    )
+
+    app = MynaApp()
+    app.start_subprocess(["echo", "hello"])
+
+    assert captured["command"] == ["bash", "-lc", "echo hello"]
+    assert captured["kwargs"]["entrypoint"] == "/custom-entrypoint"
+
+
+@pytest.mark.parametrize("reserved_key", ["image", "command", "detach"])
 def test_start_subprocess_rejects_reserved_docker_config_keys(
     monkeypatch, tmp_path, reserved_key
 ):
@@ -307,7 +379,6 @@ def test_deer_stage_parsers_are_idempotent(monkeypatch, stage_calls):
 )
 def test_cubit_stage_parsers_are_idempotent(monkeypatch, stage_calls):
     monkeypatch.setattr(sys, "argv", ["test"])
-    monkeypatch.setattr(CubitApp, "_validate_cubit_executables", lambda self: None)
     app = CubitApp()
 
     for stage_call in stage_calls:
@@ -327,7 +398,6 @@ def test_cubit_stage_parsers_are_idempotent(monkeypatch, stage_calls):
 )
 def test_cubit_vtk_to_exodus_stage_parsers_are_idempotent(monkeypatch, stage_calls):
     monkeypatch.setattr(sys, "argv", ["test"])
-    monkeypatch.setattr(CubitApp, "_validate_cubit_executables", lambda self: None)
     app = CubitVtkToExodusApp()
 
     for stage_call in stage_calls:
@@ -353,7 +423,7 @@ def test_cubit_vtk_to_exodus_stage_parsers_are_idempotent(monkeypatch, stage_cal
 )
 def test_thesis_stage_parsers_are_idempotent(monkeypatch, stage_calls):
     monkeypatch.setattr(sys, "argv", ["test"])
-    app = Thesis(validate_executable=False)
+    app = Thesis()
 
     for stage_call in stage_calls:
         getattr(app, stage_call)()
@@ -375,7 +445,7 @@ def test_thesis_stage_parsers_are_idempotent(monkeypatch, stage_calls):
 )
 def test_thesis_stage_parsers_set_default_executable(monkeypatch, stage_call):
     monkeypatch.setattr(sys, "argv", ["test"])
-    app = Thesis(validate_executable=False)
+    app = Thesis()
 
     getattr(app, stage_call)()
 
@@ -403,7 +473,6 @@ def test_thesis_part_layer_configure_parsers_register_initial_temperature_argume
 ):
     monkeypatch.setattr(sys, "argv", ["test"])
     app = app_cls()
-    app._validate_thesis_executable = False
 
     for stage_call in stage_calls:
         getattr(app, stage_call)()
@@ -427,7 +496,6 @@ def test_melt_pool_geometry_stage_parsers_register_sampling_mode(
 ):
     monkeypatch.setattr(sys, "argv", ["test"])
     app = ThesisMeltPoolGeometryPart()
-    app._validate_thesis_executable = False
 
     for stage_call in stage_calls:
         getattr(app, stage_call)()
@@ -451,7 +519,6 @@ def test_temperature_surface_part_stage_parsers_are_idempotent(
 ):
     monkeypatch.setattr(sys, "argv", ["test"])
     app = ThesisTemperatureSurfacePart()
-    app._validate_thesis_executable = False
 
     for stage_call in stage_calls:
         getattr(app, stage_call)()
@@ -476,7 +543,6 @@ def test_temperature_surface_part_stage_parsers_set_default_executable(
 ):
     monkeypatch.setattr(sys, "argv", ["test"])
     app = ThesisTemperatureSurfacePart()
-    app._validate_thesis_executable = False
 
     getattr(app, stage_call)()
 
@@ -493,7 +559,6 @@ def test_temperature_surface_part_stage_parsers_set_default_executable(
 )
 def test_exaca_stage_parsers_are_idempotent(monkeypatch, stage_calls):
     monkeypatch.setattr(sys, "argv", ["test"])
-    monkeypatch.setattr(ExaCA, "validate_executable", lambda self, default: None)
     app = ExaCA()
 
     for stage_call in stage_calls:
@@ -515,7 +580,6 @@ def test_exaca_stage_parsers_are_idempotent(monkeypatch, stage_calls):
 )
 def test_exaca_stage_parsers_set_default_executable(monkeypatch, stage_call):
     monkeypatch.setattr(sys, "argv", ["test"])
-    monkeypatch.setattr(ExaCA, "validate_executable", lambda self, default: None)
     app = ExaCA()
 
     getattr(app, stage_call)()
@@ -554,7 +618,7 @@ def test_thesis_get_executable_version_falls_back_to_embedded_binary_strings(
     )
     monkeypatch.setattr(sys, "argv", ["test", "--exec", str(executable)])
 
-    assert Thesis(validate_executable=False).get_executable_version() == "4.1.0"
+    assert Thesis().get_executable_version() == "4.1.0"
 
 
 def test_thesis_get_executable_version_reports_missing_embedded_version(
@@ -571,7 +635,7 @@ def test_thesis_get_executable_version_reports_missing_embedded_version(
         RuntimeError,
         match="Banner detection failed and no embedded version string was found",
     ):
-        Thesis(validate_executable=False).get_executable_version()
+        Thesis().get_executable_version()
 
 
 def test_thesis_get_executable_version_reads_embedded_strings_in_docker(
@@ -588,7 +652,7 @@ def test_thesis_get_executable_version_reads_embedded_strings_in_docker(
             "thesis:latest",
         ],
     )
-    app = Thesis(validate_executable=False)
+    app = Thesis()
     calls = []
 
     def fake_run(cmd_args, timeout=30):

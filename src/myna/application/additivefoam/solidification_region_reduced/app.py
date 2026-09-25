@@ -113,7 +113,6 @@ class AdditiveFOAMRegionReduced(AdditiveFOAM):
 
     def execute(self):
         """Execute all cases for the application."""
-        self.validate_executable("additiveFoam")
         mynafiles = self.settings["data"]["output_paths"][self.step_name]
         processes = []
         for mynafile in mynafiles:
@@ -349,6 +348,7 @@ class AdditiveFOAMRegionReduced(AdditiveFOAM):
             [self.args.coarse, self.args.coarse, self.args.coarse],
             case_dict["rve_mesh_dict"]["region_box"],
             case_dict["rve_mesh_dict"]["rve_pad"],
+            app=self,
         )
 
     def refine_layer_mesh(self, case_dict):
@@ -366,6 +366,7 @@ class AdditiveFOAMRegionReduced(AdditiveFOAM):
             refine_dict_path,
             "castellatedMeshControls/refinementRegions/refinementBox/levels",
             f"( ({self.args.refine_layer} {self.args.refine_layer}) )",
+            app=self,
         )
         openfoam.mesh.refine_mesh_in_box(
             case_dict["resource_template_dir"],
@@ -389,6 +390,7 @@ class AdditiveFOAMRegionReduced(AdditiveFOAM):
             refine_dict_path,
             "castellatedMeshControls/refinementRegions/refinementBox/levels",
             f"( ({self.args.refine_region} {self.args.refine_region}) )",
+            app=self,
         )
         openfoam.mesh.refine_mesh_in_box(
             case_dict["resource_template_dir"],
@@ -447,6 +449,7 @@ class AdditiveFOAMRegionReduced(AdditiveFOAM):
             f"{case_dict['case_dir']}/system/decomposeParDict",
             "numberOfSubdomains",
             self.args.np,
+            app=self,
         )
 
         with working_directory(case_dict["case_dir"]):
