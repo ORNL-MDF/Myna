@@ -42,3 +42,12 @@ the user who launched `myna`. This keeps files written to bind-mounted directori
 owned by the host user. To use a different container user, specify Docker's `user`
 run option in that stage's YAML or JSON `docker-config` file, for example
 `user: "1000:1000"`.
+
+Myna sends each application command through the image's configured entrypoint. This
+allows an image entrypoint to activate its runtime environment before it runs the
+command. To replace that entrypoint for a stage, set Docker's `entrypoint` option in
+the stage's YAML or JSON `docker-config` file, for example:
+
+```yaml
+entrypoint: /opt/app/custom-entrypoint.sh
+```
