@@ -28,7 +28,7 @@ from myna.core.utils import is_executable, get_quoted_str, version_at_least
 from myna.core.components import return_step_class
 
 
-_RESERVED_DOCKER_CONFIG_KEYS = frozenset({"image", "command", "entrypoint", "detach"})
+_RESERVED_DOCKER_CONFIG_KEYS = frozenset({"image", "command", "detach"})
 
 
 class MynaApp:
@@ -565,11 +565,13 @@ class MynaApp:
             print(f"myna subprocess (PID {process.pid}): {cmd_args}")
             return process
 
-        # Launch using Docker, overriding any default entrypoint by using bash
+        # Launch using Docker through the image's default entrypoint.  Execute the
+        # command in bash so application-provided shell syntax (for example,
+        # redirection) and the optional environment setup file continue to work.
         cmd_arg_str = " ".join(cmd_args)
         if self.args.env is not None:
             cmd_arg_str = f". {self.args.env} && " + cmd_arg_str
-        cmd_args_docker = ["-lc", cmd_arg_str]
+        cmd_args_docker = ["bash", "-lc", cmd_arg_str]
         # Match the user who started Myna so files written through bind mounts remain
         # writable on the host. A docker config can intentionally select another
         # container user.
@@ -586,7 +588,6 @@ class MynaApp:
         process = client.containers.run(
             self.args.docker_image,
             command=cmd_args_docker,
-            entrypoint="bash",
             detach=True,
             **docker_run_kwargs,
         )
@@ -594,6 +595,7 @@ class MynaApp:
             f"myna docker container {self.args.docker_image} ({process.name}):"
             f" {cmd_arg_str}"
         )
+        print(f"- Docker container kwargs: {docker_run_kwargs}")
         return process
 
     def _get_docker_run_kwargs(self) -> dict:
