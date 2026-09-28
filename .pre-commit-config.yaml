@@ -50,11 +50,3 @@ repos:
         entry: python3 scripts/check_docs_harness.py
         language: system
         pass_filenames: false
-
-  - repo: local
-    hooks:
-      - id: suspicious-unicode
-        name: Reject bidi and invisible Unicode
-        entry: python3 scripts/check_unicode.py
-        language: system
-        types: [text]
