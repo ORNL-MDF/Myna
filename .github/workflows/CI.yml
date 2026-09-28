@@ -48,6 +48,8 @@ jobs:
         run: uv run --frozen --no-sync scripts/group_docs.py
       - name: Building documentation
         run: uv run --frozen --no-sync mkdocs build --strict
+      - name: Unicode Safety
+        uses: dcondrey/unicode-safety-check@v3
 
   test-examples:
     name: Test 3DThesis, AdditiveFOAM, and ExaCA examples
