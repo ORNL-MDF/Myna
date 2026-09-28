@@ -1,6 +1,6 @@
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v3.4.0
+    rev: v6.0.0
     hooks:
       - id: check-case-conflict
       - id: check-merge-conflict
@@ -10,7 +10,7 @@ repos:
       - id: mixed-line-ending
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.14.14
+    rev: v0.16.9
     hooks:
       # Run the linter.
       - id: ruff-check
@@ -18,7 +18,7 @@ repos:
       - id: ruff-format
 
   - repo: https://github.com/codespell-project/codespell
-    rev: v2.2.6
+    rev: v2.4.3
     hooks:
       - id: codespell
         # Ref abbrev, variable name, Mist mis-spelling
