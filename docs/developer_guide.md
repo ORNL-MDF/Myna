@@ -130,6 +130,19 @@ cases are independent by layer, such as part-layer or build-region-layer steps.
 Region-layer steps still fail when any requested layer is missing because those cases
 depend on the complete requested layer set.
 
+By default, `myna run` fails when an application finishes without producing one of its
+expected output files. For best-effort workflows, the Myna-level `ignore_output_errors` flag
+can skip that output-validation failure and continue to the next workflow step:
+
+```yaml
+myna:
+  ignore_output_errors: true
+```
+
+This option only suppresses the component's missing or invalid output-file check.
+Errors raised while configuring, executing, or postprocessing an application remain
+fatal.
+
 ### Documentation impact for component types
 
 Adding a new component class or component type under `src/myna/core/components/` uses

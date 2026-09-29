@@ -366,6 +366,31 @@ def test_component_run_raises_when_execute_does_not_produce_output(
         component.run_component()
 
 
+def test_component_run_skips_missing_output_when_ignore_output_errors_is_enabled(
+    monkeypatch, tmp_path
+):
+    _clear_workflow_env(monkeypatch)
+    input_file = tmp_path / "input.yaml"
+    input_file.write_text(
+        "steps: []\ndata:\n  build:\n    name: build\nmyna: {}\n",
+        encoding="utf-8",
+    )
+    component = Component()
+    component.name = "demo"
+    component.component_application = "fakeapp"
+    component.component_class = "fakeclass"
+    component.input_file = os.fspath(input_file)
+    component.data = {"build": {"name": "build"}}
+    component.output_requirement = MissingOutputFile
+    component.output_template = "result.csv"
+    component.apply_settings({}, component.data, {"ignore_output_errors": True})
+    monkeypatch.setattr(
+        component, "_run_stage", lambda operation: operation == "execute"
+    )
+
+    component.run_component()
+
+
 def test_run_passes_workflow_context_without_setting_env(monkeypatch, tmp_path):
     _clear_workflow_env(monkeypatch)
     input_file = tmp_path / "input.yaml"

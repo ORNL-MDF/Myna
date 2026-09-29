@@ -106,8 +106,10 @@ extracts metadata. New shared workflow code should prefer `WorkflowContext`,
   `myna.core.workflow.load_input`. Accepted suffixes are `.yaml`, `.json` for the main input
   files and Myna workspaces can be included with `.yaml`, `.json`, `.myna-workspace`,
   and `.myna-workspace-json` suffixes. The `myna` section carries workflow-wide
-  settings such as the optional `workspace` path and `ignore_missing_layers` flag used
-  by `myna config` to skip missing layer metadata for independent layer-wise cases.
+  settings such as the optional `workspace` path, the `ignore_missing_layers` flag used
+  by `myna config` to skip missing layer metadata for independent layer-wise cases, and
+  the `ignore_output_errors` flag used by `myna run` to continue after component output
+  validation finds missing or invalid expected files.
 - **Workflow**: Ordered `steps` in an input file. The CLI can configure, run, and sync
   all steps or selected steps.
 - **Step**: A named workflow entry with a component `class`, an `application`, optional
@@ -166,7 +168,9 @@ validates component outputs and delegates supported sync behavior to the selecte
 database adapter while providing the active input file through `WorkflowContext`.
 When `myna.ignore_missing_layers` is true, `config` drops missing part-layer and
 build-region-layer cases from the configured case set, but region-layer steps still
-fail because their requested layers are not independent.
+fail because their requested layers are not independent. When `myna.ignore_output_errors` is
+true, `run` reports missing or invalid component outputs and continues instead of
+raising; application-stage exceptions remain fatal.
 
 ## Dependency Boundaries
 

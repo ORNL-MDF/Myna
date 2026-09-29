@@ -47,6 +47,7 @@ class Component:
         self.data = {}
         self.types = ["build"]
         self.workspace = None
+        self.ignore_output_errors = False
         self.input_file = None
         self.step_index = None
         self.last_step_name = None
@@ -73,7 +74,12 @@ class Component:
                     )
                     print(f"ERROR: {message}")
                     [print("\t" + x) for x in output_files]
-                    raise RuntimeError(message)
+                    if self.ignore_output_errors:
+                        print(
+                            "WARNING: Continuing because myna.ignore_output_errors is true."
+                        )
+                    else:
+                        raise RuntimeError(message)
             else:
                 print(
                     f"No execute command was specified for step {self.name}. The expected output files are:"
@@ -230,6 +236,9 @@ class Component:
             # Set workspace path
             if myna_settings is not None:
                 self.workspace = myna_settings.get("workspace", None)
+                self.ignore_output_errors = bool(
+                    myna_settings.get("ignore_output_errors", False)
+                )
 
             # Load commands for configure, execute, and postprocess
             self.configure_dict = step_settings.get("configure", self.configure_dict)
