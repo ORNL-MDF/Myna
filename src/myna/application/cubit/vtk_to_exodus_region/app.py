@@ -28,7 +28,7 @@ from vtk import (  # pylint: disable=no-name-in-module
 from vtkmodules.util.numpy_support import vtk_to_numpy
 from myna.application.cubit import CubitApp
 from myna.core.utils import working_directory
-from myna.application.exaca import grain_id_to_reference_id, load_grain_ids
+from myna.application.exaca.id import grain_id_to_reference_id, load_grain_ids
 
 
 class CubitVtkToExodusApp(CubitApp):
