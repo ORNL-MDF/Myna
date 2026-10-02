@@ -64,27 +64,28 @@ def run_command(args, app=None, parallel=None, **kwargs):
     app = app or _active_app.get()
     if app is not None:
         print(f"[run_command] - {args}")
-        if parallel is not None:
-            kwargs = {key: value for key, value in kwargs.items()}
+        if app.args.docker_image is not None:
+            case_dir = str(Path.cwd())
+            container_case_path = "/home/myna"
+            kwargs.setdefault("remove", True)
+            kwargs.setdefault("volumes", {})
+            kwargs["volumes"].setdefault(case_dir, {"bind": container_case_path})
+            kwargs.setdefault("working_dir", container_case_path)
+            print(f"[run_command] - Launching Docker container with {kwargs}")
+        if parallel:
             case_dir = str(Path.cwd())
             print(f"[run_command] - in {case_dir}")
-            if app.args.docker_image is not None:
-                container_case_path = "/home/myna"
-                kwargs = {
-                    "remove": True,
-                    "volumes": {
-                        case_dir: {"bind": container_case_path},
-                    },
-                    "working_dir": container_case_path,
-                }
-                print(f"[run_command] - Launching Docker container with {kwargs}")
             p = app.start_subprocess_with_mpi_args(args, **kwargs)
-            output = p.communicate()[0] if p.stdout is not None else None
+            output = (
+                p.communicate()[0] if getattr(p, "stdout", None) is not None else None
+            )
             app.wait_for_process_success(p)
             return output
         else:
             p = app.start_subprocess(args, **kwargs)
-            output = p.communicate()[0] if p.stdout is not None else None
+            output = (
+                p.communicate()[0] if getattr(p, "stdout", None) is not None else None
+            )
             app.wait_for_process_success(p)
             return output
     else:
