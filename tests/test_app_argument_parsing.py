@@ -7,6 +7,7 @@
 # License: 3-clause BSD, see https://opensource.org/licenses/BSD-3-Clause.
 #
 import json
+import os
 from types import SimpleNamespace
 import sys
 import stat
@@ -216,14 +217,83 @@ def test_start_subprocess_loads_docker_run_kwargs_from_config(monkeypatch, tmp_p
     app.start_subprocess(["echo", "hello"], volumes={"/addition": {"bind": "/work"}})
 
     assert captured["image"] == "example:latest"
-    assert captured["command"] == ["-lc", "echo hello"]
-    assert captured["kwargs"]["entrypoint"] == "bash"
+    assert captured["command"] == ["bash", "-lc", "echo hello"]
+    assert "entrypoint" not in captured["kwargs"]
     assert captured["kwargs"]["detach"] is True
+    assert captured["kwargs"]["user"] == str(os.getuid())
     assert captured["kwargs"]["remove"] is True
     assert captured["kwargs"]["volumes"] == {
         "/host": {"bind": "/data"},
         "/addition": {"bind": "/work"},
     }
+
+
+def test_start_subprocess_docker_config_overrides_default_user(monkeypatch, tmp_path):
+    docker_config_file = tmp_path / "docker-run.yaml"
+    docker_config_file.write_text("user: '1234:5678'\n", encoding="utf-8")
+
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "test",
+            "--docker-image",
+            "example:latest",
+            "--docker-config",
+            str(docker_config_file),
+        ],
+    )
+
+    captured = {}
+
+    class FakeContainers:
+        def run(self, image, command, **kwargs):
+            captured["kwargs"] = kwargs
+            return SimpleNamespace(name="fake-container")
+
+    monkeypatch.setattr(
+        "myna.core.app.base.docker.from_env",
+        lambda: SimpleNamespace(containers=FakeContainers()),
+    )
+
+    app = MynaApp()
+    app.start_subprocess(["echo", "hello"])
+
+    assert captured["kwargs"]["user"] == "1234:5678"
+
+
+def test_start_subprocess_docker_is_windows_compatible(monkeypatch, tmp_path):
+    monkeypatch.delattr(os, "getuid", raising=False)
+    docker_config_file = tmp_path / "docker-run.yaml"
+    docker_config_file.write_text("user: '1234:5678'\n", encoding="utf-8")
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "test",
+            "--docker-image",
+            "example:latest",
+            "--docker-config",
+            str(docker_config_file),
+        ],
+    )
+
+    captured = {}
+
+    class FakeContainers:
+        def run(self, image, command, **kwargs):
+            captured["kwargs"] = kwargs
+            return SimpleNamespace(name="fake-container")
+
+    monkeypatch.setattr(
+        "myna.core.app.base.docker.from_env",
+        lambda: SimpleNamespace(containers=FakeContainers()),
+    )
+
+    app = MynaApp()
+    app.start_subprocess(["echo", "hello"])
+
+    assert captured["kwargs"]["user"] == "1234:5678"
 
 
 def test_start_subprocess_rejects_non_mapping_docker_config(monkeypatch, tmp_path):
@@ -248,7 +318,43 @@ def test_start_subprocess_rejects_non_mapping_docker_config(monkeypatch, tmp_pat
         app.start_subprocess(["echo", "hello"])
 
 
-@pytest.mark.parametrize("reserved_key", ["image", "command", "entrypoint", "detach"])
+def test_start_subprocess_docker_config_sets_custom_entrypoint(monkeypatch, tmp_path):
+    docker_config_file = tmp_path / "docker-run.yaml"
+    docker_config_file.write_text("entrypoint: /custom-entrypoint\n", encoding="utf-8")
+
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "test",
+            "--docker-image",
+            "example:latest",
+            "--docker-config",
+            str(docker_config_file),
+        ],
+    )
+
+    captured = {}
+
+    class FakeContainers:
+        def run(self, image, command, **kwargs):
+            captured["command"] = command
+            captured["kwargs"] = kwargs
+            return SimpleNamespace(name="fake-container")
+
+    monkeypatch.setattr(
+        "myna.core.app.base.docker.from_env",
+        lambda: SimpleNamespace(containers=FakeContainers()),
+    )
+
+    app = MynaApp()
+    app.start_subprocess(["echo", "hello"])
+
+    assert captured["command"] == ["bash", "-lc", "echo hello"]
+    assert captured["kwargs"]["entrypoint"] == "/custom-entrypoint"
+
+
+@pytest.mark.parametrize("reserved_key", ["image", "command", "detach"])
 def test_start_subprocess_rejects_reserved_docker_config_keys(
     monkeypatch, tmp_path, reserved_key
 ):
