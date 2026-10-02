@@ -580,7 +580,9 @@ class MynaApp:
         # Match the user who started Myna so files written through bind mounts remain
         # writable on the host. A docker config can intentionally select another
         # container user.
-        docker_run_kwargs = {"user": str(os.getuid())}
+        docker_run_kwargs = {}
+        if hasattr(os, "getuid"):
+            docker_run_kwargs["user"] = str(os.getuid())
         docker_run_kwargs.update(self._get_docker_run_kwargs())
         volume_dict = {}
         if "volumes" in kwargs:
