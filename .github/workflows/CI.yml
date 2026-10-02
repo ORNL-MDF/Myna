@@ -50,6 +50,9 @@ jobs:
         run: uv run --frozen --no-sync mkdocs build --strict
       - name: Unicode Safety
         uses: dcondrey/unicode-safety-check@v3
+        with:
+          exclude-patterns: |
+            site/
 
   test-examples:
     name: Test 3DThesis, AdditiveFOAM, and ExaCA examples
