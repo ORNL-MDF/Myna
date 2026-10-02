@@ -206,9 +206,9 @@ def get_changed_files() -> set[str]:
     merge_base = get_comparison_base()
     if merge_base is not None:
         changed = set(run_git_command(["diff", "--name-only", f"{merge_base}..HEAD"]))
+        changed.update(run_git_command(["diff", "--name-only", "--cached"]))
     else:
-        changed = set(run_git_command(["diff", "--name-only", "HEAD"]))
-    changed.update(run_git_command(["ls-files", "--others", "--exclude-standard"]))
+        changed = set(run_git_command(["diff", "--name-only", "--cached"]))
     return changed
 
 
