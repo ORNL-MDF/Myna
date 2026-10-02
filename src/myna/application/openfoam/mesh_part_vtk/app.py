@@ -53,26 +53,20 @@ class OpenFOAMMeshPartVTK(MynaApp):
 
     def create_mesh(self, case_dir, scale_factor, coarse_res, refinement_level):
         """Create OpenFOAM mesh and export VTK for a case directory."""
-        case_data = load_input(os.path.join(case_dir, "myna_data.yaml"))
-        parts = case_data["build"]["parts"]
-        part_key = [x for x in parts.keys()][0]
-        stl_path = parts[part_key]["stl"]["file_local"]
-
-        working_stl_path = mesh.preprocess_stl(
-            case_dir, stl_path, scale_factor, app=self
-        )
-        bb_dict = mesh.create_stl_cube_mesh(
-            case_dir,
-            working_stl_path,
-            [coarse_res, coarse_res, coarse_res],
-            1e-4,
-            app=self,
-        )
-        mesh.extract_stl_features(
-            case_dir, working_stl_path, refinement_level, bb_dict["origin"]
-        )
-        mesh.create_part_mesh(case_dir, working_stl_path, bb_dict, app=self)
-        return mesh.foam_to_adamantine(case_dir)
+        with mesh.use_app(self):
+            case_data = load_input(os.path.join(case_dir, "myna_data.yaml"))
+            parts = case_data["build"]["parts"]
+            part_key = [x for x in parts.keys()][0]
+            stl_path = parts[part_key]["stl"]["file_local"]
+            working_stl_path = mesh.preprocess_stl(case_dir, stl_path, scale_factor)
+            bb_dict = mesh.create_stl_cube_mesh(
+                case_dir, working_stl_path, [coarse_res] * 3, 1e-4
+            )
+            mesh.extract_stl_features(
+                case_dir, working_stl_path, refinement_level, bb_dict["origin"]
+            )
+            mesh.create_part_mesh(case_dir, working_stl_path, bb_dict)
+            return mesh.foam_to_adamantine(case_dir)
 
     def execute(self):
         """Execute all case directories and write expected Myna output files."""
