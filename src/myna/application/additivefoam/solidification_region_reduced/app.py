@@ -344,12 +344,13 @@ class AdditiveFOAMRegionReduced(AdditiveFOAM):
                 from `self.parse_mynafile_path_to_dict()`
         """
         # Generate coarse background mesh
-        openfoam.mesh.create_cube_mesh(
-            case_dict["resource_template_dir"],
-            [self.args.coarse, self.args.coarse, self.args.coarse],
-            case_dict["rve_mesh_dict"]["region_box"],
-            case_dict["rve_mesh_dict"]["rve_pad"],
-        )
+        with openfoam.mesh.use_app(self):
+            openfoam.mesh.create_cube_mesh(
+                case_dict["resource_template_dir"],
+                [self.args.coarse, self.args.coarse, self.args.coarse],
+                case_dict["rve_mesh_dict"]["region_box"],
+                case_dict["rve_mesh_dict"]["rve_pad"],
+            )
 
     def refine_layer_mesh(self, case_dict):
         """Refines the coarse mesh
@@ -362,17 +363,17 @@ class AdditiveFOAMRegionReduced(AdditiveFOAM):
         refine_dict_path = os.path.join(
             case_dict["resource_template_dir"], "system", "refineLayerMeshDict"
         )
-        openfoam.mesh.update_parameter(
-            refine_dict_path,
-            "castellatedMeshControls/refinementRegions/refinementBox/levels",
-            f"( ({self.args.refine_layer} {self.args.refine_layer}) )",
-        )
-        openfoam.mesh.refine_mesh_in_box(
-            case_dict["resource_template_dir"],
-            case_dict["rve_mesh_dict"]["layer_box"],
-            self,
-            refine_dict_path,
-        )
+        with openfoam.mesh.use_app(self):
+            openfoam.mesh.update_parameter(
+                refine_dict_path,
+                "castellatedMeshControls/refinementRegions/refinementBox/levels",
+                f"( ({self.args.refine_layer} {self.args.refine_layer}) )",
+            )
+            openfoam.mesh.refine_mesh_in_box(
+                case_dict["resource_template_dir"],
+                case_dict["rve_mesh_dict"]["layer_box"],
+                refine_dict_path,
+            )
 
     def refine_region_mesh(self, case_dict):
         """Refines the already refined layer mesh in the region for the case
@@ -385,17 +386,17 @@ class AdditiveFOAMRegionReduced(AdditiveFOAM):
         refine_dict_path = os.path.join(
             case_dict["resource_template_dir"], "system", "refineRegionMeshDict"
         )
-        openfoam.mesh.update_parameter(
-            refine_dict_path,
-            "castellatedMeshControls/refinementRegions/refinementBox/levels",
-            f"( ({self.args.refine_region} {self.args.refine_region}) )",
-        )
-        openfoam.mesh.refine_mesh_in_box(
-            case_dict["resource_template_dir"],
-            case_dict["rve_mesh_dict"]["region_box"],
-            self,
-            refine_dict_path,
-        )
+        with openfoam.mesh.use_app(self):
+            openfoam.mesh.update_parameter(
+                refine_dict_path,
+                "castellatedMeshControls/refinementRegions/refinementBox/levels",
+                f"( ({self.args.refine_region} {self.args.refine_region}) )",
+            )
+            openfoam.mesh.refine_mesh_in_box(
+                case_dict["resource_template_dir"],
+                case_dict["rve_mesh_dict"]["region_box"],
+                refine_dict_path,
+            )
         self.update_exaca_region_bounds(
             case_dict["resource_template_dir"], case_dict["rve_mesh_dict"]["region_box"]
         )
