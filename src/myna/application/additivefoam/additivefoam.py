@@ -267,7 +267,9 @@ class AdditiveFOAM(MynaApp):
             scanpath_name: name of scanpath file in the case's `constant` directory
         """
         update_parameter(
-            f"{case_dir}/constant/heatSourceDict", "beam/pathName", f'"{scanpath_name}"'
+            f"{case_dir}/constant/heatSourceDict",
+            "beam/pathName",
+            f'"{scanpath_name}"',
         )
 
     def update_exaca_mesh_size(self, case_dir):
