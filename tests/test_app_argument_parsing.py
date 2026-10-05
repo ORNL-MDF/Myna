@@ -86,6 +86,14 @@ def test_validate_executable_can_be_required_by_myna_setting(monkeypatch):
         app.validate_executable("definitely-not-installed-myna-executable")
 
 
+def test_validate_executable_checks_all_executables(monkeypatch):
+    monkeypatch.setattr(sys, "argv", ["test", "--validate-executable"])
+    app = MynaApp()
+
+    with pytest.raises(FileNotFoundError, match="second-myna-executable"):
+        app.validate_executable(["/bin/sh", "second-myna-executable"])
+
+
 def test_register_argument_rejects_conflicting_option_redefinitions(monkeypatch):
     monkeypatch.setattr(sys, "argv", ["test"])
     app = MynaApp()
@@ -330,6 +338,9 @@ def test_deer_stage_parsers_are_idempotent(monkeypatch, stage_calls):
         ("parse_execute_arguments", "parse_execute_arguments"),
     ],
 )
+@pytest.mark.filterwarnings(
+    'ignore:cubit/.* app executable "(psculpt|epu)" was not found\\.:UserWarning'
+)
 def test_cubit_stage_parsers_are_idempotent(monkeypatch, stage_calls):
     monkeypatch.setattr(sys, "argv", ["test"])
     app = CubitApp()
@@ -341,6 +352,20 @@ def test_cubit_stage_parsers_are_idempotent(monkeypatch, stage_calls):
     assert app.args.cubitpath is None
 
 
+@pytest.mark.filterwarnings(
+    'ignore:cubit/.* app executable "(psculpt|epu)" was not found\\.:UserWarning'
+)
+def test_cubit_validates_assembled_executable_paths(monkeypatch):
+    monkeypatch.setattr(sys, "argv", ["test"])
+    app = CubitApp()
+    validated = []
+    monkeypatch.setattr(app, "validate_executable", validated.append)
+
+    app.parse_configure_arguments()
+
+    assert validated == [["psculpt", "epu"]]
+
+
 @pytest.mark.parametrize(
     "stage_calls",
     [
@@ -348,6 +373,9 @@ def test_cubit_stage_parsers_are_idempotent(monkeypatch, stage_calls):
         ("parse_configure_arguments", "parse_execute_arguments"),
         ("parse_execute_arguments", "parse_execute_arguments"),
     ],
+)
+@pytest.mark.filterwarnings(
+    'ignore:cubit/.* app executable "(psculpt|epu)" was not found\\.:UserWarning'
 )
 def test_cubit_vtk_to_exodus_stage_parsers_are_idempotent(monkeypatch, stage_calls):
     monkeypatch.setattr(sys, "argv", ["test"])
