@@ -88,6 +88,14 @@ On import, `src/myna/core/__init__.py` sets:
 - `MYNA_INSTALL_PATH` to the installed `myna` package root;
 - `MYNA_APP_PATH` to the installed `myna/application` directory.
 
+The top-level `myna` package, application package, and database package expose
+their public subpackages/adapters lazily. This keeps optional application and
+database dependencies isolated until the corresponding backend is accessed. Core
+workflow primitives remain eagerly available so ordinary core imports preserve
+predictable validation and configuration behavior. `__all__` remains the public
+export contract; wildcard imports can therefore intentionally load every listed
+optional backend.
+
 Workflow run and sync state is carried through `myna.core.context.WorkflowContext`.
 This context includes the active input file, current step, step class, step index, and
 previous-step information. `myna.core.context` resolves that explicit context first and
