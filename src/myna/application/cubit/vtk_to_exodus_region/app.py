@@ -431,8 +431,8 @@ class CubitVtkToExodusApp(CubitApp):
             from netCDF4 import Dataset  # pylint: disable=import-outside-toplevel
         except ImportError as exc:
             raise ImportError(
-                'Myna cubit/vtk_to_exodus_region app requires "pip install .[cubit]"'
-                + "optional dependencies!"
+                "Myna cubit/vtk_to_exodus_region app requires "
+                '"pip install .[cubit]" optional dependencies!'
             ) from exc
 
         # Pre-process VTK data file
