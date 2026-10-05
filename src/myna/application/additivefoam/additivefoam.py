@@ -178,7 +178,6 @@ class AdditiveFOAM(MynaApp):
             f"{case_dir}/constant/heatSourceDict",
             f"beam/{heat_source_model}Coeffs/dimensions",
             heat_source_dim_string,
-            app=self,
         )
 
     def update_region_start_and_end_times(self, case_dir, bb_dict, scanpath_name):
@@ -247,17 +246,12 @@ class AdditiveFOAM(MynaApp):
             start_time: start time of the simulation
             end_time: end time of the simulation
         """
-        update_parameter(
-            f"{case_dir}/system/controlDict", "startTime", start_time, app=self
-        )
-        update_parameter(
-            f"{case_dir}/system/controlDict", "endTime", end_time, app=self
-        )
+        update_parameter(f"{case_dir}/system/controlDict", "startTime", start_time)
+        update_parameter(f"{case_dir}/system/controlDict", "endTime", end_time)
         update_parameter(
             f"{case_dir}/system/controlDict",
             "writeInterval",
             np.round(0.5 * (end_time - start_time), 5),
-            app=self,
         )
         source = os.path.abspath(os.path.join(case_dir, "0"))
         target = os.path.abspath(os.path.join(case_dir, f"{start_time}"))
@@ -276,7 +270,6 @@ class AdditiveFOAM(MynaApp):
             f"{case_dir}/constant/heatSourceDict",
             "beam/pathName",
             f'"{scanpath_name}"',
-            app=self,
         )
 
     def update_exaca_mesh_size(self, case_dir):
@@ -285,9 +278,7 @@ class AdditiveFOAM(MynaApp):
         Args:
             case_dir: AdditiveFOAM case directory to update
         """
-        update_parameter(
-            f"{case_dir}/system/ExaCA", "ExaCA/dx", self.args.exaca_mesh, app=self
-        )
+        update_parameter(f"{case_dir}/system/ExaCA", "ExaCA/dx", self.args.exaca_mesh)
 
     def update_exaca_region_bounds(self, case_dir, bb):
         """Updates the bounds for the ExaCA output for an AdditiveFOAM case
@@ -300,5 +291,4 @@ class AdditiveFOAM(MynaApp):
             f"{case_dir}/system/ExaCA",
             "ExaCA/box",
             f"( {bb[0][0]} {bb[0][1]} {bb[0][2]} ) ( {bb[1][0]} {bb[1][1]} {bb[1][2]} )",
-            app=self,
         )
