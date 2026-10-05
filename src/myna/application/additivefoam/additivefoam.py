@@ -93,20 +93,18 @@ class AdditiveFOAM(MynaApp):
             f"{case_dir}/constant/heatSourceDict",
             f"beam/{absorption_model}Coeffs/eta0",
             absorption,
-            app=self,
         )
         update_parameter(
             f"{case_dir}/constant/heatSourceDict",
             f"beam/{absorption_model}Coeffs/etaMin",
             absorption,
-            app=self,
         )
 
         # Update the isotherm in the ExaCA function dictionary if it exists
         exaca_dict = f"{case_dir}/system/ExaCA"
         if os.path.exists(exaca_dict):
             liquidus = mat.get_property("liquidus_temperature", None, None)
-            update_parameter(exaca_dict, "ExaCA/isoValue", liquidus, app=self)
+            update_parameter(exaca_dict, "ExaCA/isoValue", liquidus)
 
     def get_region_resource_template_dir(self, part, region):
         """Provides the path to the template directory in the myna_resources folder

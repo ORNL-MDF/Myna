@@ -76,3 +76,21 @@ def test_run_command_propagates_app_process_failure():
 
     with pytest.raises(RuntimeError, match="process failed"):
         mesh.run_command(["checkMesh"], app=app)
+
+
+def test_update_parameter_uses_context_for_command_runner():
+    with pytest.MonkeyPatch.context() as monkeypatch:
+        run_command = Mock()
+        monkeypatch.setattr(mesh, "run_command", run_command)
+        mesh.update_parameter("system/controlDict", "application", "foo")
+
+    run_command.assert_called_once_with(
+        [
+            "foamDictionary",
+            "-entry",
+            "application",
+            "-set",
+            "foo",
+            "system/controlDict",
+        ],
+    )
