@@ -42,6 +42,7 @@ class CubitApp(MynaApp):
             path_prefix = os.path.join(self.args.cubitpath, "bin")
         self.exe_psculpt = os.path.join(path_prefix, "psculpt")
         self.exe_epu = os.path.join(path_prefix, "epu")
+        self.validate_executable([self.exe_psculpt, self.exe_epu])
 
     def parse_configure_arguments(self):
         self.parse_shared_arguments()
