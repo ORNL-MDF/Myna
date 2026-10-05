@@ -61,6 +61,31 @@ def test_register_argument_skips_duplicate_option_registration(monkeypatch):
     assert app.args.demo == "value"
 
 
+def test_validate_executable_warns_by_default(monkeypatch):
+    monkeypatch.setattr(sys, "argv", ["test"])
+    app = MynaApp()
+
+    with pytest.warns(UserWarning, match="executable"):
+        app.validate_executable("definitely-not-installed-myna-executable")
+
+
+def test_validate_executable_can_be_required_by_app_argument(monkeypatch):
+    monkeypatch.setattr(sys, "argv", ["test", "--validate-executable"])
+    app = MynaApp()
+
+    with pytest.raises(FileNotFoundError, match="executable"):
+        app.validate_executable("definitely-not-installed-myna-executable")
+
+
+def test_validate_executable_can_be_required_by_myna_setting(monkeypatch):
+    monkeypatch.setattr(sys, "argv", ["test"])
+    app = MynaApp()
+    app.settings = {"myna": {"validate_all_executable": True}}
+
+    with pytest.raises(FileNotFoundError, match="executable"):
+        app.validate_executable("definitely-not-installed-myna-executable")
+
+
 def test_register_argument_rejects_conflicting_option_redefinitions(monkeypatch):
     monkeypatch.setattr(sys, "argv", ["test"])
     app = MynaApp()
@@ -349,6 +374,9 @@ def test_cubit_vtk_to_exodus_stage_parsers_are_idempotent(monkeypatch, stage_cal
         ("parse_execute_arguments", "parse_execute_arguments"),
     ],
 )
+@pytest.mark.filterwarnings(
+    'ignore:thesis/None app executable "3DThesis" was not found\\.:UserWarning'
+)
 def test_thesis_stage_parsers_are_idempotent(monkeypatch, stage_calls):
     monkeypatch.setattr(sys, "argv", ["test"])
     app = Thesis()
@@ -371,6 +399,9 @@ def test_thesis_stage_parsers_are_idempotent(monkeypatch, stage_calls):
         "parse_execute_arguments",
     ],
 )
+@pytest.mark.filterwarnings(
+    'ignore:thesis/None app executable "3DThesis" was not found\\.:UserWarning'
+)
 def test_thesis_stage_parsers_set_default_executable(monkeypatch, stage_call):
     monkeypatch.setattr(sys, "argv", ["test"])
     app = Thesis()
@@ -387,6 +418,9 @@ def test_thesis_stage_parsers_set_default_executable(monkeypatch, stage_call):
         ThesisSolidificationPart,
         ThesisMeltPoolGeometryPart,
     ],
+)
+@pytest.mark.filterwarnings(
+    'ignore:thesis/.* app executable "3DThesis" was not found\\.:UserWarning'
 )
 @pytest.mark.parametrize(
     "stage_calls",
@@ -419,6 +453,9 @@ def test_thesis_part_layer_configure_parsers_register_initial_temperature_argume
         ("parse_configure_arguments", "parse_configure_arguments"),
     ],
 )
+@pytest.mark.filterwarnings(
+    'ignore:thesis/melt_pool_geometry_part app executable "3DThesis" was not found\\.:UserWarning'
+)
 def test_melt_pool_geometry_stage_parsers_register_sampling_mode(
     monkeypatch, stage_calls
 ):
@@ -441,6 +478,9 @@ def test_melt_pool_geometry_stage_parsers_register_sampling_mode(
         ("parse_configure_arguments", "parse_execute_arguments"),
         ("parse_execute_arguments", "parse_execute_arguments"),
     ],
+)
+@pytest.mark.filterwarnings(
+    'ignore:thesis/temperature_surface_part app executable "3DThesis" was not found\\.:UserWarning'
 )
 def test_temperature_surface_part_stage_parsers_are_idempotent(
     monkeypatch, stage_calls
@@ -466,6 +506,9 @@ def test_temperature_surface_part_stage_parsers_are_idempotent(
         "parse_execute_arguments",
     ],
 )
+@pytest.mark.filterwarnings(
+    'ignore:thesis/temperature_surface_part app executable "3DThesis" was not found\\.:UserWarning'
+)
 def test_temperature_surface_part_stage_parsers_set_default_executable(
     monkeypatch, stage_call
 ):
@@ -484,6 +527,9 @@ def test_temperature_surface_part_stage_parsers_set_default_executable(
         ("parse_configure_arguments", "parse_execute_arguments"),
         ("parse_execute_arguments", "parse_execute_arguments"),
     ],
+)
+@pytest.mark.filterwarnings(
+    'ignore:exaca/None app executable "ExaCA" was not found\\.:UserWarning'
 )
 def test_exaca_stage_parsers_are_idempotent(monkeypatch, stage_calls):
     monkeypatch.setattr(sys, "argv", ["test"])
@@ -505,6 +551,9 @@ def test_exaca_stage_parsers_are_idempotent(monkeypatch, stage_calls):
         "parse_configure_arguments",
         "parse_execute_arguments",
     ],
+)
+@pytest.mark.filterwarnings(
+    'ignore:exaca/None app executable "ExaCA" was not found\\.:UserWarning'
 )
 def test_exaca_stage_parsers_set_default_executable(monkeypatch, stage_call):
     monkeypatch.setattr(sys, "argv", ["test"])
