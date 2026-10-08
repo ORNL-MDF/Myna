@@ -170,6 +170,17 @@ Architecture/docs: no update needed - extends an existing component extension po
 
 ## Developing new applications
 
+The top-level `myna.application` package loads application backends when their
+submodule is accessed. Keep backend-specific Python imports inside the backend
+package; importing `myna` or `myna.core` should not require an unrelated optional
+application dependency. Missing backend dependencies may consequently be reported
+when that backend is accessed rather than during the initial package import.
+
+The same rule applies to database adapters: import the adapter or select its
+datatype before using adapter-specific functionality. Avoid relying on wildcard
+imports when optional backends are not installed, since wildcard imports resolve
+all names listed in `__all__`.
+
 Once a new component is implemented, you will have to implement a corresponding
 application (app) to use with `myna run`. Applications consist of up to three stage
 modules:
