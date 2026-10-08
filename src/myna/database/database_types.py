@@ -33,7 +33,7 @@ def return_datatype_class(datatype_str):
         from myna.database.peregrine import PeregrineDB
 
         return PeregrineDB()
-    elif any([x in datatype for x in ["peregrineh5", "peregrinehdf5", "hdf5", "h5"]]):
+    elif datatype in ["peregrineh5", "peregrinehdf5", "hdf5", "h5"]:
         from myna.database.peregrine_hdf5 import PeregrineHDF5
 
         info = datatype_str.lower().split("_")
