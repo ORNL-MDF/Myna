@@ -103,6 +103,13 @@ class MynaApp:
             help="(str) Path to executable",
         )
         self.register_argument(
+            "--validate-executable",
+            dest="validate_executable",
+            default=False,
+            action="store_true",
+            help="(flag) require the configured executable to exist and be executable",
+        )
+        self.register_argument(
             "--np",
             default=1,
             type=int,
@@ -348,43 +355,59 @@ class MynaApp:
             )
             warnings.warn(warning_msg, category=DeprecationWarning)
 
-    def validate_executable(self, default):
-        """Check if the specified executable exists and raise error if not"""
+    def validate_executable(self, default: str | list[str] | tuple[str, ...]):
+        """Check one or more executables, warning unless strict validation is set."""
 
         # The executable runs inside the Docker container, not on the host, so a
         # missing host executable is expected and not an error in this case.
         if self.args.docker_image is not None:
             return
 
-        # Get the name of the executable
-        exe = self.args.exec
-        if exe is None:
-            exe = default
-        exe_windows = exe + ".exe"  # Try a Windows exe just in case
+        strict = self.args.validate_executable or bool(
+            self.settings.get("myna", {}).get("validate_all_executable", False)
+        )
 
-        # If an executable is found, return
-        if any(is_executable(x) for x in [exe, exe_windows]):
-            return
+        # A configured --exec applies to single-executable applications. Apps that
+        # assemble several paths pass a list as ``default`` and validate each path;
+        # the explicit list must not be replaced by the configured --exec value.
+        if isinstance(default, str):
+            executables = self.args.exec if self.args.exec is not None else default
+            executables = [executables]
+        else:
+            executables = default
 
-        # If there is an `env` set, then assume that it sets a valid executable path
-        if self.args.env is not None:
-            warning_msg = (
-                f"Warning: {self.name} app executable was not found,"
-                + " but `env` option was set. Assuming the environment sets valid path."
-            )
-            warnings.warn(warning_msg)
-            return
+        for exe in executables:
+            exe_windows = exe + ".exe"  # Try a Windows exe just in case
 
-        # If not found, raise the appropriate errors
-        if shutil.which(exe, mode=os.F_OK) is None:
-            raise FileNotFoundError(
-                f'{self.name} app executable "{exe}" was not found.'
-            )
-        if shutil.which(exe, mode=os.X_OK) is None:
-            raise PermissionError(
-                f'{self.name} app executable "{shutil.which(exe, mode=os.F_OK)}"'
-                + "does not have execute permissions."
-            )
+            if any(is_executable(x) for x in [exe, exe_windows]):
+                continue
+
+            # If there is an `env` set, then assume that it sets a valid executable path
+            if self.args.env is not None:
+                warning_msg = (
+                    f"Warning: {self.name} app executable was not found,"
+                    + " but `env` option was set. Assuming the environment sets valid path."
+                )
+                warnings.warn(warning_msg)
+                continue
+
+            # Preserve the old exceptions when strict validation is requested. Otherwise
+            # applications can still report a useful diagnostic without preventing setup
+            # on machines where the external executable is intentionally unavailable.
+            if shutil.which(exe, mode=os.F_OK) is None:
+                message = f'{self.name} app executable "{exe}" was not found.'
+                if strict:
+                    raise FileNotFoundError(message)
+                warnings.warn(message)
+                continue
+            if shutil.which(exe, mode=os.X_OK) is None:
+                message = (
+                    f'{self.name} app executable "{shutil.which(exe, mode=os.F_OK)}"'
+                    + "does not have execute permissions."
+                )
+                if strict:
+                    raise PermissionError(message)
+                warnings.warn(message)
 
     def get_executable(self, default=None):
         """Return the configured executable, falling back to ``default``."""
