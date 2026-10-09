@@ -79,13 +79,12 @@ class File:
         """
 
         # Set locator variables for registration based on the mode
-        locator_variables = set()
         if mode == "spatial_2d":
-            locator_variables.update(["x (m)", "y (m)"])
+            locator_variables = ["x (m)", "y (m)"]
         elif mode == "spatial_3d":
-            locator_variables.update(["x (m)", "y (m)", "z (m)"])
+            locator_variables = ["x (m)", "y (m)", "z (m)"]
         elif mode == "temporal":
-            locator_variables.update(["time (s)"])
+            locator_variables = ["time (s)"]
         else:
             raise ValueError(
                 "mode argument must be 'spatial_2d', 'spatial_3d' or 'temporal'"
