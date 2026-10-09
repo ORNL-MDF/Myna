@@ -2,7 +2,6 @@ steps:
 - adamantine:
     class: temperature_part_pvd
     application: adamantine
-    executable: /home/adamantine/bin/adamantine
     configure:
       mesh-substrate-depth: 2.0e-3
       mesh-substrate-xy-pad: 1.0e-3
@@ -13,6 +12,7 @@ steps:
       radiation-temperature-infty: 300
       courant: 0.1
     execute:
+      adamantine-bin: /home/adamantine/bin/adamantine
       np: 8
       docker-image: rombur/adamantine:1.0
       mpiexec: mpirun

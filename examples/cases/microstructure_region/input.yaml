@@ -23,7 +23,6 @@ steps:
 - exaca:
     class: microstructure_region
     application: exaca
-    executable: ExaCA
     configure:
       cell-size: 10.0
       sub-size: 12.3

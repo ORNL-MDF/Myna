@@ -200,9 +200,10 @@ Current intended boundaries:
   explicitly override that user. Docker launches preserve the image's default
   entrypoint unless a stage's Docker configuration explicitly sets `entrypoint`.
 - Executable requirements are declared by application wrappers and validated at the
-  beginning of `myna config` or by the side-effect-free `myna validate` command. The
-  legacy step-level `executable` setting applies to all stages, while stage-level
-  `exec` values override only their stage and emit deprecation warnings.
+  beginning of `myna config` or by the side-effect-free `myna validate` command.
+  Applications define named executable arguments (for example `exaca-bin` and
+  `thesis-bin`); the legacy step-level `executable`, stage-level `exec`, and generic
+  `--exec` inputs remain compatibility paths and emit deprecation warnings.
 - App-level executable version gates should compare the numeric semver core of discovered
   version strings; packaging suffixes such as `-dev` may be preserved for display but are
   intentionally ignored for minimum-version decisions through shared version utilities.

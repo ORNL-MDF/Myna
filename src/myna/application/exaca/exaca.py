@@ -27,6 +27,12 @@ class ExaCA(MynaApp):
     def parse_shared_arguments(self):
         """Setup ExaCA-specific inputs"""
         self.register_argument(
+            "--exaca-bin",
+            default="ExaCA",
+            type=str,
+            help="(str) ExaCA executable",
+        )
+        self.register_argument(
             "--cell-size", type=float, help="(float) ExaCA cell size in microns"
         )
         self.register_argument(
@@ -62,11 +68,14 @@ class ExaCA(MynaApp):
     def parse_execute_arguments(self):
         self.parse_shared_arguments()
         self.parse_known_args()
-        if self.args.exec is None:
-            self.args.exec = "ExaCA"
+
+    @property
+    def exaca_bin(self):
+        """Return the configured ExaCA executable."""
+        return self.args.exec or self.args.exaca_bin
 
     def get_required_executables(self):
-        return [self.args.exec or "ExaCA"]
+        return [self.exaca_bin]
 
     def parse_postprocess_arguments(self):
         self.parse_shared_arguments()
@@ -140,10 +149,10 @@ class ExaCA(MynaApp):
 
     def _get_orientation_file(self):
         """Resolve the grain orientation reference file from the ExaCA install."""
-        exaca_exec = shutil.which(self.args.exec)
+        exaca_exec = shutil.which(self.exaca_bin)
         if exaca_exec is None:
             raise FileNotFoundError(
-                f'{self.name} app executable "{self.args.exec}" was not found.'
+                f'{self.name} app executable "{self.exaca_bin}" was not found.'
             )
         exaca_install_dir = os.path.dirname(os.path.dirname(exaca_exec))
         return os.path.join(
@@ -221,10 +230,10 @@ class ExaCA(MynaApp):
     def _patch_case_executable(self, case_dir):
         """Write the resolved ExaCA executable location into a case script."""
         run_script = os.path.join(case_dir, "runCase.sh")
-        exaca_exec = shutil.which(self.args.exec)
+        exaca_exec = shutil.which(self.exaca_bin)
         if exaca_exec is None:
             raise FileNotFoundError(
-                f'{self.name} app executable "{self.args.exec}" was not found.'
+                f'{self.name} app executable "{self.exaca_bin}" was not found.'
             )
         self._replace_run_script_placeholders(
             run_script,
