@@ -18,7 +18,9 @@ def test_validate_executable_can_be_strict(monkeypatch):
     app = MynaApp()
 
     with pytest.raises(FileNotFoundError, match="executable"):
-        app.validate_executable("definitely-not-installed-myna-executable", strict=True)
+        app.validate_executable(
+            ["definitely-not-installed-myna-executable"], strict=True
+        )
 
 
 def test_validate_all_executable_false_disables_strict_default(monkeypatch):
@@ -27,4 +29,4 @@ def test_validate_all_executable_false_disables_strict_default(monkeypatch):
     app.settings = {"myna": {"validate_all_executable": False}}
 
     with pytest.warns(UserWarning, match="executable"):
-        app.validate_executable("definitely-not-installed-myna-executable")
+        app.validate_executable(["definitely-not-installed-myna-executable"])

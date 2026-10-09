@@ -369,7 +369,7 @@ class MynaApp:
 
     def validate_executable(
         self,
-        default: str | list[str] | tuple[str, ...],
+        executables: list[str | Path],
         strict: bool | None = None,
     ):
         """Check one or more executables in the configured execution environment."""
@@ -385,17 +385,8 @@ class MynaApp:
                 or os.environ.get("MYNA_VALIDATE_EXECUTABLES") == "1"
             )
 
-        # A configured --exec applies to single-executable applications. Apps that
-        # assemble several paths pass a list as ``default`` and validate each path;
-        # the explicit list must not be replaced by the configured --exec value.
-        if isinstance(default, str):
-            executables = self.args.exec if self.args.exec is not None else default
-            executables = [executables]
-        else:
-            executables = default
-
         for exe in executables:
-            output, returncode = self.run_subprocess(["which", str(exe)], check=False)
+            _, returncode = self.run_subprocess(["which", str(exe)], check=False)
             if returncode == 0:
                 continue
 
