@@ -18,8 +18,15 @@ import pytest
 import yaml
 
 from myna.core.workflow.load_input import load_input, write_input
+from myna.core.app.base import MynaApp
 
 from .example_paths import CASES_DIR
+
+
+@pytest.fixture(autouse=True)
+def disable_external_validation_for_legacy_config_tests(monkeypatch):
+    """Keep fixture configuration tests independent of installed applications."""
+    monkeypatch.setattr(MynaApp, "validate_executable", lambda *args, **kwargs: None)
 
 
 # This test checks that all examples can be correctly configured.

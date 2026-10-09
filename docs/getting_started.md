@@ -120,10 +120,16 @@ In general, these examples can be run by navigating into any of the case directo
 and then executing:
 
 ```shell
+myna validate
 myna config
 myna run
 myna sync
 ```
+
+`myna config` validates application executables before creating workflow files.
+Use `myna validate` for the same check without modifying the workflow. Legacy
+step-level `executable` and stage-level `exec` settings remain supported but emit
+deprecation warnings.
 
 You can also copy the full `examples/` tree out of the Myna repository to run
 elsewhere. If you copy an individual case instead, update the path to the build under

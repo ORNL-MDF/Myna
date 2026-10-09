@@ -255,6 +255,13 @@ class MynaApp:
         """Parse known command line arguments to update self.args and apply
         any corrections"""
         self.args, _ = self.parser.parse_known_args()
+        if self.args.exec is not None:
+            warnings.warn(
+                "The --exec option is deprecated; configure the step executable "
+                "or stage-local exec setting instead.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
         self._set_procs()
         self._mpiargs_to_current()
         if self.args.skip:
@@ -367,11 +374,13 @@ class MynaApp:
         """Check one or more executables in the configured execution environment."""
 
         if strict is None:
+            configured = self.settings.get("myna", {}).get(
+                "validate_all_executable", None
+            )
             strict = (
-                self.args.validate_executable
-                or bool(
-                    self.settings.get("myna", {}).get("validate_all_executable", False)
-                )
+                bool(configured)
+                if configured is not None
+                else self.args.validate_executable
                 or os.environ.get("MYNA_VALIDATE_EXECUTABLES") == "1"
             )
 
