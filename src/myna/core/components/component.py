@@ -577,14 +577,11 @@ class Component:
             obsolete_keys = ["exec"]
             if dict_key in obsolete_keys:
                 warning_msg = (
-                    f" Step {self.name} {operation}"
-                    + f' argument "{dict_key}" for {operation} is'
-                    + " obsolete. Using default value. Instead, use: "
-                    + f"  \n\t{self.name}:"
-                    + f"  \n\t  executable: {value}\n"
+                    f' Step {self.name} {operation} argument "{dict_key}" is '
+                    "deprecated; use the step-level executable setting instead."
                 )
-                warnings.warn(warning_msg)
-                return True
+                warnings.warn(warning_msg, DeprecationWarning, stacklevel=2)
+                return False
             return False
 
         def _get_arglist(key, value, operation) -> list:
