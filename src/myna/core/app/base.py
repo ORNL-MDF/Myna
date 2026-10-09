@@ -24,7 +24,7 @@ import yaml
 from myna.core.app._argument_registrar import _ArgumentRegistrar
 from myna.core.context import get_workflow_context
 from myna.core.workflow.load_input import load_input
-from myna.core.utils import is_executable, get_quoted_str, version_at_least
+from myna.core.utils import get_quoted_str, version_at_least
 from myna.core.components import return_step_class
 
 
@@ -355,17 +355,17 @@ class MynaApp:
             )
             warnings.warn(warning_msg, category=DeprecationWarning)
 
-    def validate_executable(self, default: str | list[str] | tuple[str, ...]):
-        """Check one or more executables, warning unless strict validation is set."""
+    def validate_executable(
+        self,
+        default: str | list[str] | tuple[str, ...],
+        strict: bool | None = None,
+    ):
+        """Check one or more executables in the configured execution environment."""
 
-        # The executable runs inside the Docker container, not on the host, so a
-        # missing host executable is expected and not an error in this case.
-        if self.args.docker_image is not None:
-            return
-
-        strict = self.args.validate_executable or bool(
-            self.settings.get("myna", {}).get("validate_all_executable", False)
-        )
+        if strict is None:
+            strict = self.args.validate_executable or bool(
+                self.settings.get("myna", {}).get("validate_all_executable", False)
+            )
 
         # A configured --exec applies to single-executable applications. Apps that
         # assemble several paths pass a list as ``default`` and validate each path;
@@ -377,37 +377,43 @@ class MynaApp:
             executables = default
 
         for exe in executables:
-            exe_windows = exe + ".exe"  # Try a Windows exe just in case
-
-            if any(is_executable(x) for x in [exe, exe_windows]):
+            output, returncode = self.run_subprocess(["which", str(exe)], check=False)
+            if returncode == 0:
                 continue
 
-            # If there is an `env` set, then assume that it sets a valid executable path
-            if self.args.env is not None:
-                warning_msg = (
-                    f"Warning: {self.name} app executable was not found,"
-                    + " but `env` option was set. Assuming the environment sets valid path."
-                )
-                warnings.warn(warning_msg)
-                continue
+            message = f'{self.name} app executable "{exe}" was not found.'
+            if strict:
+                raise FileNotFoundError(message)
+            warnings.warn(message)
 
-            # Preserve the old exceptions when strict validation is requested. Otherwise
-            # applications can still report a useful diagnostic without preventing setup
-            # on machines where the external executable is intentionally unavailable.
-            if shutil.which(exe, mode=os.F_OK) is None:
-                message = f'{self.name} app executable "{exe}" was not found.'
-                if strict:
-                    raise FileNotFoundError(message)
-                warnings.warn(message)
-                continue
-            if shutil.which(exe, mode=os.X_OK) is None:
-                message = (
-                    f'{self.name} app executable "{shutil.which(exe, mode=os.F_OK)}"'
-                    + "does not have execute permissions."
-                )
-                if strict:
-                    raise PermissionError(message)
-                warnings.warn(message)
+    def run_subprocess(self, cmd_args, check=True, timeout=30):
+        """Run a command through the configured local or Docker environment."""
+        process = self.start_subprocess(
+            [str(arg) for arg in cmd_args],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+        if isinstance(process, Container):
+            result = process.wait(timeout=timeout)
+            output = process.logs(stdout=True, stderr=True).decode(
+                "utf-8", errors="replace"
+            )
+            returncode = result["StatusCode"]
+        else:
+            try:
+                stdout, stderr = process.communicate(timeout=timeout)
+            except subprocess.TimeoutExpired:
+                process.kill()
+                process.communicate()
+                raise
+            output = b"\n".join(stream for stream in (stdout, stderr) if stream).decode(
+                "utf-8", errors="replace"
+            )
+            returncode = process.returncode
+
+        if check and returncode != 0:
+            raise subprocess.CalledProcessError(returncode, cmd_args, output=output)
+        return output, returncode
 
     def get_executable(self, default=None):
         """Return the configured executable, falling back to ``default``."""
