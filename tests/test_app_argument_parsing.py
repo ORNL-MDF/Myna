@@ -355,15 +355,13 @@ def test_cubit_stage_parsers_are_idempotent(monkeypatch, stage_calls):
 @pytest.mark.filterwarnings(
     'ignore:cubit/.* app executable "(psculpt|epu)" was not found\\.:UserWarning'
 )
-def test_cubit_validates_assembled_executable_paths(monkeypatch):
+def test_cubit_declares_assembled_executable_paths(monkeypatch):
     monkeypatch.setattr(sys, "argv", ["test"])
     app = CubitApp()
-    validated = []
-    monkeypatch.setattr(app, "validate_executable", validated.append)
 
     app.parse_configure_arguments()
 
-    assert validated == [["psculpt", "epu"]]
+    assert app.get_required_executables() == ["psculpt", "epu"]
 
 
 @pytest.mark.parametrize(

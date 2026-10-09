@@ -183,6 +183,10 @@ Current intended boundaries:
   segmentation type, and output sync.
 - `src/myna/application/` owns external-tool wrappers, templates, executable handling,
   and postprocessing needed to satisfy component file contracts.
+- Executable requirements are declared by application wrappers and validated at the
+  beginning of `myna config` or by the side-effect-free `myna validate` command. The
+  legacy step-level `executable` setting applies to all stages, while stage-level
+  `exec` values override only their stage and emit deprecation warnings.
 - App-level executable version gates should compare the numeric semver core of discovered
   version strings; packaging suffixes such as `-dev` may be preserved for display but are
   intentionally ignored for minimum-version decisions through shared version utilities.
