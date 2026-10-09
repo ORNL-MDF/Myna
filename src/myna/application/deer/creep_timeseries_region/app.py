@@ -141,7 +141,7 @@ class CreepTimeseriesRegionDeerApp(DeerApp):
                         "working_dir": container_case_path,
                     }
                 cmd_args = [
-                    self.args.exec,
+                    self.deer_bin,
                     "-i",
                     path_map["grain_boundary"],
                     path_map["case_input"],

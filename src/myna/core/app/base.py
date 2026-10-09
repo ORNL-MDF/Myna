@@ -100,7 +100,8 @@ class MynaApp:
             "--exec",
             default=None,
             type=str,
-            help="(str) Path to executable",
+            help="(str, deprecated) path to an application executable; use the "
+            "application-specific executable option instead",
         )
         self.register_argument(
             "--validate-executable",
@@ -257,8 +258,8 @@ class MynaApp:
         self.args, _ = self.parser.parse_known_args()
         if self.args.exec is not None:
             warnings.warn(
-                "The --exec option is deprecated; configure the step executable "
-                "or stage-local exec setting instead.",
+                "The --exec option is deprecated; use the application-specific "
+                "executable option instead.",
                 DeprecationWarning,
                 stacklevel=2,
             )
@@ -411,11 +412,12 @@ class MynaApp:
             stderr=subprocess.PIPE,
         )
         if isinstance(process, Container):
-            result = process.wait(timeout=timeout)
+            returncode = self.wait_for_process_success(
+                process, raise_error=False, timeout=timeout
+            )
             output = process.logs(stdout=True, stderr=True).decode(
                 "utf-8", errors="replace"
             )
-            returncode = result["StatusCode"]
         else:
             try:
                 stdout, stderr = process.communicate(timeout=timeout)
@@ -426,7 +428,7 @@ class MynaApp:
             output = b"\n".join(stream for stream in (stdout, stderr) if stream).decode(
                 "utf-8", errors="replace"
             )
-            returncode = process.returncode
+            returncode = self.wait_for_process_success(process, raise_error=False)
 
         if check and returncode != 0:
             raise subprocess.CalledProcessError(returncode, cmd_args, output=output)
@@ -696,7 +698,7 @@ class MynaApp:
         return self.start_subprocess(modified_cmd_args, **kwargs)
 
     def wait_for_process_success(
-        self, process: subprocess.Popen | Container, raise_error=True
+        self, process: subprocess.Popen | Container, raise_error=True, timeout=None
     ):
         """Wait for a process to complete successfully, raising an error if the
         process fails.
@@ -704,13 +706,14 @@ class MynaApp:
         Args:
             process: (subprocess.Popen) subprocess object
             raise_error: (bool) if True, a failed subprocess will raise an error
+            timeout: (float | None) maximum seconds to wait for completion
 
         Returns:
             returncode: (int) process returncode from `Popen.wait()`
         """
 
         # Both subprocess.Popen and the docker Container class have the .wait() method
-        returncode = process.wait()
+        returncode = process.wait(timeout=timeout)
         if isinstance(process, Container):
             returncode = returncode["StatusCode"]
         if returncode != 0:

@@ -1,31 +1,32 @@
 thesis:
    solidification_part:
-      executable: 3DThesis
       configure:
+         thesis-bin: 3DThesis
          res: 25e-6
       execute:
          batch: True
    temperature_surface_part:
-      executable: 3DThesis
       configure:
+         thesis-bin: 3DThesis
          res: 100e-6
          wait: 10.0
       execute:
          batch: True
          use-prior-layer-average: True
    solidification_build_region:
-      executable: 3DThesis
       configure:
+         thesis-bin: 3DThesis
          res: 25e-6
       execute:
          batch: True
    depth_map_part:
-      executable: 3DThesis
       configure:
+         thesis-bin: 3DThesis
          res: 25e-6
          z-res: 10e-6
       execute:
          batch: True
 exaca:
    microstructure_region:
-      executable: ExaCA
+      configure:
+         exaca-bin: ExaCA

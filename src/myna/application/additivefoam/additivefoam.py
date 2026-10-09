@@ -27,13 +27,23 @@ class AdditiveFOAM(MynaApp):
         super().__init__()
         self.app_type = "additivefoam"
 
+        self.register_argument(
+            "--additivefoam-bin",
+            default="additiveFoam",
+            type=str,
+            help="(str) AdditiveFOAM executable",
+        )
+
         # Parse app-specific arguments
         self.parse_known_args()
-        if self.args.exec is None:
-            self.args.exec = "additiveFoam"
+
+    @property
+    def additivefoam_bin(self):
+        """Return the configured AdditiveFOAM executable."""
+        return self.args.exec or self.args.additivefoam_bin
 
     def get_required_executables(self):
-        return [self.args.exec or "additiveFoam"]
+        return [self.additivefoam_bin]
 
     def has_matching_template_mesh_dict(self, mesh_path, mesh_dict):
         """Checks if there is a usable mesh dictionary in the case directory

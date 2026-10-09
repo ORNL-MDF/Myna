@@ -217,6 +217,12 @@ class Thesis(MynaApp):
 
     def parse_shared_arguments(self):
         self.register_argument(
+            "--thesis-bin",
+            default="3DThesis",
+            type=str,
+            help="(str) 3DThesis executable",
+        )
+        self.register_argument(
             "--res",
             default=12.5e-6,
             type=float,
@@ -254,13 +260,22 @@ class Thesis(MynaApp):
         )
 
     def _parse_thesis_stage_arguments(self):
+        self.register_argument(
+            "--thesis-bin",
+            default="3DThesis",
+            type=str,
+            help="(str) 3DThesis executable",
+        )
         self.parse_shared_arguments()
         self.parse_known_args()
-        if self.args.exec is None:
-            self.args.exec = "3DThesis"
+
+    @property
+    def thesis_bin(self):
+        """Return the configured 3DThesis executable."""
+        return self.args.exec or self.args.thesis_bin
 
     def get_required_executables(self):
-        return [self.args.exec or "3DThesis"]
+        return [self.thesis_bin]
 
     def get_executable_version(
         self,
@@ -672,7 +687,7 @@ class Thesis(MynaApp):
                 f.write(f"- Working directory: {os.getcwd()}\n")
 
                 # Execute the case
-                cmd_args = [self.args.exec, self.input_file]
+                cmd_args = [self.thesis_bin, self.input_file]
                 process = self.start_subprocess_with_mpi_args(
                     cmd_args,
                     stdout=f,

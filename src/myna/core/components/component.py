@@ -286,6 +286,14 @@ class Component:
                 workspace_dict = workspace_dict.get(self.component_class, {})
                 self.executable = workspace_dict.get("executable", self.executable)
             self.executable = step_settings.get("executable", self.executable)
+            if "executable" in step_settings:
+                warnings.warn(
+                    f"Step {self.name} executable is deprecated; configure the "
+                    "application-specific executable argument in the relevant "
+                    "stage instead.",
+                    DeprecationWarning,
+                    stacklevel=2,
+                )
 
             # If an output_template is specified, use it.
             # Otherwise, use a combination of the class, component, and output names.
@@ -622,7 +630,8 @@ class Component:
             if dict_key in obsolete_keys:
                 warning_msg = (
                     f' Step {self.name} {operation} argument "{dict_key}" is '
-                    "deprecated; use the step-level executable setting instead."
+                    "deprecated; use the application-specific executable argument "
+                    "instead."
                 )
                 warnings.warn(warning_msg, DeprecationWarning, stacklevel=2)
                 return False

@@ -464,7 +464,7 @@ class AdditiveFOAMRegionReduced(AdditiveFOAM):
 
             # Launch job, using MPI arguments if specified
             with open("additiveFoam.log", "w", encoding="utf-8") as f:
-                cmd_args = [self.args.exec]
+                cmd_args = [self.additivefoam_bin]
                 if parallel:
                     cmd_args.append("-parallel")
                 process = self.start_subprocess_with_mpi_args(

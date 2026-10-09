@@ -22,6 +22,12 @@ class DeerApp(MynaApp):
 
     def parse_shared_arguments(self):
         self.register_argument(
+            "--deer-bin",
+            default="deer-opt",
+            type=str,
+            help="(str) DEER executable",
+        )
+        self.register_argument(
             "--moosepath",
             default=None,
             type=str,
@@ -35,3 +41,11 @@ class DeerApp(MynaApp):
     def parse_execute_arguments(self):
         self.parse_shared_arguments()
         self.parse_known_args()
+
+    @property
+    def deer_bin(self):
+        """Return the configured DEER executable."""
+        return self.args.exec or self.args.deer_bin
+
+    def get_required_executables(self):
+        return [self.deer_bin]

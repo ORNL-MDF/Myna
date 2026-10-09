@@ -14,6 +14,8 @@ import stat
 import pytest
 import yaml
 
+from myna.application.adamantine.adamantine import AdamantineApp
+from myna.application.additivefoam.additivefoam import AdditiveFOAM
 from myna.application.cubit.cubit import CubitApp
 from myna.application.cubit.vtk_to_exodus_region.app import CubitVtkToExodusApp
 from myna.application.deer.deer import DeerApp
@@ -92,6 +94,27 @@ def test_validate_executable_checks_all_executables(monkeypatch):
 
     with pytest.raises(FileNotFoundError, match="second-myna-executable"):
         app.validate_executable(["/bin/sh", "second-myna-executable"])
+
+
+@pytest.mark.parametrize(
+    ("app_cls", "argument", "attribute"),
+    [
+        (AdditiveFOAM, "--additivefoam-bin", "additivefoam_bin"),
+        (AdamantineApp, "--adamantine-bin", "adamantine_bin"),
+        (DeerApp, "--deer-bin", "deer_bin"),
+        (ExaCA, "--exaca-bin", "exaca_bin"),
+        (Thesis, "--thesis-bin", "thesis_bin"),
+    ],
+)
+def test_apps_accept_named_executable_arguments(
+    monkeypatch, app_cls, argument, attribute
+):
+    monkeypatch.setattr(sys, "argv", ["test", argument, "/custom/application-bin"])
+    app = app_cls()
+    if app_cls in (DeerApp, ExaCA, Thesis):
+        app.parse_execute_arguments()
+
+    assert getattr(app, attribute) == "/custom/application-bin"
 
 
 def test_register_argument_rejects_conflicting_option_redefinitions(monkeypatch):
@@ -434,7 +457,7 @@ def test_thesis_stage_parsers_set_default_executable(monkeypatch, stage_call):
 
     getattr(app, stage_call)()
 
-    assert app.args.exec == "3DThesis"
+    assert app.thesis_bin == "3DThesis"
 
 
 @pytest.mark.parametrize(
@@ -543,7 +566,7 @@ def test_temperature_surface_part_stage_parsers_set_default_executable(
 
     getattr(app, stage_call)()
 
-    assert app.args.exec == "3DThesis"
+    assert app.thesis_bin == "3DThesis"
 
 
 @pytest.mark.parametrize(
@@ -588,7 +611,7 @@ def test_exaca_stage_parsers_set_default_executable(monkeypatch, stage_call):
     getattr(app, stage_call)()
 
     if "execute" in stage_call:
-        assert app.args.exec == "ExaCA"
+        assert app.exaca_bin == "ExaCA"
 
 
 def test_exaca_get_executable_version_reads_banner_before_missing_input_error(

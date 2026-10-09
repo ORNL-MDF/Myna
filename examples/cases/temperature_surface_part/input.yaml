@@ -2,7 +2,6 @@ steps:
 - 3dthesis:
     class: temperature_surface_part
     application: thesis
-    executable: 3DThesis
     configure:
       res: 100.0e-6
       wait: 10.0
