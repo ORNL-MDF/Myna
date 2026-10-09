@@ -64,7 +64,9 @@ class ExaCA(MynaApp):
         self.parse_known_args()
         if self.args.exec is None:
             self.args.exec = "ExaCA"
-        self.validate_executable("ExaCA")
+
+    def get_required_executables(self):
+        return [self.args.exec or "ExaCA"]
 
     def parse_postprocess_arguments(self):
         self.parse_shared_arguments()

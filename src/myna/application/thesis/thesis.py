@@ -258,7 +258,9 @@ class Thesis(MynaApp):
         self.parse_known_args()
         if self.args.exec is None:
             self.args.exec = "3DThesis"
-        self.validate_executable("3DThesis")
+
+    def get_required_executables(self):
+        return [self.args.exec or "3DThesis"]
 
     def get_executable_version(
         self,
