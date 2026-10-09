@@ -23,6 +23,21 @@ class AdamantineApp(MynaApp):
     def __init__(self):
         super().__init__()
         self.app_type = "adamantine"
+        self.register_argument(
+            "--adamantine-bin",
+            default="adamantine",
+            type=str,
+            help="(str) Adamantine executable",
+        )
+        self.parse_known_args()
+
+    @property
+    def adamantine_bin(self):
+        """Return the configured Adamantine executable."""
+        return self.args.exec or self.args.adamantine_bin
+
+    def get_required_executables(self):
+        return [self.adamantine_bin]
 
     def boost_info_file_to_dict(self, input_file: str | Path):
         """Loads a Boost info format adamantine input file to a Python dictionary
