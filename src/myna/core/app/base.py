@@ -293,6 +293,10 @@ class MynaApp:
         Subclasses can override this method and call `self.parse_known_args()`.
         """
 
+    def get_required_executables(self):
+        """Return executable names required by this application instance."""
+        return []
+
     def configure(self):
         """Configure the application workflow step.
 
