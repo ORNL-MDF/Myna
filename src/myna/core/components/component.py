@@ -154,6 +154,47 @@ class Component:
     def _run_stage_subprocess(self, cmd):
         subprocess.run(cmd, check=True)
 
+    def validate_executables(self):
+        """Parse each available application stage and validate its executables."""
+        for operation in ("configure", "execute", "postprocess"):
+            script_name = os.path.join(
+                os.environ["MYNA_APP_PATH"],
+                self.component_application,
+                self.component_class,
+                f"{operation}.py",
+            )
+            if not os.path.exists(script_name):
+                continue
+
+            module_name = ".".join(
+                [
+                    "myna",
+                    "application",
+                    self.component_application,
+                    self.component_class,
+                    "app",
+                ]
+            )
+            module = importlib.import_module(module_name)
+            app_classes = [
+                value
+                for value in vars(module).values()
+                if isinstance(value, type)
+                and value.__module__ == module.__name__
+                and hasattr(value, f"parse_{operation}_arguments")
+            ]
+            if not app_classes:
+                continue
+
+            stage_args = self.cmd_preformat(self.get_step_args_list(operation))
+            previous_argv = sys.argv
+            sys.argv = [script_name, *stage_args]
+            try:
+                app = app_classes[0]()
+                getattr(app, f"parse_{operation}_arguments")()
+            finally:
+                sys.argv = previous_argv
+
     def _should_run_stage_in_process(self, script_name):
         installed_script = os.path.join(
             os.environ["MYNA_INSTALL_PATH"],

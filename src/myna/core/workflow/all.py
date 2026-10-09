@@ -22,7 +22,7 @@ def main():
         "type",
         action="store",
         nargs="+",
-        help='Run one or more stages of the myna workflow: "config", "run", "sync". Or output the current "status" or "launch_peregrine"',
+        help='Run one or more stages of the myna workflow: "config", "validate", "run", "sync". Or output the current "status" or "launch_peregrine"',
     )
 
     # Only parse known argument (type) since others will only be used per-step.
@@ -34,6 +34,8 @@ def main():
     else:
         if "config" in args.type:
             myna.core.workflow.config.parse(parser)
+        if "validate" in args.type:
+            myna.core.workflow.validate.parse(parser)
         if "run" in args.type:
             myna.core.workflow.run.parse(parser)
         if "sync" in args.type:

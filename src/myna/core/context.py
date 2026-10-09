@@ -20,6 +20,7 @@ import warnings
 WORKFLOW_ENV_INPUT_FILE = "MYNA_INPUT"
 WORKFLOW_ENV_RUN_INPUT = "MYNA_RUN_INPUT"
 WORKFLOW_ENV_SYNC_INPUT = "MYNA_SYNC_INPUT"
+WORKFLOW_ENV_VALIDATE_EXECUTABLES = "MYNA_VALIDATE_EXECUTABLES"
 WORKFLOW_ENV_STEP_NAME = "MYNA_STEP_NAME"
 WORKFLOW_ENV_STEP_CLASS = "MYNA_STEP_CLASS"
 WORKFLOW_ENV_STEP_INDEX = "MYNA_STEP_INDEX"
@@ -162,6 +163,8 @@ def workflow_env(
         updates[WORKFLOW_ENV_SYNC_INPUT] = (
             None if context is None else context.input_file
         )
+    elif operation == "validate":
+        updates[WORKFLOW_ENV_VALIDATE_EXECUTABLES] = "1"
 
     previous_values = {key: os.environ.get(key) for key in updates}
     previous_presence = {key: key in os.environ for key in updates}

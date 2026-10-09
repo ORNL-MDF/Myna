@@ -40,6 +40,7 @@ Available modules and scripts:
 """
 
 from . import config
+from . import validate
 from . import run
 from . import sync
 from .launch_from_peregrine import launch_from_peregrine
@@ -60,6 +61,7 @@ from .status import format_class_string_to_list, write_codebase_status_to_file
 
 __all__ = [
     "config",
+    "validate",
     "run",
     "sync",
     "launch_from_peregrine",

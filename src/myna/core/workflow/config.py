@@ -13,6 +13,7 @@ import copy
 from myna.core.workflow.load_input import load_input, write_input
 from myna.core.utils import nested_set, nested_get
 from myna.core import components
+from myna.core.context import workflow_context, workflow_env
 from myna.core import metadata
 from myna import database
 from importlib.metadata import version
@@ -148,6 +149,28 @@ def config(input_file, output_file=None, show_avail=False, overwrite=False):
 
     # Load input file
     settings = load_input(input_file)
+
+    # Validate every application before checking databases or creating files.
+    for index, step in enumerate(settings.get("steps", [])):
+        step_name = next(iter(step))
+        step_settings = step[step_name]
+        step_obj = components.return_step_class(step_settings["class"])
+        step_obj.name = step_name
+        step_obj.component_class = step_settings["class"]
+        step_obj.component_application = step_settings["application"]
+        step_obj.input_file = os.path.abspath(input_file)
+        step_obj.step_index = index
+        step_obj.apply_settings(
+            step_settings, settings.get("data"), settings.get("myna")
+        )
+        with workflow_context(
+            input_file=os.path.abspath(input_file),
+            step_name=step_name,
+            step_class=step_settings["class"],
+            step_index=index,
+        ) as context:
+            with workflow_env(context, operation="validate"):
+                step_obj.validate_executables()
 
     # Check build directory contains the expected metadata folder
     build_path = nested_get(settings, ["data", "build", "path"])
