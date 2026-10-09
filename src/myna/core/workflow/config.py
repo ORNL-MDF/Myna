@@ -10,6 +10,7 @@
 
 import os
 import copy
+from pathlib import Path
 from myna.core.workflow.load_input import load_input, write_input
 from myna.core.utils import nested_set, nested_get
 from myna.core import components
@@ -86,6 +87,26 @@ def _warn_for_skipped_layers(step_name, skipped_layers):
     for scope_name in sorted(skipped_layers):
         layers = ", ".join(str(x) for x in sorted(skipped_layers[scope_name]))
         print(f"  - {scope_name}: {layers}")
+
+
+def _case_build_structure(case_dir, build_name):
+    """Return case path components starting at the configured build directory.
+
+    Case directories normally live beneath the input file's parent directory, but a
+    staged remote snapshot can retain additional directories above the build output.
+    Select the build directory explicitly instead of relying on its absolute index
+    after removing an input-directory prefix.
+    """
+
+    case_parts = Path(os.path.abspath(case_dir)).parts
+    try:
+        build_index = len(case_parts) - 1 - case_parts[::-1].index(build_name)
+    except ValueError as error:
+        raise ValueError(
+            f'Case directory "{case_dir}" does not contain build directory '
+            f'"{build_name}".'
+        ) from error
+    return [""] + list(case_parts[build_index:])
 
 
 # Parser comes from the top-level command parsing
@@ -498,9 +519,8 @@ def config(input_file, output_file=None, show_avail=False, overwrite=False):
             # Select only relevant build, part, and layer information
             data_dict_case = {"build": {}}
             data_dict_case["build"] = copy.deepcopy(settings["data"]["build"])
-            base_path = os.path.abspath(os.path.dirname(input_file))
-            build_struct = (
-                os.path.abspath(case_dir).replace(base_path, "").split(os.sep)
+            build_struct = _case_build_structure(
+                case_dir, data_dict_case["build"].get("name", "myna_output")
             )
             if "build_region" in step_obj.types:
                 data_dict_case["build"].pop("parts", None)

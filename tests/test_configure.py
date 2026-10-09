@@ -18,6 +18,7 @@ import pytest
 import yaml
 
 from myna.core.workflow.load_input import load_input, write_input
+from myna.core.workflow import config as config_module
 
 from .example_paths import CASES_DIR
 
@@ -126,6 +127,18 @@ def test_config_writes_relative_runtime_paths_and_absolute_provenance(tmp_path):
             "file_local"
         ]
     )
+
+
+def test_case_build_structure_ignores_staging_directories(tmp_path):
+    case_dir = tmp_path / "stage" / "myna_output" / "P5" / "51" / "3dthesis"
+
+    assert config_module._case_build_structure(case_dir, "myna_output") == [
+        "",
+        "myna_output",
+        "P5",
+        "51",
+        "3dthesis",
+    ]
 
 
 def test_config_expands_layer_range_strings_in_written_input(tmp_path):
