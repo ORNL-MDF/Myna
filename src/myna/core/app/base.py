@@ -363,8 +363,12 @@ class MynaApp:
         """Check one or more executables in the configured execution environment."""
 
         if strict is None:
-            strict = self.args.validate_executable or bool(
-                self.settings.get("myna", {}).get("validate_all_executable", False)
+            strict = (
+                self.args.validate_executable
+                or bool(
+                    self.settings.get("myna", {}).get("validate_all_executable", False)
+                )
+                or os.environ.get("MYNA_VALIDATE_EXECUTABLES") == "1"
             )
 
         # A configured --exec applies to single-executable applications. Apps that
