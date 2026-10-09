@@ -31,7 +31,9 @@ class AdditiveFOAM(MynaApp):
         self.parse_known_args()
         if self.args.exec is None:
             self.args.exec = "additiveFoam"
-        self.validate_executable("additiveFoam")
+
+    def get_required_executables(self):
+        return [self.args.exec or "additiveFoam"]
 
     def has_matching_template_mesh_dict(self, mesh_path, mesh_dict):
         """Checks if there is a usable mesh dictionary in the case directory
