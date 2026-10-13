@@ -274,8 +274,10 @@ class Thesis(MynaApp):
         """Return the configured 3DThesis executable."""
         return self.args.exec or self.args.thesis_bin
 
-    def get_required_executables(self):
-        return [self.thesis_bin]
+    def get_required_executables(self, operation=None):
+        if operation is None or operation == "execute":
+            return [self.thesis_bin]
+        return []
 
     def get_executable_version(
         self,

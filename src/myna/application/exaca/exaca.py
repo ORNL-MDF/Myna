@@ -74,8 +74,10 @@ class ExaCA(MynaApp):
         """Return the configured ExaCA executable."""
         return self.args.exec or self.args.exaca_bin
 
-    def get_required_executables(self):
-        return [self.exaca_bin]
+    def get_required_executables(self, operation=None):
+        if operation is None or operation == "execute":
+            return [self.exaca_bin]
+        return []
 
     def parse_postprocess_arguments(self):
         self.parse_shared_arguments()

@@ -301,8 +301,13 @@ class MynaApp:
         Subclasses can override this method and call `self.parse_known_args()`.
         """
 
-    def get_required_executables(self):
-        """Return executable names required by this application instance."""
+    def get_required_executables(self, operation=None):
+        """Return executable names required by an application stage.
+
+        ``operation`` is accepted so application wrappers can declare different
+        requirements for configure, execute, and postprocess.  The default app
+        has no executable requirements.
+        """
         return []
 
     def configure(self):

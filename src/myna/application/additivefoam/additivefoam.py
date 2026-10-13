@@ -42,8 +42,10 @@ class AdditiveFOAM(MynaApp):
         """Return the configured AdditiveFOAM executable."""
         return self.args.exec or self.args.additivefoam_bin
 
-    def get_required_executables(self):
-        return [self.additivefoam_bin]
+    def get_required_executables(self, operation=None):
+        if operation is None or operation == "execute":
+            return [self.additivefoam_bin]
+        return []
 
     def has_matching_template_mesh_dict(self, mesh_path, mesh_dict):
         """Checks if there is a usable mesh dictionary in the case directory
