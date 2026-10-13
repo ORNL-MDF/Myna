@@ -280,6 +280,24 @@ class AdamantineTemperatureApp(AdamantineApp):
             mesh_sizes[0] / scan_dict["scan_speed_median"]
         )
 
+        # Update thermal_conductivity_y if not specified (temporary fix)
+        if (
+            "thermal_conductivity_y"
+            not in input_dict["materials"]["material_0"]["solid"]
+        ):
+            input_dict["materials"]["material_0"]["solid"]["thermal_conductivity_y"] = (
+                input_dict["materials"]["material_0"]["solid"]["thermal_conductivity_x"]
+            )
+        if (
+            "thermal_conductivity_y"
+            not in input_dict["materials"]["material_0"]["liquid"]
+        ):
+            input_dict["materials"]["material_0"]["liquid"][
+                "thermal_conductivity_y"
+            ] = input_dict["materials"]["material_0"]["liquid"][
+                "thermal_conductivity_x"
+            ]
+
         # UPDATE TIME STEPS
         # - Base update on the max scan speed and the mesh_size
         # - Control the time_step by the courant number which must be
@@ -315,6 +333,9 @@ class AdamantineTemperatureApp(AdamantineApp):
         input_dict["post_processor"]["filename_prefix"] = case_dict[
             "mynafile"
         ].name.replace(".pvd", "")
+
+        # Update number of materials (temporary fix)
+        input_dict["materials"]["n_materials"] = 1
 
         # WRITE UPDATED INPUT FILE
         export_file = case_dict["case_dir"] / Path(self.case_files["input"])
