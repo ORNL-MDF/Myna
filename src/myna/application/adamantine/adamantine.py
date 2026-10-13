@@ -36,8 +36,10 @@ class AdamantineApp(MynaApp):
         """Return the configured Adamantine executable."""
         return self.args.exec or self.args.adamantine_bin
 
-    def get_required_executables(self):
-        return [self.adamantine_bin]
+    def get_required_executables(self, operation=None):
+        if operation is None or operation == "execute":
+            return [self.adamantine_bin]
+        return []
 
     def boost_info_file_to_dict(self, input_file: str | Path):
         """Loads a Boost info format adamantine input file to a Python dictionary
