@@ -192,9 +192,9 @@ class Component:
             try:
                 app = app_classes[0]()
                 getattr(app, f"parse_{operation}_arguments")()
-                required = app.get_required_executables()
+                required = app.get_required_executables(operation)
                 if required:
-                    app.validate_executable(required, strict=True)
+                    app.validate_executable(required)
             finally:
                 sys.argv = previous_argv
 

@@ -43,8 +43,10 @@ class CubitApp(MynaApp):
         self.exe_psculpt = os.path.join(path_prefix, "psculpt")
         self.exe_epu = os.path.join(path_prefix, "epu")
 
-    def get_required_executables(self):
-        return [self.exe_psculpt, self.exe_epu]
+    def get_required_executables(self, operation=None):
+        if operation is None or operation == "execute":
+            return [self.exe_psculpt, self.exe_epu]
+        return []
 
     def parse_configure_arguments(self):
         self.parse_shared_arguments()

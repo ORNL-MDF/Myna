@@ -47,5 +47,7 @@ class DeerApp(MynaApp):
         """Return the configured DEER executable."""
         return self.args.exec or self.args.deer_bin
 
-    def get_required_executables(self):
-        return [self.deer_bin]
+    def get_required_executables(self, operation=None):
+        if operation is None or operation == "execute":
+            return [self.deer_bin]
+        return []

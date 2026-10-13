@@ -163,9 +163,6 @@ def workflow_env(
         updates[WORKFLOW_ENV_SYNC_INPUT] = (
             None if context is None else context.input_file
         )
-    elif operation == "validate":
-        updates[WORKFLOW_ENV_VALIDATE_EXECUTABLES] = "1"
-
     previous_values = {key: os.environ.get(key) for key in updates}
     previous_presence = {key: key in os.environ for key in updates}
     try:
