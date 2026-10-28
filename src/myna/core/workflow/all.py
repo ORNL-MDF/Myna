@@ -22,7 +22,7 @@ def main():
         "type",
         action="store",
         nargs="+",
-        help='Run one or more stages of the myna workflow: "config", "run", "sync". Or output the current "status" or "launch_peregrine"',
+        help='Run one or more stages of the myna workflow: "config", "run", "sync", or "remote". Or output the current "status" or "launch_peregrine"',
     )
 
     # Only parse known argument (type) since others will only be used per-step.
@@ -31,6 +31,8 @@ def main():
         myna.core.workflow.status.write_codebase_status_to_file(parser)
     elif "launch_peregrine" in args.type:
         myna.core.workflow.launch_from_peregrine(parser)
+    elif "remote" in args.type:
+        myna.core.workflow.remote.parse(parser)
     else:
         if "config" in args.type:
             myna.core.workflow.config.parse(parser)

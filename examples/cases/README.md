@@ -23,6 +23,7 @@ External tools still need to be installed and configured separately.
 | `microstructure_region` | Peregrine fixture | `exaca` | AdditiveFOAM, ExaCA |
 | `microstructure_region_slice` | Peregrine fixture | `exaca` | AdditiveFOAM, ExaCA |
 | `openfoam_meshing` | Peregrine fixture | core only | OpenFOAM |
+| `remote_launcher` | Peregrine fixture | core only | 3DThesis, SSH-accessible remote Myna installation |
 | `rve_part_center` | Peregrine fixture | core only | AdditiveFOAM |
 | `solidification_build_region` | Peregrine fixture | core only | 3DThesis |
 | `solidification_part` | Peregrine fixture | core only | 3DThesis |
