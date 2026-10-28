@@ -86,5 +86,9 @@ Run the harness check with:
 uv run python scripts/check_docs_harness.py
 ```
 
-The check runs in pre-commit and main CI. If it fails, follow the error message: it
+The check runs in pre-commit and main CI. If it fails, meaning that the script found
+there are likely missing documentation updates (based on files modified) or other documentation
+policies that were broken by the commit. Follow the warning message: it
 should identify the missing file, heading, link target, or size limit.
+The GitHub CI step intentionally only raises a warning for visibility of a potential documentation issue to code reviewers,
+but due to false positives on detecting missing documentation will still allow merging.
