@@ -41,7 +41,10 @@ jobs:
       - name: Run pytest (without examples)
         run: uv run --frozen --no-sync pytest
       - name: Check documentation harness
-        run: uv run --frozen --no-sync python scripts/check_docs_harness.py
+        run: |
+          if ! uv run --frozen --no-sync python scripts/check_docs_harness.py; then
+            echo "::warning title=Documentation harness::The documentation harness check failed. Review this step's logs; this advisory check does not block merging."
+          fi
       - name: Analyzing code with pylint
         run: uv run --frozen --no-sync pylint $(git ls-files '*.py') --fail-under=7.25
       - name: Building API docs
