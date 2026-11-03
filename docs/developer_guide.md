@@ -252,3 +252,12 @@ from embedded binary strings, prefer normalizing the discovered token to the com
 numeric semver core before using it in app-level minimum-version checks. This keeps app
 decisions stable across packaging differences that may preserve the numeric release while
 altering or truncating suffix text.
+
+## Application stage arguments
+
+Applications define stage options in their `MynaApp` argument methods. `myna run`
+collects workflow and workspace settings through `Component.get_step_args_list()` and
+passes them through the shared stage argument loader. Input-file values override
+workspace values. Executable validation uses the same definitions and resolved values,
+without executing the stage or changing `sys.argv`. Resolved defaults remain structured
+values on the app object.
