@@ -28,6 +28,12 @@ def _should_ignore_missing_layers(settings):
     return bool(nested_get(settings, ["myna", "ignore_missing_layers"], False))
 
 
+def _strict_executable_validation(settings):
+    """Return whether config should fail on missing executables."""
+
+    return bool(nested_get(settings, ["myna", "validate_all_executable"], True))
+
+
 def _can_skip_missing_layers(step_obj, settings):
     """Whether the active step allows missing layers to be skipped."""
 
@@ -170,7 +176,11 @@ def config(input_file, output_file=None, show_avail=False, overwrite=False):
             step_index=index,
         ) as context:
             with workflow_env(context, operation="validate"):
-                step_obj.validate_executables()
+                # Configuration requires usable executables by default. The
+                # existing workflow setting remains an explicit opt-out.
+                step_obj.validate_executables(
+                    strict=_strict_executable_validation(settings)
+                )
 
     # Check build directory contains the expected metadata folder
     build_path = nested_get(settings, ["data", "build", "path"])

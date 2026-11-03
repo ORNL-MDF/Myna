@@ -207,10 +207,11 @@ Current intended boundaries:
 - App-level executable version gates should compare the numeric semver core of discovered
   version strings; packaging suffixes such as `-dev` may be preserved for display but are
   intentionally ignored for minimum-version decisions through shared version utilities.
-- Applications with a default executable validate its availability during argument
-  parsing. Missing or non-executable tools produce warnings by default; strict errors
-  can be enabled globally with `myna.validate_all_executable: true` or per step with
-  the `validate_executable` argument.
+- `myna config` validates required executables strictly by default before creating case
+  files. Set `myna.validate_all_executable: false` to opt out and receive warnings.
+  The side-effect-free `myna validate` command and application argument parsing retain
+  their warning default; strict validation can also be requested with
+  `--validate-executable` or `MYNA_VALIDATE_EXECUTABLES=1`.
 - `src/myna/cli/` contains launch templates and CLI-specific support; general workflow
   behavior belongs under `src/myna/core/workflow/`.
 - `tests/` contains test-only helpers. Do not import from `tests/` in runtime modules.
