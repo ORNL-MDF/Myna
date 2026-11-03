@@ -88,3 +88,26 @@ def test_component_validates_each_stage_requirement_in_its_stage_environment(
     component.validate_executables()
 
     assert validated == [(["/container/bin/adamantine"], None, "rombur/adamantine:1.0")]
+
+
+def test_component_validation_continues_after_stage_parser_system_exit(monkeypatch):
+    component = components.return_step_class("temperature_part_pvd")
+    component.component_application = "adamantine"
+    component.component_class = "temperature_part_pvd"
+    component.name = "adamantine"
+    component.data = {"build": {"name": "build"}}
+    component.configure_dict = {}
+    component.execute_dict = {"adamantine-bin": "adamantine"}
+
+    validated = []
+
+    def record_validation(self, executables, strict=None):
+        validated.append(executables)
+
+    monkeypatch.setattr(MynaApp, "validate_executable", record_validation)
+    monkeypatch.setattr(sys, "argv", ["myna", "--skip"])
+
+    component.validate_executables()
+
+    assert validated == [["adamantine"]]
+    assert sys.argv == ["myna", "--skip"]
