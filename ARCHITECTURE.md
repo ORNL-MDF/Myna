@@ -100,8 +100,8 @@ Workflow run and sync state is carried through `myna.core.context.WorkflowContex
 This context includes the active input file, current step, step class, step index, and
 previous-step information. `myna.core.context` resolves that explicit context first and
 still falls back to legacy `MYNA_*` environment variables so direct stage-script
-invocation remains compatible in Myna 1.x. That env-var fallback is deprecated and
-scheduled for removal in Myna 2.0. `MynaApp` consumes that shared context resolution
+invocation remains compatible through Myna 1.2. That env-var fallback is deprecated and
+scheduled for removal in Myna 1.3. `MynaApp` consumes that shared context resolution
 rather than reading workflow env vars directly.
 
 `myna config` still sets `MYNA_INPUT` and the deprecated `MYNA_CONFIG_INPUT` while it

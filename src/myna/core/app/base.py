@@ -190,6 +190,16 @@ class MynaApp:
 
     def load_stage_arguments(self, operation, argv=None):
         """Register one stage's options and resolve values from explicit argv."""
+        legacy_hook = f"parse_{operation}_arguments"
+        if getattr(type(self), legacy_hook) is not getattr(MynaApp, legacy_hook):
+            warnings.warn(
+                f"Overriding {legacy_hook} as an argument registration hook is "
+                f"deprecated and will be removed in Myna 1.3; use "
+                f"register_{operation}_arguments() to declare options and "
+                f"MynaApp.{legacy_hook}() to resolve them.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
         previous = self.parse_known_args
         previous_argv = MynaApp._argument_argv
         stage_argv = (
@@ -295,7 +305,8 @@ class MynaApp:
         if self.args.exec is not None:
             warnings.warn(
                 "The --exec option is deprecated; use the application-specific "
-                "executable option instead.",
+                "executable option instead. This compatibility path will be "
+                "removed in Myna 1.3.",
                 DeprecationWarning,
                 stacklevel=2,
             )
@@ -385,6 +396,12 @@ class MynaApp:
 
         TODO: Remove this function in next release"""
         if self.args.mpiargs is not None:
+            warnings.warn(
+                "--mpiargs is deprecated and will be removed in Myna 1.3; use "
+                "--mpiexec, --np, and --mpiflags instead.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
             if self.args.mpiexec is not None:
                 raise ValueError(
                     "--mpiargs (deprecated input) may not be used with --mpiexec"
