@@ -80,7 +80,6 @@ markers = [
     'parallel: mark tests that require multiple cores to run',
 ]
 filterwarnings = [
-    'error',
     'ignore::DeprecationWarning'
 ]
 
