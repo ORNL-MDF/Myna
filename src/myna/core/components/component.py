@@ -200,7 +200,13 @@ class Component:
             sys.argv = [script_name, *stage_args]
             try:
                 app = app_classes[0]()
-                getattr(app, f"parse_{operation}_arguments")()
+                try:
+                    getattr(app, f"parse_{operation}_arguments")()
+                except SystemExit:
+                    # Some stage parsers call sys.exit() for control flags such
+                    # as --skip. Validation only needs the parsed app settings;
+                    # a parser exit must not abort workflow validation.
+                    pass
                 required = app.get_required_executables(operation)
                 if required:
                     app.validate_executable(required, strict=strict)
