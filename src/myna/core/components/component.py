@@ -163,7 +163,7 @@ class Component:
     def _run_stage_subprocess(self, cmd):
         subprocess.run(cmd, check=True)
 
-    def validate_executables(self):
+    def validate_executables(self, strict=None):
         """Parse each available application stage and validate its executables."""
         for operation in ("configure", "execute", "postprocess"):
             script_name = os.path.join(
@@ -203,7 +203,7 @@ class Component:
                 getattr(app, f"parse_{operation}_arguments")()
                 required = app.get_required_executables(operation)
                 if required:
-                    app.validate_executable(required)
+                    app.validate_executable(required, strict=strict)
             finally:
                 sys.argv = previous_argv
 
