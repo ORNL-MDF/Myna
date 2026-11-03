@@ -81,9 +81,6 @@ markers = [
     'examples: mark tests that run cases in the `examples` directory',
     'parallel: mark tests that require multiple cores to run',
 ]
-filterwarnings = [
-    'ignore::DeprecationWarning'
-]
 
 [tool.codespell]
 ignore-words-list = 'mater,nd'
