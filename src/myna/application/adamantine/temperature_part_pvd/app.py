@@ -82,7 +82,7 @@ class AdamantineTemperatureApp(AdamantineApp):
         ]["value"]
         return case_dict
 
-    def parse_configure_arguments(self):
+    def register_configure_arguments(self):
         """Check for arguments relevant to the configure step and update app settings"""
         self.register_argument(
             "--mesh-substrate-depth",
@@ -138,7 +138,6 @@ class AdamantineTemperatureApp(AdamantineApp):
             type=float,
             help="Courant number for controlling the time step, must be less than 1",
         )
-        self.parse_known_args()
 
     def update_material_property_dict_from_mist(self, input_dict: dict, material):
         """Updates the materials dictionary of the adamantine input dictionary
@@ -324,7 +323,7 @@ class AdamantineTemperatureApp(AdamantineApp):
     def configure(self):
         """Configure case directories for all cases associated with the Myna step"""
         # Check for arguments relevant to the configure step
-        self.parse_configure_arguments()
+        self.load_stage_arguments("configure")
 
         # Iterate through cases
         output_files = self.settings["data"]["output_paths"][self.step_name]
