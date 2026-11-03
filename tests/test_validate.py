@@ -14,6 +14,19 @@ import pytest
 from myna.core import components
 from myna.core.app.base import MynaApp
 from myna.core.context import workflow_context, workflow_env
+from myna.core.workflow.config import _strict_executable_validation
+
+
+def test_config_executable_validation_is_strict_by_default():
+    assert _strict_executable_validation({}) is True
+    assert _strict_executable_validation({"myna": {}}) is True
+
+
+def test_config_executable_validation_setting_can_opt_out():
+    assert (
+        _strict_executable_validation({"myna": {"validate_all_executable": False}})
+        is False
+    )
 
 
 def test_validate_executable_can_be_strict(monkeypatch):
