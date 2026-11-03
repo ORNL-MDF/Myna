@@ -193,14 +193,21 @@ class MynaApp:
         """Register one stage's options and resolve values from explicit argv."""
         previous = self.parse_known_args
         previous_argv = MynaApp._argument_argv
-        MynaApp._argument_argv = None if argv is None else list(argv)
+        stage_argv = (
+            list(argv)
+            if argv is not None
+            else list(previous_argv)
+            if previous_argv is not None
+            else []
+        )
+        MynaApp._argument_argv = stage_argv
         self.parse_known_args = lambda: None
         try:
             getattr(self, f"register_{operation}_arguments")()
             if MynaApp._resolved_stage_args is not None:
                 self.args = argparse.Namespace(**vars(MynaApp._resolved_stage_args))
             else:
-                self.args = self.parser.parse_args(argv)
+                self.args = self.parser.parse_args(stage_argv)
             self._set_procs()
             self._mpiargs_to_current()
             self._after_stage_arguments_loaded(operation)
@@ -332,13 +339,13 @@ class MynaApp:
         """
 
     def parse_configure_arguments(self):
-        return self.load_stage_arguments("configure")
+        return self.load_stage_arguments("configure", sys.argv[1:])
 
     def parse_execute_arguments(self):
-        return self.load_stage_arguments("execute")
+        return self.load_stage_arguments("execute", sys.argv[1:])
 
     def parse_postprocess_arguments(self):
-        return self.load_stage_arguments("postprocess")
+        return self.load_stage_arguments("postprocess", sys.argv[1:])
 
     def get_required_executables(self, operation=None):
         """Return executable names required by an application stage.
