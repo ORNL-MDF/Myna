@@ -24,7 +24,7 @@ class OpenFOAMMeshPartVTK(MynaApp):
         self.app_type = "openfoam"
         self.class_name = "mesh_part_vtk"
 
-    def parse_execute_arguments(self):
+    def register_execute_arguments(self):
         """Parse execute-step arguments."""
         self.register_argument(
             "--scale",
@@ -44,7 +44,6 @@ class OpenFOAMMeshPartVTK(MynaApp):
             type=int,
             help="Number of refinement levels for part mesh",
         )
-        self.parse_known_args()
 
     def configure(self):
         """Configure each case directory by copying the template."""
@@ -70,7 +69,7 @@ class OpenFOAMMeshPartVTK(MynaApp):
 
     def execute(self):
         """Execute all case directories and write expected Myna output files."""
-        self.parse_execute_arguments()
+        self.load_stage_arguments("execute")
         myna_files = self.get_step_output_paths()
 
         for myna_file, case_dir in zip(

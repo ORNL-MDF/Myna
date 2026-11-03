@@ -61,13 +61,11 @@ class ExaCA(MynaApp):
             help="(float) Grain size of substrate, in microns",
         )
 
-    def parse_configure_arguments(self):
+    def register_configure_arguments(self):
         self.parse_shared_arguments()
-        self.parse_known_args()
 
-    def parse_execute_arguments(self):
+    def register_execute_arguments(self):
         self.parse_shared_arguments()
-        self.parse_known_args()
 
     @property
     def exaca_bin(self):
@@ -83,9 +81,8 @@ class ExaCA(MynaApp):
             return [self.exaca_bin]
         return []
 
-    def parse_postprocess_arguments(self):
+    def register_postprocess_arguments(self):
         self.parse_shared_arguments()
-        self.parse_known_args()
 
     def get_executable_version(self, timeout=30):
         """Return the ExaCA version reported by its executable banner.
