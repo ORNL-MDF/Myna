@@ -25,8 +25,9 @@ functionality).
   `sys.argv` for the active stage to preserve command-line parsing behavior.
 - Stage code should get workflow state from `MynaApp` attributes rather than directly
   reading `MYNA_*` environment variables. Those env vars are exposed only during the
-  active stage call for compatibility in Myna 1.x and are deprecated for removal in
-  Myna 2.0.
+  active stage call for compatibility through Myna 1.2 and are deprecated for removal
+  in Myna 1.3. Use `WorkflowContext`, `MynaApp` attributes, or
+  `get_workflow_input_file()` instead.
 - Stage code should restore process-global state it changes. Prefer
   `myna.core.utils.working_directory()` over bare `os.chdir()` calls.
 - If the model has a case template that it will copy from, then the convention is to

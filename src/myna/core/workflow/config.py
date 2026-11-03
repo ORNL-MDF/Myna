@@ -19,6 +19,7 @@ from myna.core.workflow.validate import validate as validate_workflow
 from importlib.metadata import version
 import datetime
 import getpass
+import warnings
 from git import Repo, InvalidGitRepositoryError
 
 
@@ -145,9 +146,17 @@ def config(input_file, output_file=None, show_avail=False, overwrite=False):
 
     # Set environmental variable for input file location
     os.environ["MYNA_INPUT"] = os.path.abspath(input_file)
+    if "MYNA_CONFIG_INPUT" in os.environ:
+        warnings.warn(
+            "The legacy MYNA_CONFIG_INPUT value is being overwritten and will be "
+            "removed in Myna 1.3; use get_workflow_input_file() or WorkflowContext "
+            "to access the active input file.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
     os.environ["MYNA_CONFIG_INPUT"] = os.path.abspath(
         input_file
-    )  # MYNA_CONFIG_INPUT will be deprecated in future versions
+    )  # MYNA_CONFIG_INPUT is deprecated and will be removed in Myna 1.3
 
     # Set output file
     if output_file is None:
