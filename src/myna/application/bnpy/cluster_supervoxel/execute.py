@@ -97,10 +97,10 @@ def train_supervoxel_model(
     # Load app-specific dependencies
     try:
         import bnpy
-    except ImportError:
+    except ImportError as exc:
         raise ImportError(
             'Myna bnpy app requires "pip install .[bnpy]" optional dependencies!'
-        )
+        ) from exc
 
     # Create blank dataframe
     col_names = [f"c_{x}" for x in range(app.n_voxel_clusters)]
@@ -246,10 +246,10 @@ def run(
     # Load app-specific dependencies
     try:
         import bnpy
-    except ImportError:
+    except ImportError as exc:
         raise ImportError(
             'Myna bnpy app requires "pip install .[bnpy]" optional dependencies!'
-        )
+        ) from exc
 
     # Create bnpy dataset for clustering
     df = pl.read_csv(composition_file)
@@ -362,10 +362,10 @@ def main():
 
     try:
         import bnpy
-    except ImportError:
+    except ImportError as exc:
         raise ImportError(
             'Myna bnpy app requires "pip install .[bnpy]" optional dependencies!'
-        )
+        ) from exc
 
     # Get latest voxel model
     voxel_model_path = app.args.voxel_model

@@ -56,37 +56,39 @@ class AdditiveFOAMRegionReducedSTL(AdditiveFOAMRegionReduced):
         """
 
         if not self.can_use_existing_stl_mesh_resource(case_dict):
-            # Preprocess the STL
-            working_stl_path = openfoam.mesh.preprocess_stl(
-                case_dict["resource_template_dir"], case_dict["stl"], self.args.scale
-            )
+            with openfoam.mesh.use_app(self):
+                working_stl_path = openfoam.mesh.preprocess_stl(
+                    case_dict["resource_template_dir"],
+                    case_dict["stl"],
+                    self.args.scale,
+                )
 
             # Generate background mesh
-            bb_dict = openfoam.mesh.create_stl_cube_mesh(
-                case_dict["resource_template_dir"],
-                working_stl_path,
-                [self.args.coarse, self.args.coarse, self.args.coarse],
-                1.0e-08,
-            )
+            with openfoam.mesh.use_app(self):
+                bb_dict = openfoam.mesh.create_stl_cube_mesh(
+                    case_dict["resource_template_dir"],
+                    working_stl_path,
+                    [self.args.coarse, self.args.coarse, self.args.coarse],
+                    1.0e-08,
+                )
 
             # Cut background mesh on STL features using snappyHexMeshDict from template
             region_dict = self.settings["data"]["build"]["parts"][case_dict["part"]][
                 "regions"
             ][case_dict["region"]]
-            openfoam.mesh.extract_stl_features(
-                case_dict["resource_template_dir"],
-                working_stl_path,
-                0,
-                [region_dict["x"], region_dict["y"], -1e-6],
-            )
+            with openfoam.mesh.use_app(self):
+                openfoam.mesh.extract_stl_features(
+                    case_dict["resource_template_dir"],
+                    working_stl_path,
+                    0,
+                    [region_dict["x"], region_dict["y"], -1e-6],
+                )
 
             # Create mesh for part
-            openfoam.mesh.create_part_mesh(
-                case_dict["resource_template_dir"],
-                working_stl_path,
-                bb_dict,
-                app=self,
-            )
+            with openfoam.mesh.use_app(self):
+                openfoam.mesh.create_part_mesh(
+                    case_dict["resource_template_dir"], working_stl_path, bb_dict
+                )
 
             # After successful STL mesh generation, write out the mesh dict
             with open(
@@ -127,7 +129,8 @@ class AdditiveFOAMRegionReducedSTL(AdditiveFOAMRegionReduced):
             "layer_thickness"
         ]["value"]
         height = float(layer_thickness) * float(case_dict["layer"])
-        openfoam.mesh.slice_part_mesh(case_dict["resource_template_dir"], height)
+        with openfoam.mesh.use_app(self):
+            openfoam.mesh.slice_part_mesh(case_dict["resource_template_dir"], height)
 
         # Refine the layer mesh
         self.refine_layer_mesh(case_dict)

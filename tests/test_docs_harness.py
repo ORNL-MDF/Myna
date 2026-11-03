@@ -23,12 +23,12 @@ assert SPEC.loader is not None
 SPEC.loader.exec_module(DOCS_HARNESS)
 
 
-def test_get_changed_files_uses_merge_base_diff_and_untracked(monkeypatch):
+def test_get_changed_files_uses_committed_and_staged_changes(monkeypatch):
     def fake_run_git_command(args):
         command_map = {
             ("merge-base", "HEAD", "origin/main"): ["abc123"],
             ("diff", "--name-only", "abc123..HEAD"): ["src/myna/core/context.py"],
-            ("ls-files", "--others", "--exclude-standard"): ["scratch.txt"],
+            ("diff", "--name-only", "--cached"): ["ARCHITECTURE.md"],
         }
         return command_map.get(tuple(args), [])
 
@@ -36,17 +36,16 @@ def test_get_changed_files_uses_merge_base_diff_and_untracked(monkeypatch):
 
     assert DOCS_HARNESS.get_changed_files() == {
         "src/myna/core/context.py",
-        "scratch.txt",
+        "ARCHITECTURE.md",
     }
 
 
-def test_get_changed_files_falls_back_to_dirty_worktree(monkeypatch):
+def test_get_changed_files_falls_back_to_staged_changes(monkeypatch):
     def fake_run_git_command(args):
         command_map = {
             ("merge-base", "HEAD", "origin/main"): [],
             ("merge-base", "HEAD", "main"): [],
-            ("diff", "--name-only", "HEAD"): ["scripts/check_docs_harness.py"],
-            ("ls-files", "--others", "--exclude-standard"): [],
+            ("diff", "--name-only", "--cached"): ["scripts/check_docs_harness.py"],
         }
         return command_map.get(tuple(args), [])
 

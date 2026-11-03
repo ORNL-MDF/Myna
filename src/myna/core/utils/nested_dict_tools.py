@@ -36,5 +36,9 @@ def get_synonymous_key(dict_obj, synonym_list):
         entry_name: first matching key
     """
     matches = [syn in dict_obj for syn in synonym_list]
-    entry_name = synonym_list[matches.index(True)]
+    try:
+        entry_name = synonym_list[matches.index(True)]
+    except ValueError as e:
+        error_msg = f"No overlap between source keys:\n\n\t{dict_obj}\n\nand synomyn list:\n\n\t{synonym_list}"
+        raise ValueError(error_msg) from e
     return entry_name

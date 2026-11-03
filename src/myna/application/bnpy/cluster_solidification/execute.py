@@ -47,10 +47,10 @@ def train_voxel_model(myna_files, thermal_files, sF, gamma, input_dir):
     # Load app-specific dependencies
     try:
         import bnpy
-    except ImportError:
+    except ImportError as exc:
         raise ImportError(
             'Myna bnpy app requires "pip install .[bnpy]" optional dependencies!'
-        )
+        ) from exc
 
     # Create blank dataframe
     df_training = pd.DataFrame({"logG": [], "logV": []})
@@ -203,10 +203,10 @@ def run_clustering(
     # Load app-specific dependencies
     try:
         import bnpy
-    except ImportError:
+    except ImportError as exc:
         raise ImportError(
             'Myna bnpy app requires "pip install .[bnpy]" optional dependencies!'
-        )
+        ) from exc
 
     with working_directory(case_dir):
         # Get case myna_data

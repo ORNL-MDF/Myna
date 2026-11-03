@@ -25,6 +25,7 @@ from myna.core.context import (
     get_workflow_input_file,
     workflow_context,
 )
+from myna.core.files.file import File
 from myna.core.workflow.run import run
 from myna.core.workflow.sync import sync
 
@@ -324,6 +325,70 @@ def test_component_runs_stage_with_context_without_env(monkeypatch, tmp_path):
     assert sys.argv == previous_argv
     for key in WORKFLOW_ENV_KEYS:
         assert key not in os.environ
+
+
+class MissingOutputFile(File):
+    """Output file type used to exercise run-time validation."""
+
+    def __init__(self, file):
+        super().__init__(file)
+        self.filetype = ".csv"
+
+    def file_is_valid(self):
+        return True
+
+
+def test_component_run_raises_when_execute_does_not_produce_output(
+    monkeypatch, tmp_path
+):
+    _clear_workflow_env(monkeypatch)
+    input_file = tmp_path / "input.yaml"
+    input_file.write_text(
+        "steps: []\ndata:\n  build:\n    name: build\nmyna: {}\n",
+        encoding="utf-8",
+    )
+    component = Component()
+    component.name = "demo"
+    component.component_application = "fakeapp"
+    component.component_class = "fakeclass"
+    component.input_file = os.fspath(input_file)
+    component.data = {"build": {"name": "build"}}
+    component.output_requirement = MissingOutputFile
+    component.output_template = "result.csv"
+    monkeypatch.setattr(
+        component, "_run_stage", lambda operation: operation == "execute"
+    )
+
+    with pytest.raises(
+        RuntimeError,
+        match="Only found 0 valid output files out of 1 output files for step demo",
+    ):
+        component.run_component()
+
+
+def test_component_run_skips_missing_output_when_ignore_output_errors_is_enabled(
+    monkeypatch, tmp_path
+):
+    _clear_workflow_env(monkeypatch)
+    input_file = tmp_path / "input.yaml"
+    input_file.write_text(
+        "steps: []\ndata:\n  build:\n    name: build\nmyna: {}\n",
+        encoding="utf-8",
+    )
+    component = Component()
+    component.name = "demo"
+    component.component_application = "fakeapp"
+    component.component_class = "fakeclass"
+    component.input_file = os.fspath(input_file)
+    component.data = {"build": {"name": "build"}}
+    component.output_requirement = MissingOutputFile
+    component.output_template = "result.csv"
+    component.apply_settings({}, component.data, {"ignore_output_errors": True})
+    monkeypatch.setattr(
+        component, "_run_stage", lambda operation: operation == "execute"
+    )
+
+    component.run_component()
 
 
 def test_run_passes_workflow_context_without_setting_env(monkeypatch, tmp_path):

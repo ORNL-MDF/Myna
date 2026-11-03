@@ -88,6 +88,14 @@ On import, `src/myna/core/__init__.py` sets:
 - `MYNA_INSTALL_PATH` to the installed `myna` package root;
 - `MYNA_APP_PATH` to the installed `myna/application` directory.
 
+The top-level `myna` package, application package, and database package expose
+their public subpackages/adapters lazily. This keeps optional application and
+database dependencies isolated until the corresponding backend is accessed. Core
+workflow primitives remain eagerly available so ordinary core imports preserve
+predictable validation and configuration behavior. `__all__` remains the public
+export contract; wildcard imports can therefore intentionally load every listed
+optional backend.
+
 Workflow run and sync state is carried through `myna.core.context.WorkflowContext`.
 This context includes the active input file, current step, step class, step index, and
 previous-step information. `myna.core.context` resolves that explicit context first and
@@ -106,8 +114,10 @@ extracts metadata. New shared workflow code should prefer `WorkflowContext`,
   `myna.core.workflow.load_input`. Accepted suffixes are `.yaml`, `.json` for the main input
   files and Myna workspaces can be included with `.yaml`, `.json`, `.myna-workspace`,
   and `.myna-workspace-json` suffixes. The `myna` section carries workflow-wide
-  settings such as the optional `workspace` path and `ignore_missing_layers` flag used
-  by `myna config` to skip missing layer metadata for independent layer-wise cases.
+  settings such as the optional `workspace` path, the `ignore_missing_layers` flag used
+  by `myna config` to skip missing layer metadata for independent layer-wise cases, and
+  the `ignore_output_errors` flag used by `myna run` to continue after component output
+  validation finds missing or invalid expected files.
 - **Workflow**: Ordered `steps` in an input file. The CLI can configure, run, and sync
   all steps or selected steps.
 - **Step**: A named workflow entry with a component `class`, an `application`, optional
@@ -166,7 +176,9 @@ validates component outputs and delegates supported sync behavior to the selecte
 database adapter while providing the active input file through `WorkflowContext`.
 When `myna.ignore_missing_layers` is true, `config` drops missing part-layer and
 build-region-layer cases from the configured case set, but region-layer steps still
-fail because their requested layers are not independent.
+fail because their requested layers are not independent. When `myna.ignore_output_errors` is
+true, `run` reports missing or invalid component outputs and continues instead of
+raising; application-stage exceptions remain fatal.
 
 ## Dependency Boundaries
 
@@ -188,6 +200,10 @@ Current intended boundaries:
   Applications define named executable arguments (for example `exaca-bin` and
   `thesis-bin`); the legacy step-level `executable`, stage-level `exec`, and generic
   `--exec` inputs remain compatibility paths and emit deprecation warnings.
+- `MynaApp` Docker launches run as the UID of the process that starts Myna by default,
+  so bind-mounted outputs remain host-writable; a stage's Docker configuration can
+  explicitly override that user. Docker launches preserve the image's default
+  entrypoint unless a stage's Docker configuration explicitly sets `entrypoint`.
 - App-level executable version gates should compare the numeric semver core of discovered
   version strings; packaging suffixes such as `-dev` may be preserved for display but are
   intentionally ignored for minimum-version decisions through shared version utilities.

@@ -29,6 +29,7 @@ class PeregrineDB(Database):
             "Spot Size (mm)",
             "Bulk Spot Size (mm)",
             "Bulk Laser Spot Size (mm)",
+            "Bulk Laser Spot Size (µm)",
         ],
     }
 

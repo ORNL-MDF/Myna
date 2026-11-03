@@ -130,6 +130,19 @@ cases are independent by layer, such as part-layer or build-region-layer steps.
 Region-layer steps still fail when any requested layer is missing because those cases
 depend on the complete requested layer set.
 
+By default, `myna run` fails when an application finishes without producing one of its
+expected output files. For best-effort workflows, the Myna-level `ignore_output_errors` flag
+can skip that output-validation failure and continue to the next workflow step:
+
+```yaml
+myna:
+  ignore_output_errors: true
+```
+
+This option only suppresses the component's missing or invalid output-file check.
+Errors raised while configuring, executing, or postprocessing an application remain
+fatal.
+
 ### Documentation impact for component types
 
 Adding a new component class or component type under `src/myna/core/components/` uses
@@ -156,6 +169,17 @@ Architecture/docs: no update needed - extends an existing component extension po
 ```
 
 ## Developing new applications
+
+The top-level `myna.application` package loads application backends when their
+submodule is accessed. Keep backend-specific Python imports inside the backend
+package; importing `myna` or `myna.core` should not require an unrelated optional
+application dependency. Missing backend dependencies may consequently be reported
+when that backend is accessed rather than during the initial package import.
+
+The same rule applies to database adapters: import the adapter or select its
+datatype before using adapter-specific functionality. Avoid relying on wildcard
+imports when optional backends are not installed, since wildcard imports resolve
+all names listed in `__all__`.
 
 Once a new component is implemented, you will have to implement a corresponding
 application (app) to use with `myna run`. Applications consist of up to three stage

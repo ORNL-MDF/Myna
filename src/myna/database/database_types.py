@@ -6,13 +6,8 @@
 #
 # License: 3-clause BSD, see https://opensource.org/licenses/BSD-3-Clause.
 #
-"""Database classes for handling different types of data object loading"""
+"""Database class lookup without eagerly importing every adapter."""
 
-from myna.database.peregrine import PeregrineDB
-from myna.database.peregrine_hdf5 import PeregrineHDF5
-from myna.database.nist_ambench_2022 import AMBench2022
-from myna.database.myna_json import MynaJSON
-from myna.database.pelican import Pelican
 from myna.core.db import NoDatabase
 
 
@@ -32,27 +27,34 @@ def return_datatype_class(datatype_str):
         formatted = formatted.replace("_", "")
         return formatted
 
-    if remove_text_format(datatype_str) in ["peregrine", "peregrinedb"]:
+    datatype = remove_text_format(datatype_str)
+
+    if datatype in ["peregrine", "peregrinedb"]:
+        from myna.database.peregrine import PeregrineDB
+
         return PeregrineDB()
-    elif any(
-        [
-            x in remove_text_format(datatype_str)
-            for x in ["peregrineh5", "peregrinehdf5", "hdf5", "h5"]
-        ]
-    ):
+    elif datatype in ["peregrineh5", "peregrinehdf5", "hdf5", "h5"]:
+        from myna.database.peregrine_hdf5 import PeregrineHDF5
+
         info = datatype_str.lower().split("_")
         if len(info) > 1:
             version = "_".join(info[1:])
             return PeregrineHDF5(version=version)
         else:
             return PeregrineHDF5()
-    elif remove_text_format(datatype_str) in ["ambench2022"]:
+    elif datatype in ["ambench2022"]:
+        from myna.database.nist_ambench_2022 import AMBench2022
+
         return AMBench2022()
-    elif remove_text_format(datatype_str) in ["mynajson"]:
+    elif datatype in ["mynajson"]:
+        from myna.database.myna_json import MynaJSON
+
         return MynaJSON()
-    elif remove_text_format(datatype_str) in ["pelican"]:
+    elif datatype in ["pelican"]:
+        from myna.database.pelican import Pelican
+
         return Pelican()
-    elif remove_text_format(datatype_str) in ["none"]:
+    elif datatype in ["none"]:
         return NoDatabase()
     else:
         print(f"Error: {datatype_str} does not correspond to any implemented database")

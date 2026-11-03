@@ -28,7 +28,7 @@ class NetCDF4Dataset:
             from netCDF4 import Dataset  # pylint: disable=import-outside-toplevel
         except ImportError as exc:
             raise ImportError(
-                "Myna deer app requires `pip install .[deer]` optional dependencies!"
+                'Myna deer app requires "pip install .[deer]" optional dependencies!'
             ) from exc
 
         self.data_file = data_file

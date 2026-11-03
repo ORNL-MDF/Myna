@@ -22,10 +22,10 @@ def get_representative_distribution(
     # Load app-specific dependencies
     try:
         import ot
-    except ImportError:
+    except ImportError as exc:
         raise ImportError(
             'Myna bnpy app requires "pip install .[bnpy]" optional dependencies!'
-        )
+        ) from exc
 
     # Initialize convergence criteria
     residue_rel = 1e6
