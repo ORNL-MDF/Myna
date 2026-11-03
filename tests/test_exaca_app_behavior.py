@@ -188,7 +188,7 @@ def test_region_and_slice_configure_match_outputs_to_region_inputs(
 
     for app_cls in (ExaCAMicrostructureRegion, ExaCAMicrostructureRegionSlice):
         monkeypatch.setattr(context_module, "_LEGACY_ENV_FALLBACK_WARNED", False)
-        with pytest.warns(DeprecationWarning, match="Myna 2.0"):
+        with pytest.warns(DeprecationWarning, match="Myna 1.3"):
             app = app_cls()
         captured.clear()
         monkeypatch.setattr(app, "parse_configure_arguments", lambda: None)
@@ -223,7 +223,7 @@ def test_region_setup_case_populates_inputs_run_script_and_analysis(
     case_dir = tmp_path / "case"
     _write_case_metadata(case_dir)
 
-    with pytest.warns(DeprecationWarning, match="Myna 2.0"):
+    with pytest.warns(DeprecationWarning, match="Myna 1.3"):
         app = ExaCAMicrostructureRegion()
     app.args = _build_app_args(template_dir, exe_path)
     app.setup_case(str(case_dir), [str(solid_file)], 50.0)
@@ -266,7 +266,7 @@ def test_region_setup_case_accepts_unit_bearing_temperature_headers(
     case_dir = tmp_path / "case"
     _write_case_metadata(case_dir)
 
-    with pytest.warns(DeprecationWarning, match="Myna 2.0"):
+    with pytest.warns(DeprecationWarning, match="Myna 1.3"):
         app = ExaCAMicrostructureRegion()
     app.args = _build_app_args(template_dir, exe_path)
     app.setup_case(str(case_dir), [str(solid_file)], 50.0)
@@ -300,7 +300,7 @@ def test_slice_setup_case_uses_shared_setup_without_analysis(monkeypatch, tmp_pa
     case_dir = tmp_path / "case"
     _write_case_metadata(case_dir)
 
-    with pytest.warns(DeprecationWarning, match="Myna 2.0"):
+    with pytest.warns(DeprecationWarning, match="Myna 1.3"):
         app = ExaCAMicrostructureRegionSlice()
     app.args = _build_app_args(template_dir, exe_path)
     app.setup_case(str(case_dir), [str(solid_file)], 50.0)
@@ -368,7 +368,7 @@ def test_region_execute_moves_exaca_vtk_to_workflow_output(monkeypatch, tmp_path
     workflow_output = tmp_path / "result.vtk"
     raw_output = case_dir / "exaca.vtk"
 
-    with pytest.warns(DeprecationWarning, match="Myna 2.0"):
+    with pytest.warns(DeprecationWarning, match="Myna 1.3"):
         app = ExaCAMicrostructureRegion()
     app.args = SimpleNamespace(overwrite=False, batch=False)
     monkeypatch.setattr(app, "parse_execute_arguments", lambda: None)
@@ -422,7 +422,7 @@ def test_slice_execute_writes_csv_statistics_from_raw_vtk(monkeypatch, tmp_path)
         }
     )
 
-    with pytest.warns(DeprecationWarning, match="Myna 2.0"):
+    with pytest.warns(DeprecationWarning, match="Myna 1.3"):
         app = ExaCAMicrostructureRegionSlice()
     app.args = SimpleNamespace(overwrite=False, batch=False)
     monkeypatch.setattr(app, "parse_execute_arguments", lambda: None)
@@ -477,7 +477,7 @@ def test_slice_postprocess_colors_raw_exaca_vtk(monkeypatch, tmp_path):
     )
 
     calls = {}
-    with pytest.warns(DeprecationWarning, match="Myna 2.0"):
+    with pytest.warns(DeprecationWarning, match="Myna 1.3"):
         app = ExaCAMicrostructureRegionSlice()
     monkeypatch.setattr(app, "parse_postprocess_arguments", lambda: None)
     monkeypatch.setattr(app, "get_step_output_paths", lambda: [str(workflow_output)])
