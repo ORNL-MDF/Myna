@@ -55,7 +55,8 @@ jobs:
         uses: dcondrey/unicode-safety-check@v3
         with:
           exclude-patterns: |
-            site/
+            site/**
+            .venv/**
 
   test-examples:
     name: Test 3DThesis, AdditiveFOAM, and ExaCA examples
