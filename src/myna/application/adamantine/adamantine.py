@@ -33,7 +33,11 @@ class AdamantineApp(MynaApp):
 
     @property
     def adamantine_bin(self):
-        """Return the configured Adamantine executable."""
+        """Return the configured Adamantine executable.
+
+        ``--exec`` remains a deprecated compatibility alias and is scheduled for
+        removal in Myna 1.3.
+        """
         return self.args.exec or self.args.adamantine_bin
 
     def get_required_executables(self, operation=None):

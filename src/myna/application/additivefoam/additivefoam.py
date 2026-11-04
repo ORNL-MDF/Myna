@@ -39,7 +39,11 @@ class AdditiveFOAM(MynaApp):
 
     @property
     def additivefoam_bin(self):
-        """Return the configured AdditiveFOAM executable."""
+        """Return the configured AdditiveFOAM executable.
+
+        ``--exec`` remains a deprecated compatibility alias and is scheduled for
+        removal in Myna 1.3.
+        """
         return self.args.exec or self.args.additivefoam_bin
 
     def get_required_executables(self, operation=None):

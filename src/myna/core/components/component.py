@@ -306,7 +306,8 @@ class Component:
             self.executable = step_settings.get("executable", self.executable)
             if "executable" in step_settings:
                 warnings.warn(
-                    f"Step {self.name} executable is deprecated; configure the "
+                    f"Step {self.name} executable is deprecated and will be removed "
+                    "in Myna 1.3; configure the "
                     "application-specific executable argument in the relevant "
                     "stage instead.",
                     DeprecationWarning,
@@ -648,7 +649,8 @@ class Component:
             if dict_key in obsolete_keys:
                 warning_msg = (
                     f' Step {self.name} {operation} argument "{dict_key}" is '
-                    "deprecated; use the application-specific executable argument "
+                    "deprecated and will be removed in Myna 1.3; use the "
+                    "application-specific executable argument "
                     "instead."
                 )
                 warnings.warn(warning_msg, DeprecationWarning, stacklevel=2)

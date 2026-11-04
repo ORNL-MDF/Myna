@@ -44,7 +44,11 @@ class DeerApp(MynaApp):
 
     @property
     def deer_bin(self):
-        """Return the configured DEER executable."""
+        """Return the configured DEER executable.
+
+        ``--exec`` remains a deprecated compatibility alias and is scheduled for
+        removal in Myna 1.3.
+        """
         return self.args.exec or self.args.deer_bin
 
     def get_required_executables(self, operation=None):

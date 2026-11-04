@@ -271,7 +271,11 @@ class Thesis(MynaApp):
 
     @property
     def thesis_bin(self):
-        """Return the configured 3DThesis executable."""
+        """Return the configured 3DThesis executable.
+
+        ``--exec`` remains a deprecated compatibility alias and is scheduled for
+        removal in Myna 1.3.
+        """
         return self.args.exec or self.args.thesis_bin
 
     def get_required_executables(self, operation=None):
