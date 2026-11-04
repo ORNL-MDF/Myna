@@ -34,13 +34,11 @@ class DeerApp(MynaApp):
             help="Path to the root Moose install directory",
         )
 
-    def parse_configure_arguments(self):
+    def register_configure_arguments(self):
         self.parse_shared_arguments()
-        self.parse_known_args()
 
-    def parse_execute_arguments(self):
+    def register_execute_arguments(self):
         self.parse_shared_arguments()
-        self.parse_known_args()
 
     @property
     def deer_bin(self):

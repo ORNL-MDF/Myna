@@ -213,8 +213,20 @@ Applications that derive from `MynaApp` should read workflow state from app attr
 such as `self.input_file`, `self.step_name`, `self.last_step_name`, and
 `self.step_index`. Avoid reading `MYNA_*` environment variables directly in new app
 code; those names are only populated temporarily while a stage is running for
-compatibility with existing wrappers and direct stage invocation in Myna 1.x. That
-env-var fallback is deprecated and will be removed in Myna 2.0.
+compatibility with existing wrappers and direct stage invocation through Myna 1.2.
+These environment fallbacks and temporary environment exposure are deprecated in
+Myna 1.2 and will be removed in Myna 1.3. Use `WorkflowContext`, `MynaApp` workflow
+attributes, or `get_workflow_input_file()` instead. `MYNA_CONFIG_INPUT` is deprecated
+on the same schedule.
+
+For `MynaApp` stage arguments, declare options in `register_configure_arguments()`,
+`register_execute_arguments()`, or `register_postprocess_arguments()`. The base
+`parse_*_arguments()` methods resolve registered values. Overriding those parsing
+methods as registration hooks is deprecated in Myna 1.2 and will be removed in Myna
+1.3. The shared `--exec` option is deprecated; use the application-specific executable
+option. The legacy `--mpiargs` string is deprecated; use `--mpiexec`, `--np`, and
+`--mpiflags`. These compatibility paths and their conversion or precedence behavior
+will be removed in Myna 1.3.
 
 Because stage modules are imported and executed in-process, they should restore any
 global process state they modify, especially the current working directory. Prefer
@@ -252,3 +264,12 @@ from embedded binary strings, prefer normalizing the discovered token to the com
 numeric semver core before using it in app-level minimum-version checks. This keeps app
 decisions stable across packaging differences that may preserve the numeric release while
 altering or truncating suffix text.
+
+## Application stage arguments
+
+Applications define stage options in their `MynaApp` argument methods. `myna run`
+collects workflow and workspace settings through `Component.get_step_args_list()` and
+passes them through the shared stage argument loader. Input-file values override
+workspace values. Executable validation uses the same definitions and resolved values,
+without executing the stage or changing `sys.argv`. Resolved defaults remain structured
+values on the app object.

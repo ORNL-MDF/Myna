@@ -172,7 +172,7 @@ class ThesisMeltPoolGeometryPart(Thesis):
             thesis_to_myna_mapping[thesis_name] = myna_name
         return thesis_to_myna_mapping
 
-    def parse_configure_arguments(self):
+    def register_configure_arguments(self):
         self.register_argument(
             "--sampling-mode",
             default=self.SNAPSHOT_SAMPLING_MODE,
@@ -189,9 +189,9 @@ class ThesisMeltPoolGeometryPart(Thesis):
             "Request interpolated melt-pool statistics by writing `MP_Stats=0` and "
             "`MP_Stats_Interp=1` in `Output.txt`.",
         )
-        super().parse_configure_arguments()
+        super().register_configure_arguments()
 
-    def parse_execute_arguments(self):
+    def register_execute_arguments(self):
         self.register_argument(
             "--sampling-mode",
             default=self.SNAPSHOT_SAMPLING_MODE,
@@ -205,7 +205,7 @@ class ThesisMeltPoolGeometryPart(Thesis):
             help="(flag) retained for stage parser compatibility; configured "
             "`xy-grid` cases already encode the selected melt-pool statistics mode",
         )
-        super().parse_execute_arguments()
+        super().register_execute_arguments()
 
     def configure_case(self, case_dir, myna_input="myna_data.yaml"):
         settings = self._load_case_settings(case_dir, myna_input=myna_input)
@@ -273,7 +273,7 @@ class ThesisMeltPoolGeometryPart(Thesis):
             )
 
     def configure(self):
-        self.parse_configure_arguments()
+        self.load_stage_arguments("configure")
         for case_dir in self.get_case_dirs():
             self.configure_case(case_dir)
 
@@ -303,7 +303,7 @@ class ThesisMeltPoolGeometryPart(Thesis):
         )
 
     def execute(self):
-        self.parse_execute_arguments()
+        self.load_stage_arguments("execute")
         self.require_supported_3dthesis_version()
         myna_files = self.get_step_output_paths()
 

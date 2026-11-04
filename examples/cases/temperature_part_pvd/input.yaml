@@ -6,7 +6,7 @@ steps:
       mesh-substrate-depth: 2.0e-3
       mesh-substrate-xy-pad: 1.0e-3
       mesh-size-factor: 1
-      write-freqeuncy-factor: 5
+      write-frequency-factor: 5
       convection-heat-transfer-coef: 100
       convection-temperature-infty: 300
       radiation-temperature-infty: 300

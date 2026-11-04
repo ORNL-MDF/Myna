@@ -47,7 +47,7 @@ class CreepTimeseriesRegionDeerApp(DeerApp):
         self.material_model_file_name = "material_model.xml"
         self.output_csv_name = "wCreep_out.csv"
 
-    def parse_configure_arguments(self):
+    def register_configure_arguments(self):
         """Check for arguments relevant to the configure step and update app settings"""
         self.register_argument(
             "--loaddir",
@@ -61,7 +61,7 @@ class CreepTimeseriesRegionDeerApp(DeerApp):
             type=float,
             help="(float) load in Newtons",
         )
-        super().parse_configure_arguments()
+        super().register_configure_arguments()
 
     def configure_case(self, case_dir, exodus_file):
         """Configure a single case
@@ -78,7 +78,7 @@ class CreepTimeseriesRegionDeerApp(DeerApp):
         """Configure all cases for the Myna step"""
 
         # Check for arguments relevant to the configure step
-        self.parse_configure_arguments()
+        self.load_stage_arguments("configure")
 
         # Get input (exodus_files) and output paths, then iterate through cases
         exodus_files = self.settings["data"]["output_paths"][self.last_step_name]
@@ -159,7 +159,7 @@ class CreepTimeseriesRegionDeerApp(DeerApp):
 
     def execute(self):
         """Run all cases for the Myna step"""
-        self.parse_execute_arguments()
+        self.load_stage_arguments("execute")
         csv_files = self.settings["data"]["output_paths"][self.step_name]
         processes = []
         for csv_file in csv_files:

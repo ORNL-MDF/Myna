@@ -267,7 +267,6 @@ class Thesis(MynaApp):
             help="(str) 3DThesis executable",
         )
         self.parse_shared_arguments()
-        self.parse_known_args()
 
     @property
     def thesis_bin(self):
@@ -413,12 +412,12 @@ class Thesis(MynaApp):
             return version
         return match.group("version")
 
-    def parse_configure_arguments(self):
+    def register_configure_arguments(self):
         if self.supports_part_layer_initial_temperature:
             self.parse_part_layer_initial_temperature_arguments()
         self._parse_thesis_stage_arguments()
 
-    def parse_execute_arguments(self):
+    def register_execute_arguments(self):
         self._parse_thesis_stage_arguments()
 
     def set_case(self, input_dir, output_dir):

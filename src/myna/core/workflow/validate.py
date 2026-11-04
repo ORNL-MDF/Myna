@@ -38,11 +38,22 @@ def validate(input_file, step=None):
     input_file = os.path.abspath(input_file)
     settings = load_input(input_file)
     selected_steps = str_to_list(step)
+    configured_steps = settings.get("steps", [])
 
-    for index, step_settings in enumerate(settings.get("steps", [])):
+    if selected_steps is not None:
+        available_steps = {
+            next(iter(step_settings)) for step_settings in configured_steps
+        }
+        unknown_steps = [name for name in selected_steps if name not in available_steps]
+        if unknown_steps:
+            raise ValueError("Unknown step name(s): " + ", ".join(unknown_steps))
+
+    matched_steps = 0
+    for index, step_settings in enumerate(configured_steps):
         step_name = next(iter(step_settings))
         if selected_steps is not None and step_name not in selected_steps:
             continue
+        matched_steps += 1
         values = step_settings[step_name]
         step_obj = components.return_step_class(values["class"])
         step_obj.name = step_name
@@ -60,3 +71,6 @@ def validate(input_file, step=None):
             with workflow_env(context, operation="validate"):
                 step_obj.validate_executables()
         print(f"Validated executables for step {step_name}.")
+
+    if selected_steps is not None and matched_steps == 0:
+        raise ValueError("Step selection matched no workflow steps.")

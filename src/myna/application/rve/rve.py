@@ -31,10 +31,8 @@ class RVE(MynaApp):
             help="(int) max number of layers to include in the region",
         )
 
-    def parse_execute_arguments(self):
+    def register_execute_arguments(self):
         self.parse_shared_arguments()
-        self.parse_known_args()
 
-    def parse_postprocess_arguments(self):
+    def register_postprocess_arguments(self):
         self.parse_shared_arguments()
-        self.parse_known_args()

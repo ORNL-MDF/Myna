@@ -160,7 +160,7 @@ def test_temperature_surface_part_execute_uses_interface_path_when_configured(
     called = {"interface": False}
     myna_files = ["file_0.csv", "file_1.csv"]
 
-    monkeypatch.setattr(app, "parse_execute_arguments", lambda: None)
+    monkeypatch.setattr(app, "load_stage_arguments", lambda _: None)
     monkeypatch.setattr(app, "get_step_output_paths", lambda: myna_files)
     monkeypatch.setattr(
         app,

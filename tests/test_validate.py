@@ -14,6 +14,7 @@ import pytest
 from myna.core import components
 from myna.core.app.base import MynaApp
 from myna.core.context import workflow_context, workflow_env
+from myna.core.workflow import validate as validate_workflow
 from myna.core.workflow.config import _strict_executable_validation
 
 
@@ -63,6 +64,28 @@ def test_validate_workflow_does_not_force_strict_environment(monkeypatch):
     with workflow_context(input_file="input.yaml") as context:
         with workflow_env(context, operation="validate"):
             assert "MYNA_VALIDATE_EXECUTABLES" not in os.environ
+
+
+def test_validate_rejects_unknown_step_names(monkeypatch):
+    monkeypatch.setattr(
+        validate_workflow,
+        "load_input",
+        lambda _: {"steps": [{"configured": {}}]},
+    )
+
+    with pytest.raises(ValueError, match="Unknown step name.*typo"):
+        validate_workflow.validate("input.yaml", "typo")
+
+
+def test_validate_rejects_selection_that_matches_no_steps(monkeypatch):
+    monkeypatch.setattr(
+        validate_workflow,
+        "load_input",
+        lambda _: {"steps": []},
+    )
+
+    with pytest.raises(ValueError, match="Unknown step name"):
+        validate_workflow.validate("input.yaml", "configured")
 
 
 def test_component_validates_each_stage_requirement_in_its_stage_environment(

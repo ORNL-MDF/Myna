@@ -31,7 +31,7 @@ class AdditiveFOAMRegionReduced(AdditiveFOAM):
         # Define app-specific template file names
         self.mesh_dict_name = "mesh_dict.yaml"
 
-    def parse_configure_arguments(self):
+    def register_configure_arguments(self):
         """Check for arguments relevant to the configure step and update app settings"""
         # Parse app-specific arguments
         self.register_argument(
@@ -99,12 +99,11 @@ class AdditiveFOAMRegionReduced(AdditiveFOAM):
             help="(int) additional refinement of region mesh"
             + " level after layer refinement (each level halves coarse mesh)",
         )
-        self.parse_known_args()
 
     def configure(self):
         """Configure all cases for the application"""
         # Check for arguments relevant to the configure step
-        self.parse_configure_arguments()
+        self.load_stage_arguments("configure")
 
         # Get list of expected output files and iterate through the cases
         mynafiles = self.settings["data"]["output_paths"][self.step_name]
