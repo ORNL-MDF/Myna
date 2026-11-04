@@ -5,6 +5,7 @@ steps:
     configure:
       res: 250.0e-6
     execute:
+      thesis-bin: /home/cloud/3DThesis/build/bin/3DThesis
       np: 1
 data:
   build:

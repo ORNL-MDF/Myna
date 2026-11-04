@@ -13,32 +13,34 @@ additivefoam:
 exaca:
   microstructure_region:
     configure:
-      exaca-bin: ExaCA
       cell-size: 2.5
       nd: 250
       sub-size: 12.3
       mu: 5
       std: 0.5
+    execute:
+      exaca-bin: ExaCA
   microstructure_region_slice:
     configure:
-      exaca-bin: ExaCA
       cell-size: 2.5
       nd: 250
       sub-size: 12.3
       mu: 5
       std: 0.5
+    execute:
+      exaca-bin: ExaCA
 thesis:
   melt_pool_geometry_part:
     configure:
-      thesis-bin: 3DThesis
       nout: 1000
       res: 20e-6
       z-res: 20e-6
     execute:
+      thesis-bin: 3DThesis
       batch: true
   solidification_part:
     configure:
-      thesis-bin: 3DThesis
       res: 25e-6
     execute:
+      thesis-bin: 3DThesis
       batch: true
