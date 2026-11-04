@@ -195,6 +195,11 @@ Current intended boundaries:
   segmentation type, and output sync.
 - `src/myna/application/` owns external-tool wrappers, templates, executable handling,
   and postprocessing needed to satisfy component file contracts.
+- Executable requirements are declared by application wrappers and validated at the
+  beginning of `myna config` or by the side-effect-free `myna validate` command.
+  Applications define named executable arguments (for example `exaca-bin` and
+  `thesis-bin`); the legacy step-level `executable`, stage-level `exec`, and generic
+  `--exec` inputs remain compatibility paths and emit deprecation warnings.
 - `MynaApp` Docker launches run as the UID of the process that starts Myna by default,
   so bind-mounted outputs remain host-writable; a stage's Docker configuration can
   explicitly override that user. Docker launches preserve the image's default
@@ -202,6 +207,11 @@ Current intended boundaries:
 - App-level executable version gates should compare the numeric semver core of discovered
   version strings; packaging suffixes such as `-dev` may be preserved for display but are
   intentionally ignored for minimum-version decisions through shared version utilities.
+- `myna config` validates required executables strictly by default before creating case
+  files. Set `myna.validate_all_executable: false` to opt out and receive warnings.
+  The side-effect-free `myna validate` command and application argument parsing retain
+  their warning default; strict validation can also be requested with
+  `--validate-executable` or `MYNA_VALIDATE_EXECUTABLES=1`.
 - `src/myna/cli/` contains launch templates and CLI-specific support; general workflow
   behavior belongs under `src/myna/core/workflow/`.
 - `tests/` contains test-only helpers. Do not import from `tests/` in runtime modules.
