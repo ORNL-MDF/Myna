@@ -7,13 +7,11 @@
 # License: 3-clause BSD, see https://opensource.org/licenses/BSD-3-Clause.
 #
 import sys
-import os
 
 import pytest
 
 from myna.core import components
 from myna.core.app.base import MynaApp
-from myna.core.context import workflow_context, workflow_env
 from myna.core.workflow.config import _strict_executable_validation
 
 
@@ -46,23 +44,6 @@ def test_validate_all_executable_false_disables_strict_default(monkeypatch):
 
     with pytest.warns(UserWarning, match="executable"):
         app.validate_executable(["definitely-not-installed-myna-executable"])
-
-
-def test_validate_environment_can_enable_strict_default(monkeypatch):
-    monkeypatch.setattr(sys, "argv", ["test"])
-    monkeypatch.setenv("MYNA_VALIDATE_EXECUTABLES", "1")
-    app = MynaApp()
-
-    with pytest.raises(FileNotFoundError, match="executable"):
-        app.validate_executable(["definitely-not-installed-myna-executable"])
-
-
-def test_validate_workflow_does_not_force_strict_environment(monkeypatch):
-    monkeypatch.delenv("MYNA_VALIDATE_EXECUTABLES", raising=False)
-
-    with workflow_context(input_file="input.yaml") as context:
-        with workflow_env(context, operation="validate"):
-            assert "MYNA_VALIDATE_EXECUTABLES" not in os.environ
 
 
 def test_component_validates_each_stage_requirement_in_its_stage_environment(

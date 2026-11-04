@@ -212,7 +212,7 @@ Current intended boundaries:
   files. Set `myna.validate_all_executable: false` to opt out and receive warnings.
   The side-effect-free `myna validate` command and application argument parsing retain
   their warning default; strict validation can also be requested with
-  `--validate-executable` or `MYNA_VALIDATE_EXECUTABLES=1`.
+  `--validate-executable`.
 - `src/myna/cli/` contains launch templates and CLI-specific support; general workflow
   behavior belongs under `src/myna/core/workflow/`.
 - `tests/` contains test-only helpers. Do not import from `tests/` in runtime modules.

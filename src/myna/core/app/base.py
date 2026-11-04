@@ -387,7 +387,6 @@ class MynaApp:
                 bool(configured)
                 if configured is not None
                 else self.args.validate_executable
-                or os.environ.get("MYNA_VALIDATE_EXECUTABLES") == "1"
             )
 
         for exe in executables:
