@@ -36,7 +36,8 @@ class CubitApp(MynaApp):
 
         # Check that all needed executables are accessible. This overrides the
         # assumed behavior that each app only has one executable passed through the
-        # `--exec` argument, because the user passes a Cubit install path
+        # `--exec` argument (deprecated; scheduled for removal in Myna 1.3), because
+        # the user passes a Cubit install path
         path_prefix = ""
         if self.args.cubitpath is not None:
             path_prefix = os.path.join(self.args.cubitpath, "bin")

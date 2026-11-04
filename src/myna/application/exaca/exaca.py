@@ -71,7 +71,11 @@ class ExaCA(MynaApp):
 
     @property
     def exaca_bin(self):
-        """Return the configured ExaCA executable."""
+        """Return the configured ExaCA executable.
+
+        ``--exec`` remains a deprecated compatibility alias and is scheduled for
+        removal in Myna 1.3.
+        """
         return self.args.exec or self.args.exaca_bin
 
     def get_required_executables(self, operation=None):

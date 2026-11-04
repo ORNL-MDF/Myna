@@ -100,8 +100,8 @@ class MynaApp:
             "--exec",
             default=None,
             type=str,
-            help="(str, deprecated) path to an application executable; use the "
-            "application-specific executable option instead",
+            help="(str, deprecated; removed in Myna 1.3) path to an application "
+            "executable; use the application-specific executable option instead",
         )
         self.register_argument(
             "--validate-executable",
@@ -258,8 +258,8 @@ class MynaApp:
         self.args, _ = self.parser.parse_known_args()
         if self.args.exec is not None:
             warnings.warn(
-                "The --exec option is deprecated; use the application-specific "
-                "executable option instead.",
+                "The --exec option is deprecated and will be removed in Myna 1.3; "
+                "use the application-specific executable option instead.",
                 DeprecationWarning,
                 stacklevel=2,
             )
