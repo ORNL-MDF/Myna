@@ -33,7 +33,7 @@ def parse(parser):
     validate(args.input, args.step)
 
 
-def validate(input_file, step=None):
+def validate(input_file, step=None, strict=None):
     """Validate executable requirements without modifying workflow files."""
     input_file = os.path.abspath(input_file)
     settings = load_input(input_file)
@@ -58,5 +58,5 @@ def validate(input_file, step=None):
             step_index=index,
         ) as context:
             with workflow_env(context, operation="validate"):
-                step_obj.validate_executables()
+                step_obj.validate_executables(strict=strict)
         print(f"Validated executables for step {step_name}.")
