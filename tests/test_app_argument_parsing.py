@@ -15,6 +15,8 @@ import stat
 import pytest
 import yaml
 
+from myna.application.adamantine.adamantine import AdamantineApp
+from myna.application.additivefoam.additivefoam import AdditiveFOAM
 from myna.application.cubit.cubit import CubitApp
 from myna.application.cubit.vtk_to_exodus_region.app import CubitVtkToExodusApp
 from myna.application.deer.deer import DeerApp
@@ -60,6 +62,60 @@ def test_register_argument_skips_duplicate_option_registration(monkeypatch):
 
     assert _count_option_actions(app.parser, "--demo") == 1
     assert app.args.demo == "value"
+
+
+def test_validate_executable_warns_by_default(monkeypatch):
+    monkeypatch.setattr(sys, "argv", ["test"])
+    app = MynaApp()
+
+    with pytest.warns(UserWarning, match="executable"):
+        app.validate_executable(["definitely-not-installed-myna-executable"])
+
+
+def test_validate_executable_can_be_required_by_app_argument(monkeypatch):
+    monkeypatch.setattr(sys, "argv", ["test", "--validate-executable"])
+    app = MynaApp()
+
+    with pytest.raises(FileNotFoundError, match="executable"):
+        app.validate_executable(["definitely-not-installed-myna-executable"])
+
+
+def test_validate_executable_can_be_required_by_myna_setting(monkeypatch):
+    monkeypatch.setattr(sys, "argv", ["test"])
+    app = MynaApp()
+    app.settings = {"myna": {"validate_all_executable": True}}
+
+    with pytest.raises(FileNotFoundError, match="executable"):
+        app.validate_executable(["definitely-not-installed-myna-executable"])
+
+
+def test_validate_executable_checks_all_executables(monkeypatch):
+    monkeypatch.setattr(sys, "argv", ["test", "--validate-executable"])
+    app = MynaApp()
+
+    with pytest.raises(FileNotFoundError, match="second-myna-executable"):
+        app.validate_executable(["/bin/sh", "second-myna-executable"])
+
+
+@pytest.mark.parametrize(
+    ("app_cls", "argument", "attribute"),
+    [
+        (AdditiveFOAM, "--additivefoam-bin", "additivefoam_bin"),
+        (AdamantineApp, "--adamantine-bin", "adamantine_bin"),
+        (DeerApp, "--deer-bin", "deer_bin"),
+        (ExaCA, "--exaca-bin", "exaca_bin"),
+        (Thesis, "--thesis-bin", "thesis_bin"),
+    ],
+)
+def test_apps_accept_named_executable_arguments(
+    monkeypatch, app_cls, argument, attribute
+):
+    monkeypatch.setattr(sys, "argv", ["test", argument, "/custom/application-bin"])
+    app = app_cls()
+    if app_cls in (DeerApp, ExaCA, Thesis):
+        app.parse_execute_arguments()
+
+    assert getattr(app, attribute) == "/custom/application-bin"
 
 
 def test_register_argument_rejects_conflicting_option_redefinitions(monkeypatch):
@@ -411,9 +467,11 @@ def test_deer_stage_parsers_are_idempotent(monkeypatch, stage_calls):
         ("parse_execute_arguments", "parse_execute_arguments"),
     ],
 )
+@pytest.mark.filterwarnings(
+    'ignore:cubit/.* app executable "(psculpt|epu)" was not found\\.:UserWarning'
+)
 def test_cubit_stage_parsers_are_idempotent(monkeypatch, stage_calls):
     monkeypatch.setattr(sys, "argv", ["test"])
-    monkeypatch.setattr(CubitApp, "_validate_cubit_executables", lambda self: None)
     app = CubitApp()
 
     for stage_call in stage_calls:
@@ -421,6 +479,18 @@ def test_cubit_stage_parsers_are_idempotent(monkeypatch, stage_calls):
 
     assert _count_option_actions(app.parser, "--cubitpath") == 1
     assert app.args.cubitpath is None
+
+
+@pytest.mark.filterwarnings(
+    'ignore:cubit/.* app executable "(psculpt|epu)" was not found\\.:UserWarning'
+)
+def test_cubit_declares_assembled_executable_paths(monkeypatch):
+    monkeypatch.setattr(sys, "argv", ["test"])
+    app = CubitApp()
+
+    app.parse_configure_arguments()
+
+    assert app.get_required_executables() == ["psculpt", "epu"]
 
 
 @pytest.mark.parametrize(
@@ -431,9 +501,11 @@ def test_cubit_stage_parsers_are_idempotent(monkeypatch, stage_calls):
         ("parse_execute_arguments", "parse_execute_arguments"),
     ],
 )
+@pytest.mark.filterwarnings(
+    'ignore:cubit/.* app executable "(psculpt|epu)" was not found\\.:UserWarning'
+)
 def test_cubit_vtk_to_exodus_stage_parsers_are_idempotent(monkeypatch, stage_calls):
     monkeypatch.setattr(sys, "argv", ["test"])
-    monkeypatch.setattr(CubitApp, "_validate_cubit_executables", lambda self: None)
     app = CubitVtkToExodusApp()
 
     for stage_call in stage_calls:
@@ -457,9 +529,12 @@ def test_cubit_vtk_to_exodus_stage_parsers_are_idempotent(monkeypatch, stage_cal
         ("parse_execute_arguments", "parse_execute_arguments"),
     ],
 )
+@pytest.mark.filterwarnings(
+    'ignore:thesis/None app executable "3DThesis" was not found\\.:UserWarning'
+)
 def test_thesis_stage_parsers_are_idempotent(monkeypatch, stage_calls):
     monkeypatch.setattr(sys, "argv", ["test"])
-    app = Thesis(validate_executable=False)
+    app = Thesis()
 
     for stage_call in stage_calls:
         getattr(app, stage_call)()
@@ -479,13 +554,16 @@ def test_thesis_stage_parsers_are_idempotent(monkeypatch, stage_calls):
         "parse_execute_arguments",
     ],
 )
+@pytest.mark.filterwarnings(
+    'ignore:thesis/None app executable "3DThesis" was not found\\.:UserWarning'
+)
 def test_thesis_stage_parsers_set_default_executable(monkeypatch, stage_call):
     monkeypatch.setattr(sys, "argv", ["test"])
-    app = Thesis(validate_executable=False)
+    app = Thesis()
 
     getattr(app, stage_call)()
 
-    assert app.args.exec == "3DThesis"
+    assert app.thesis_bin == "3DThesis"
 
 
 @pytest.mark.parametrize(
@@ -495,6 +573,9 @@ def test_thesis_stage_parsers_set_default_executable(monkeypatch, stage_call):
         ThesisSolidificationPart,
         ThesisMeltPoolGeometryPart,
     ],
+)
+@pytest.mark.filterwarnings(
+    'ignore:thesis/.* app executable "3DThesis" was not found\\.:UserWarning'
 )
 @pytest.mark.parametrize(
     "stage_calls",
@@ -509,7 +590,6 @@ def test_thesis_part_layer_configure_parsers_register_initial_temperature_argume
 ):
     monkeypatch.setattr(sys, "argv", ["test"])
     app = app_cls()
-    app._validate_thesis_executable = False
 
     for stage_call in stage_calls:
         getattr(app, stage_call)()
@@ -528,12 +608,14 @@ def test_thesis_part_layer_configure_parsers_register_initial_temperature_argume
         ("parse_configure_arguments", "parse_configure_arguments"),
     ],
 )
+@pytest.mark.filterwarnings(
+    'ignore:thesis/melt_pool_geometry_part app executable "3DThesis" was not found\\.:UserWarning'
+)
 def test_melt_pool_geometry_stage_parsers_register_sampling_mode(
     monkeypatch, stage_calls
 ):
     monkeypatch.setattr(sys, "argv", ["test"])
     app = ThesisMeltPoolGeometryPart()
-    app._validate_thesis_executable = False
 
     for stage_call in stage_calls:
         getattr(app, stage_call)()
@@ -552,12 +634,14 @@ def test_melt_pool_geometry_stage_parsers_register_sampling_mode(
         ("parse_execute_arguments", "parse_execute_arguments"),
     ],
 )
+@pytest.mark.filterwarnings(
+    'ignore:thesis/temperature_surface_part app executable "3DThesis" was not found\\.:UserWarning'
+)
 def test_temperature_surface_part_stage_parsers_are_idempotent(
     monkeypatch, stage_calls
 ):
     monkeypatch.setattr(sys, "argv", ["test"])
     app = ThesisTemperatureSurfacePart()
-    app._validate_thesis_executable = False
 
     for stage_call in stage_calls:
         getattr(app, stage_call)()
@@ -577,16 +661,18 @@ def test_temperature_surface_part_stage_parsers_are_idempotent(
         "parse_execute_arguments",
     ],
 )
+@pytest.mark.filterwarnings(
+    'ignore:thesis/temperature_surface_part app executable "3DThesis" was not found\\.:UserWarning'
+)
 def test_temperature_surface_part_stage_parsers_set_default_executable(
     monkeypatch, stage_call
 ):
     monkeypatch.setattr(sys, "argv", ["test"])
     app = ThesisTemperatureSurfacePart()
-    app._validate_thesis_executable = False
 
     getattr(app, stage_call)()
 
-    assert app.args.exec == "3DThesis"
+    assert app.thesis_bin == "3DThesis"
 
 
 @pytest.mark.parametrize(
@@ -597,9 +683,11 @@ def test_temperature_surface_part_stage_parsers_set_default_executable(
         ("parse_execute_arguments", "parse_execute_arguments"),
     ],
 )
+@pytest.mark.filterwarnings(
+    'ignore:exaca/None app executable "ExaCA" was not found\\.:UserWarning'
+)
 def test_exaca_stage_parsers_are_idempotent(monkeypatch, stage_calls):
     monkeypatch.setattr(sys, "argv", ["test"])
-    monkeypatch.setattr(ExaCA, "validate_executable", lambda self, default: None)
     app = ExaCA()
 
     for stage_call in stage_calls:
@@ -619,15 +707,17 @@ def test_exaca_stage_parsers_are_idempotent(monkeypatch, stage_calls):
         "parse_execute_arguments",
     ],
 )
+@pytest.mark.filterwarnings(
+    'ignore:exaca/None app executable "ExaCA" was not found\\.:UserWarning'
+)
 def test_exaca_stage_parsers_set_default_executable(monkeypatch, stage_call):
     monkeypatch.setattr(sys, "argv", ["test"])
-    monkeypatch.setattr(ExaCA, "validate_executable", lambda self, default: None)
     app = ExaCA()
 
     getattr(app, stage_call)()
 
     if "execute" in stage_call:
-        assert app.args.exec == "ExaCA"
+        assert app.exaca_bin == "ExaCA"
 
 
 def test_exaca_get_executable_version_reads_banner_before_missing_input_error(
@@ -660,7 +750,7 @@ def test_thesis_get_executable_version_falls_back_to_embedded_binary_strings(
     )
     monkeypatch.setattr(sys, "argv", ["test", "--exec", str(executable)])
 
-    assert Thesis(validate_executable=False).get_executable_version() == "4.1.0"
+    assert Thesis().get_executable_version() == "4.1.0"
 
 
 def test_thesis_get_executable_version_reports_missing_embedded_version(
@@ -677,7 +767,7 @@ def test_thesis_get_executable_version_reports_missing_embedded_version(
         RuntimeError,
         match="Banner detection failed and no embedded version string was found",
     ):
-        Thesis(validate_executable=False).get_executable_version()
+        Thesis().get_executable_version()
 
 
 def test_thesis_get_executable_version_reads_embedded_strings_in_docker(
@@ -694,7 +784,7 @@ def test_thesis_get_executable_version_reads_embedded_strings_in_docker(
             "thesis:latest",
         ],
     )
-    app = Thesis(validate_executable=False)
+    app = Thesis()
     calls = []
 
     def fake_run(cmd_args, timeout=30):

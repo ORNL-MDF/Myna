@@ -31,35 +31,30 @@ class CubitApp(MynaApp):
             help="Path to the root Cubit install directory",
         )
 
-    def _validate_cubit_executables(self):
+    def _set_cubit_executable_paths(self):
         """Check that Cubit executables are accessible for the parsed options."""
 
         # Check that all needed executables are accessible. This overrides the
         # assumed behavior that each app only has one executable passed through the
-        # `--exec` argument, because the user passes a Cubit install path
+        # `--exec` argument (deprecated; scheduled for removal in Myna 1.3), because
+        # the user passes a Cubit install path
         path_prefix = ""
         if self.args.cubitpath is not None:
             path_prefix = os.path.join(self.args.cubitpath, "bin")
         self.exe_psculpt = os.path.join(path_prefix, "psculpt")
         self.exe_epu = os.path.join(path_prefix, "epu")
-        original_executable_arg = self.args.exec
-        for executable in [self.exe_psculpt, self.exe_epu]:
-            self.args.exec = executable
-            self.validate_executable(executable)
-        # Set original value back to exec commented out since it is ignored
-        if original_executable_arg is not None:
-            self.args.exec = (
-                f"# (ignored by {self.name} app) " + original_executable_arg
-            )
-        else:
-            self.args.exec = original_executable_arg
+
+    def get_required_executables(self, operation=None):
+        if operation is None or operation == "execute":
+            return [self.exe_psculpt, self.exe_epu]
+        return []
 
     def parse_configure_arguments(self):
         self.parse_shared_arguments()
         self.parse_known_args()
-        self._validate_cubit_executables()
+        self._set_cubit_executable_paths()
 
     def parse_execute_arguments(self):
         self.parse_shared_arguments()
         self.parse_known_args()
-        self._validate_cubit_executables()
+        self._set_cubit_executable_paths()

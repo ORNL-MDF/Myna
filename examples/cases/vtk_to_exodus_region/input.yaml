@@ -20,7 +20,6 @@ steps:
 - exaca:
     class: microstructure_region
     application: exaca
-    executable: ExaCA
     configure:
       cell-size: 2.5
       sub-size: 12.3
@@ -42,11 +41,11 @@ steps:
 - deer:
     class: creep_timeseries_region
     application: deer
-    executable: deer-opt
     configure:
       loaddir: z
       load: 100
     execute:
+      deer-bin: deer-opt
       docker-image: idaholab/moose-dev:2025.04.22
       docker-config: docker_config_deer.yaml
       env: /projects/activate
