@@ -7,9 +7,12 @@
 # License: 3-clause BSD, see https://opensource.org/licenses/BSD-3-Clause.
 #
 import sys
+import os
 from contextlib import nullcontext
+from types import SimpleNamespace
 
 import pytest
+import oslex
 
 from myna.core import components
 from myna.core.app.base import MynaApp
@@ -37,6 +40,50 @@ def test_validate_executable_can_be_strict(monkeypatch):
         app.validate_executable(
             ["definitely-not-installed-myna-executable"], strict=True
         )
+
+
+@pytest.mark.skipif(os.name == "nt", reason="environment setup uses a POSIX shell")
+def test_validate_executable_quotes_paths_with_environment(monkeypatch, tmp_path):
+    executable = tmp_path / "tool $(touch injected)"
+    executable.write_text("#!/bin/sh\n", encoding="utf-8")
+    executable.chmod(0o755)
+    env_file = tmp_path / "setup environment.sh"
+    env_file.write_text(":\n", encoding="utf-8")
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setattr(sys, "argv", ["test", "--env", str(env_file)])
+
+    MynaApp().validate_executable([executable], strict=True)
+
+    assert not (tmp_path / "injected").exists()
+
+
+def test_validate_executable_quotes_docker_command(monkeypatch):
+    monkeypatch.setattr(sys, "argv", ["test", "--docker-image", "example"])
+    captured = {}
+
+    class Process:
+        name = "test-container"
+
+        def communicate(self, timeout=None):
+            return b"", b""
+
+        def wait(self, timeout=None):
+            return 0
+
+    def run(image, command, **kwargs):
+        captured["command"] = command
+        return Process()
+
+    monkeypatch.setattr(
+        "myna.core.app.base.docker.from_env",
+        lambda: SimpleNamespace(containers=SimpleNamespace(run=run)),
+    )
+    monkeypatch.setattr(oslex, "quote", lambda _: pytest.fail("used host quoting"))
+    executable = "/opt/my tools/$(touch injected)"
+    MynaApp().validate_executable([executable], strict=True)
+
+    assert captured["command"][:2] == ["bash", "-lc"]
+    assert oslex.split_sh(captured["command"][2]) == ["which", executable]
 
 
 def test_validate_all_executable_false_disables_strict_default(monkeypatch):

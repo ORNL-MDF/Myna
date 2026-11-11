@@ -31,7 +31,9 @@ dependencies = [
     'scipy',
     'gitpython',
     'zarr',
-    'docker']
+    'docker',
+    "oslex>=2.0.0",
+]
 
 [project.optional-dependencies]
 dev = [

@@ -283,6 +283,9 @@ def test_start_subprocess_loads_docker_run_kwargs_from_config(monkeypatch, tmp_p
         "/addition": {"bind": "/work"},
     }
 
+    app.start_subprocess(["echo", "hello", ">", "output.txt"])
+    assert captured["command"] == ["bash", "-lc", "echo hello > output.txt"]
+
 
 def test_start_subprocess_docker_config_overrides_default_user(monkeypatch, tmp_path):
     docker_config_file = tmp_path / "docker-run.yaml"

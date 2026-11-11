@@ -19,6 +19,7 @@ import subprocess
 import warnings
 from pathlib import Path
 import docker
+import oslex
 from docker.models.containers import Container
 import yaml
 from myna.core.app._argument_registrar import _ArgumentRegistrar
@@ -401,8 +402,10 @@ class MynaApp:
 
     def run_subprocess(self, cmd_args, check=True, timeout=30):
         """Run a command through the configured local or Docker environment."""
+        cmd_args = [str(arg) for arg in cmd_args]
         process = self.start_subprocess(
-            [str(arg) for arg in cmd_args],
+            cmd_args,
+            literal_args=True,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
         )
@@ -594,8 +597,13 @@ class MynaApp:
         else:
             print(f"Warning: NOT overwriting existing case in: {case_dir}")
 
-    def start_subprocess(self, cmd_args, **kwargs) -> subprocess.Popen | Container:
+    def start_subprocess(
+        self, cmd_args, *, literal_args=False, **kwargs
+    ) -> subprocess.Popen | Container:
         """Starts a subprocess, activating an environment if present
+
+        If literal_args is true, quote arguments when invoking a shell. Otherwise,
+        shell operators in cmd_args retain their existing meaning.
 
         kwargs are passed to the subprocess launcher, Popen or Docker:
             - For Popen subprocess, this can be used to redirect stdout & stderr, etc.
@@ -605,7 +613,14 @@ class MynaApp:
         # Launch using subprocess.Popen
         if self.args.docker_image is None:
             if self.args.env is not None:
-                cmd_arg_str = [f". {self.args.env} && " + " ".join(cmd_args)]
+                shell_args = (
+                    [oslex.quote(str(arg)) for arg in cmd_args]
+                    if literal_args
+                    else cmd_args
+                )
+                cmd_arg_str = [
+                    f". {oslex.quote(self.args.env)} && " + " ".join(shell_args)
+                ]
                 process = subprocess.Popen(cmd_arg_str, shell=True, **kwargs)
                 print(f"myna subprocess (PID {process.pid}): {cmd_arg_str}")
                 return process
@@ -616,9 +631,12 @@ class MynaApp:
         # Launch using Docker through the image's default entrypoint.  Execute the
         # command in bash so application-provided shell syntax (for example,
         # redirection) and the optional environment setup file continue to work.
-        cmd_arg_str = " ".join(cmd_args)
+        shell_args = (
+            [oslex.quote_sh(str(arg)) for arg in cmd_args] if literal_args else cmd_args
+        )
+        cmd_arg_str = " ".join(shell_args)
         if self.args.env is not None:
-            cmd_arg_str = f". {self.args.env} && " + cmd_arg_str
+            cmd_arg_str = f". {oslex.quote_sh(self.args.env)} && " + cmd_arg_str
         cmd_args_docker = ["bash", "-lc", cmd_arg_str]
         # Match the user who started Myna so files written through bind mounts remain
         # writable on the host. A docker config can intentionally select another
