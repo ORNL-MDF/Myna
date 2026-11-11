@@ -39,7 +39,7 @@ class CubitVtkToExodusApp(CubitApp):
         super().__init__()
         self.class_name = "vtk_to_exodus"
 
-    def parse_execute_arguments(self):
+    def register_execute_arguments(self):
         self.register_argument(
             "--spn-xyz-order",
             default=5,
@@ -107,7 +107,7 @@ class CubitVtkToExodusApp(CubitApp):
             help="Minimum connected grain-region voxel count to preserve before "
             + "merging it into a neighboring grain.",
         )
-        super().parse_execute_arguments()
+        super().register_execute_arguments()
 
     @staticmethod
     def load_vtk_image_data(vtk_file):
@@ -579,5 +579,5 @@ class CubitVtkToExodusApp(CubitApp):
 
     def execute(self):
         """Execute all cubit/vtk_to_exodus_region cases."""
-        self.parse_execute_arguments()
+        self.load_stage_arguments("execute")
         self.mesh_all_cases()

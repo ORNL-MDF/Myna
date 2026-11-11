@@ -41,6 +41,9 @@ class MynaApp:
     """
 
     ENV_APP_PATH = "MYNA_APP_PATH"
+    _argument_argv = None
+    _validation_mode = False
+    _resolved_stage_args = None
 
     def __init__(self):
         # Set the print name as well as the Myna app and class names
@@ -186,6 +189,46 @@ class MynaApp:
         )
         self.parse_known_args()
 
+    def load_stage_arguments(self, operation, argv=None):
+        """Register one stage's options and resolve values from explicit argv."""
+        legacy_hook = f"parse_{operation}_arguments"
+        if getattr(type(self), legacy_hook) is not getattr(MynaApp, legacy_hook):
+            warnings.warn(
+                f"Overriding {legacy_hook} as an argument registration hook is "
+                f"deprecated and will be removed in Myna 1.3; use "
+                f"register_{operation}_arguments() to declare options and "
+                f"MynaApp.{legacy_hook}() to resolve them.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+        previous = self.parse_known_args
+        previous_argv = MynaApp._argument_argv
+        stage_argv = (
+            list(argv)
+            if argv is not None
+            else list(previous_argv)
+            if previous_argv is not None
+            else []
+        )
+        MynaApp._argument_argv = stage_argv
+        self.parse_known_args = lambda: None
+        try:
+            getattr(self, f"register_{operation}_arguments")()
+            if MynaApp._resolved_stage_args is not None:
+                self.args = argparse.Namespace(**vars(MynaApp._resolved_stage_args))
+            else:
+                self.args = self.parser.parse_args(stage_argv)
+            self._set_procs()
+            self._mpiargs_to_current()
+            self._after_stage_arguments_loaded(operation)
+            return self.args
+        finally:
+            self.parse_known_args = previous
+            MynaApp._argument_argv = previous_argv
+
+    def _after_stage_arguments_loaded(self, operation):
+        """Hook for application settings derived from resolved stage arguments."""
+
     @property
     def name(self):
         return f"{self.app_type}/{self.class_name}"
@@ -256,7 +299,10 @@ class MynaApp:
     def parse_known_args(self):
         """Parse known command line arguments to update self.args and apply
         any corrections"""
-        self.args, _ = self.parser.parse_known_args()
+        if MynaApp._resolved_stage_args is not None:
+            self.args = argparse.Namespace(**vars(MynaApp._resolved_stage_args))
+        else:
+            self.args, _ = self.parser.parse_known_args(MynaApp._argument_argv)
         if self.args.exec is not None:
             warnings.warn(
                 "The --exec option is deprecated and will be removed in Myna 1.3; "
@@ -266,7 +312,7 @@ class MynaApp:
             )
         self._set_procs()
         self._mpiargs_to_current()
-        if self.args.skip:
+        if self.args.skip and not MynaApp._validation_mode:
             print(f"- Skipping part of step {self.step_name}")
             sys.exit()
 
@@ -277,16 +323,16 @@ class MynaApp:
             **kwargs,
         )
 
-    def parse_configure_arguments(self):
+    def register_configure_arguments(self):
         """Register arguments used by the configure stage.
 
-        Subclasses can override this method and call `self.parse_known_args()`.
+        Subclasses can override this method to add stage options.
         """
 
-    def parse_execute_arguments(self):
+    def register_execute_arguments(self):
         """Register arguments used by the execute stage.
 
-        Subclasses can override this method and call `self.parse_known_args()`.
+        Subclasses can override this method to add stage options.
         """
 
     def parse_shared_arguments(self):
@@ -296,11 +342,20 @@ class MynaApp:
         relevant stage-specific parse methods.
         """
 
-    def parse_postprocess_arguments(self):
+    def register_postprocess_arguments(self):
         """Register arguments used by the postprocess stage.
 
-        Subclasses can override this method and call `self.parse_known_args()`.
+        Subclasses can override this method to add stage options.
         """
+
+    def parse_configure_arguments(self):
+        return self.load_stage_arguments("configure", sys.argv[1:])
+
+    def parse_execute_arguments(self):
+        return self.load_stage_arguments("execute", sys.argv[1:])
+
+    def parse_postprocess_arguments(self):
+        return self.load_stage_arguments("postprocess", sys.argv[1:])
 
     def get_required_executables(self, operation=None):
         """Return executable names required by an application stage.
@@ -341,6 +396,12 @@ class MynaApp:
 
         TODO: Remove this function in next release"""
         if self.args.mpiargs is not None:
+            warnings.warn(
+                "--mpiargs is deprecated and will be removed in Myna 1.3; use "
+                "--mpiexec, --np, and --mpiflags instead.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
             if self.args.mpiexec is not None:
                 raise ValueError(
                     "--mpiargs (deprecated input) may not be used with --mpiexec"

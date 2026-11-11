@@ -31,6 +31,7 @@ from myna.application.thesis.temperature_surface_part import (
     ThesisTemperatureSurfacePart,
 )
 from myna.core.app.base import MynaApp
+from myna.core.components.component import Component
 
 
 def _count_option_actions(parser, option_string):
@@ -40,6 +41,47 @@ def _count_option_actions(parser, option_string):
 def _write_shell_executable(path, body):
     path.write_text(f"#!/bin/sh\n{body}", encoding="utf-8")
     path.chmod(path.stat().st_mode | stat.S_IXUSR)
+
+
+def test_parse_known_args_reuses_resolved_stage_namespace(monkeypatch):
+    monkeypatch.setattr(sys, "argv", ["test"])
+    app = MynaApp()
+    resolved_values = vars(app.args).copy()
+    resolved_values["exec"] = "/resolved/app"
+    resolved = SimpleNamespace(**resolved_values)
+    monkeypatch.setattr(MynaApp, "_resolved_stage_args", resolved)
+    monkeypatch.setattr(
+        app.parser,
+        "parse_known_args",
+        lambda *args, **kwargs: pytest.fail("stage arguments were parsed twice"),
+    )
+
+    app.parse_known_args()
+
+    assert app.args.exec == "/resolved/app"
+
+
+def test_stage_loader_resolves_workspace_input_and_app_defaults(tmp_path, monkeypatch):
+    monkeypatch.setattr(sys, "argv", ["test"])
+    workspace = tmp_path / "workspace.yaml"
+    workspace.write_text(
+        "exaca:\n  microstructure_region:\n    execute:\n      nd: 2\n      mu: 7\n",
+        encoding="utf-8",
+    )
+    component = Component()
+    component.name = "exaca/microstructure_region"
+    component.component_application = "exaca"
+    component.component_class = "microstructure_region"
+    component.workspace = str(workspace)
+    component.execute_dict = {"nd": 4, "exaca-bin": "/input/ExaCA"}
+
+    app = ExaCA()
+    app.load_stage_arguments("execute", component.get_step_args_list("execute"))
+
+    assert app.args.nd == 4
+    assert app.args.mu == 7
+    assert app.args.exaca_bin == "/input/ExaCA"
+    assert app.args.std == 2
 
 
 def test_register_argument_skips_duplicate_option_registration(monkeypatch):

@@ -388,13 +388,13 @@ def test_temperature_and_solidification_part_setup_share_case_configuration(
     _write_case_metadata(temperature_case, case_payload)
     _write_case_metadata(solidification_case, case_payload)
 
-    with pytest.warns(DeprecationWarning, match="Myna 2.0"):
+    with pytest.warns(DeprecationWarning, match="Myna 1.3"):
         temperature_app = ThesisTemperaturePart()
     temperature_app.args = _build_args(template_dir, nout=5)
     temperature_app.configure_case(str(temperature_case))
 
     monkeypatch.setattr(context_module, "_LEGACY_ENV_FALLBACK_WARNED", False)
-    with pytest.warns(DeprecationWarning, match="Myna 2.0"):
+    with pytest.warns(DeprecationWarning, match="Myna 1.3"):
         solidification_app = ThesisSolidificationPart()
     solidification_app.args = _build_args(template_dir, nout=5)
     solidification_app.configure_case(str(solidification_case))
@@ -647,7 +647,7 @@ def test_solidification_build_region_configure_creates_ordered_paths_and_beams(
     case_dir = tmp_path / "case"
     _write_case_metadata(case_dir, _build_region_case_payload(scanfile_a, scanfile_b))
 
-    with pytest.warns(DeprecationWarning, match="Myna 2.0"):
+    with pytest.warns(DeprecationWarning, match="Myna 1.3"):
         app = ThesisSolidificationBuildRegion()
     app.args = _build_args(template_dir)
     app.configure_case(str(case_dir))
@@ -712,7 +712,7 @@ def test_melt_pool_geometry_configure_creates_segment_cases(monkeypatch, tmp_pat
     monkeypatch.setattr(melt_pool_app_module, "Scanpath", FakeScanpath)
     monkeypatch.setattr(melt_pool_app_module, "ThesisPath", FakeThesisPath)
 
-    with pytest.warns(DeprecationWarning, match="Myna 2.0"):
+    with pytest.warns(DeprecationWarning, match="Myna 1.3"):
         app = ThesisMeltPoolGeometryPart()
     app.args = _build_args(template_dir, nout=5)
     app.configure_case(str(case_dir))
@@ -798,7 +798,7 @@ def test_melt_pool_geometry_configure_skips_segments_without_snapshot_times(
     monkeypatch.setattr(melt_pool_app_module, "Scanpath", FakeScanpath)
     monkeypatch.setattr(melt_pool_app_module, "ThesisPath", FakeThesisPath)
 
-    with pytest.warns(DeprecationWarning, match="Myna 2.0"):
+    with pytest.warns(DeprecationWarning, match="Myna 1.3"):
         app = ThesisMeltPoolGeometryPart()
     app.args = _build_args(template_dir, nout=2)
     app.configure_case(str(case_dir))
@@ -1235,7 +1235,7 @@ def test_depth_map_configure_uses_standard_part_case(monkeypatch, tmp_path):
     case_dir = tmp_path / "case"
     _write_case_metadata(case_dir, _build_part_case_payload(scanfile))
 
-    with pytest.warns(DeprecationWarning, match="Myna 2.0"):
+    with pytest.warns(DeprecationWarning, match="Myna 1.3"):
         app = ThesisDepthMapPart()
     app.args = _build_args(template_dir, nout=5)
     app.configure_case(str(case_dir))
@@ -1302,7 +1302,7 @@ def test_depth_map_execute_exports_max_z_depth(monkeypatch, tmp_path):
         encoding="utf-8",
     )
 
-    with pytest.warns(DeprecationWarning, match="Myna 2.0"):
+    with pytest.warns(DeprecationWarning, match="Myna 1.3"):
         app = ThesisDepthMapPart()
     app.args = _build_args(tmp_path / "unused")
     monkeypatch.setattr(app, "parse_execute_arguments", lambda: None)
@@ -1371,7 +1371,7 @@ def test_temperature_execute_exports_snapshot_schema(monkeypatch, tmp_path):
         encoding="utf-8",
     )
 
-    with pytest.warns(DeprecationWarning, match="Myna 2.0"):
+    with pytest.warns(DeprecationWarning, match="Myna 1.3"):
         app = ThesisTemperaturePart()
     app.args = _build_args(tmp_path / "unused", nout=4)
     monkeypatch.setattr(app, "parse_execute_arguments", lambda: None)
@@ -1418,7 +1418,7 @@ def test_solidification_part_execute_merges_final_csvs(monkeypatch, tmp_path):
         encoding="utf-8",
     )
 
-    with pytest.warns(DeprecationWarning, match="Myna 2.0"):
+    with pytest.warns(DeprecationWarning, match="Myna 1.3"):
         app = ThesisSolidificationPart()
     app.args = _build_args(tmp_path / "unused")
     monkeypatch.setattr(app, "parse_execute_arguments", lambda: None)
@@ -1453,7 +1453,7 @@ def test_solidification_build_region_execute_exports_single_final_csv(
         encoding="utf-8",
     )
 
-    with pytest.warns(DeprecationWarning, match="Myna 2.0"):
+    with pytest.warns(DeprecationWarning, match="Myna 1.3"):
         app = ThesisSolidificationBuildRegion()
     app.args = _build_args(tmp_path / "unused")
     monkeypatch.setattr(app, "parse_execute_arguments", lambda: None)
@@ -1491,7 +1491,7 @@ def test_temperature_run_case_reuses_existing_results_unless_overwriting(
     existing_file = data_dir / "existing.csv"
     existing_file.write_text("x,y,z,T\n", encoding="utf-8")
 
-    with pytest.warns(DeprecationWarning, match="Myna 2.0"):
+    with pytest.warns(DeprecationWarning, match="Myna 1.3"):
         app = ThesisTemperaturePart()
     app.args = _build_args(tmp_path / "unused", overwrite=False, nout=4)
     app.set_case(str(case_dir), str(case_dir))
