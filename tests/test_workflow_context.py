@@ -286,8 +286,9 @@ def test_component_runs_stage_with_context_without_env(monkeypatch, tmp_path):
     monkeypatch.setattr(
         os.path,
         "exists",
-        lambda path: path
-        == "/tmp/myna-install/application/fakeapp/fakeclass/configure.py",
+        lambda path: (
+            path == "/tmp/myna-install/application/fakeapp/fakeclass/configure.py"
+        ),
     )
     monkeypatch.setattr(importlib, "import_module", fake_import_module)
 
@@ -485,8 +486,9 @@ def test_component_restores_cwd_after_stage_failure(monkeypatch, tmp_path):
     monkeypatch.setattr(
         os.path,
         "exists",
-        lambda path: path
-        == "/tmp/myna-install/application/fakeapp/fakeclass/execute.py",
+        lambda path: (
+            path == "/tmp/myna-install/application/fakeapp/fakeclass/execute.py"
+        ),
     )
     monkeypatch.setattr(importlib, "import_module", fake_import_module)
 
@@ -548,8 +550,9 @@ def test_component_stage_import_error_is_not_treated_as_missing(monkeypatch):
     monkeypatch.setattr(
         os.path,
         "exists",
-        lambda path: path
-        == "/tmp/myna-install/application/fakeapp/fakeclass/configure.py",
+        lambda path: (
+            path == "/tmp/myna-install/application/fakeapp/fakeclass/configure.py"
+        ),
     )
     monkeypatch.setattr(importlib, "import_module", fake_import_module)
 
