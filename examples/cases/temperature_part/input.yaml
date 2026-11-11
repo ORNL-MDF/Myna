@@ -2,7 +2,6 @@ steps:
 - 3dthesis:
     class: temperature_part
     application: thesis
-    executable: 3DThesis
     configure:
       res: 25.0e-6
     execute:

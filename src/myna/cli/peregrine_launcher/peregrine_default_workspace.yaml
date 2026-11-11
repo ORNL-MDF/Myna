@@ -18,7 +18,8 @@ exaca:
       sub-size: 12.3
       mu: 5
       std: 0.5
-    executable: ExaCA
+    execute:
+      exaca-bin: ExaCA
   microstructure_region_slice:
     configure:
       cell-size: 2.5
@@ -26,19 +27,20 @@ exaca:
       sub-size: 12.3
       mu: 5
       std: 0.5
-    executable: ExaCA
+    execute:
+      exaca-bin: ExaCA
 thesis:
   melt_pool_geometry_part:
     configure:
       nout: 1000
       res: 20e-6
       z-res: 20e-6
-    executable: 3DThesis
     execute:
+      thesis-bin: 3DThesis
       batch: true
   solidification_part:
     configure:
       res: 25e-6
-    executable: 3DThesis
     execute:
+      thesis-bin: 3DThesis
       batch: true

@@ -344,7 +344,7 @@ class AdamantineTemperatureApp(AdamantineApp):
             # Assemble command and kwargs for launching process
             container_case_path = "/home/myna"
             cmd_args = [
-                self.args.exec,
+                self.adamantine_bin,
                 "-i",
                 self.case_files["input"],
                 ">",

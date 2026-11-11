@@ -15,6 +15,7 @@ from myna.core.utils import nested_set, nested_get
 from myna.core import components
 from myna.core import metadata
 from myna import database
+from myna.core.workflow.validate import validate as validate_workflow
 from importlib.metadata import version
 import datetime
 import getpass
@@ -25,6 +26,12 @@ def _should_ignore_missing_layers(settings):
     """Whether configure should skip missing layer metadata when possible."""
 
     return bool(nested_get(settings, ["myna", "ignore_missing_layers"], False))
+
+
+def _strict_executable_validation(settings):
+    """Return whether config should fail on missing executables."""
+
+    return bool(nested_get(settings, ["myna", "validate_all_executable"], True))
 
 
 def _can_skip_missing_layers(step_obj, settings):
@@ -146,8 +153,10 @@ def config(input_file, output_file=None, show_avail=False, overwrite=False):
     if output_file is None:
         output_file = input_file
 
-    # Load input file
+    # Load input file and validate every application before checking databases
+    # or creating files. Configuration remains strict by default.
     settings = load_input(input_file)
+    validate_workflow(input_file, strict=_strict_executable_validation(settings))
 
     # Check build directory contains the expected metadata folder
     build_path = nested_get(settings, ["data", "build", "path"])

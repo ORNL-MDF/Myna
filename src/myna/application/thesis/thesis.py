@@ -47,11 +47,9 @@ class Thesis(MynaApp):
         material_filename="Material.txt",
         output_dir=None,
         output_suffix="",
-        validate_executable=True,
     ):
         super().__init__()
         self.app_type = "thesis"
-        self._validate_thesis_executable = validate_executable
 
         # Set case directories and input files
         self.input_filename = input_filename
@@ -219,6 +217,12 @@ class Thesis(MynaApp):
 
     def parse_shared_arguments(self):
         self.register_argument(
+            "--thesis-bin",
+            default="3DThesis",
+            type=str,
+            help="(str) 3DThesis executable",
+        )
+        self.register_argument(
             "--res",
             default=12.5e-6,
             type=float,
@@ -256,12 +260,28 @@ class Thesis(MynaApp):
         )
 
     def _parse_thesis_stage_arguments(self):
+        self.register_argument(
+            "--thesis-bin",
+            default="3DThesis",
+            type=str,
+            help="(str) 3DThesis executable",
+        )
         self.parse_shared_arguments()
         self.parse_known_args()
-        if self._validate_thesis_executable:
-            super().validate_executable("3DThesis")
-        if self.args.exec is None:
-            self.args.exec = "3DThesis"
+
+    @property
+    def thesis_bin(self):
+        """Return the configured 3DThesis executable.
+
+        ``--exec`` remains a deprecated compatibility alias and is scheduled for
+        removal in Myna 1.3.
+        """
+        return self.args.exec or self.args.thesis_bin
+
+    def get_required_executables(self, operation=None):
+        if operation is None or operation == "execute":
+            return [self.thesis_bin]
+        return []
 
     def get_executable_version(
         self,
@@ -673,7 +693,7 @@ class Thesis(MynaApp):
                 f.write(f"- Working directory: {os.getcwd()}\n")
 
                 # Execute the case
-                cmd_args = [self.args.exec, self.input_file]
+                cmd_args = [self.thesis_bin, self.input_file]
                 process = self.start_subprocess_with_mpi_args(
                     cmd_args,
                     stdout=f,

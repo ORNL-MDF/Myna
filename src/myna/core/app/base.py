@@ -19,12 +19,13 @@ import subprocess
 import warnings
 from pathlib import Path
 import docker
+import oslex
 from docker.models.containers import Container
 import yaml
 from myna.core.app._argument_registrar import _ArgumentRegistrar
 from myna.core.context import get_workflow_context
 from myna.core.workflow.load_input import load_input
-from myna.core.utils import is_executable, get_quoted_str, version_at_least
+from myna.core.utils import get_quoted_str, version_at_least
 from myna.core.components import return_step_class
 
 
@@ -100,7 +101,15 @@ class MynaApp:
             "--exec",
             default=None,
             type=str,
-            help="(str) Path to executable",
+            help="(str, deprecated; removed in Myna 1.3) path to an application "
+            "executable; use the application-specific executable option instead",
+        )
+        self.register_argument(
+            "--validate-executable",
+            dest="validate_executable",
+            default=False,
+            action="store_true",
+            help="(flag) require the configured executable to exist and be executable",
         )
         self.register_argument(
             "--np",
@@ -248,6 +257,13 @@ class MynaApp:
         """Parse known command line arguments to update self.args and apply
         any corrections"""
         self.args, _ = self.parser.parse_known_args()
+        if self.args.exec is not None:
+            warnings.warn(
+                "The --exec option is deprecated and will be removed in Myna 1.3; "
+                "use the application-specific executable option instead.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
         self._set_procs()
         self._mpiargs_to_current()
         if self.args.skip:
@@ -285,6 +301,15 @@ class MynaApp:
 
         Subclasses can override this method and call `self.parse_known_args()`.
         """
+
+    def get_required_executables(self, operation=None):
+        """Return executable names required by an application stage.
+
+        ``operation`` is accepted so application wrappers can declare different
+        requirements for configure, execute, and postprocess.  The default app
+        has no executable requirements.
+        """
+        return []
 
     def configure(self):
         """Configure the application workflow step.
@@ -348,43 +373,64 @@ class MynaApp:
             )
             warnings.warn(warning_msg, category=DeprecationWarning)
 
-    def validate_executable(self, default):
-        """Check if the specified executable exists and raise error if not"""
+    def validate_executable(
+        self,
+        executables: list[str | Path],
+        strict: bool | None = None,
+    ):
+        """Check one or more executables in the configured execution environment."""
 
-        # The executable runs inside the Docker container, not on the host, so a
-        # missing host executable is expected and not an error in this case.
-        if self.args.docker_image is not None:
-            return
-
-        # Get the name of the executable
-        exe = self.args.exec
-        if exe is None:
-            exe = default
-        exe_windows = exe + ".exe"  # Try a Windows exe just in case
-
-        # If an executable is found, return
-        if any(is_executable(x) for x in [exe, exe_windows]):
-            return
-
-        # If there is an `env` set, then assume that it sets a valid executable path
-        if self.args.env is not None:
-            warning_msg = (
-                f"Warning: {self.name} app executable was not found,"
-                + " but `env` option was set. Assuming the environment sets valid path."
+        if strict is None:
+            configured = self.settings.get("myna", {}).get(
+                "validate_all_executable", None
             )
-            warnings.warn(warning_msg)
-            return
+            strict = (
+                bool(configured)
+                if configured is not None
+                else self.args.validate_executable
+            )
 
-        # If not found, raise the appropriate errors
-        if shutil.which(exe, mode=os.F_OK) is None:
-            raise FileNotFoundError(
-                f'{self.name} app executable "{exe}" was not found.'
+        for exe in executables:
+            _, returncode = self.run_subprocess(["which", str(exe)], check=False)
+            if returncode == 0:
+                continue
+
+            message = f'{self.name} app executable "{exe}" was not found.'
+            if strict:
+                raise FileNotFoundError(message)
+            warnings.warn(message)
+
+    def run_subprocess(self, cmd_args, check=True, timeout=30):
+        """Run a command through the configured local or Docker environment."""
+        cmd_args = [str(arg) for arg in cmd_args]
+        process = self.start_subprocess(
+            cmd_args,
+            literal_args=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+        if isinstance(process, Container):
+            returncode = self.wait_for_process_success(
+                process, raise_error=False, timeout=timeout
             )
-        if shutil.which(exe, mode=os.X_OK) is None:
-            raise PermissionError(
-                f'{self.name} app executable "{shutil.which(exe, mode=os.F_OK)}"'
-                + "does not have execute permissions."
+            output = process.logs(stdout=True, stderr=True).decode(
+                "utf-8", errors="replace"
             )
+        else:
+            try:
+                stdout, stderr = process.communicate(timeout=timeout)
+            except subprocess.TimeoutExpired:
+                process.kill()
+                process.communicate()
+                raise
+            output = b"\n".join(stream for stream in (stdout, stderr) if stream).decode(
+                "utf-8", errors="replace"
+            )
+            returncode = self.wait_for_process_success(process, raise_error=False)
+
+        if check and returncode != 0:
+            raise subprocess.CalledProcessError(returncode, cmd_args, output=output)
+        return output, returncode
 
     def get_executable(self, default=None):
         """Return the configured executable, falling back to ``default``."""
@@ -551,8 +597,13 @@ class MynaApp:
         else:
             print(f"Warning: NOT overwriting existing case in: {case_dir}")
 
-    def start_subprocess(self, cmd_args, **kwargs) -> subprocess.Popen | Container:
+    def start_subprocess(
+        self, cmd_args, *, literal_args=False, **kwargs
+    ) -> subprocess.Popen | Container:
         """Starts a subprocess, activating an environment if present
+
+        If literal_args is true, quote arguments when invoking a shell. Otherwise,
+        shell operators in cmd_args retain their existing meaning.
 
         kwargs are passed to the subprocess launcher, Popen or Docker:
             - For Popen subprocess, this can be used to redirect stdout & stderr, etc.
@@ -562,7 +613,14 @@ class MynaApp:
         # Launch using subprocess.Popen
         if self.args.docker_image is None:
             if self.args.env is not None:
-                cmd_arg_str = [f". {self.args.env} && " + " ".join(cmd_args)]
+                shell_args = (
+                    [oslex.quote(str(arg)) for arg in cmd_args]
+                    if literal_args
+                    else cmd_args
+                )
+                cmd_arg_str = [
+                    f". {oslex.quote(self.args.env)} && " + " ".join(shell_args)
+                ]
                 process = subprocess.Popen(cmd_arg_str, shell=True, **kwargs)
                 print(f"myna subprocess (PID {process.pid}): {cmd_arg_str}")
                 return process
@@ -573,9 +631,12 @@ class MynaApp:
         # Launch using Docker through the image's default entrypoint.  Execute the
         # command in bash so application-provided shell syntax (for example,
         # redirection) and the optional environment setup file continue to work.
-        cmd_arg_str = " ".join(cmd_args)
+        shell_args = (
+            [oslex.quote_sh(str(arg)) for arg in cmd_args] if literal_args else cmd_args
+        )
+        cmd_arg_str = " ".join(shell_args)
         if self.args.env is not None:
-            cmd_arg_str = f". {self.args.env} && " + cmd_arg_str
+            cmd_arg_str = f". {oslex.quote_sh(self.args.env)} && " + cmd_arg_str
         cmd_args_docker = ["bash", "-lc", cmd_arg_str]
         # Match the user who started Myna so files written through bind mounts remain
         # writable on the host. A docker config can intentionally select another
@@ -658,7 +719,7 @@ class MynaApp:
         return self.start_subprocess(modified_cmd_args, **kwargs)
 
     def wait_for_process_success(
-        self, process: subprocess.Popen | Container, raise_error=True
+        self, process: subprocess.Popen | Container, raise_error=True, timeout=None
     ):
         """Wait for a process to complete successfully, raising an error if the
         process fails.
@@ -666,13 +727,14 @@ class MynaApp:
         Args:
             process: (subprocess.Popen) subprocess object
             raise_error: (bool) if True, a failed subprocess will raise an error
+            timeout: (float | None) maximum seconds to wait for completion
 
         Returns:
             returncode: (int) process returncode from `Popen.wait()`
         """
 
         # Both subprocess.Popen and the docker Container class have the .wait() method
-        returncode = process.wait()
+        returncode = process.wait(timeout=timeout)
         if isinstance(process, Container):
             returncode = returncode["StatusCode"]
         if returncode != 0:
