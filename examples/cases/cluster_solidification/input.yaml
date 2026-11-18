@@ -2,7 +2,6 @@ steps:
 - 3dthesis:
     class: solidification_part
     application: thesis
-    executable: 3DThesis
     configure:
       res: 50.0e-6
     execute:

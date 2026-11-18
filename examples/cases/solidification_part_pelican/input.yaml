@@ -2,7 +2,6 @@ steps:
 - test:
     class: solidification_part
     application: thesis
-    executable: 3DThesis
     configure:
       res: 100.0e-6
       template: ./template

@@ -120,10 +120,18 @@ In general, these examples can be run by navigating into any of the case directo
 and then executing:
 
 ```shell
+myna validate
 myna config
 myna run
 myna sync
 ```
+
+`myna config` validates application executables before creating workflow files.
+Use `myna validate` for the same check without modifying the workflow. Configure an
+application executable using its stage argument, such as `exaca-bin`, `thesis-bin`,
+or `additivefoam-bin`. Legacy step-level `executable`, stage-level `exec`, and the
+generic `--exec` option are deprecated, remain supported with deprecation warnings,
+and are scheduled for removal in Myna 1.3.
 
 You can also copy the full `examples/` tree out of the Myna repository to run
 elsewhere. If you copy an individual case instead, update the path to the build under

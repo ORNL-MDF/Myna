@@ -2,7 +2,6 @@ steps:
 - 3dthesis:
     class: melt_pool_geometry_part
     application: thesis
-    executable: 3DThesis
     configure:
       sampling-mode: snapshots
       res: 25.0e-6

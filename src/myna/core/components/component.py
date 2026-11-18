@@ -163,6 +163,56 @@ class Component:
     def _run_stage_subprocess(self, cmd):
         subprocess.run(cmd, check=True)
 
+    def validate_executables(self, strict=None):
+        """Parse each available application stage and validate its executables."""
+        for operation in ("configure", "execute", "postprocess"):
+            script_name = os.path.join(
+                os.environ["MYNA_APP_PATH"],
+                self.component_application,
+                self.component_class,
+                f"{operation}.py",
+            )
+            if not os.path.exists(script_name):
+                continue
+
+            module_name = ".".join(
+                [
+                    "myna",
+                    "application",
+                    self.component_application,
+                    self.component_class,
+                    "app",
+                ]
+            )
+            module = importlib.import_module(module_name)
+            app_classes = [
+                value
+                for value in vars(module).values()
+                if isinstance(value, type)
+                and value.__module__ == module.__name__
+                and hasattr(value, f"parse_{operation}_arguments")
+            ]
+            if not app_classes:
+                continue
+
+            stage_args = self.cmd_preformat(self.get_step_args_list(operation))
+            previous_argv = sys.argv
+            sys.argv = [script_name, *stage_args]
+            try:
+                app = app_classes[0]()
+                try:
+                    getattr(app, f"parse_{operation}_arguments")()
+                except SystemExit:
+                    # Some stage parsers call sys.exit() for control flags such
+                    # as --skip. Validation only needs the parsed app settings;
+                    # a parser exit must not abort workflow validation.
+                    pass
+                required = app.get_required_executables(operation)
+                if required:
+                    app.validate_executable(required, strict=strict)
+            finally:
+                sys.argv = previous_argv
+
     def _should_run_stage_in_process(self, script_name):
         installed_script = os.path.join(
             os.environ["MYNA_INSTALL_PATH"],
@@ -254,6 +304,15 @@ class Component:
                 workspace_dict = workspace_dict.get(self.component_class, {})
                 self.executable = workspace_dict.get("executable", self.executable)
             self.executable = step_settings.get("executable", self.executable)
+            if "executable" in step_settings:
+                warnings.warn(
+                    f"Step {self.name} executable is deprecated and will be removed "
+                    "in Myna 1.3; configure the "
+                    "application-specific executable argument in the relevant "
+                    "stage instead.",
+                    DeprecationWarning,
+                    stacklevel=2,
+                )
 
             # If an output_template is specified, use it.
             # Otherwise, use a combination of the class, component, and output names.
@@ -589,14 +648,13 @@ class Component:
             obsolete_keys = ["exec"]
             if dict_key in obsolete_keys:
                 warning_msg = (
-                    f" Step {self.name} {operation}"
-                    + f' argument "{dict_key}" for {operation} is'
-                    + " obsolete. Using default value. Instead, use: "
-                    + f"  \n\t{self.name}:"
-                    + f"  \n\t  executable: {value}\n"
+                    f' Step {self.name} {operation} argument "{dict_key}" is '
+                    "deprecated and will be removed in Myna 1.3; use the "
+                    "application-specific executable argument "
+                    "instead."
                 )
-                warnings.warn(warning_msg)
-                return True
+                warnings.warn(warning_msg, DeprecationWarning, stacklevel=2)
+                return False
             return False
 
         def _get_arglist(key, value, operation) -> list:
