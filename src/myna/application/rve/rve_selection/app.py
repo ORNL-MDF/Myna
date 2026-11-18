@@ -29,7 +29,7 @@ class RVESelection(RVE):
         super().__init__()
         self.class_name = "rve_selection"
 
-    def parse_execute_arguments(self):
+    def register_execute_arguments(self):
         self.parse_shared_arguments()
         self.register_argument(
             "--bid",
@@ -44,11 +44,9 @@ class RVESelection(RVE):
             type=int,
             help="(int) max adjacent layers to keep in each grouped region",
         )
-        self.parse_known_args()
 
-    def parse_postprocess_arguments(self):
+    def register_postprocess_arguments(self):
         self.parse_shared_arguments()
-        self.parse_known_args()
 
     @staticmethod
     def cluster_colormap(n_digits, colorspace="tab20"):
@@ -330,7 +328,7 @@ class RVESelection(RVE):
 
     def execute(self):
         """Execute the RVE selection algorithm for all expected outputs."""
-        self.parse_execute_arguments()
+        self.load_stage_arguments("execute")
         myna_files = self.settings["data"]["output_paths"][self.step_name]
         myna_id_files = self.settings["data"]["output_paths"][self.last_step_name]
         for myna_file in myna_files:
@@ -343,7 +341,7 @@ class RVESelection(RVE):
 
     def postprocess(self):
         """Populate region metadata from generated RVE selection files."""
-        self.parse_postprocess_arguments()
+        self.load_stage_arguments("postprocess")
         myna_files = self.settings["data"]["output_paths"][self.step_name]
 
         for part in self.settings["data"]["build"]["parts"]:

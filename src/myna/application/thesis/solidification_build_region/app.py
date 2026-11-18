@@ -75,7 +75,7 @@ class ThesisSolidificationBuildRegion(Thesis):
         os.remove(beam_file_template)
 
     def configure(self):
-        self.parse_configure_arguments()
+        self.load_stage_arguments("configure")
         for case_dir in self.get_case_dirs():
             self.configure_case(case_dir)
 
@@ -95,7 +95,7 @@ class ThesisSolidificationBuildRegion(Thesis):
         )
 
     def execute(self):
-        self.parse_execute_arguments()
+        self.load_stage_arguments("execute")
         myna_files = self.get_step_output_paths()
 
         output_files = []

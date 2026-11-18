@@ -132,6 +132,8 @@ application executable using its stage argument, such as `exaca-bin`, `thesis-bi
 or `additivefoam-bin`. Legacy step-level `executable`, stage-level `exec`, and the
 generic `--exec` option are deprecated, remain supported with deprecation warnings,
 and are scheduled for removal in Myna 1.3.
+Use `myna validate --step <step-name>` to validate selected steps; step names that are
+not present in the input file are reported as errors.
 
 You can also copy the full `examples/` tree out of the Myna repository to run
 elsewhere. If you copy an individual case instead, update the path to the build under

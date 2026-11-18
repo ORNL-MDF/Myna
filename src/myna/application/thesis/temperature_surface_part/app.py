@@ -52,7 +52,7 @@ class ThesisTemperatureSurfacePart(Thesis):
             help="(float) wait time after the scan path ends before sampling",
         )
 
-    def parse_execute_arguments(self):
+    def register_execute_arguments(self):
         """Register and parse execute-stage arguments."""
         self.register_argument(
             "--use-prior-layer-average",
@@ -62,7 +62,7 @@ class ThesisTemperatureSurfacePart(Thesis):
             help="(flag) initialize each layer from the average of the previous "
             "layer output temperature when available",
         )
-        super().parse_execute_arguments()
+        super().register_execute_arguments()
 
     def _configure_case_snapshot_time(self, case_scanfile, case_dir):
         """Set the single snapshot time to scan completion plus wait time."""
@@ -83,7 +83,7 @@ class ThesisTemperatureSurfacePart(Thesis):
 
     def configure(self):
         """Configure all workflow case directories for this step."""
-        self.parse_configure_arguments()
+        self.load_stage_arguments("configure")
         for case_dir in self.get_case_dirs():
             self.configure_case(case_dir)
 
@@ -353,7 +353,7 @@ class ThesisTemperatureSurfacePart(Thesis):
 
     def execute(self):
         """Execute the workflow using independent or dependent scheduling."""
-        self.parse_execute_arguments()
+        self.load_stage_arguments("execute")
         myna_files = self.get_step_output_paths()
 
         if self.args.use_prior_layer_average:

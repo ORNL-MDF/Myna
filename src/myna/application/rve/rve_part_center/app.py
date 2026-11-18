@@ -44,7 +44,7 @@ class RVEPartCenter(RVE):
 
     def execute(self):
         """Execute RVE selection for all output files."""
-        self.parse_execute_arguments()
+        self.load_stage_arguments("execute")
         myna_files = self.settings["data"]["output_paths"][self.step_name]
         for myna_file in myna_files:
             layersets = get_adjacent_layer_regions(
@@ -81,7 +81,7 @@ class RVEPartCenter(RVE):
 
     def postprocess(self):
         """Populate region metadata from the selected RVEs."""
-        self.parse_postprocess_arguments()
+        self.load_stage_arguments("postprocess")
         myna_files = self.settings["data"]["output_paths"][self.step_name]
         for part in self.settings["data"]["build"]["parts"]:
             values = self.settings["data"]["build"]["parts"][part].get("regions")

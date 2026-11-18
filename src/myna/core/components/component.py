@@ -18,6 +18,7 @@ from contextlib import contextmanager
 from typing import Literal
 import myna
 import myna.database
+from myna.core.app.base import MynaApp
 from myna.core.context import get_workflow_input_file, workflow_context, workflow_env
 from myna.core.workflow import load_input
 from myna.core.utils import nested_get, get_quoted_str
@@ -153,6 +154,49 @@ class Component:
                 f"'{operation}()' or 'main()'."
             )
 
+        app_module_name = ".".join(module_name.split(".")[:-1] + ["app"])
+        try:
+            app_module = importlib.import_module(app_module_name)
+        except ModuleNotFoundError as exc:
+            if not (exc.name or "").startswith(
+                f"myna.application.{self.component_application}"
+            ):
+                raise
+            app_module = None
+        app_class = None
+        if app_module is not None:
+            app_class = next(
+                (
+                    value
+                    for value in vars(app_module).values()
+                    if isinstance(value, type)
+                    and value.__module__ == app_module.__name__
+                    and issubclass(value, MynaApp)
+                ),
+                None,
+            )
+        if app_class is not None:
+            previous_argv = MynaApp._argument_argv
+            previous_validation_mode = MynaApp._validation_mode
+            MynaApp._argument_argv = list(stage_args)
+            MynaApp._validation_mode = True
+            try:
+                resolved_app = app_class()
+            finally:
+                MynaApp._argument_argv = previous_argv
+                MynaApp._validation_mode = previous_validation_mode
+            resolved_app.load_stage_arguments(operation, stage_args)
+
+        previous_resolved_args = MynaApp._resolved_stage_args
+        MynaApp._resolved_stage_args = (
+            resolved_app.args if app_class is not None else None
+        )
+        try:
+            self._run_stage_function(stage_func, script_name, stage_args)
+        finally:
+            MynaApp._resolved_stage_args = previous_resolved_args
+
+    def _run_stage_function(self, stage_func, script_name, stage_args):
         with self._stage_process_state(script_name, stage_args):
             try:
                 stage_func()
@@ -190,28 +234,25 @@ class Component:
                 for value in vars(module).values()
                 if isinstance(value, type)
                 and value.__module__ == module.__name__
-                and hasattr(value, f"parse_{operation}_arguments")
+                and hasattr(value, "load_stage_arguments")
             ]
             if not app_classes:
                 continue
 
             stage_args = self.cmd_preformat(self.get_step_args_list(operation))
-            previous_argv = sys.argv
-            sys.argv = [script_name, *stage_args]
+            previous_argv = MynaApp._argument_argv
+            previous_validation_mode = MynaApp._validation_mode
+            MynaApp._argument_argv = stage_args
+            MynaApp._validation_mode = True
             try:
                 app = app_classes[0]()
-                try:
-                    getattr(app, f"parse_{operation}_arguments")()
-                except SystemExit:
-                    # Some stage parsers call sys.exit() for control flags such
-                    # as --skip. Validation only needs the parsed app settings;
-                    # a parser exit must not abort workflow validation.
-                    pass
-                required = app.get_required_executables(operation)
-                if required:
-                    app.validate_executable(required, strict=strict)
             finally:
-                sys.argv = previous_argv
+                MynaApp._argument_argv = previous_argv
+                MynaApp._validation_mode = previous_validation_mode
+            app.load_stage_arguments(operation, stage_args)
+            required = app.get_required_executables(operation)
+            if required:
+                app.validate_executable(required, strict=strict)
 
     def _should_run_stage_in_process(self, script_name):
         installed_script = os.path.join(
@@ -230,12 +271,15 @@ class Component:
     def _stage_process_state(self, script_name, args):
         previous_argv = sys.argv
         previous_cwd = os.getcwd()
+        previous_argument_argv = MynaApp._argument_argv
+        MynaApp._argument_argv = list(args)
         sys.argv = [script_name]
         sys.argv.extend(args)
         try:
             yield
         finally:
             sys.argv = previous_argv
+            MynaApp._argument_argv = previous_argument_argv
             os.chdir(previous_cwd)
 
     @contextmanager

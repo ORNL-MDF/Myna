@@ -135,6 +135,14 @@ def workflow_env(
 ):
     """Temporarily expose workflow state through legacy environment variables."""
 
+    warnings.warn(
+        "Temporary MYNA_* environment exposure during workflow stages is "
+        "deprecated and will be removed in Myna 1.3; use WorkflowContext and "
+        "MynaApp workflow attributes instead.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+
     if context is None:
         context = get_workflow_context()
 
@@ -207,7 +215,7 @@ def _warn_legacy_env_fallback() -> None:
 
     warnings.warn(
         "Workflow state derived from legacy MYNA_* environment variables is "
-        "deprecated and will be removed in Myna 2.0. Use explicit workflow "
+        "deprecated and will be removed in Myna 1.3. Use explicit workflow "
         "context or MynaApp workflow attributes instead.",
         DeprecationWarning,
         stacklevel=3,

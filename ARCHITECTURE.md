@@ -100,8 +100,8 @@ Workflow run and sync state is carried through `myna.core.context.WorkflowContex
 This context includes the active input file, current step, step class, step index, and
 previous-step information. `myna.core.context` resolves that explicit context first and
 still falls back to legacy `MYNA_*` environment variables so direct stage-script
-invocation remains compatible in Myna 1.x. That env-var fallback is deprecated and
-scheduled for removal in Myna 2.0. `MynaApp` consumes that shared context resolution
+invocation remains compatible through Myna 1.2. That env-var fallback is deprecated and
+scheduled for removal in Myna 1.3. `MynaApp` consumes that shared context resolution
 rather than reading workflow env vars directly.
 
 `myna config` still sets `MYNA_INPUT` and the deprecated `MYNA_CONFIG_INPUT` while it
@@ -171,7 +171,11 @@ component metadata requirements, creates case directories, writes per-case
 `run`, Myna reloads the input before each step, applies step settings to a component,
 and calls available app-stage modules in-process through `Component.run_component`.
 Stage command-line arguments from the input file are still exposed through `sys.argv`
-while each stage runs, preserving `argparse`-based app wrappers. For `sync`, Myna
+while each stage runs, preserving `argparse`-based app wrappers. The same stage
+argument definitions are resolved by `MynaApp.load_stage_arguments` for executable
+validation, using component values with input-file values taking precedence over workspace
+values. Resolution returns structured argparse values and does not run a stage or modify
+`sys.argv`. For `sync`, Myna
 validates component outputs and delegates supported sync behavior to the selected
 database adapter while providing the active input file through `WorkflowContext`.
 When `myna.ignore_missing_layers` is true, `config` drops missing part-layer and

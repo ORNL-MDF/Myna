@@ -49,12 +49,11 @@ class CubitApp(MynaApp):
             return [self.exe_psculpt, self.exe_epu]
         return []
 
-    def parse_configure_arguments(self):
+    def register_configure_arguments(self):
         self.parse_shared_arguments()
-        self.parse_known_args()
-        self._set_cubit_executable_paths()
 
-    def parse_execute_arguments(self):
+    def register_execute_arguments(self):
         self.parse_shared_arguments()
-        self.parse_known_args()
+
+    def _after_stage_arguments_loaded(self, operation):
         self._set_cubit_executable_paths()

@@ -16,6 +16,7 @@ import oslex
 
 from myna.core import components
 from myna.core.app.base import MynaApp
+from myna.core.workflow import validate as validate_workflow
 from myna.core.workflow.config import _strict_executable_validation
 from myna.core.workflow import validate as validate_module
 
@@ -124,6 +125,28 @@ def test_workflow_validate_passes_optional_strict_value(monkeypatch, tmp_path):
     validate_module.validate(input_file, strict=False)
 
     assert calls == [False]
+
+
+def test_validate_rejects_unknown_step_names(monkeypatch):
+    monkeypatch.setattr(
+        validate_workflow,
+        "load_input",
+        lambda _: {"steps": [{"configured": {}}]},
+    )
+
+    with pytest.raises(ValueError, match="Unknown step name.*typo"):
+        validate_workflow.validate("input.yaml", "typo")
+
+
+def test_validate_rejects_selection_that_matches_no_steps(monkeypatch):
+    monkeypatch.setattr(
+        validate_workflow,
+        "load_input",
+        lambda _: {"steps": []},
+    )
+
+    with pytest.raises(ValueError, match="Unknown step name"):
+        validate_workflow.validate("input.yaml", "configured")
 
 
 def test_component_validates_each_stage_requirement_in_its_stage_environment(

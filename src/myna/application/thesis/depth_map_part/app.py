@@ -45,7 +45,7 @@ class ThesisDepthMapPart(Thesis):
 
     def configure(self):
         """Configure all simulations associated with the Myna step."""
-        self.parse_configure_arguments()
+        self.load_stage_arguments("configure")
         for case_dir in self.get_case_dirs():
             self.configure_case(case_dir)
 
@@ -63,7 +63,7 @@ class ThesisDepthMapPart(Thesis):
 
     def execute(self):
         """Execute and postprocess all cases for the Myna step."""
-        self.parse_execute_arguments()
+        self.load_stage_arguments("execute")
         myna_files = self.get_step_output_paths()
 
         proc_list = []

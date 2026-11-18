@@ -118,7 +118,7 @@ class ExaCAMicrostructureRegion(ExaCA):
 
     def configure(self):
         """Configure all ExaCA microstructure_region cases."""
-        self.parse_configure_arguments()
+        self.load_stage_arguments("configure")
         for (
             case_dir,
             solid_files,
@@ -143,7 +143,7 @@ class ExaCAMicrostructureRegion(ExaCA):
 
     def execute(self):
         """Execute all ExaCA microstructure_region cases."""
-        self.parse_execute_arguments()
+        self.load_stage_arguments("execute")
         myna_files = self.get_step_output_paths()
         _, _, files_are_valid = self.get_output_file_status()
 
@@ -172,7 +172,7 @@ class ExaCAMicrostructureRegion(ExaCA):
 
     def postprocess(self):
         """Export RGB-colored VTKs for valid ExaCA outputs."""
-        self.parse_postprocess_arguments()
+        self.load_stage_arguments("postprocess")
         myna_files = self.get_step_output_paths()
         _, _, files_are_valid = self.get_output_file_status()
 

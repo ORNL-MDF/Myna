@@ -116,7 +116,7 @@ def test_get_workflow_context_falls_back_to_legacy_env(monkeypatch):
     monkeypatch.setenv("MYNA_LAST_STEP_NAME", "previous")
     monkeypatch.setenv("MYNA_LAST_STEP_CLASS", "previous_class")
 
-    with pytest.warns(DeprecationWarning, match="Myna 2.0"):
+    with pytest.warns(DeprecationWarning, match="Myna 1.3"):
         assert get_workflow_context() == WorkflowContext(
             input_file="/tmp/input.yaml",
             step_name="demo",
@@ -142,7 +142,7 @@ def test_get_workflow_input_file_uses_shared_context_resolution(monkeypatch, tmp
     assert get_workflow_input_file(default="fallback.yaml") == "fallback.yaml"
 
     monkeypatch.setenv("MYNA_INPUT", os.fspath(input_file))
-    with pytest.warns(DeprecationWarning, match="Myna 2.0"):
+    with pytest.warns(DeprecationWarning, match="Myna 1.3"):
         assert get_workflow_input_file() == os.fspath(input_file)
 
 
@@ -151,7 +151,7 @@ def test_workflow_context_env_fallback_warns_once_per_process(monkeypatch):
     monkeypatch.setattr(context_module, "_LEGACY_ENV_FALLBACK_WARNED", False)
     monkeypatch.setenv("MYNA_INPUT", "/tmp/input.yaml")
 
-    with pytest.warns(DeprecationWarning, match="Myna 2.0") as record:
+    with pytest.warns(DeprecationWarning, match="Myna 1.3") as record:
         get_workflow_context()
         get_workflow_context()
 
@@ -180,7 +180,7 @@ def test_get_workflow_context_invalid_step_index_raises_value_error(monkeypatch)
     monkeypatch.setattr(context_module, "_LEGACY_ENV_FALLBACK_WARNED", False)
     monkeypatch.setenv("MYNA_STEP_INDEX", "not-an-int")
 
-    with pytest.warns(DeprecationWarning, match="Myna 2.0"):
+    with pytest.warns(DeprecationWarning, match="Myna 1.3"):
         with pytest.raises(ValueError):
             get_workflow_context()
 
@@ -207,7 +207,7 @@ myna: {}
     monkeypatch.setenv("MYNA_STEP_INDEX", "0")
     monkeypatch.setenv("MYNA_LAST_STEP_NAME", "previous")
 
-    with pytest.warns(DeprecationWarning, match="Myna 2.0"):
+    with pytest.warns(DeprecationWarning, match="Myna 1.3"):
         app = MynaApp()
 
     assert app.input_file == os.fspath(input_file)
@@ -286,8 +286,9 @@ def test_component_runs_stage_with_context_without_env(monkeypatch, tmp_path):
     monkeypatch.setattr(
         os.path,
         "exists",
-        lambda path: path
-        == "/tmp/myna-install/application/fakeapp/fakeclass/configure.py",
+        lambda path: (
+            path == "/tmp/myna-install/application/fakeapp/fakeclass/configure.py"
+        ),
     )
     monkeypatch.setattr(importlib, "import_module", fake_import_module)
 
@@ -485,8 +486,9 @@ def test_component_restores_cwd_after_stage_failure(monkeypatch, tmp_path):
     monkeypatch.setattr(
         os.path,
         "exists",
-        lambda path: path
-        == "/tmp/myna-install/application/fakeapp/fakeclass/execute.py",
+        lambda path: (
+            path == "/tmp/myna-install/application/fakeapp/fakeclass/execute.py"
+        ),
     )
     monkeypatch.setattr(importlib, "import_module", fake_import_module)
 
@@ -548,8 +550,9 @@ def test_component_stage_import_error_is_not_treated_as_missing(monkeypatch):
     monkeypatch.setattr(
         os.path,
         "exists",
-        lambda path: path
-        == "/tmp/myna-install/application/fakeapp/fakeclass/configure.py",
+        lambda path: (
+            path == "/tmp/myna-install/application/fakeapp/fakeclass/configure.py"
+        ),
     )
     monkeypatch.setattr(importlib, "import_module", fake_import_module)
 

@@ -71,7 +71,7 @@ class ExaCAMicrostructureRegionSlice(ExaCAMicrostructureRegion):
 
     def postprocess(self):
         """Export RGB-colored VTKs for the slice cases."""
-        self.parse_postprocess_arguments()
+        self.load_stage_arguments("postprocess")
         myna_files = self.get_step_output_paths()
         _, _, files_are_valid = self.get_output_file_status()
 
