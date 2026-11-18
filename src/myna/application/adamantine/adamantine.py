@@ -51,21 +51,31 @@ class AdamantineApp(MynaApp):
             # Step up a key
             if line == "}":
                 _ = current_keys.pop()
+                continue
 
+            # Split line to key/value pair
+            # - Handle latent heat exception due to space in "latent heat" key
+            if "latent heat" in line:
+                split_line = [
+                    "latent heat",
+                    line.split("latent heat", maxsplit=1)[1].split(" ")[1],
+                ]
             else:
                 split_line = line.split(" ", maxsplit=1)
-                if len(split_line) == 1:
-                    current_keys.append(split_line[0])
-                else:
-                    line_key = [split_line[0]]
-                    line_literal = split_line[1]
-                    if line_literal in ["true", "false"]:
-                        line_literal = line_literal.capitalize()
-                    try:
-                        line_value = literal_eval(line_literal)
-                    except ValueError:
-                        line_value = line_literal
-                    nested_set(input_dict, current_keys + line_key, line_value)
+
+            # Parse key/value pair
+            if len(split_line) == 1:
+                current_keys.append(split_line[0])
+            else:
+                line_key = [split_line[0]]
+                line_literal = split_line[1]
+                if line_literal in ["true", "false"]:
+                    line_literal = line_literal.capitalize()
+                try:
+                    line_value = literal_eval(line_literal)
+                except ValueError:
+                    line_value = line_literal
+                nested_set(input_dict, current_keys + line_key, line_value)
 
         return input_dict
 

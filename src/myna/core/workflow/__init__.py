@@ -42,6 +42,7 @@ Available modules and scripts:
 from . import config
 from . import run
 from . import sync
+from . import remote
 from .launch_from_peregrine import launch_from_peregrine
 from .load_input import (
     validate_required_input_keys,
@@ -62,6 +63,7 @@ __all__ = [
     "config",
     "run",
     "sync",
+    "remote",
     "launch_from_peregrine",
     "validate_required_input_keys",
     "get_validated_input_filetype",
